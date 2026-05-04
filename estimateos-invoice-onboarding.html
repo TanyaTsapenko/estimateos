@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EstimateOS — Invoice & Onboarding</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --jet:#1A1A1A;--onyx:#222526;--graphite:#353A3E;
+  --platinum:#E0E0E0;--ash:#BFBFBF;--surface:#F5F5F5;
+  --white:#fff;--border:#D0D0D0;--bl:#E8E8E8;
+  --green:#16a34a;--green-bg:rgba(22,163,74,.06);
+  --orange:#d97706;--blue:#3b82f6;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--platinum);min-height:100vh}
+.app{max-width:390px;margin:0 auto;min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex;animation:fu .25s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADER */
+.gh{background:linear-gradient(150deg,#111 0%,#1A1A1A 30%,#222526 60%,#353A3E 100%);padding:20px 20px 52px;position:relative;overflow:hidden;flex-shrink:0}
+.gh::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(191,191,191,.06) 0%,transparent 70%);border-radius:50%}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--ash)}
+.h-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:relative;z-index:2}
+.h-eye{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px}
+.h-big{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1}
+.h-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:5px}
+.back-btn{width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;flex-shrink:0}
+
+/* CARD */
+.card{background:var(--white);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3}
+.card-grey{background:var(--platinum);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3}
+
+/* LABELS */
+.sl{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);padding:10px 0 8px;border-bottom:1px solid var(--bl);margin-bottom:12px}
+.sl2{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sl2-t{font-size:13px;font-weight:700;color:var(--jet)}
+
+/* BADGE */
+.badge{font-size:8px;font-weight:700;padding:3px 8px;border-radius:8px;letter-spacing:.04em}
+.b-paid{background:rgba(22,163,74,.1);color:var(--green)}
+.b-pending{background:rgba(245,158,11,.1);color:var(--orange)}
+.b-overdue{background:rgba(239,68,68,.08);color:#ef4444}
+.b-draft{background:var(--surface);color:var(--ash)}
+
+/* INVOICE CARD */
+.inv-card{background:var(--white);border-radius:14px;padding:14px;border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:transform .15s;position:relative;overflow:hidden}
+.inv-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.inv-card.paid::before{background:var(--green)}
+.inv-card.pending::before{background:var(--orange)}
+.inv-card.overdue::before{background:#ef4444}
+.inv-card:active{transform:scale(.99)}
+
+/* STATS */
+.stats-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.stat{background:var(--white);border-radius:14px;padding:12px;border:1px solid var(--border)}
+.stat-val{font-size:16px;font-weight:800;color:var(--jet)}
+.stat-lbl{font-size:9px;color:var(--ash);margin-top:2px}
+
+/* FIELDS */
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.f label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.f input,.f select,.f textarea{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--jet);outline:none;transition:all .15s;-webkit-appearance:none;width:100%}
+.f input:focus,.f select:focus{border-color:var(--graphite);background:#fff}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 4.5 5-4.5' stroke='%23BFBFBF' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* INFO BOX */
+.info-box{background:rgba(34,37,38,.04);border:1px solid rgba(34,37,38,.08);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--graphite);line-height:1.6;margin-bottom:12px}
+.info-box.green{background:var(--green-bg);border-color:rgba(22,163,74,.15);color:#15803d}
+
+/* INVOICE DETAIL */
+.inv-detail-header{background:linear-gradient(135deg,var(--jet),var(--graphite));border-radius:14px;padding:16px;margin-bottom:14px;color:#fff}
+.inv-num{font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.inv-client{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.inv-addr{font-size:11px;color:rgba(255,255,255,.5);margin-top:3px}
+.inv-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,.1);border-radius:8px;overflow:hidden;margin-top:12px}
+.inv-stat{background:rgba(0,0,0,.2);padding:8px;text-align:center}
+.inv-stat-v{font-size:13px;font-weight:800;color:#fff}
+.inv-stat-l{font-size:8px;color:rgba(255,255,255,.4);margin-top:1px}
+
+/* LINE ITEMS */
+.line-item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--bl)}
+.line-item:last-child{border-bottom:none}
+.li-name{font-size:12px;color:var(--jet);font-weight:500}
+.li-detail{font-size:10px;color:var(--ash);margin-top:1px}
+.li-amt{font-size:13px;font-weight:700;color:var(--jet);white-space:nowrap;margin-left:8px}
+
+/* PAYMENT TIMELINE */
+.pay-item{display:flex;gap:12px;margin-bottom:12px}
+.pay-dot-wrap{display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.pay-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.pay-line{width:2px;background:var(--bl);flex:1;margin:4px 0}
+.pay-body{flex:1;padding-top:4px}
+.pay-title{font-size:12px;font-weight:700;color:var(--jet)}
+.pay-sub{font-size:10px;color:var(--ash);margin-top:2px}
+.pay-amt{font-size:14px;font-weight:800;margin-top:4px}
+
+/* PAYMENT METHODS */
+.pay-method{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s}
+.pay-method:active{background:var(--bl)}
+.pay-method-ic{font-size:20px;flex-shrink:0}
+.pay-method-body{flex:1}
+.pay-method-name{font-size:13px;font-weight:600;color:var(--jet)}
+.pay-method-sub{font-size:10px;color:var(--ash);margin-top:1px}
+.pay-method-arr{color:var(--ash);font-size:16px}
+
+/* NAV */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;max-width:390px;margin:0 auto;background:#fff;border-top:1px solid var(--bl);padding:12px 16px;display:flex;gap:10px;z-index:50;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.btn-p{background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex:1;box-shadow:0 4px 14px rgba(26,26,26,.2);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-s{background:var(--surface);color:var(--graphite);border:1px solid var(--border);border-radius:12px;padding:13px 16px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.btn-back-n{background:var(--surface);color:var(--ash);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;min-width:76px}
+
+/* BOT NAV */
+.bot-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:#fff;border-top:1px solid var(--bl);padding:8px 0 14px;display:flex;justify-content:space-around;z-index:100}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 10px;cursor:pointer}
+.ni-ic{font-size:18px}
+.ni-lb{font-size:8px;font-weight:600;color:var(--ash)}
+.ni.on .ni-lb{color:var(--graphite)}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--graphite);margin:2px auto 0}
+
+/* ═══════ ONBOARDING ═══════ */
+.ob-screen{display:none;min-height:100vh;flex-direction:column;background:#fff}
+.ob-screen.active{display:flex;animation:fu .3s ease}
+
+/* SPLASH */
+.splash{min-height:100vh;background:linear-gradient(160deg,#111 0%,#1A1A1A 40%,#222526 70%,#353A3E 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;position:relative;overflow:hidden}
+.splash::before{content:'';position:absolute;top:-100px;left:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%);border-radius:50%}
+.splash::after{content:'';position:absolute;bottom:-80px;right:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(255,255,255,.02) 0%,transparent 70%);border-radius:50%}
+.splash-logo{font-size:32px;font-weight:800;color:#fff;letter-spacing:-.03em;margin-bottom:8px}
+.splash-logo span{color:var(--ash)}
+.splash-tag{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:48px;text-align:center}
+.splash-title{font-size:28px;font-weight:800;color:#fff;text-align:center;line-height:1.3;letter-spacing:-.02em;margin-bottom:12px}
+.splash-sub{font-size:14px;color:rgba(255,255,255,.4);text-align:center;line-height:1.6;margin-bottom:48px;max-width:300px}
+.splash-btn{background:#fff;color:var(--jet);border:none;border-radius:14px;padding:16px 32px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;cursor:pointer;width:100%;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.splash-login{font-size:12px;color:rgba(255,255,255,.3);margin-top:16px;cursor:pointer}
+.splash-login span{color:rgba(255,255,255,.6);font-weight:600}
+
+/* STEPS */
+.ob-steps{display:flex;align-items:center;padding:20px 20px 0;gap:6px}
+.ob-step-line{height:3px;flex:1;border-radius:2px;background:var(--bl);transition:background .3s}
+.ob-step-line.done{background:var(--graphite)}
+.ob-step-line.active{background:var(--graphite)}
+.ob-step-num{font-size:9px;font-weight:700;color:var(--ash);letter-spacing:.1em}
+
+/* ONBOARDING CONTENT */
+.ob-content{flex:1;padding:24px 20px 100px;overflow-y:auto}
+.ob-icon{font-size:48px;margin-bottom:16px;display:block}
+.ob-title{font-size:24px;font-weight:800;color:var(--jet);letter-spacing:-.02em;margin-bottom:8px;line-height:1.2}
+.ob-sub{font-size:14px;color:#6b7280;line-height:1.6;margin-bottom:24px}
+
+/* NICHE CARDS */
+.niche-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.niche-card{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.niche-card.selected{background:rgba(53,58,62,.06);border-color:var(--graphite)}
+.niche-card.selected::after{content:'✓';position:absolute;top:8px;right:8px;width:18px;height:18px;background:var(--graphite);color:#fff;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.niche-ic{font-size:28px;margin-bottom:8px}
+.niche-name{font-size:12px;font-weight:700;color:var(--jet)}
+.niche-sub{font-size:10px;color:var(--ash);margin-top:2px}
+.niche-badge{font-size:8px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(22,163,74,.1);color:var(--green);margin-top:5px;display:inline-block}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.check-item{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:12px;padding:12px 14px;border:1px solid var(--border)}
+.check-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.check-body{flex:1}
+.check-title{font-size:13px;font-weight:600;color:var(--jet)}
+.check-sub{font-size:10px;color:var(--ash);margin-top:1px}
+.check-status{font-size:11px;font-weight:700;flex-shrink:0}
+
+/* DEMO CARD */
+.demo-card{background:linear-gradient(135deg,var(--jet),var(--graphite));border-radius:14px;padding:16px;margin-bottom:10px;color:#fff;cursor:pointer;transition:transform .15s}
+.demo-card:active{transform:scale(.98)}
+.demo-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.demo-sub{font-size:11px;color:rgba(255,255,255,.5)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center;max-width:390px;margin:0 auto;left:0;right:0}
+.overlay.open{display:flex;animation:mfu .2s}
+@keyframes mfu{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px 18px 36px;width:100%;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(40px)}to{transform:translateY(0)}}
+.modal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.modal-title{font-size:16px;font-weight:800;color:var(--jet)}
+.modal-x{width:28px;height:28px;background:var(--surface);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:var(--ash)}
+.m-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bl);font-size:12px}
+.m-row:last-child{border-bottom:none}
+.m-l{color:var(--ash)}
+.m-r{font-weight:600;color:var(--jet)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--jet);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ════════════════════════════════
+     ONBOARDING SCREENS
+════════════════════════════════ -->
+
+<!-- SPLASH -->
+<div class="ob-screen active" id="ob-splash">
+  <div class="splash">
+    <div style="position:relative;z-index:2;width:100%;max-width:320px;display:flex;flex-direction:column;align-items:center">
+      <div class="splash-logo">Estimate<span>OS</span></div>
+      <div class="splash-tag">Built for Canadian contractors</div>
+      <div style="width:64px;height:64px;background:rgba(255,255,255,.06);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:32px">🪟</div>
+      <div class="splash-title">Win more jobs.<br>Sign on the spot.</div>
+      <div class="splash-sub">Estimates, contracts and e-signatures in 5 minutes. Built for Windows & Doors contractors.</div>
+      <button class="splash-btn" onclick="goOb('ob-register')">Get Started — Free Trial →</button>
+      <div class="splash-login" onclick="goOb('ob-register')">Already have an account? <span>Sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="ob-screen" id="ob-register">
+  <div style="background:linear-gradient(150deg,#111,#222526);padding:20px 20px 48px;flex-shrink:0;position:relative">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:relative;z-index:2">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">Step 1 of 5</div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px">Create your account</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.02em">Welcome 👋</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px">14-day free trial · No credit card needed</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3">
+    <div class="f"><label>Full Name *</label><input placeholder="Andriy Koval"/></div>
+    <div class="f"><label>Email *</label><input type="email" placeholder="andriy@arcticclimate.ca"/></div>
+    <div class="f"><label>Phone</label><input type="tel" placeholder="(403) 555-0244"/></div>
+    <div class="f"><label>Password *</label><input type="password" placeholder="Min 8 characters"/>
+      <div style="height:4px;background:var(--bl);border-radius:2px;margin-top:6px;overflow:hidden"><div id="pwBar" style="height:100%;width:0%;background:var(--graphite);border-radius:2px;transition:width .3s"></div></div>
+      <div style="font-size:10px;color:var(--ash);margin-top:3px" id="pwLabel">Enter password</div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;cursor:pointer" onclick="this.querySelector('.chk').classList.toggle('on');this.querySelector('.chk').textContent=this.querySelector('.chk').classList.contains('on')?'✓':''">
+      <div class="chk" style="width:20px;height:20px;border:1.5px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;background:#fff;transition:all .2s"></div>
+      <div style="font-size:12px;color:#6b7280;line-height:1.6">I agree to the <span style="color:var(--jet);font-weight:600">Terms of Service</span> and <span style="color:var(--jet);font-weight:600">Privacy Policy</span></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--jet);display:flex;align-items:center;justify-content:center;gap:6px" onclick="toast('🍎 Apple Sign In')">🍎 Apple</div>
+      <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--jet);display:flex;align-items:center;justify-content:center;gap:6px" onclick="toast('🔵 Google Sign In')">🔵 Google</div>
+    </div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-back-n" onclick="goOb('ob-splash')">←</button>
+    <button class="btn-p" onclick="goOb('ob-company')">Create Account →</button>
+  </div>
+</div>
+
+<!-- COMPANY SETUP -->
+<div class="ob-screen" id="ob-company">
+  <div style="background:linear-gradient(150deg,#111,#222526);padding:20px 20px 48px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:relative;z-index:2">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">Step 2 of 5</div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px">Your business</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.02em">Company Setup 🏢</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px">Appears on all estimates and contracts</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3">
+    <div class="f"><label>Company Name *</label><input placeholder="Arctic Climate Solutions Inc." id="coName"/></div>
+    <div class="r2">
+      <div class="f"><label>Phone *</label><input type="tel" placeholder="(403) 555-0244"/></div>
+      <div class="f"><label>Province *</label>
+        <select>
+          <option value="">Select...</option>
+          <option value="AB" selected>Alberta (AB)</option>
+          <option value="BC">BC</option>
+          <option value="ON">Ontario</option>
+          <option value="MB">Manitoba</option>
+          <option value="SK">Saskatchewan</option>
+        </select>
+      </div>
+    </div>
+    <div class="f"><label>City *</label><input placeholder="Calgary"/></div>
+    <div class="f"><label>Licence Number</label><input placeholder="AB-G2-4821"/></div>
+    <div class="f"><label>Insurance Provider</label><input placeholder="Intact Insurance"/></div>
+
+    <!-- LOGO UPLOAD -->
+    <div class="f"><label>Company Logo</label>
+      <div style="border:1.5px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;position:relative" onclick="toast('📁 Logo upload — tap to choose')">
+        <input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%"/>
+        <div style="font-size:28px;margin-bottom:6px">📁</div>
+        <div style="font-size:13px;font-weight:600;color:var(--jet)">Upload your logo</div>
+        <div style="font-size:11px;color:var(--ash);margin-top:2px">PNG or JPG · shown on all docs</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ash);text-align:center;cursor:pointer" onclick="goOb('ob-niche')">Skip for now →</div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-back-n" onclick="goOb('ob-register')">←</button>
+    <button class="btn-p" onclick="goOb('ob-niche')">Continue →</button>
+  </div>
+</div>
+
+<!-- NICHE SELECTION -->
+<div class="ob-screen" id="ob-niche">
+  <div style="background:linear-gradient(150deg,#111,#222526);padding:20px 20px 48px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:relative;z-index:2">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">Step 3 of 5</div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px">Your trade</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.02em">What do you install? 🔨</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px">Sets up your price list and estimate form</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3">
+    <div class="niche-grid">
+      <div class="niche-card selected" onclick="selectNiche(this)">
+        <div class="niche-ic">🪟</div>
+        <div class="niche-name">Windows & Doors</div>
+        <div class="niche-sub">Residential & commercial</div>
+        <div class="niche-badge">Most popular</div>
+      </div>
+      <div class="niche-card" onclick="selectNiche(this)">
+        <div class="niche-ic">🏠</div>
+        <div class="niche-name">Roofing</div>
+        <div class="niche-sub">Shingles, flat roof, metal</div>
+      </div>
+      <div class="niche-card" onclick="selectNiche(this)">
+        <div class="niche-ic">🧱</div>
+        <div class="niche-name">Siding</div>
+        <div class="niche-sub">Vinyl, wood, composite</div>
+      </div>
+      <div class="niche-card" onclick="selectNiche(this)">
+        <div class="niche-ic">❄️</div>
+        <div class="niche-name">HVAC</div>
+        <div class="niche-sub">Heating, cooling, venting</div>
+        <div class="niche-badge" style="background:rgba(245,158,11,.1);color:var(--orange)">Coming soon</div>
+      </div>
+      <div class="niche-card" onclick="selectNiche(this)">
+        <div class="niche-ic">🚿</div>
+        <div class="niche-name">Bathroom</div>
+        <div class="niche-sub">Remodel & renovation</div>
+        <div class="niche-badge" style="background:rgba(245,158,11,.1);color:var(--orange)">Coming soon</div>
+      </div>
+      <div class="niche-card" onclick="selectNiche(this)">
+        <div class="niche-ic">🪜</div>
+        <div class="niche-name">General Reno</div>
+        <div class="niche-sub">Multiple trades</div>
+        <div class="niche-badge" style="background:rgba(245,158,11,.1);color:var(--orange)">Coming soon</div>
+      </div>
+    </div>
+    <div class="info-box">🪟 Windows & Doors is fully set up with Canadian pricing, 13 provinces with correct tax rates, and standard contract terms.</div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-back-n" onclick="goOb('ob-company')">←</button>
+    <button class="btn-p" onclick="goOb('ob-prices')">Continue →</button>
+  </div>
+</div>
+
+<!-- PRICE LIST SETUP -->
+<div class="ob-screen" id="ob-prices">
+  <div style="background:linear-gradient(150deg,#111,#222526);padding:20px 20px 48px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:relative;z-index:2">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">Step 4 of 5</div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px">Your rates</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.02em">Set Your Prices 💰</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px">Pre-filled with Alberta market rates</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3">
+    <div class="info-box">💡 These are average Calgary rates. Edit to match your pricing. You can always change these later in Settings.</div>
+
+    <div class="sl">Windows</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--jet)">🪟 Double-Hung</span>
+        <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1000" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--jet)">🪟 Casement</span>
+        <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1170" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--jet)">🏠 Bay / Bow</span>
+        <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="2800" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
+      </div>
+    </div>
+
+    <div class="sl">Doors</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--jet)">🚪 Entry Door</span>
+        <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1850" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--jet)">🚪 Patio Sliding</span>
+        <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="2300" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--ash);text-align:center;cursor:pointer;margin-bottom:10px" onclick="goOb('ob-ready')">Use default rates, I'll edit later →</div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-back-n" onclick="goOb('ob-niche')">←</button>
+    <button class="btn-p" onclick="goOb('ob-ready')">Save & Continue →</button>
+  </div>
+</div>
+
+<!-- READY -->
+<div class="ob-screen" id="ob-ready">
+  <div style="background:linear-gradient(150deg,#111,#222526);padding:20px 20px 48px;flex-shrink:0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;position:relative;z-index:2">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="font-size:11px;color:rgba(255,255,255,.35)">Step 5 of 5</div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px">You're set</div>
+      <div style="font-size:28px;font-weight:800;color:#fff;letter-spacing:-.02em">Ready to Go! 🚀</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.35);margin-top:4px">Your account is set up</div>
+    </div>
+  </div>
+  <div style="background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:22px 18px 100px;overflow-y:auto;position:relative;z-index:3">
+
+    <!-- CHECKLIST -->
+    <div class="checklist">
+      <div class="check-item">
+        <div class="check-ic" style="background:var(--green-bg)">✅</div>
+        <div class="check-body"><div class="check-title">Account created</div><div class="check-sub">andriy@arcticclimate.ca</div></div>
+        <div class="check-status" style="color:var(--green)">Done</div>
+      </div>
+      <div class="check-item">
+        <div class="check-ic" style="background:var(--green-bg)">✅</div>
+        <div class="check-body"><div class="check-title">Company profile</div><div class="check-sub">Arctic Climate Solutions</div></div>
+        <div class="check-status" style="color:var(--green)">Done</div>
+      </div>
+      <div class="check-item">
+        <div class="check-ic" style="background:var(--green-bg)">✅</div>
+        <div class="check-body"><div class="check-title">Niche selected</div><div class="check-sub">Windows & Doors</div></div>
+        <div class="check-status" style="color:var(--green)">Done</div>
+      </div>
+      <div class="check-item">
+        <div class="check-ic" style="background:var(--green-bg)">✅</div>
+        <div class="check-body"><div class="check-title">Price list ready</div><div class="check-sub">Alberta market rates loaded</div></div>
+        <div class="check-status" style="color:var(--green)">Done</div>
+      </div>
+      <div class="check-item" style="border:1.5px solid rgba(53,58,62,.15)">
+        <div class="check-ic" style="background:rgba(53,58,62,.06)">📄</div>
+        <div class="check-body"><div class="check-title">Contract template</div><div class="check-sub">Using EstimateOS default</div></div>
+        <div class="check-status" style="color:var(--ash);cursor:pointer" onclick="toast('→ Settings → Documents')">Set up →</div>
+      </div>
+    </div>
+
+    <div class="info-box green">🎉 You're all set! Create your first estimate in under 5 minutes.</div>
+
+    <!-- DEMO -->
+    <div class="sl2"><div class="sl2-t">Quick Start</div></div>
+    <div class="demo-card" onclick="go('s-inv-list')">
+      <div style="font-size:20px;margin-bottom:6px">📋</div>
+      <div class="demo-title">Create your first estimate →</div>
+      <div class="demo-sub">Takes 3-5 minutes · Auto-generates contract</div>
+    </div>
+    <div style="background:var(--surface);border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer;border:1px solid var(--border)" onclick="toast('📺 Watch demo video')">
+      <div style="font-size:20px;margin-bottom:6px">📺</div>
+      <div style="font-size:13px;font-weight:700;color:var(--jet)">Watch 2-min demo video</div>
+      <div style="font-size:11px;color:var(--ash);margin-top:2px">See how EstimateOS works on a real job</div>
+    </div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-p" onclick="go('s-inv-list')">Go to Dashboard →</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════
+     INVOICE SCREENS
+════════════════════════════════ -->
+
+<!-- INVOICE LIST -->
+<div class="screen" id="s-inv-list">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="goOb('ob-ready')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+      <div style="width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;position:relative;z-index:2" onclick="go('s-inv-new')">＋</div>
+    </div>
+    <div class="h-title">
+      <div class="h-eye">Billing · April 2026</div>
+      <div class="h-big">Invoices</div>
+      <div class="h-sub">CA$48,320 received · CA$21,860 pending</div>
+    </div>
+  </div>
+  <div class="card-grey">
+    <div class="stats-3">
+      <div class="stat"><div class="stat-val" style="color:var(--green)">CA$48K</div><div class="stat-lbl">Received</div></div>
+      <div class="stat"><div class="stat-val" style="color:var(--orange)">CA$22K</div><div class="stat-lbl">Pending</div></div>
+      <div class="stat"><div class="stat-val" style="color:#ef4444">1</div><div class="stat-lbl">Overdue</div></div>
+    </div>
+
+    <div class="sl">⚠️ Overdue</div>
+    <div class="inv-card overdue" onclick="go('s-inv-detail')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:11px;color:var(--ash);font-weight:600">INV-0038</div><div style="font-size:14px;font-weight:700;color:var(--jet);margin-top:2px">Tom Bradley</div></div>
+        <div class="badge b-overdue">9 days overdue</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bl)">
+        <div style="font-size:10px;color:var(--ash)">Due Apr 10 · Balance CA$11,200</div>
+        <div style="font-size:16px;font-weight:800;color:#ef4444">CA$11,200</div>
+      </div>
+    </div>
+
+    <div class="sl">Pending</div>
+    <div class="inv-card pending" onclick="go('s-inv-detail')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:11px;color:var(--ash);font-weight:600">INV-0041</div><div style="font-size:14px;font-weight:700;color:var(--jet);margin-top:2px">Michael Kowalski</div></div>
+        <div class="badge b-pending">Pending</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bl)">
+        <div style="font-size:10px;color:var(--ash)">Due May 5 · Balance CA$9,170</div>
+        <div style="font-size:16px;font-weight:800;color:var(--jet)">CA$18,340</div>
+      </div>
+    </div>
+    <div class="inv-card pending" onclick="go('s-inv-detail')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:11px;color:var(--ash);font-weight:600">INV-0040</div><div style="font-size:14px;font-weight:700;color:var(--jet);margin-top:2px">Olena Petrenko</div></div>
+        <div class="badge b-pending">Pending</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bl)">
+        <div style="font-size:10px;color:var(--ash)">Due May 1 · Balance CA$6,090</div>
+        <div style="font-size:16px;font-weight:800;color:var(--jet)">CA$12,180</div>
+      </div>
+    </div>
+
+    <div class="sl">Paid — April 2026</div>
+    <div class="inv-card paid" onclick="go('s-inv-detail')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:11px;color:var(--ash);font-weight:600">INV-0042</div><div style="font-size:14px;font-weight:700;color:var(--jet);margin-top:2px">Sarah Johnson</div></div>
+        <div class="badge b-paid">Paid ✓</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bl)">
+        <div style="font-size:10px;color:var(--ash)">Paid Apr 18 · Full payment</div>
+        <div style="font-size:16px;font-weight:800;color:var(--green)">CA$9,720</div>
+      </div>
+    </div>
+    <div class="inv-card paid" onclick="go('s-inv-detail')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:11px;color:var(--ash);font-weight:600">INV-0039</div><div style="font-size:14px;font-weight:700;color:var(--jet);margin-top:2px">James Wilson</div></div>
+        <div class="badge b-paid">Paid ✓</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bl)">
+        <div style="font-size:10px;color:var(--ash)">Paid Apr 16 · Full payment</div>
+        <div style="font-size:16px;font-weight:800;color:var(--green)">CA$22,500</div>
+      </div>
+    </div>
+  </div>
+  <div class="bot-nav">
+    <div class="ni" onclick="toast('🏠 Dashboard')"><div class="ni-ic">🏠</div><div class="ni-lb">Dashboard</div></div>
+    <div class="ni" onclick="toast('📋 Estimates')"><div class="ni-ic">📋</div><div class="ni-lb">Estimates</div></div>
+    <div class="ni" onclick="toast('📊 Pipeline')"><div class="ni-ic">📊</div><div class="ni-lb">Pipeline</div></div>
+    <div class="ni" onclick="toast('👥 CRM')"><div class="ni-ic">👥</div><div class="ni-lb">CRM</div></div>
+    <div class="ni on"><div class="ni-ic">🧾</div><div class="ni-lb" style="color:var(--graphite)">Invoices</div><div class="ni-dot"></div></div>
+  </div>
+</div>
+
+<!-- INVOICE DETAIL -->
+<div class="screen" id="s-inv-detail">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-inv-list')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+      <div style="display:flex;gap:8px;position:relative;z-index:2">
+        <div style="background:rgba(255,255,255,.08);padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;color:rgba(255,255,255,.6);cursor:pointer" onclick="toast('📄 PDF downloaded')">PDF</div>
+        <div style="background:rgba(255,255,255,.08);padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;color:rgba(255,255,255,.6);cursor:pointer" onclick="toast('📧 Invoice resent!')">Send</div>
+      </div>
+    </div>
+    <div class="h-title">
+      <div class="h-eye">INV-0041 · Pending</div>
+      <div class="h-big">Invoice</div>
+      <div class="h-sub">Michael Kowalski · Due May 5</div>
+    </div>
+  </div>
+  <div class="card">
+
+    <!-- CLIENT HEADER -->
+    <div class="inv-detail-header">
+      <div class="inv-num">INV-0041 · from EST-0041</div>
+      <div class="inv-client">Michael Kowalski</div>
+      <div class="inv-addr">112 Brentwood Blvd NW, Calgary, AB</div>
+      <div class="inv-stats">
+        <div class="inv-stat"><div class="inv-stat-v">CA$18,340</div><div class="inv-stat-l">Total</div></div>
+        <div class="inv-stat"><div class="inv-stat-v">CA$9,170</div><div class="inv-stat-l">Deposit paid</div></div>
+        <div class="inv-stat"><div class="inv-stat-v">CA$9,170</div><div class="inv-stat-l">Balance due</div></div>
+      </div>
+    </div>
+
+    <!-- PAYMENT TIMELINE -->
+    <div class="sl">Payment Status</div>
+    <div style="padding:4px 0;margin-bottom:14px">
+      <div class="pay-item">
+        <div class="pay-dot-wrap">
+          <div class="pay-dot" style="background:var(--green-bg)">✅</div>
+          <div class="pay-line"></div>
+        </div>
+        <div class="pay-body">
+          <div class="pay-title">Deposit Received</div>
+          <div class="pay-sub">Apr 17, 2026 · E-Transfer</div>
+          <div class="pay-amt" style="color:var(--green)">CA$9,170</div>
+        </div>
+      </div>
+      <div class="pay-item">
+        <div class="pay-dot-wrap">
+          <div class="pay-dot" style="background:rgba(245,158,11,.1)">⏳</div>
+        </div>
+        <div class="pay-body">
+          <div class="pay-title">Balance Due</div>
+          <div class="pay-sub">Due May 5, 2026 · On completion</div>
+          <div class="pay-amt" style="color:var(--orange)">CA$9,170</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINE ITEMS -->
+    <div class="sl">Scope of Work</div>
+    <div style="background:var(--surface);border-radius:12px;padding:4px 14px;margin-bottom:14px;border:1px solid var(--border)">
+      <div class="line-item"><div><div class="li-name">🪟 Double-Hung Window ×4</div><div class="li-detail">Retrofit · Low-E glass · Full-frame</div></div><div class="li-amt">CA$4,800</div></div>
+      <div class="line-item"><div><div class="li-name">🪟 Casement Window ×4</div><div class="li-detail">Retrofit · 2nd floor · Triple-pane</div></div><div class="li-amt">CA$5,400</div></div>
+      <div class="line-item"><div><div class="li-name">🚪 Entry Door ×1</div><div class="li-detail">Full-frame · Sidelight · Black frame</div></div><div class="li-amt">CA$2,880</div></div>
+      <div class="line-item"><div><div class="li-name">Services & Add-ons</div><div class="li-detail">Disposal, trim, caulking, warranty</div></div><div class="li-amt">CA$4,385</div></div>
+    </div>
+
+    <!-- TOTALS -->
+    <div style="background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:4px 0">
+        <span>Subtotal</span><span>CA$17,465</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:4px 0;border-bottom:1px solid var(--bl)">
+        <span>GST (5%)</span><span>CA$875</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0 4px;align-items:baseline">
+        <span style="font-size:13px;font-weight:600;color:var(--jet)">Total</span>
+        <span style="font-size:20px;font-weight:800;color:var(--jet)">CA$18,340</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0">
+        <span style="color:var(--green);font-weight:600">Deposit paid</span>
+        <span style="color:var(--green);font-weight:600">− CA$9,170</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px;border-top:1px solid var(--bl);margin-top:4px">
+        <span style="font-size:13px;font-weight:700;color:var(--orange)">Balance due</span>
+        <span style="font-size:20px;font-weight:800;color:var(--orange)">CA$9,170</span>
+      </div>
+    </div>
+
+    <!-- PAYMENT METHODS -->
+    <div class="sl">How to Pay</div>
+    <div class="pay-method" onclick="toast('📋 Copied: payments@arcticclimate.ca')">
+      <div class="pay-method-ic">📲</div>
+      <div class="pay-method-body">
+        <div class="pay-method-name">E-Transfer</div>
+        <div class="pay-method-sub">payments@arcticclimate.ca</div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--graphite)">Copy</div>
+    </div>
+    <div class="pay-method" onclick="toast('📋 Copied: Arctic Climate Solutions Inc.')">
+      <div class="pay-method-ic">📝</div>
+      <div class="pay-method-body">
+        <div class="pay-method-name">Cheque</div>
+        <div class="pay-method-sub">Payable to: Arctic Climate Solutions Inc.</div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:var(--graphite)">Copy</div>
+    </div>
+
+    <!-- MARK PAID -->
+    <div class="sl" style="margin-top:4px">Actions</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button style="flex:1;background:var(--green-bg);color:var(--green);border:1.5px solid rgba(22,163,74,.2);border-radius:12px;padding:13px;font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer" onclick="markPaid()">✓ Mark as Paid</button>
+      <button style="flex:1;background:var(--surface);color:var(--graphite);border:1px solid var(--border);border-radius:12px;padding:13px;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer" onclick="toast('💳 Payment link sent!')">Send Payment Link</button>
+    </div>
+    <button style="width:100%;background:rgba(239,68,68,.06);color:#ef4444;border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:12px;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer" onclick="toast('⚠️ Reminder sent to Michael!')">⚠️ Send Overdue Reminder</button>
+
+  </div>
+</div>
+
+<!-- CREATE INVOICE FROM ESTIMATE -->
+<div class="screen" id="s-inv-new">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-inv-list')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div class="h-title">
+      <div class="h-eye">New Invoice</div>
+      <div class="h-big">Create Invoice</div>
+      <div class="h-sub">From signed estimate or manually</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="info-box green">✅ Fastest way — convert a signed estimate. All data fills automatically.</div>
+
+    <div class="sl">From Signed Estimate</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="openModal()">
+        <div><div style="font-size:13px;font-weight:700;color:var(--jet)">Sarah Johnson</div><div style="font-size:10px;color:var(--ash);margin-top:2px">EST-0042 · CA$9,720 · Signed Apr 18</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="badge b-acc" style="background:var(--green-bg);color:var(--green)">Signed ✓</div><div style="color:var(--ash)">›</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="openModal()">
+        <div><div style="font-size:13px;font-weight:700;color:var(--jet)">James Wilson</div><div style="font-size:10px;color:var(--ash);margin-top:2px">EST-0038 · CA$22,500 · Signed Apr 14</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="badge" style="background:var(--green-bg);color:var(--green)">Signed ✓</div><div style="color:var(--ash)">›</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="openModal()">
+        <div><div style="font-size:13px;font-weight:700;color:var(--jet)">Olena Petrenko</div><div style="font-size:10px;color:var(--ash);margin-top:2px">EST-0040 · CA$12,180 · Signed Apr 16</div></div>
+        <div style="display:flex;align-items:center;gap:8px"><div class="badge" style="background:var(--green-bg);color:var(--green)">Signed ✓</div><div style="color:var(--ash)">›</div></div>
+      </div>
+    </div>
+
+    <div class="sl">Or Create Manually</div>
+    <div class="f"><label>Client Name</label><input placeholder="Client name"/></div>
+    <div class="r2">
+      <div class="f"><label>Amount</label><input type="number" placeholder="0.00"/></div>
+      <div class="f"><label>Due Date</label><input type="date"/></div>
+    </div>
+    <div class="f"><label>Description</label><input placeholder="Windows & doors installation"/></div>
+  </div>
+  <div class="nav-bar">
+    <button class="btn-back-n" onclick="go('s-inv-list')">← Back</button>
+    <button class="btn-p" onclick="toast('🧾 Invoice created!');go('s-inv-list')">Create Invoice →</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-h">
+      <div><div class="modal-title">Convert to Invoice</div><div style="font-size:11px;color:var(--ash);margin-top:2px">EST-0042 · Sarah Johnson</div></div>
+      <div class="modal-x" onclick="closeModal()">✕</div>
+    </div>
+    <div class="m-row"><span class="m-l">Client</span><span class="m-r">Sarah Johnson</span></div>
+    <div class="m-row"><span class="m-l">Total</span><span class="m-r">CA$9,720</span></div>
+    <div class="m-row"><span class="m-l">Deposit (50%)</span><span class="m-r">CA$4,860</span></div>
+    <div class="m-row"><span class="m-l">Balance due</span><span class="m-r">CA$4,860</span></div>
+    <div class="m-row"><span class="m-l">Due date</span><span class="m-r">On completion</span></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button style="flex:1;background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer" onclick="toast('🧾 Invoice INV-0043 created!');closeModal();go('s-inv-list')">Create Invoice</button>
+      <button style="background:var(--surface);color:var(--graphite);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"></div>
+</div>
+
+<script>
+// SCREEN NAVIGATION
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  var el = document.getElementById(id);
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+}
+
+// ONBOARDING NAVIGATION
+function goOb(id) {
+  document.querySelectorAll('.ob-screen, .screen').forEach(s => s.classList.remove('active'));
+  var el = document.getElementById(id);
+  if (el) { el.classList.add('active'); window.scrollTo(0,0); }
+}
+
+// NICHE SELECT
+function selectNiche(card) {
+  document.querySelectorAll('.niche-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+}
+
+// PASSWORD STRENGTH
+var pwInput = document.querySelector('input[type="password"]');
+if (pwInput) {
+  pwInput.addEventListener('input', function() {
+    var v = this.value;
+    var bar = document.getElementById('pwBar');
+    var lbl = document.getElementById('pwLabel');
+    if (!bar) return;
+    if (v.length === 0) { bar.style.width='0%'; lbl.textContent='Enter password'; }
+    else if (v.length < 6) { bar.style.width='25%'; bar.style.background='#ef4444'; lbl.textContent='Too short'; }
+    else if (v.length < 8) { bar.style.width='50%'; bar.style.background=var_orange(); lbl.textContent='Could be stronger'; }
+    else if (!/[0-9]/.test(v) && !/[^a-zA-Z0-9]/.test(v)) { bar.style.width='70%'; bar.style.background=var_orange(); lbl.textContent='Add numbers or symbols'; }
+    else { bar.style.width='100%'; bar.style.background='#16a34a'; lbl.textContent='Strong password ✓'; }
+  });
+}
+function var_orange() { return '#d97706'; }
+
+// MARK PAID
+function markPaid() {
+  toast('✅ Invoice marked as paid!');
+  setTimeout(() => go('s-inv-list'), 1000);
+}
+
+// MODAL
+function openModal() { document.getElementById('overlay').classList.add('open'); }
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+
+// TOAST
+function toast(msg) {
+  var t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>

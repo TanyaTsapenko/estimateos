@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EstimateOS — Settings & Notifications</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --jet:#1A1A1A;--onyx:#222526;--graphite:#353A3E;
+  --platinum:#E0E0E0;--ash:#BFBFBF;--surface:#F5F5F5;
+  --white:#fff;--border:#D0D0D0;--bl:#E8E8E8;
+  --amber:#D97706;--amber-light:rgba(217,119,6,.08);
+  --green:#16a34a;--green-bg:rgba(22,163,74,.06);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.06);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--platinum);min-height:100vh}
+.app{max-width:390px;margin:0 auto;min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column;animation:fu .25s ease}
+.screen.active{display:flex}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADER */
+.gh{background:linear-gradient(150deg,#111 0%,#1A1A1A 30%,#222526 60%,#353A3E 100%);padding:20px 20px 52px;position:relative;overflow:hidden;flex-shrink:0}
+.gh::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(217,119,6,.06) 0%,transparent 70%);border-radius:50%}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--amber)}
+.h-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:relative;z-index:2}
+.back-btn{width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;flex-shrink:0}
+.h-eye{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px;position:relative;z-index:2}
+.h-big{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1;position:relative;z-index:2}
+.h-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:5px;position:relative;z-index:2}
+
+/* CARD */
+.card{background:var(--platinum);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:20px 16px 84px;overflow-y:auto;position:relative;z-index:3}
+.card-white{background:var(--white);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:20px 16px 84px;overflow-y:auto;position:relative;z-index:3}
+
+/* SECTION */
+.section{background:var(--white);border-radius:14px;overflow:hidden;margin-bottom:10px;border:1px solid var(--border)}
+.section-label{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);margin:14px 0 8px;padding-left:2px}
+
+/* ROW */
+.row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--bl);cursor:pointer;transition:background .15s}
+.row:last-child{border-bottom:none}
+.row:active{background:var(--surface)}
+.row-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.row-body{flex:1;min-width:0}
+.row-title{font-size:13px;font-weight:600;color:var(--jet)}
+.row-sub{font-size:11px;color:var(--ash);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.row-arr{color:var(--ash);font-size:16px}
+.row-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:8px}
+.rb-green{background:var(--green-bg);color:var(--green)}
+.rb-amber{background:var(--amber-light);color:var(--amber)}
+.rb-red{background:var(--red-bg);color:var(--red)}
+.rb-grey{background:var(--surface);color:var(--ash)}
+
+/* TOGGLE */
+.sw{width:40px;height:22px;background:#e2e8f0;border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.sw.on{background:var(--graphite)}
+.swk{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw.on .swk{left:21px}
+
+/* PROFILE HEADER */
+.profile-header{background:linear-gradient(135deg,var(--jet),var(--graphite));border-radius:14px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.profile-av{width:52px;height:52px;border-radius:50%;background:var(--amber-light);border:2px solid var(--amber);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--amber);flex-shrink:0}
+.profile-name{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.01em}
+.profile-email{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.profile-plan{display:inline-flex;align-items:center;gap:5px;background:var(--amber-light);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--amber);margin-top:6px}
+
+/* PLAN CARD */
+.plan-card{background:linear-gradient(135deg,var(--jet),var(--graphite));border-radius:14px;padding:16px;margin-bottom:10px;color:#fff}
+.plan-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.plan-name{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:4px}
+.plan-price{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.plan-period{font-size:11px;color:rgba(255,255,255,.4)}
+.plan-renew{font-size:11px;color:rgba(255,255,255,.35);margin-top:6px}
+.plan-features{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.plan-feat{background:rgba(255,255,255,.08);border-radius:6px;padding:3px 9px;font-size:10px;color:rgba(255,255,255,.6)}
+
+/* FIELDS */
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.f label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.f input,.f select{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--jet);outline:none;transition:all .15s;width:100%;-webkit-appearance:none}
+.f input:focus,.f select:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.08);background:#fff}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* SUBMIT BTN */
+.save-btn{background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;box-shadow:0 4px 14px rgba(26,26,26,.2);margin-bottom:10px}
+.danger-btn{background:var(--red-bg);color:var(--red);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%}
+
+/* NOTIF ITEM */
+.notif-item{background:var(--white);border-radius:14px;padding:13px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;position:relative;overflow:hidden;transition:transform .15s}
+.notif-item:active{transform:scale(.99)}
+.notif-item.unread{border-color:rgba(217,119,6,.2)}
+.notif-item.unread::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber);border-radius:3px 0 0 3px}
+.notif-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.notif-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.notif-title{font-size:13px;font-weight:700;color:var(--jet);line-height:1.3}
+.notif-time{font-size:10px;color:var(--ash);white-space:nowrap;flex-shrink:0}
+.notif-body{font-size:12px;color:#6b7280;line-height:1.5;margin-left:42px}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:4px}
+
+/* NOTIF FILTERS */
+.notif-filters{display:flex;gap:7px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.notif-filters::-webkit-scrollbar{display:none}
+.nf{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--ash);flex-shrink:0}
+.nf.on{background:var(--graphite);color:#fff;border-color:var(--graphite)}
+
+/* NOTIF EMPTY */
+.notif-empty{text-align:center;padding:48px 20px;color:var(--ash)}
+.notif-empty-ic{font-size:40px;margin-bottom:12px}
+.notif-empty-t{font-size:14px;font-weight:600;color:var(--jet);margin-bottom:6px}
+.notif-empty-s{font-size:13px;color:var(--ash)}
+
+/* BOT NAV */
+.bot-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:#fff;border-top:1px solid var(--bl);padding:8px 0 14px;display:flex;justify-content:space-around;z-index:100}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 10px;cursor:pointer}
+.ni-ic{font-size:18px;position:relative}
+.ni-lb{font-size:8px;font-weight:600;color:var(--ash)}
+.ni.on .ni-lb{color:var(--graphite)}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--graphite);margin:2px auto 0}
+.notif-badge{position:absolute;top:-4px;right:-6px;background:var(--amber);color:#fff;font-size:8px;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* DANGER ZONE */
+.danger-zone{background:var(--red-bg);border:1px solid rgba(239,68,68,.15);border-radius:14px;padding:16px;margin-top:4px}
+.dz-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:10px}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--jet);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;z-index:400;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+
+/* SUB SCREEN */
+.sub-screen{display:none;min-height:100vh;flex-direction:column;animation:fu .25s ease}
+.sub-screen.active{display:flex}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══════════════ SETTINGS ═══════════════ -->
+<div class="screen active" id="s-settings">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="toast('← Dashboard')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+      <div style="position:relative;z-index:2">
+        <div class="row-badge rb-amber">Pro Plan</div>
+      </div>
+    </div>
+    <div>
+      <div class="h-eye">Account</div>
+      <div class="h-big">Settings</div>
+      <div class="h-sub">Arctic Climate Solutions</div>
+    </div>
+  </div>
+  <div class="card">
+
+    <!-- PROFILE HEADER -->
+    <div class="profile-header">
+      <div class="profile-av">AK</div>
+      <div>
+        <div class="profile-name">Andriy Koval</div>
+        <div class="profile-email">andriy@arcticclimate.ca</div>
+        <div class="profile-plan">⭐ Pro Plan · CA$149/mo</div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="section-label">Account</div>
+    <div class="section">
+      <div class="row" onclick="go('s-profile')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">👤</div>
+        <div class="row-body"><div class="row-title">Profile</div><div class="row-sub">Andriy Koval · (403) 555-0244</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="go('s-company')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🏢</div>
+        <div class="row-body"><div class="row-title">Company Profile</div><div class="row-sub">Arctic Climate Solutions · AB-G2-4821</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="go('s-password')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🔐</div>
+        <div class="row-body"><div class="row-title">Change Password</div><div class="row-sub">Last changed 30 days ago</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- SUBSCRIPTION -->
+    <div class="section-label">Subscription</div>
+    <div class="plan-card">
+      <div class="plan-card-top">
+        <div>
+          <div class="plan-name">Current Plan</div>
+          <div class="plan-price">CA$149</div>
+          <div class="plan-period">/month · Pro · 3 users</div>
+        </div>
+        <div class="row-badge rb-green" style="margin-top:4px">Active</div>
+      </div>
+      <div class="plan-renew">🔄 Renews May 18, 2026</div>
+      <div class="plan-features">
+        <div class="plan-feat">AI Follow-ups ✓</div>
+        <div class="plan-feat">CRM ✓</div>
+        <div class="plan-feat">Invoicing ✓</div>
+        <div class="plan-feat">3 users ✓</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="row" onclick="toast('📊 Upgrade to Team →')">
+        <div class="row-ic" style="background:var(--amber-light)">⬆️</div>
+        <div class="row-body"><div class="row-title">Upgrade to Team</div><div class="row-sub">CA$299/mo · Unlimited users</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="toast('🧾 Billing history')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🧾</div>
+        <div class="row-body"><div class="row-title">Billing History</div><div class="row-sub">Invoices and receipts</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="section-label">Documents</div>
+    <div class="section">
+      <div class="row" onclick="toast('📄 Contract Template →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">📄</div>
+        <div class="row-body"><div class="row-title">Contract Template</div><div class="row-sub">ArcticClimate_Contract_2026.docx</div></div>
+        <div class="row-right"><div class="row-badge rb-green">Active</div><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="toast('✍️ E-Signature Settings →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">✍️</div>
+        <div class="row-body"><div class="row-title">E-Signature</div><div class="row-sub">Client signs on-site · enabled</div></div>
+        <div class="row-right"><div class="row-badge rb-green">On</div><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="toast('💰 Price List →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">💰</div>
+        <div class="row-body"><div class="row-title">Price List</div><div class="row-sub">25 window & door types</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="section-label">Notifications</div>
+    <div class="section">
+      <div class="row" onclick="go('s-notif-settings')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🔔</div>
+        <div class="row-body"><div class="row-title">Notification Settings</div><div class="row-sub">Email · SMS · Push</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- PREFERENCES -->
+    <div class="section-label">Preferences</div>
+    <div class="section">
+      <div class="row" onclick="toast('🌍 Language')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🌍</div>
+        <div class="row-body"><div class="row-title">Language</div><div class="row-sub">English (Canada)</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">🌙</div>
+        <div class="row-body"><div class="row-title">Dark Mode</div><div class="row-sub">Coming soon</div></div>
+        <div class="row-right"><div class="sw" onclick="togSw(this)"><div class="swk"></div></div></div>
+      </div>
+      <div class="row">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">📐</div>
+        <div class="row-body"><div class="row-title">Measurement Units</div><div class="row-sub">Inches (imperial)</div></div>
+        <div class="row-right">
+          <select style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:12px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--jet);outline:none" onclick="event.stopPropagation()">
+            <option>Inches</option>
+            <option>Centimetres</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPORT -->
+    <div class="section-label">Support</div>
+    <div class="section">
+      <div class="row" onclick="toast('❓ Help Center →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">❓</div>
+        <div class="row-body"><div class="row-title">Help Center</div><div class="row-sub">FAQ and guides</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="toast('💬 Chat with support →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">💬</div>
+        <div class="row-body"><div class="row-title">Contact Support</div><div class="row-sub">hello@estimateos.ca</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+      <div class="row" onclick="toast('⭐ Rate the app →')">
+        <div class="row-ic" style="background:rgba(53,58,62,.06)">⭐</div>
+        <div class="row-body"><div class="row-title">Rate EstimateOS</div><div class="row-sub">Leave a review</div></div>
+        <div class="row-right"><div class="row-arr">›</div></div>
+      </div>
+    </div>
+
+    <!-- DANGER ZONE -->
+    <div class="section-label">Account Actions</div>
+    <div class="danger-zone">
+      <div class="dz-title">⚠️ Danger Zone</div>
+      <div class="section" style="margin-bottom:8px">
+        <div class="row" onclick="toast('🚪 Signing out...')">
+          <div class="row-ic" style="background:var(--red-bg)">🚪</div>
+          <div class="row-body"><div class="row-title" style="color:var(--red)">Sign Out</div><div class="row-sub">You'll need to sign in again</div></div>
+        </div>
+        <div class="row" onclick="toast('❌ Cancel Subscription →')">
+          <div class="row-ic" style="background:var(--red-bg)">❌</div>
+          <div class="row-body"><div class="row-title" style="color:var(--red)">Cancel Subscription</div><div class="row-sub">Ends on May 18, 2026</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;font-size:11px;color:var(--ash);margin-top:16px">
+      EstimateOS v1.0.0 · estimateos.ca<br>
+      <span style="margin-top:4px;display:block">Privacy Policy · Terms of Service</span>
+    </div>
+
+  </div>
+
+  <!-- BOT NAV -->
+  <div class="bot-nav">
+    <div class="ni" onclick="toast('🏠 Dashboard')"><div class="ni-ic">🏠</div><div class="ni-lb">Dashboard</div></div>
+    <div class="ni" onclick="toast('📋 Estimates')"><div class="ni-ic">📋</div><div class="ni-lb">Estimates</div></div>
+    <div class="ni" onclick="toast('📊 Pipeline')"><div class="ni-ic">📊</div><div class="ni-lb">Pipeline</div></div>
+    <div class="ni" onclick="go('s-notifications')">
+      <div class="ni-ic">🔔<div class="notif-badge">3</div></div>
+      <div class="ni-lb">Alerts</div>
+    </div>
+    <div class="ni on"><div class="ni-ic">⚙️</div><div class="ni-lb" style="color:var(--graphite)">Settings</div><div class="ni-dot"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ PROFILE EDIT ═══════════════ -->
+<div class="screen" id="s-profile">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-settings')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div><div class="h-eye">Account</div><div class="h-big">Your Profile</div></div>
+  </div>
+  <div class="card-white">
+    <div class="f"><label>First Name</label><input value="Andriy"/></div>
+    <div class="f"><label>Last Name</label><input value="Koval"/></div>
+    <div class="f"><label>Email</label><input type="email" value="andriy@arcticclimate.ca"/></div>
+    <div class="f"><label>Phone</label><input type="tel" value="(403) 555-0244"/></div>
+    <div class="f"><label>Role</label>
+      <select>
+        <option selected>Owner</option>
+        <option>Manager</option>
+        <option>Estimator</option>
+        <option>Sales Rep</option>
+      </select>
+    </div>
+    <button class="save-btn" onclick="toast('✅ Profile saved!')">Save Changes</button>
+  </div>
+</div>
+
+<!-- ═══════════════ COMPANY EDIT ═══════════════ -->
+<div class="screen" id="s-company">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-settings')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div><div class="h-eye">Settings</div><div class="h-big">Company</div></div>
+  </div>
+  <div class="card-white">
+    <div class="f"><label>Company Name</label><input value="Arctic Climate Solutions Inc."/></div>
+    <div class="r2">
+      <div class="f"><label>Phone</label><input type="tel" value="(403) 555-0244"/></div>
+      <div class="f"><label>Province</label>
+        <select><option selected>Alberta (AB)</option><option>BC</option><option>Ontario</option></select>
+      </div>
+    </div>
+    <div class="f"><label>City</label><input value="Calgary"/></div>
+    <div class="f"><label>Licence #</label><input value="AB-G2-4821"/></div>
+    <div class="f"><label>Insurance</label><input value="Intact Insurance"/></div>
+    <div class="f"><label>WCB #</label><input value="WCB-AB-00123"/></div>
+    <button class="save-btn" onclick="toast('✅ Company saved!')">Save Changes</button>
+  </div>
+</div>
+
+<!-- ═══════════════ CHANGE PASSWORD ═══════════════ -->
+<div class="screen" id="s-password">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-settings')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div><div class="h-eye">Security</div><div class="h-big">Password</div></div>
+  </div>
+  <div class="card-white">
+    <div class="f"><label>Current Password</label><input type="password" placeholder="Your current password"/></div>
+    <div class="f"><label>New Password</label><input type="password" placeholder="Min 8 characters"/></div>
+    <div class="f"><label>Confirm New Password</label><input type="password" placeholder="Repeat new password"/></div>
+    <button class="save-btn" onclick="toast('✅ Password updated!')">Update Password</button>
+  </div>
+</div>
+
+<!-- ═══════════════ NOTIFICATION SETTINGS ═══════════════ -->
+<div class="screen" id="s-notif-settings">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-settings')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div><div class="h-eye">Settings</div><div class="h-big">Notifications</div><div class="h-sub">Choose what to be notified about</div></div>
+  </div>
+  <div class="card">
+    <div class="section-label">Client Activity</div>
+    <div class="section">
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">✅</div><div class="row-body"><div class="row-title">Client signed contract</div><div class="row-sub">Notify immediately</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">📧</div><div class="row-body"><div class="row-title">Client opened estimate</div><div class="row-sub">When email is opened</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">⏰</div><div class="row-body"><div class="row-title">No response after 48h</div><div class="row-sub">Remind me to follow up</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">💬</div><div class="row-body"><div class="row-title">Client has questions</div><div class="row-sub">Declined to sign — wants to talk</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+    </div>
+
+    <div class="section-label">Payments</div>
+    <div class="section">
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">💰</div><div class="row-body"><div class="row-title">Payment received</div><div class="row-sub">Deposit or final payment</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">⚠️</div><div class="row-body"><div class="row-title">Invoice overdue</div><div class="row-sub">Payment 3+ days late</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+    </div>
+
+    <div class="section-label">Business</div>
+    <div class="section">
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">🪪</div><div class="row-body"><div class="row-title">Licence expiry</div><div class="row-sub">30 days before expiry</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">📊</div><div class="row-body"><div class="row-title">Weekly summary</div><div class="row-sub">Revenue and win rate</div></div><div class="sw" onclick="togSw(this)"><div class="swk"></div></div></div>
+    </div>
+
+    <div class="section-label">Delivery Method</div>
+    <div class="section">
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">📧</div><div class="row-body"><div class="row-title">Email notifications</div><div class="row-sub">andriy@arcticclimate.ca</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">📱</div><div class="row-body"><div class="row-title">SMS notifications</div><div class="row-sub">(403) 555-0244</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="row"><div class="row-ic" style="background:rgba(53,58,62,.06)">🔔</div><div class="row-body"><div class="row-title">Push notifications</div><div class="row-sub">Browser / app alerts</div></div><div class="sw on" onclick="togSw(this)"><div class="swk"></div></div></div>
+    </div>
+    <button class="save-btn" onclick="toast('✅ Notification settings saved!')">Save Settings</button>
+  </div>
+</div>
+
+<!-- ═══════════════ NOTIFICATIONS CENTER ═══════════════ -->
+<div class="screen" id="s-notifications">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="back-btn" onclick="go('s-settings')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+      <div style="position:relative;z-index:2;cursor:pointer" onclick="markAllRead()">
+        <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.4)">Mark all read</span>
+      </div>
+    </div>
+    <div>
+      <div class="h-eye">3 unread</div>
+      <div class="h-big">Notifications</div>
+      <div class="h-sub">Stay on top of your business</div>
+    </div>
+  </div>
+  <div class="card">
+
+    <div class="notif-filters">
+      <div class="nf on" onclick="setFilter(this)">All (8)</div>
+      <div class="nf" onclick="setFilter(this)">Unread (3)</div>
+      <div class="nf" onclick="setFilter(this)">Signed</div>
+      <div class="nf" onclick="setFilter(this)">Payments</div>
+      <div class="nf" onclick="setFilter(this)">Follow-ups</div>
+    </div>
+
+    <!-- TODAY -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin-bottom:8px">Today</div>
+
+    <div class="notif-item unread" onclick="toast('✅ Opening EST-0043...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:rgba(22,163,74,.08)">✅</div>
+          <div class="notif-title">Sarah Johnson signed the contract</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
+          <div class="notif-time">2:34 PM</div>
+          <div class="notif-dot"></div>
+        </div>
+      </div>
+      <div class="notif-body">EST-0043 · Better Package · CA$10,153 · Deposit CA$5,076 due via e-transfer</div>
+    </div>
+
+    <div class="notif-item unread" onclick="toast('📧 Opening EST-0041...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:rgba(59,130,246,.08)">📧</div>
+          <div class="notif-title">Michael Kowalski opened your estimate</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
+          <div class="notif-time">11:12 AM</div>
+          <div class="notif-dot"></div>
+        </div>
+      </div>
+      <div class="notif-body">EST-0041 · CA$18,340 · Opened 2 times — good sign! Consider calling now.</div>
+    </div>
+
+    <div class="notif-item unread" onclick="toast('⏰ Opening follow-up...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:var(--amber-light)">⏰</div>
+          <div class="notif-title">Follow up with Nina Marchuk</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0">
+          <div class="notif-time">9:00 AM</div>
+          <div class="notif-dot"></div>
+        </div>
+      </div>
+      <div class="notif-body">EST-0037 · No reply for 5 days · AI follow-up is ready to send</div>
+    </div>
+
+    <!-- YESTERDAY -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin:14px 0 8px">Yesterday</div>
+
+    <div class="notif-item" onclick="toast('💰 Opening INV-0042...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:var(--green-bg)">💰</div>
+          <div class="notif-title">Payment received — James Wilson</div>
+        </div>
+        <div class="notif-time">4:15 PM</div>
+      </div>
+      <div class="notif-body">INV-0039 · CA$22,500 full payment received · E-transfer confirmed</div>
+    </div>
+
+    <div class="notif-item" onclick="toast('✅ Opening EST-0042...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:rgba(22,163,74,.08)">✅</div>
+          <div class="notif-title">Olena Petrenko signed the contract</div>
+        </div>
+        <div class="notif-time">1:22 PM</div>
+      </div>
+      <div class="notif-body">EST-0040 · Better Package · CA$12,180 · Deposit CA$6,090 received</div>
+    </div>
+
+    <!-- EARLIER -->
+    <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin:14px 0 8px">Earlier this week</div>
+
+    <div class="notif-item" onclick="toast('⚠️ Opening INV-0038...')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:var(--red-bg)">⚠️</div>
+          <div class="notif-title">Invoice overdue — Tom Bradley</div>
+        </div>
+        <div class="notif-time">Apr 15</div>
+      </div>
+      <div class="notif-body">INV-0038 · CA$11,200 · 9 days overdue · Send reminder?</div>
+    </div>
+
+    <div class="notif-item" onclick="toast('🪪 Licence reminder')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:var(--amber-light)">🪪</div>
+          <div class="notif-title">Licence expiry reminder</div>
+        </div>
+        <div class="notif-time">Apr 14</div>
+      </div>
+      <div class="notif-body">AB-G2-4821 expires in 28 days · Renew before May 18, 2026</div>
+    </div>
+
+    <div class="notif-item" onclick="toast('📊 Weekly summary')">
+      <div class="notif-top">
+        <div style="display:flex;align-items:flex-start;gap:8px;flex:1">
+          <div class="notif-ic" style="background:rgba(53,58,62,.06)">📊</div>
+          <div class="notif-title">Weekly Summary — Apr 7–13</div>
+        </div>
+        <div class="notif-time">Apr 13</div>
+      </div>
+      <div class="notif-body">5 estimates sent · 3 signed · CA$44,420 revenue · Win rate 60%</div>
+    </div>
+
+  </div>
+
+  <!-- BOT NAV -->
+  <div class="bot-nav">
+    <div class="ni" onclick="toast('🏠 Dashboard')"><div class="ni-ic">🏠</div><div class="ni-lb">Dashboard</div></div>
+    <div class="ni" onclick="toast('📋 Estimates')"><div class="ni-ic">📋</div><div class="ni-lb">Estimates</div></div>
+    <div class="ni" onclick="toast('📊 Pipeline')"><div class="ni-ic">📊</div><div class="ni-lb">Pipeline</div></div>
+    <div class="ni on"><div class="ni-ic">🔔<div class="notif-badge">3</div></div><div class="ni-lb" style="color:var(--graphite)">Alerts</div><div class="ni-dot"></div></div>
+    <div class="ni" onclick="go('s-settings')"><div class="ni-ic">⚙️</div><div class="ni-lb">Settings</div></div>
+  </div>
+</div>
+
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function togSw(el) {
+  el.classList.toggle('on');
+  toast(el.classList.contains('on') ? '✅ Enabled' : '🔕 Disabled');
+}
+
+function setFilter(btn) {
+  document.querySelectorAll('.nf').forEach(f => f.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function markAllRead() {
+  document.querySelectorAll('.notif-item.unread').forEach(function(el) {
+    el.classList.remove('unread');
+    var dot = el.querySelector('.notif-dot');
+    if (dot) dot.remove();
+  });
+  document.querySelectorAll('.notif-badge').forEach(function(b) { b.style.display = 'none'; });
+  toast('✅ All marked as read');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>

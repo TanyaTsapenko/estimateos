@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EstimateOS — Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --jet:#1A1A1A;--onyx:#222526;--graphite:#353A3E;
+  --platinum:#E0E0E0;--ash:#BFBFBF;--surface:#F5F5F5;
+  --white:#fff;--border:#D0D0D0;--bl:#E8E8E8;
+  --amber:#D97706;--amber-light:rgba(217,119,6,.08);
+  --green:#16a34a;--green-bg:rgba(22,163,74,.06);
+  --red:#ef4444;--blue:#3b82f6;
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--platinum);min-height:100vh}
+.app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.gh{background:linear-gradient(150deg,#111 0%,#1A1A1A 30%,#222526 60%,#353A3E 100%);padding:20px 20px 52px;position:relative;overflow:hidden;flex-shrink:0}
+.gh::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(217,119,6,.06) 0%,transparent 70%);border-radius:50%}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--amber)}
+.h-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;position:relative;z-index:2}
+.back-btn{width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);cursor:pointer;font-size:16px;flex-shrink:0}
+.h-eye{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px;position:relative;z-index:2}
+.h-big{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1;position:relative;z-index:2}
+.h-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:5px;position:relative;z-index:2}
+
+/* PERIOD SELECTOR */
+.period-sel{position:relative;z-index:2;margin-top:14px;display:flex;gap:6px}
+.period-btn{padding:6px 14px;border-radius:16px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);transition:all .2s;flex-shrink:0}
+.period-btn.on{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.25)}
+
+/* CARD */
+.card{background:var(--platinum);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:20px 16px 84px;overflow-y:auto;position:relative;z-index:3}
+
+/* KPI GRID */
+.kpi-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.kpi-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{background:var(--white);border-radius:14px;padding:13px;border:1px solid var(--border)}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.kpi-ic{width:28px;height:28px;border-radius:8px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;font-size:12px}
+.kpi-tr{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px}
+.tr-up{background:rgba(22,163,74,.1);color:var(--green)}
+.tr-dn{background:rgba(239,68,68,.08);color:var(--red)}
+.tr-flat{background:var(--surface);color:var(--ash)}
+.kpi-val{font-size:18px;font-weight:800;color:var(--jet);letter-spacing:-.01em}
+.kpi-lbl{font-size:9px;color:var(--ash);margin-top:2px;font-weight:500}
+.kpi-wide{background:var(--white);border-radius:14px;padding:13px;border:1px solid var(--border);margin-bottom:10px}
+.kpi-wide-row{display:flex;align-items:center;justify-content:space-between}
+
+/* CHART */
+.chart-box{background:var(--white);border-radius:14px;padding:14px;border:1px solid var(--border);margin-bottom:10px}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.chart-title{font-size:12px;font-weight:700;color:var(--jet)}
+.chart-legend{display:flex;gap:10px}
+.cl-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ash)}
+.cl-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:100px;margin-bottom:8px}
+.bc-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.bc-bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height .3s}
+.bc-lbl{font-size:8px;color:var(--ash);text-align:center}
+
+/* LINE CHART */
+.line-chart-wrap{position:relative;height:80px;margin-bottom:8px}
+.line-chart-wrap svg{width:100%;height:100%}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:16px}
+.donut-svg{flex-shrink:0}
+.donut-legend{flex:1;display:flex;flex-direction:column;gap:8px}
+.dl-item{display:flex;align-items:center;justify-content:space-between}
+.dl-left{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--jet)}
+.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dl-val{font-size:12px;font-weight:700;color:var(--jet)}
+
+/* TABLE */
+.table-box{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:10px}
+.table-head{display:grid;grid-template-columns:2fr 1fr 1fr;padding:9px 14px;background:var(--surface);border-bottom:1px solid var(--bl)}
+.th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.th:not(:first-child){text-align:right}
+.table-row{display:grid;grid-template-columns:2fr 1fr 1fr;padding:11px 14px;border-bottom:1px solid var(--bl);cursor:pointer;transition:background .15s}
+.table-row:last-child{border-bottom:none}
+.table-row:active{background:var(--surface)}
+.td{font-size:12px;color:var(--jet);font-weight:500}
+.td:not(:first-child){text-align:right;font-weight:700}
+.td-sub{font-size:10px;color:var(--ash);margin-top:1px}
+
+/* SECTION LABEL */
+.sl{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);padding:10px 0 8px;border-bottom:1px solid var(--bl);margin-bottom:10px}
+.sl2{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sl2-t{font-size:13px;font-weight:700;color:var(--jet)}
+.sl2-a{font-size:11px;color:var(--amber);font-weight:600;cursor:pointer}
+
+/* INSIGHT CARD */
+.insight{background:var(--white);border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid var(--border);border-left:3px solid var(--amber)}
+.insight-title{font-size:12px;font-weight:700;color:var(--jet);margin-bottom:4px}
+.insight-body{font-size:11px;color:#6b7280;line-height:1.6}
+
+/* BOT NAV */
+.bot-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:390px;background:#fff;border-top:1px solid var(--bl);padding:8px 0 14px;display:flex;justify-content:space-around;z-index:100}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 10px;cursor:pointer}
+.ni-ic{font-size:18px}
+.ni-lb{font-size:8px;font-weight:600;color:var(--ash)}
+.ni.on .ni-lb{color:var(--graphite)}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--graphite);margin:2px auto 0}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--jet);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="gh">
+  <div class="h-top">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="back-btn" onclick="toast('← Dashboard')">←</div>
+      <div class="logo">Estimate<span>OS</span></div>
+    </div>
+    <div style="position:relative;z-index:2;cursor:pointer" onclick="toast('📄 Exporting PDF...')">
+      <span style="font-size:11px;font-weight:600;color:rgba(255,255,255,.4)">Export PDF</span>
+    </div>
+  </div>
+  <div>
+    <div class="h-eye">Business Analytics</div>
+    <div class="h-big">Reports</div>
+    <div class="h-sub">Arctic Climate · Calgary, AB</div>
+  </div>
+  <div class="period-sel">
+    <div class="period-btn" onclick="setPeriod(this,'3m')">3 months</div>
+    <div class="period-btn on" onclick="setPeriod(this,'month')">This month</div>
+    <div class="period-btn" onclick="setPeriod(this,'year')">This year</div>
+    <div class="period-btn" onclick="setPeriod(this,'custom')">Custom</div>
+  </div>
+</div>
+
+<div class="card">
+
+  <!-- ── KPI TOP ── -->
+  <div class="kpi-2">
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-ic">💰</div><div class="kpi-tr tr-up">+18%</div></div>
+      <div class="kpi-val" style="font-size:15px">CA$48,320</div>
+      <div class="kpi-lbl">Revenue — April</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-ic">🎯</div><div class="kpi-tr tr-up">+7%</div></div>
+      <div class="kpi-val">67%</div>
+      <div class="kpi-lbl">Win Rate</div>
+    </div>
+  </div>
+  <div class="kpi-3">
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-ic" style="font-size:10px">📋</div></div>
+      <div class="kpi-val" style="font-size:16px">12</div>
+      <div class="kpi-lbl">Estimates</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-ic" style="font-size:10px">✅</div></div>
+      <div class="kpi-val" style="font-size:16px">8</div>
+      <div class="kpi-lbl">Signed</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-top"><div class="kpi-ic" style="font-size:10px">📊</div></div>
+      <div class="kpi-val" style="font-size:16px">CA$9.2K</div>
+      <div class="kpi-lbl">Avg deal</div>
+    </div>
+  </div>
+
+  <!-- ── REVENUE CHART ── -->
+  <div class="chart-box">
+    <div class="chart-head">
+      <div class="chart-title">Revenue — Last 6 months</div>
+      <div style="font-size:10px;color:var(--green);font-weight:700">↑ CA$7,400 vs last period</div>
+    </div>
+    <div class="bar-chart">
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:38px;background:var(--bl)"></div>
+        <div class="bc-lbl">Nov</div>
+      </div>
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:52px;background:var(--ash)"></div>
+        <div class="bc-lbl">Dec</div>
+      </div>
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:34px;background:var(--bl)"></div>
+        <div class="bc-lbl">Jan</div>
+      </div>
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:58px;background:var(--ash)"></div>
+        <div class="bc-lbl">Feb</div>
+      </div>
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:44px;background:var(--ash)"></div>
+        <div class="bc-lbl">Mar</div>
+      </div>
+      <div class="bc-wrap">
+        <div class="bc-bar" style="height:100px;background:var(--amber)"></div>
+        <div class="bc-lbl" style="color:var(--amber);font-weight:700">Apr</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--ash)">
+      <span>CA$0</span><span>CA$25K</span><span>CA$50K</span>
+    </div>
+  </div>
+
+  <!-- ── WIN RATE CHART ── -->
+  <div class="chart-box">
+    <div class="chart-head">
+      <div class="chart-title">Win Rate by Month</div>
+      <div style="font-size:11px;font-weight:700;color:var(--amber)">67% this month</div>
+    </div>
+    <svg viewBox="0 0 330 80" style="width:100%;height:80px;margin-bottom:6px">
+      <defs>
+        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#D97706" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#D97706" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- grid lines -->
+      <line x1="0" y1="20" x2="330" y2="20" stroke="#E8E8E8" stroke-width="1"/>
+      <line x1="0" y1="40" x2="330" y2="40" stroke="#E8E8E8" stroke-width="1"/>
+      <line x1="0" y1="60" x2="330" y2="60" stroke="#E8E8E8" stroke-width="1"/>
+      <!-- area fill -->
+      <path d="M 10,56 L 66,48 L 122,52 L 178,44 L 234,40 L 320,24 L 320,80 L 10,80 Z" fill="url(#lineGrad)"/>
+      <!-- line -->
+      <polyline points="10,56 66,48 122,52 178,44 234,40 320,24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- dots -->
+      <circle cx="10" cy="56" r="3" fill="#D97706"/>
+      <circle cx="66" cy="48" r="3" fill="#D97706"/>
+      <circle cx="122" cy="52" r="3" fill="#D97706"/>
+      <circle cx="178" cy="44" r="3" fill="#D97706"/>
+      <circle cx="234" cy="40" r="3" fill="#D97706"/>
+      <circle cx="320" cy="24" r="4" fill="#D97706" stroke="#fff" stroke-width="2"/>
+      <!-- labels -->
+      <text x="10" y="76" font-size="8" fill="#BFBFBF" text-anchor="middle">Nov</text>
+      <text x="66" y="76" font-size="8" fill="#BFBFBF" text-anchor="middle">Dec</text>
+      <text x="122" y="76" font-size="8" fill="#BFBFBF" text-anchor="middle">Jan</text>
+      <text x="178" y="76" font-size="8" fill="#BFBFBF" text-anchor="middle">Feb</text>
+      <text x="234" y="76" font-size="8" fill="#BFBFBF" text-anchor="middle">Mar</text>
+      <text x="320" y="76" font-size="8" fill="#D97706" font-weight="700" text-anchor="middle">Apr</text>
+      <!-- % labels -->
+      <text x="318" y="20" font-size="8" fill="#BFBFBF" text-anchor="end">75%</text>
+      <text x="318" y="40" font-size="8" fill="#BFBFBF" text-anchor="end">50%</text>
+      <text x="318" y="60" font-size="8" fill="#BFBFBF" text-anchor="end">25%</text>
+    </svg>
+  </div>
+
+  <!-- ── PACKAGE BREAKDOWN ── -->
+  <div class="chart-box">
+    <div class="chart-head">
+      <div class="chart-title">Package Distribution</div>
+    </div>
+    <div class="donut-wrap">
+      <svg width="90" height="90" viewBox="0 0 90 90" class="donut-svg">
+        <circle cx="45" cy="45" r="32" fill="none" stroke="#E8E8E8" stroke-width="14"/>
+        <!-- Best: 25% = 50.3 -->
+        <circle cx="45" cy="45" r="32" fill="none" stroke="#1A1A1A" stroke-width="14"
+          stroke-dasharray="50 151" stroke-dashoffset="0" transform="rotate(-90 45 45)"/>
+        <!-- Better: 50% = 100.5 -->
+        <circle cx="45" cy="45" r="32" fill="none" stroke="#D97706" stroke-width="14"
+          stroke-dasharray="101 100" stroke-dashoffset="-50" transform="rotate(-90 45 45)"/>
+        <!-- Good: 25% = 50.3 -->
+        <circle cx="45" cy="45" r="32" fill="none" stroke="#BFBFBF" stroke-width="14"
+          stroke-dasharray="50 151" stroke-dashoffset="-151" transform="rotate(-90 45 45)"/>
+        <text x="45" y="42" text-anchor="middle" font-size="12" font-weight="800" fill="#1A1A1A">8</text>
+        <text x="45" y="54" text-anchor="middle" font-size="8" fill="#BFBFBF">jobs</text>
+      </svg>
+      <div class="donut-legend">
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--amber)"></div>Better</div>
+          <div class="dl-val">4 jobs · 50%</div>
+        </div>
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--jet)"></div>Best</div>
+          <div class="dl-val">2 jobs · 25%</div>
+        </div>
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--ash)"></div>Good</div>
+          <div class="dl-val">2 jobs · 25%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOP CLIENTS ── -->
+  <div class="sl2"><div class="sl2-t">Top Clients</div><div class="sl2-a" onclick="toast('👥 All clients →')">See all →</div></div>
+  <div class="table-box">
+    <div class="table-head">
+      <div class="th">Client</div>
+      <div class="th">Jobs</div>
+      <div class="th">Revenue</div>
+    </div>
+    <div class="table-row" onclick="toast('👤 James Wilson →')">
+      <div class="td">James Wilson<div class="td-sub">3 jobs · Repeat ⭐</div></div>
+      <div class="td">3</div>
+      <div class="td" style="color:var(--green)">CA$45,200</div>
+    </div>
+    <div class="table-row" onclick="toast('👤 Sarah Johnson →')">
+      <div class="td">Sarah Johnson<div class="td-sub">1 job · Referral</div></div>
+      <div class="td">1</div>
+      <div class="td">CA$9,720</div>
+    </div>
+    <div class="table-row" onclick="toast('👤 Olena Petrenko →')">
+      <div class="td">Olena Petrenko<div class="td-sub">1 job</div></div>
+      <div class="td">1</div>
+      <div class="td">CA$12,180</div>
+    </div>
+    <div class="table-row" onclick="toast('👤 Victor Lysenko →')">
+      <div class="td">Victor Lysenko<div class="td-sub">1 job</div></div>
+      <div class="td">1</div>
+      <div class="td">CA$15,840</div>
+    </div>
+  </div>
+
+  <!-- ── ESTIMATE PERFORMANCE ── -->
+  <div class="sl2" style="margin-top:4px"><div class="sl2-t">Estimate Performance</div></div>
+  <div class="table-box" style="margin-bottom:10px">
+    <div class="table-head" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="th">Month</div>
+      <div class="th">Sent</div>
+      <div class="th">Won</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">April 2026<div class="td-sub" style="color:var(--amber)">Current month</div></div>
+      <div class="td">12</div>
+      <div class="td" style="color:var(--green)">8</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">March 2026</div>
+      <div class="td">9</div>
+      <div class="td">5</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">February 2026</div>
+      <div class="td">11</div>
+      <div class="td">7</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">January 2026</div>
+      <div class="td">7</div>
+      <div class="td">3</div>
+    </div>
+  </div>
+
+  <!-- ── LOST ANALYSIS ── -->
+  <div class="sl2"><div class="sl2-t">Lost Deals Analysis</div></div>
+  <div class="chart-box" style="margin-bottom:10px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--jet);font-weight:500">Price too high</span>
+          <span style="font-weight:700;color:var(--jet)">60%</span>
+        </div>
+        <div style="height:6px;background:var(--bl);border-radius:3px;overflow:hidden">
+          <div style="width:60%;height:100%;background:var(--amber);border-radius:3px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--jet);font-weight:500">Client postponed</span>
+          <span style="font-weight:700;color:var(--jet)">25%</span>
+        </div>
+        <div style="height:6px;background:var(--bl);border-radius:3px;overflow:hidden">
+          <div style="width:25%;height:100%;background:var(--graphite);border-radius:3px"></div>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--jet);font-weight:500">Chose competitor</span>
+          <span style="font-weight:700;color:var(--jet)">15%</span>
+        </div>
+        <div style="height:6px;background:var(--bl);border-radius:3px;overflow:hidden">
+          <div style="width:15%;height:100%;background:var(--ash);border-radius:3px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── AI INSIGHTS ── -->
+  <div class="sl2"><div class="sl2-t">💡 AI Insights</div></div>
+  <div class="insight">
+    <div class="insight-title">Better package closes 78% of the time</div>
+    <div class="insight-body">Clients who choose Better rarely downgrade. Consider leading with Better as your default recommendation instead of Good.</div>
+  </div>
+  <div class="insight">
+    <div class="insight-title">Same-day estimates close 2× faster</div>
+    <div class="insight-body">7 of your 8 wins this month happened when you sent the estimate within 2 hours of the site visit.</div>
+  </div>
+  <div class="insight">
+    <div class="insight-title">Referrals have 90% win rate</div>
+    <div class="insight-body">Maria Bondar (referral from Sarah Johnson) is still a lead. Follow up — referrals close almost always.</div>
+  </div>
+
+  <!-- ── REVENUE BREAKDOWN ── -->
+  <div class="sl2" style="margin-top:4px"><div class="sl2-t">Revenue Breakdown</div></div>
+  <div class="table-box">
+    <div class="table-head" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="th">Category</div>
+      <div class="th">Jobs</div>
+      <div class="th">Revenue</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">🪟 Windows<div class="td-sub">All types</div></div>
+      <div class="td">6</div>
+      <div class="td">CA$31,400</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">🚪 Doors<div class="td-sub">Entry, patio, French</div></div>
+      <div class="td">3</div>
+      <div class="td">CA$9,840</div>
+    </div>
+    <div class="table-row" style="grid-template-columns:2fr 1fr 1fr">
+      <div class="td">🔧 Services<div class="td-sub">Install, disposal, trim</div></div>
+      <div class="td">8</div>
+      <div class="td">CA$7,080</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="bot-nav">
+  <div class="ni" onclick="toast('🏠 Dashboard')"><div class="ni-ic">🏠</div><div class="ni-lb">Dashboard</div></div>
+  <div class="ni" onclick="toast('📋 Estimates')"><div class="ni-ic">📋</div><div class="ni-lb">Estimates</div></div>
+  <div class="ni" onclick="toast('📊 Pipeline')"><div class="ni-ic">📊</div><div class="ni-lb">Pipeline</div></div>
+  <div class="ni on"><div class="ni-ic">📈</div><div class="ni-lb" style="color:var(--graphite)">Reports</div><div class="ni-dot"></div></div>
+  <div class="ni" onclick="toast('⚙️ Settings')"><div class="ni-ic">⚙️</div><div class="ni-lb">Settings</div></div>
+</div>
+
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+function setPeriod(btn, period) {
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  toast('📊 Loading ' + period + ' data...');
+}
+function toast(msg) {
+  var t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+</script>
+</body>
+</html>

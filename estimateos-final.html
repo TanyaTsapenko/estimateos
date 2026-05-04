@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EstimateOS</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--jet:#1A1A1A;--onyx:#222526;--graphite:#353A3E;--platinum:#E0E0E0;--ash:#BFBFBF;--surface:#F5F5F5;--border:#D0D0D0;--border-light:#E8E8E8}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--platinum);min-height:100vh;font-size:14px}
+.app{max-width:390px;margin:0 auto;min-height:100vh;position:relative}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex;animation:fu .3s ease}
+.gh{background:linear-gradient(150deg,#111 0%,#1A1A1A 30%,#222526 60%,#353A3E 100%);padding:20px 20px 52px;position:relative;overflow:hidden;flex-shrink:0}
+.gh::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(191,191,191,.06) 0%,transparent 70%);border-radius:50%}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--ash)}
+.pills{display:flex;gap:4px}
+.pill{width:20px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
+.pill.active{background:#fff;width:28px}
+.pill.done{background:var(--graphite)}
+.h-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;position:relative;z-index:2}
+.h-title{position:relative;z-index:2}
+.h-eye{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px}
+.h-big{font-size:38px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1}
+.h-sub{font-size:13px;color:rgba(255,255,255,.35);margin-top:5px}
+.card{background:#fff;border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:24px 18px 90px;position:relative;z-index:3;overflow-y:auto}
+.sl{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ash);padding:12px 0 8px;border-bottom:1px solid var(--border-light);margin-bottom:14px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.r1{margin-bottom:10px}
+.f{display:flex;flex-direction:column;gap:5px}
+.f label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.f input,.f select,.f textarea{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--jet);outline:none;transition:all .15s;-webkit-appearance:none;width:100%}
+.f input:focus,.f select:focus{border-color:var(--graphite);box-shadow:0 0 0 3px rgba(53,58,62,.08);background:#fff}
+.f input::placeholder{color:#C8C8C8}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='7'%3E%3Cpath d='M1 1l5 4.5 5-4.5' stroke='%23BFBFBF' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:390px;margin:0 auto;background:#fff;border-top:1px solid var(--border-light);padding:12px 16px;display:flex;gap:10px;z-index:50;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.btn-back{background:var(--surface);color:var(--ash);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;min-width:80px}
+.btn-next{background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex:1;box-shadow:0 4px 14px rgba(26,26,26,.25)}
+.info-box{background:rgba(34,37,38,.04);border:1px solid rgba(34,37,38,.08);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--graphite);line-height:1.6;margin-bottom:14px}
+.pw-bar{height:3px;border-radius:2px;background:var(--border-light);margin-top:6px;overflow:hidden}
+.pw-fill{height:100%;border-radius:2px;background:var(--graphite);width:0;transition:width .3s}
+.terms-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.chk{width:18px;height:18px;border:1.5px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px;font-size:11px}
+.chk.on{background:var(--graphite);border-color:var(--graphite);color:#fff}
+.terms-text{font-size:12px;color:#6b7280;line-height:1.6}
+.divider{display:flex;align-items:center;gap:12px;margin:14px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border-light)}
+.divider span{font-size:11px;color:var(--ash)}
+.social-btn{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;color:var(--jet);cursor:pointer;margin-bottom:8px}
+.login-link{text-align:center;font-size:12px;color:var(--ash);margin-top:12px}
+.login-link span{color:var(--graphite);font-weight:600;cursor:pointer}
+.niche-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.nc{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .18s;position:relative}
+.nc.sel{border-color:var(--graphite);background:#fff;box-shadow:0 4px 14px rgba(26,26,26,.12)}
+.nc .ck{position:absolute;top:7px;right:7px;width:15px;height:15px;background:var(--graphite);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:8px;color:#fff}
+.nc.sel .ck{display:flex}
+.avatar{width:34px;height:34px;background:rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ash)}
+.dash-bg{background:var(--platinum);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:20px 16px 80px;overflow-y:auto}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--border)}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.stat-ic{width:30px;height:30px;border-radius:8px;background:rgba(53,58,62,.06);display:flex;align-items:center;justify-content:center;font-size:13px}
+.stat-tr{font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(53,58,62,.08);color:var(--graphite)}
+.stat-val{font-size:20px;font-weight:800;color:var(--jet)}
+.stat-lbl{font-size:9px;color:var(--ash);margin-top:2px;font-weight:500}
+.stat-wide{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.new-btn{background:linear-gradient(135deg,var(--jet),var(--graphite));border:none;border-radius:14px;padding:15px;width:100%;font-size:15px;font-weight:800;color:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 20px rgba(26,26,26,.25)}
+.sl2{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sl2-t{font-size:13px;font-weight:700;color:var(--jet)}
+.sl2-a{font-size:11px;color:var(--graphite);font-weight:600;cursor:pointer}
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.qa{background:#fff;border-radius:14px;padding:14px;border:1px solid var(--border);text-align:center;cursor:pointer}
+.ec{background:#fff;border-radius:14px;padding:13px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer}
+.ec-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.ec-name{font-size:13px;font-weight:700;color:var(--jet)}
+.ec-date{font-size:9px;color:var(--ash);margin-top:1px}
+.badge{font-size:8px;font-weight:700;padding:3px 8px;border-radius:8px;letter-spacing:.04em;white-space:nowrap}
+.b-acc{background:rgba(53,58,62,.1);color:var(--graphite)}
+.b-sent{background:rgba(53,58,62,.06);color:var(--graphite)}
+.b-draft{background:var(--surface);color:var(--ash)}
+.ec-bot{display:flex;align-items:center;justify-content:space-between;margin-top:7px;padding-top:7px;border-top:1px solid var(--border-light)}
+.ec-tags{display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:8px;color:var(--ash);background:var(--surface);border-radius:5px;padding:2px 6px}
+.ec-amt{font-size:13px;font-weight:800;color:var(--jet)}
+.bot-nav{position:fixed;bottom:0;left:0;right:0;max-width:390px;margin:0 auto;background:#fff;border-top:1px solid var(--border-light);padding:8px 0 14px;display:flex;justify-content:space-around;z-index:50}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 16px;cursor:pointer}
+.ni-ic{font-size:19px}
+.ni-lb{font-size:8px;font-weight:600;color:var(--ash)}
+.ni.on .ni-lb{color:var(--graphite)}
+.ni-dot{width:4px;height:4px;border-radius:50%;background:var(--graphite);margin:2px auto 0}
+.op-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.op-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.op-badge{width:24px;height:24px;background:var(--graphite);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.op-name{font-size:12px;font-weight:600;color:var(--jet);margin-left:8px}
+.op-price{font-size:13px;font-weight:700;color:var(--graphite)}
+.del-btn{width:26px;height:26px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;color:#ef4444;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.add-btn{width:100%;background:transparent;border:1.5px dashed #c8c8c8;border-radius:12px;padding:14px;color:var(--graphite);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.live-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.lb-head{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+.lb-dot{width:6px;height:6px;border-radius:50%;background:var(--graphite);animation:pulse 2s infinite}
+.lb-lbl{font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ash)}
+.lb-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#6b7280;border-bottom:1px solid var(--border-light)}
+.lb-row:last-of-type{border-bottom:none}
+.lb-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-top:4px}
+.lb-total-l{font-size:13px;font-weight:600;color:var(--jet)}
+.lb-total-v{font-size:22px;font-weight:800;color:var(--graphite)}
+.tog-list{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:14px}
+.tog-row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border-light);gap:10px}
+.tog-row:last-child{border-bottom:none}
+.tog-info{flex:1}
+.tog-name{font-size:13px;font-weight:500;color:var(--jet)}
+.tog-sub{font-size:10px;color:var(--ash);margin-top:1px}
+.tog-price{font-size:11px;color:var(--graphite);font-weight:600;min-width:44px;text-align:right;margin-right:8px}
+.sw{width:40px;height:22px;background:#e2e8f0;border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.sw.on{background:var(--graphite)}
+.swk{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw.on .swk{left:21px}
+.tier-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.tier{background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:16px;cursor:pointer;transition:all .18s}
+.tier.on{border-color:var(--graphite);background:#fff;box-shadow:0 4px 16px rgba(26,26,26,.1)}
+.t-tag{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:6px;display:inline-block;margin-bottom:8px;background:rgba(53,58,62,.08);color:var(--graphite)}
+.t-price{font-size:26px;font-weight:800;color:var(--jet);line-height:1;margin-bottom:3px}
+.t-sub{font-size:11px;color:var(--ash);margin-bottom:10px}
+.t-why{background:rgba(53,58,62,.05);border-radius:8px;padding:9px 11px;font-size:12px;color:var(--graphite);line-height:1.5;margin-bottom:10px}
+.t-badge{background:var(--graphite);color:#fff;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:8px}
+.t-feats{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;font-size:11px;color:#6b7280;padding-top:10px;border-top:1px solid var(--border-light)}
+.t-feats li::before{content:"✓ ";color:var(--graphite);font-weight:700}
+.sum-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.sum-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#6b7280;border-bottom:1px solid var(--border-light)}
+.sum-row:last-of-type{border-bottom:none}
+.sum-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-top:4px}
+.sum-total-l{font-size:13px;font-weight:600;color:var(--jet)}
+.sum-total-v{font-size:22px;font-weight:800;color:var(--graphite)}
+.send-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 14px;width:100%;color:var(--jet);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.gen-btn{background:linear-gradient(135deg,var(--jet),var(--graphite));border:none;border-radius:12px;padding:14px;width:100%;font-size:14px;font-weight:800;color:#fff;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 6px 20px rgba(26,26,26,.25)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SCREEN 1: REGISTRATION -->
+<div class="screen active" id="s-reg">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div></div>
+    <div class="h-title">
+      <div class="h-eye">Welcome</div>
+      <div class="h-big">Create account</div>
+      <div class="h-sub">Get started free — no credit card required</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="r2">
+      <div class="f"><label>First Name</label><input id="reg-fn" placeholder="Andriy"/></div>
+      <div class="f"><label>Last Name</label><input placeholder="Koval"/></div>
+    </div>
+    <div class="r1"><div class="f"><label>Email</label><input type="email" placeholder="andriy@company.ca"/></div></div>
+    <div class="r1"><div class="f"><label>Password</label>
+      <input type="password" placeholder="Min. 8 characters" oninput="var l=this.value.length;var f=document.getElementById('pwf');f.style.width=l<6?'20%':l<8?'50%':l<12?'75%':'100%'"/>
+      <div class="pw-bar"><div class="pw-fill" id="pwf"></div></div>
+    </div></div>
+    <div class="r1"><div class="f"><label>Confirm Password</label><input type="password" placeholder="Repeat password"/></div></div>
+    <div class="terms-row">
+      <div class="chk" onclick="this.classList.toggle('on');this.textContent=this.classList.contains('on')?'✓':''"></div>
+      <div class="terms-text">I agree to <strong>Terms of Service</strong> and <strong>Privacy Policy.</strong> Data stored securely in Canada.</div>
+    </div>
+    <button class="btn-next" style="width:100%;margin-bottom:14px" onclick="go('s-company')">Create Account →</button>
+    <div class="divider"><span>or sign up with</span></div>
+    <button class="social-btn">🍎 Continue with Apple</button>
+    <button class="social-btn">🔵 Continue with Google</button>
+    <div class="login-link">Already have an account? <span onclick="go('s-dashboard')">Log in</span></div>
+  </div>
+</div>
+
+<!-- SCREEN 2: COMPANY SETUP -->
+<div class="screen" id="s-company">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill active"></div><div class="pill"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 1 of 2 · Company</div><div class="h-big">Your Company</div><div class="h-sub">Appears on all your estimates</div></div>
+  </div>
+  <div class="card">
+    <div class="r1"><div class="f"><label>Company Name</label><input placeholder="Arctic Climate Solutions"/></div></div>
+    <div class="r2">
+      <div class="f"><label>Phone</label><input type="tel" placeholder="(403) 555-0244"/></div>
+      <div class="f"><label>Website</label><input placeholder="arcticclimate.ca"/></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>City</label><input placeholder="Calgary"/></div>
+      <div class="f"><label>Province</label><select><option>AB — GST 5%</option><option>ON — HST 13%</option><option>BC — HST 12%</option><option>QC — 14.975%</option></select></div>
+    </div>
+    <div class="r1"><div class="f"><label>Licence / Registration #</label><input placeholder="AB-G2-4821"/>
+      <div style="font-size:10px;color:var(--ash);margin-top:2px">Contractor, gas or electrical licence number</div>
+    </div></div>
+    <div class="r1"><div class="f"><label>Insurance Provider</label><input placeholder="Intact Insurance"/></div></div>
+    <div style="border:1.5px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;margin-top:4px">
+      <div style="font-size:24px;margin-bottom:6px">🏢</div>
+      <div style="font-size:13px;font-weight:600;color:var(--jet)">Upload your logo</div>
+      <div style="font-size:10px;color:var(--ash);margin-top:2px">PNG or JPG · Shown on all estimates</div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn-back" onclick="go('s-reg')">← Back</button><button class="btn-next" onclick="go('s-niche')">Continue →</button></div>
+</div>
+
+<!-- SCREEN 3: NICHE -->
+<div class="screen" id="s-niche">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill done"></div><div class="pill active"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 2 of 2 · Your Trade</div><div class="h-big">What's your trade?</div><div class="h-sub">We'll customize your estimator</div></div>
+  </div>
+  <div class="card">
+    <div class="info-box">💡 You can add more trades later in Settings.</div>
+    <div class="niche-grid">
+      <div class="nc" onclick="selN(this)"><div class="ck">✓</div><div style="font-size:26px;margin-bottom:5px">❄️</div><div style="font-size:11px;font-weight:700;color:var(--jet)">HVAC</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Heating, Cooling</div></div>
+      <div class="nc" onclick="selN(this)"><div class="ck">✓</div><div style="font-size:26px;margin-bottom:5px">🏠</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Roofing</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Shingles, Metal</div></div>
+      <div class="nc" onclick="selN(this)"><div class="ck">✓</div><div style="font-size:26px;margin-bottom:5px">🔧</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Plumbing</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Pipes, Fixtures</div></div>
+      <div class="nc" onclick="selN(this)"><div class="ck">✓</div><div style="font-size:26px;margin-bottom:5px">🔨</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Renovation</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Kitchen, Bath</div></div>
+      <div class="nc" onclick="selN(this)"><div class="ck">✓</div><div style="font-size:26px;margin-bottom:5px">⚡</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Electrical</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Panel, Wiring</div></div>
+      <div class="nc sel" onclick="selN(this)"><div class="ck" style="display:flex">✓</div><div style="font-size:26px;margin-bottom:5px">🪟</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Windows &amp; Doors</div><div style="font-size:9px;color:var(--ash);margin-top:1px">Replacement</div></div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn-back" onclick="go('s-company')">← Back</button><button class="btn-next" onclick="go('s-dashboard')">Start Estimating →</button></div>
+</div>
+
+<!-- SCREEN 4: DASHBOARD -->
+<div class="screen" id="s-dashboard">
+  <div class="gh">
+    <div class="h-top">
+      <div class="logo">Estimate<span>OS</span></div>
+      <div style="display:flex;align-items:center;gap:10px;position:relative;z-index:2">
+        <div style="width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">🔔</div>
+        <div class="avatar">AK</div>
+      </div>
+    </div>
+    <div style="position:relative;z-index:2">
+      <div style="font-size:13px;color:rgba(255,255,255,.35);margin-bottom:4px">Good morning 👋</div>
+      <div style="font-size:24px;font-weight:800;color:#fff;letter-spacing:-.02em" id="dashName">Andriy</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:3px">Arctic Climate Solutions · Calgary, AB</div>
+    </div>
+  </div>
+  <div class="dash-bg">
+    <div class="stats">
+      <div class="stat"><div class="stat-top"><div class="stat-ic">📋</div><div class="stat-tr">+3</div></div><div class="stat-val">12</div><div class="stat-lbl">Estimates this month</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-ic">✓</div><div class="stat-tr">67%</div></div><div class="stat-val">8</div><div class="stat-lbl">Accepted</div></div>
+    </div>
+    <div class="stat-wide">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--jet),var(--graphite));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px">💰</div>
+        <div><div style="font-size:19px;font-weight:800;color:var(--graphite)">CA$48,320</div><div style="font-size:10px;color:var(--ash);margin-top:1px">Revenue this month</div></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:10px;color:var(--ash)">vs last month</div><div style="font-size:11px;color:var(--graphite);font-weight:700">+CA$12,400</div></div>
+    </div>
+    <button class="new-btn" onclick="go('s-step1')"><span style="font-size:18px">＋</span> New Estimate</button>
+    <div class="sl2"><div class="sl2-t">Quick Actions</div></div>
+    <div class="qa-grid">
+      <div class="qa" onclick="go('s-pricelist')"><div style="font-size:22px;margin-bottom:5px">💰</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Price List</div><div style="font-size:9px;color:var(--ash);margin-top:2px">Update your rates</div></div>
+      <div class="qa"><div style="font-size:22px;margin-bottom:5px">🏢</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Company Profile</div><div style="font-size:9px;color:var(--ash);margin-top:2px">Logo &amp; details</div></div>
+      <div class="qa" onclick="go('s-estimates')"><div style="font-size:22px;margin-bottom:5px">📊</div><div style="font-size:11px;font-weight:700;color:var(--jet)">All Estimates</div><div style="font-size:9px;color:var(--ash);margin-top:2px">View history</div></div>
+      <div class="qa"><div style="font-size:22px;margin-bottom:5px">⚙️</div><div style="font-size:11px;font-weight:700;color:var(--jet)">Settings</div><div style="font-size:9px;color:var(--ash);margin-top:2px">App preferences</div></div>
+    </div>
+    <div class="sl2"><div class="sl2-t">Recent Estimates</div><div class="sl2-a" onclick="go('s-estimates')">See all →</div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">Sarah Johnson</div><div class="ec-date">Today · EST-0042</div></div><div class="badge b-acc">Accepted</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 5 windows</div><div class="tag">Better</div></div><div class="ec-amt">CA$9,720</div></div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">Michael Kowalski</div><div class="ec-date">Yesterday · EST-0041</div></div><div class="badge b-sent">Sent</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 8 windows</div><div class="tag">Best</div></div><div class="ec-amt">CA$18,340</div></div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">David Chen</div><div class="ec-date">Apr 15 · EST-0039</div></div><div class="badge b-draft">Draft</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 3 windows</div><div class="tag">Good</div></div><div class="ec-amt" style="color:var(--ash)">CA$4,250</div></div></div>
+  </div>
+  <div class="bot-nav">
+    <div class="ni on"><div class="ni-ic">🏠</div><div class="ni-lb" style="color:var(--graphite)">Dashboard</div><div class="ni-dot"></div></div>
+    <div class="ni" onclick="go('s-estimates')"><div class="ni-ic">📋</div><div class="ni-lb">Estimates</div></div>
+    <div class="ni" onclick="go('s-pricelist')"><div class="ni-ic">💰</div><div class="ni-lb">Price List</div></div>
+    <div class="ni"><div class="ni-ic">⚙️</div><div class="ni-lb">Settings</div></div>
+  </div>
+</div>
+
+<!-- SCREEN 5: ESTIMATES LIST -->
+<div class="screen" id="s-estimates">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="avatar">AK</div></div>
+    <div class="h-title"><div class="h-eye">Arctic Climate Solutions</div><div class="h-big">Estimates</div><div class="h-sub">April 2026</div></div>
+  </div>
+  <div class="dash-bg">
+    <div class="stats" style="margin-bottom:12px">
+      <div class="stat"><div class="stat-top"><div class="stat-ic">📋</div></div><div class="stat-val" style="color:var(--graphite)">CA$48K</div><div class="stat-lbl">Total value</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-ic">✓</div><div class="stat-tr">67%</div></div><div class="stat-val">8</div><div class="stat-lbl">Accepted</div></div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:8px;padding:10px 14px;margin-bottom:12px">
+      <span style="color:var(--ash)">🔍</span>
+      <input placeholder="Search by client name..." style="border:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--jet);outline:none;flex:1"/>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:14px;overflow-x:auto">
+      <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;background:var(--graphite);color:#fff;white-space:nowrap">All (12)</div>
+      <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--ash);white-space:nowrap;cursor:pointer">Sent (5)</div>
+      <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--ash);white-space:nowrap;cursor:pointer">Accepted (4)</div>
+      <div style="padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;background:#fff;border:1px solid var(--border);color:var(--ash);white-space:nowrap;cursor:pointer">Draft (2)</div>
+    </div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">Sarah Johnson</div><div class="ec-date">Today · EST-0042</div></div><div class="badge b-acc">Accepted</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 5 windows</div><div class="tag">🚪 1 door</div><div class="tag">Better</div></div><div class="ec-amt">CA$9,720</div></div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">Michael Kowalski</div><div class="ec-date">Yesterday · EST-0041</div></div><div class="badge b-sent">Sent</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 8 windows</div><div class="tag">Best</div></div><div class="ec-amt">CA$18,340</div></div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">Olena Petrenko</div><div class="ec-date">Apr 16 · EST-0040</div></div><div class="badge b-sent">Sent</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🚪 3 doors</div><div class="tag">Better</div></div><div class="ec-amt">CA$12,180</div></div></div>
+    <div class="ec"><div class="ec-top"><div><div class="ec-name">David Chen</div><div class="ec-date">Apr 15 · EST-0039</div></div><div class="badge b-draft">Draft</div></div><div class="ec-bot"><div class="ec-tags"><div class="tag">🪟 3 windows</div><div class="tag">Good</div></div><div class="ec-amt" style="color:var(--ash)">CA$4,250</div></div></div>
+  </div>
+  <div style="position:fixed;bottom:74px;right:calc(50% - 195px + 16px);z-index:51">
+    <button onclick="go('s-step1')" style="background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:14px;padding:13px 18px;font-size:14px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(26,26,26,.3)">＋ New</button>
+  </div>
+  <div class="bot-nav">
+    <div class="ni" onclick="go('s-dashboard')"><div class="ni-ic">🏠</div><div class="ni-lb">Dashboard</div></div>
+    <div class="ni on"><div class="ni-ic">📋</div><div class="ni-lb" style="color:var(--graphite)">Estimates</div><div class="ni-dot"></div></div>
+    <div class="ni" onclick="go('s-pricelist')"><div class="ni-ic">💰</div><div class="ni-lb">Price List</div></div>
+    <div class="ni"><div class="ni-ic">⚙️</div><div class="ni-lb">Settings</div></div>
+  </div>
+</div>
+
+<!-- SCREEN 6: PRICE LIST -->
+<div class="screen" id="s-pricelist">
+  <div class="gh">
+    <div class="h-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;font-size:16px" onclick="go('s-dashboard')">←</div>
+        <div class="logo">Estimate<span>OS</span></div>
+      </div>
+    </div>
+    <div class="h-title"><div class="h-eye">Settings</div><div class="h-big">Price List</div><div class="h-sub">Auto-loads into every estimate</div></div>
+  </div>
+  <div class="card">
+    <div class="info-box">Set your prices once. These are base rates for <strong>Good</strong> package. Better +20%, Best +40% automatically.</div>
+    <div class="sl">Windows</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🪟 Double-Hung Window</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1000" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🪟 Casement Window</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1170" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🏠 Bay / Bow Window</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="2800" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🪟 Sliding Window</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1030" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">⬜ Fixed / Picture</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="850" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+    </div>
+    <div class="sl">Doors</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🚪 Entry Door</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="1850" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🚪 Patio Sliding Door</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="2300" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🚪 French Doors</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="2780" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🚪 Storm Door</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="780" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+    </div>
+    <div class="sl">Add-ons</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">📋 Permit &amp; Inspection</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="250" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🗑 Removal &amp; Disposal</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="180" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🪵 Interior Casing &amp; Trim</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="320" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🔒 Exterior Caulking</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="150" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🪟 Sidelight</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="600" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface);border-radius:10px"><span style="font-size:12px;color:var(--jet);font-weight:500">🔆 Transom Window</span><div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--ash)">CA$</span><input type="number" value="450" style="background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:5px 9px;font-size:13px;font-weight:600;color:var(--jet);width:70px;text-align:right;font-family:'Plus Jakarta Sans',sans-serif;outline:none"/></div></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="btn-back" onclick="go('s-dashboard')">Reset</button>
+    <button class="btn-next" onclick="alert('✅ Price list saved!')">Save Price List ✓</button>
+  </div>
+</div>
+
+<!-- SCREEN 7: STEP 1 CLIENT -->
+<div class="screen" id="s-step1">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill active"></div><div class="pill"></div><div class="pill"></div><div class="pill"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 1 of 4 · Client</div><div class="h-big">Client Info</div><div class="h-sub">Who are we estimating for?</div></div>
+  </div>
+  <div class="card">
+    <div class="sl">Client Details</div>
+    <div class="r2"><div class="f"><label>First Name</label><input placeholder="Sarah"/></div><div class="f"><label>Last Name</label><input placeholder="Johnson"/></div></div>
+    <div class="r2"><div class="f"><label>Phone</label><input type="tel" placeholder="(403) 555-0188"/></div><div class="f"><label>Email</label><input type="email" placeholder="sarah@email.com"/></div></div>
+    <div class="r1"><div class="f"><label>Preferred Contact</label><select><option>📱 Phone call</option><option>💬 SMS</option><option>📧 Email</option></select></div></div>
+    <div class="sl">Property</div>
+    <div class="r1"><div class="f"><label>Street Address</label><input placeholder="4521 Elbow Drive SW"/></div></div>
+    <div class="r2">
+      <div class="f"><label>City</label><input placeholder="Calgary"/></div>
+      <div class="f"><label>Province</label>
+        <select id="prov" onchange="updTax()">
+          <option value="AB">AB — GST 5%</option><option value="BC">BC — HST 12%</option><option value="MB">MB — 12%</option>
+          <option value="NB">NB — HST 15%</option><option value="NL">NL — HST 15%</option><option value="NS">NS — HST 15%</option>
+          <option value="NT">NT — GST 5%</option><option value="NU">NU — GST 5%</option><option value="ON">ON — HST 13%</option>
+          <option value="PE">PE — HST 15%</option><option value="QC">QC — 14.975%</option><option value="SK">SK — 11%</option><option value="YT">YT — GST 5%</option>
+        </select>
+      </div>
+    </div>
+    <div class="r2"><div class="f"><label>Postal Code</label><input placeholder="T2S 2B1"/></div><div class="f"><label>Home Type</label><select><option>Detached House</option><option>Semi-Detached</option><option>Townhouse</option><option>Condo</option><option>Commercial</option></select></div></div>
+    <div class="r2"><div class="f"><label>Year Built</label><select><option>2000–Present</option><option>1980–2000</option><option>Pre-1980</option></select></div><div class="f"><label>Storeys</label><select><option>1 storey</option><option>2 storeys</option><option>3+ storeys</option></select></div></div>
+  </div>
+  <div class="nav"><button class="btn-back" onclick="go('s-dashboard')">← Back</button><button class="btn-next" onclick="go('s-step2')">Continue →</button></div>
+</div>
+
+<!-- SCREEN 8: STEP 2 OPENINGS -->
+<div class="screen" id="s-step2">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill done"></div><div class="pill active"></div><div class="pill"></div><div class="pill"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 2 of 4 · Openings</div><div class="h-big">Windows &amp; Doors</div><div class="h-sub">Add each opening — prices calculate automatically</div></div>
+  </div>
+  <div class="card">
+    <div class="info-box">💡 Add each window or door separately. Prices auto-load from your Price List.</div>
+    <div id="opsWrap"></div>
+    <button class="add-btn" onclick="addOp()">＋ Add Window or Door</button>
+    <div class="live-box">
+      <div class="lb-head"><div class="lb-dot"></div><div class="lb-lbl">Live Estimate</div></div>
+      <div id="liveRows"><div class="lb-row"><span>No openings yet</span><span>—</span></div></div>
+      <div class="lb-total"><div class="lb-total-l">Subtotal</div><div class="lb-total-v" id="liveTot">CA$0</div></div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn-back" onclick="go('s-step1')">← Back</button><button class="btn-next" onclick="go('s-step3')">Continue →</button></div>
+</div>
+
+<!-- SCREEN 9: STEP 3 SERVICES -->
+<div class="screen" id="s-step3">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill done"></div><div class="pill done"></div><div class="pill active"></div><div class="pill"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 3 of 4 · Services</div><div class="h-big">Services &amp; Package</div><div class="h-sub">Choose what is included</div></div>
+  </div>
+  <div class="card">
+    <div class="sl">Standard Services</div>
+    <div class="tog-list">
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Permit &amp; Inspection</div><div class="tog-sub">City building permit</div></div><div class="tog-price">+$250</div><div class="sw" data-k="permit" data-v="250" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Removal &amp; Disposal</div><div class="tog-sub">Old units hauled away</div></div><div class="tog-price">+$180</div><div class="sw on" data-k="disposal" data-v="180" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Interior Casing &amp; Trim</div><div class="tog-sub">New wood trim around openings</div></div><div class="tog-price">+$320</div><div class="sw on" data-k="trim" data-v="320" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Exterior Caulking &amp; Seal</div><div class="tog-sub">Weatherseal all openings</div></div><div class="tog-price">+$150</div><div class="sw on" data-k="caulk" data-v="150" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Drywall Repair</div><div class="tog-sub">Patch interior after full-frame</div></div><div class="tog-price">+$280</div><div class="sw" data-k="drywall" data-v="280" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Scaffolding / Lift</div><div class="tog-sub">Required for 2nd+ floor</div></div><div class="tog-price">+$350</div><div class="sw" data-k="scaffold" data-v="350" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">5-Year Labour Warranty</div><div class="tog-sub">Beyond standard 1 year</div></div><div class="tog-price">+$200</div><div class="sw" data-k="warranty" data-v="200" onclick="togSw(this)"><div class="swk"></div></div></div>
+      <div class="tog-row"><div class="tog-info"><div class="tog-name">Rebate Application Assistance</div><div class="tog-sub">Provincial energy rebate paperwork</div></div><div class="tog-price">Free</div><div class="sw on" data-k="rebate" data-v="0" onclick="togSw(this)"><div class="swk"></div></div></div>
+    </div>
+    <div class="sl">Choose Package</div>
+    <div class="info-box">All prices include supply + installation for openings above.</div>
+    <div class="tier-grid">
+      <div class="tier" onclick="selT(this,1.0)">
+        <div class="t-tag">Good</div>
+        <div class="t-price"><sup style="font-size:13px;vertical-align:top;margin-top:5px">CA$</sup><span id="p-good">—</span></div>
+        <div class="t-sub">Supply + installation</div>
+        <div class="t-why">Best value. Reliable vinyl windows that meet building code.</div>
+        <ul class="t-feats"><li>Vinyl frames</li><li>Double-pane</li><li>10-year warranty</li><li>Standard colours</li></ul>
+      </div>
+      <div class="tier on" onclick="selT(this,1.2)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start"><div class="t-tag">Better</div><div class="t-badge">Popular</div></div>
+        <div class="t-price"><sup style="font-size:13px;vertical-align:top;margin-top:5px">CA$</sup><span id="p-better">—</span></div>
+        <div class="t-sub">Supply + installation</div>
+        <div class="t-why">Saves ~$380/yr on heating. Qualifies for energy rebate.</div>
+        <ul class="t-feats"><li>Fiberglass frames</li><li>Double Low-E argon</li><li>20-year warranty</li><li>Energy Star ✓</li></ul>
+      </div>
+      <div class="tier" onclick="selT(this,1.4)">
+        <div class="t-tag">Best</div>
+        <div class="t-price"><sup style="font-size:13px;vertical-align:top;margin-top:5px">CA$</sup><span id="p-best">—</span></div>
+        <div class="t-sub">Supply + installation</div>
+        <div class="t-why">Triple-pane glass, lifetime warranty, max rebate eligibility.</div>
+        <ul class="t-feats"><li>Wood-clad frames</li><li>Triple-pane argon</li><li>Lifetime warranty</li><li>Max rebate ✓</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="nav"><button class="btn-back" onclick="go('s-step2')">← Back</button><button class="btn-next" onclick="go('s-step4');buildSum()">Continue →</button></div>
+</div>
+
+<!-- SCREEN 10: STEP 4 REVIEW -->
+<div class="screen" id="s-step4">
+  <div class="gh">
+    <div class="h-top"><div class="logo">Estimate<span>OS</span></div><div class="pills"><div class="pill done"></div><div class="pill done"></div><div class="pill done"></div><div class="pill active"></div></div></div>
+    <div class="h-title"><div class="h-eye">Step 4 of 4 · Review</div><div class="h-big">Ready to Send</div><div class="h-sub">Review and send to client</div></div>
+  </div>
+  <div class="card">
+    <div class="sl">Estimate Summary</div>
+    <div class="sum-box"><div id="sumRows"></div><div class="sum-total"><div class="sum-total-l">Total incl. <span id="taxLblS">GST (5%)</span></div><div class="sum-total-v" id="sumTot">CA$0</div></div></div>
+    <div class="sl">Payment Terms</div>
+    <div class="r2">
+      <div class="f"><label>Required Deposit</label><select id="depType" onchange="calcDep()"><option value="50">50% deposit</option><option value="25">25% deposit</option><option value="0">No deposit</option></select></div>
+      <div class="f"><label>Deposit Amount</label><div id="depAmt" style="background:rgba(53,58,62,.06);border:1px solid rgba(53,58,62,.12);border-radius:10px;padding:12px 14px;font-size:14px;font-weight:700;color:var(--graphite)">CA$0</div></div>
+    </div>
+    <div class="r2">
+      <div class="f"><label>Valid Until</label><input type="date" id="validDate"/></div>
+      <div class="f"><label>Start Date</label><input type="date"/></div>
+    </div>
+    <div class="sl">Terms &amp; Conditions</div>
+    <div class="r1"><div class="f"><textarea style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:#6b7280;outline:none;min-height:70px;resize:none;width:100%">This estimate is valid for 30 days. A deposit is required to confirm booking. All materials include manufacturer warranty. Work performed by licensed and insured technicians.</textarea></div></div>
+    <div class="sl">Message to Client</div>
+    <div class="info-box">Included in the estimate email. Edit before sending.</div>
+    <div class="r1"><div class="f"><textarea style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--jet);outline:none;min-height:80px;resize:none;width:100%">Hi, thank you for having us over today. Please find your estimate attached. Feel free to call or text with any questions.</textarea></div></div>
+    <div class="sl">Send Estimate</div>
+    <button class="send-btn" onclick="alert('📧 Sent!')"><span>📧</span><div><div style="font-weight:700">Email estimate + Leave Behind Package</div><div style="font-size:10px;color:var(--ash);margin-top:1px">Full document sent to client email</div></div></button>
+    <button class="send-btn" onclick="alert('💬 SMS sent!')"><span>💬</span><div><div style="font-weight:700">Send link via SMS</div><div style="font-size:10px;color:var(--ash);margin-top:1px">Client taps to view on phone</div></div></button>
+    <button class="send-btn" onclick="window.print()"><span>🖨️</span><div><div style="font-weight:700">Print / Save as PDF</div><div style="font-size:10px;color:var(--ash);margin-top:1px">Hand estimate to client on the spot</div></div></button>
+  </div>
+  <div class="nav">
+    <button class="btn-back" onclick="go('s-step3')">← Back</button>
+    <button class="gen-btn" onclick="alert('✅ Estimate EST-0043 generated!\n📧 Sending to client...')">Generate Estimate</button>
+  </div>
+</div>
+
+<script>
+var taxRate=0.05,taxLbl='GST (5%)',mult=1.2;
+var addons={disposal:180,trim:320,caulk:150,rebate:0};
+var ops=[],cnt=0;
+var TY={
+  window_dh:{name:'Double-Hung Window',base:700,lab:300,icon:'🪟'},
+  window_cas:{name:'Casement Window',base:850,lab:320,icon:'🪟'},
+  window_bay:{name:'Bay / Bow Window',base:2200,lab:600,icon:'🏠'},
+  window_sl:{name:'Sliding Window',base:750,lab:280,icon:'🪟'},
+  window_fix:{name:'Fixed / Picture',base:600,lab:250,icon:'⬜'},
+  door_entry:{name:'Entry Door',base:1400,lab:450,icon:'🚪'},
+  door_patio:{name:'Patio Sliding Door',base:1800,lab:500,icon:'🚪'},
+  door_french:{name:'French Doors',base:2200,lab:580,icon:'🚪'},
+  door_storm:{name:'Storm Door',base:600,lab:200,icon:'🚪'},
+  door_int:{name:'Interior Door',base:350,lab:180,icon:'🚪'}
+};
+
+function go(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='s-step3')updTP()}
+function selN(el){document.querySelectorAll('.nc').forEach(function(c){c.classList.remove('sel');c.querySelector('.ck').style.display='none'});el.classList.add('sel');el.querySelector('.ck').style.display='flex'}
+function updTax(){var t={AB:[0.05,'GST (5%)'],BC:[0.12,'HST (12%)'],MB:[0.12,'GST+PST (12%)'],NB:[0.15,'HST (15%)'],NL:[0.15,'HST (15%)'],NS:[0.15,'HST (15%)'],NT:[0.05,'GST (5%)'],NU:[0.05,'GST (5%)'],ON:[0.13,'HST (13%)'],PE:[0.15,'HST (15%)'],QC:[0.14975,'QST+GST (14.975%)'],SK:[0.11,'PST+GST (11%)'],YT:[0.05,'GST (5%)']};var v=t[document.getElementById('prov').value]||[0.05,'GST (5%)'];taxRate=v[0];taxLbl=v[1];calc()}
+function addOp(){
+  cnt++;var id='op'+cnt;
+  ops.push({id:id,type:'window_dh',install:'retrofit',floor:'ground',qty:1,width:'md',shape:'rect',frame:'good',colour:'white',glass:'clear',sidelight:0,transom:0,screen:0});
+  var h='<div class="op-card" id="card_'+id+'"><div class="op-head"><div style="display:flex;align-items:center"><div class="op-badge">'+cnt+'</div><div class="op-name" id="nm_'+id+'">Double-Hung Window</div></div><div style="display:flex;align-items:center;gap:8px"><div class="op-price" id="prc_'+id+'">CA$0</div><div class="del-btn" onclick="remOp(\''+id+'\')">✕</div></div></div>'+
+  '<div class="r2"><div class="f"><label>Type</label><select onchange="updOp(\''+id+'\',\'type\',this.value)"><optgroup label="Windows"><option value="window_dh">Double-Hung</option><option value="window_cas">Casement</option><option value="window_bay">Bay / Bow</option><option value="window_sl">Sliding</option><option value="window_fix">Fixed</option></optgroup><optgroup label="Doors"><option value="door_entry">Entry Door</option><option value="door_patio">Patio Sliding</option><option value="door_french">French Doors</option><option value="door_storm">Storm Door</option><option value="door_int">Interior Door</option></optgroup></select></div>'+
+  '<div class="f"><label>Qty</label><select onchange="updOp(\''+id+'\',\'qty\',parseInt(this.value))"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>8</option><option>10</option></select></div></div>'+
+  '<div class="r2"><div class="f"><label>Width</label><select onchange="updOp(\''+id+'\',\'width\',this.value)"><option value="sm">Under 24"</option><option value="md" selected>24"–36"</option><option value="lg">37"–48"</option><option value="xl">Over 48"</option></select></div>'+
+  '<div class="f"><label>Shape</label><select onchange="updOp(\''+id+'\',\'shape\',this.value)"><option value="rect">Rectangle</option><option value="arch">Arch (+30%)</option><option value="custom">Custom (+50%)</option></select></div></div>'+
+  '<div class="r2"><div class="f"><label>Frame Colour</label><select onchange="updOp(\''+id+'\',\'colour\',this.value)"><option value="white">White (standard)</option><option value="brown">Brown</option><option value="black">Black (+$80)</option><option value="grey">Grey (+$80)</option><option value="custom">Custom (+$150)</option></select></div>'+
+  '<div class="f"><label>Glass Upgrade</label><select onchange="updOp(\''+id+'\',\'glass\',this.value)"><option value="clear">Clear (standard)</option><option value="lowe">Low-E (+$60)</option><option value="frosted">Frosted (+$90)</option><option value="tinted">Tinted (+$70)</option><option value="tempered">Tempered (+$110)</option></select></div></div>'+
+  '<div class="r2"><div class="f"><label>Frame Condition</label><select onchange="updOp(\''+id+'\',\'frame\',this.value)"><option value="good">Good — retrofit ok</option><option value="repair">Needs repair (+$120)</option><option value="rotted">Rotted (+$280)</option></select></div>'+
+  '<div class="f"><label>Install Type</label><select onchange="updOp(\''+id+'\',\'install\',this.value)"><option value="retrofit">Retrofit</option><option value="fullframe">Full-Frame (+$200)</option><option value="new">New Construction</option></select></div></div>'+
+  '<div class="r2"><div class="f"><label>Floor Level</label><select onchange="updOp(\''+id+'\',\'floor\',this.value)"><option value="ground">Ground Floor</option><option value="second">2nd Floor (+$80)</option><option value="third">3rd Floor (+$180)</option></select></div>'+
+  '<div class="f"><label>Room / Location</label><input onchange="updOp(\''+id+'\',\'room\',this.value)" placeholder="Living room..." style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:Plus Jakarta Sans,sans-serif;font-size:13px;color:var(--jet);outline:none;width:100%"/></div></div>'+
+  '<div style="background:rgba(53,58,62,.04);border-radius:10px;padding:10px;margin-top:4px"><div style="font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ash);margin-bottom:8px">Optional for this opening</div>'+
+  '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light)"><div><div style="font-size:12px;font-weight:500;color:var(--jet)">Sidelight</div><div style="font-size:10px;color:var(--ash)">Glass panel beside door — +$600</div></div><div class="sw" style="width:36px;height:20px" onclick="togIt(this,\''+id+'\',\'sidelight\',600)"><div class="swk" style="width:14px;height:14px;top:3px;left:3px"></div></div></div>'+
+  '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light)"><div><div style="font-size:12px;font-weight:500;color:var(--jet)">Transom Window</div><div style="font-size:10px;color:var(--ash)">Above opening — +$450</div></div><div class="sw" style="width:36px;height:20px" onclick="togIt(this,\''+id+'\',\'transom\',450)"><div class="swk" style="width:14px;height:14px;top:3px;left:3px"></div></div></div>'+
+  '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0"><div><div style="font-size:12px;font-weight:500;color:var(--jet)">Security Screen</div><div style="font-size:10px;color:var(--ash)">Insect or security mesh — +$120</div></div><div class="sw" style="width:36px;height:20px" onclick="togIt(this,\''+id+'\',\'screen\',120)"><div class="swk" style="width:14px;height:14px;top:3px;left:3px"></div></div></div>'+
+  '</div></div>';
+  document.getElementById('opsWrap').insertAdjacentHTML('beforeend',h);calc();
+}
+function remOp(id){ops=ops.filter(function(o){return o.id!==id});var c=document.getElementById('card_'+id);if(c)c.remove();calc()}
+function updOp(id,k,v){var op=ops.find(function(o){return o.id===id});if(op){op[k]=v;if(k==='type'){var nm=document.getElementById('nm_'+id);if(nm)nm.textContent=TY[v]?TY[v].name:v}calc()}}
+function togSw(el){el.classList.toggle('on');var k=el.dataset.k,v=parseFloat(el.dataset.v)||0;if(el.classList.contains('on'))addons[k]=v;else delete addons[k];calc()}
+function togIt(el,id,k,v){el.classList.toggle('on');var op=ops.find(function(o){return o.id===id});if(op){op[k]=el.classList.contains('on')?v:0;calc()}}
+function selT(el,m){document.querySelectorAll('.tier').forEach(function(t){t.classList.remove('on')});el.classList.add('on');mult=m;updTP()}
+function opCost(op,m){var mm=m||mult;var t=TY[op.type]||TY['window_dh'];var sz=op.width==='sm'?0.85:op.width==='lg'?1.2:op.width==='xl'?1.4:1.0;var sh=op.shape==='arch'?1.3:op.shape==='custom'?1.5:1.0;var fa=op.floor==='second'?80:op.floor==='third'?180:0;var ia=op.install==='fullframe'?200:0;var fc=op.frame==='repair'?120:op.frame==='rotted'?280:0;var col=op.colour==='black'||op.colour==='grey'?80:op.colour==='custom'?150:0;var gl=op.glass==='lowe'?60:op.glass==='frosted'?90:op.glass==='tinted'?70:op.glass==='tempered'?110:0;var ex=(op.sidelight||0)+(op.transom||0)+(op.screen||0);return((t.base+t.lab)*sz*sh+fa+ia+fc+col+gl+ex)*mm*(op.qty||1)}
+function fmt(n){return'CA$'+Math.round(n).toLocaleString('en-CA')}
+function adT(){return Object.values(addons).reduce(function(s,v){return s+v},0)}
+function bSub(m){var s=0;ops.forEach(function(op){s+=opCost(op,m)});return s}
+function calc(){
+  var sub=0,rows='';
+  ops.forEach(function(op){var t=TY[op.type]||TY['window_dh'];var c=opCost(op);sub+=c;rows+='<div class="lb-row"><span>'+t.icon+' '+t.name+' \xd7'+(op.qty||1)+'</span><span>'+fmt(c)+'</span></div>';var pe=document.getElementById('prc_'+op.id);if(pe)pe.textContent=fmt(c)});
+  if(!rows)rows='<div class="lb-row"><span>No openings yet</span><span>\u2014</span></div>';
+  document.getElementById('liveRows').innerHTML=rows;
+  document.getElementById('liveTot').textContent=fmt(sub+adT());
+  updTP();
+}
+function updTP(){
+  var a=adT();var pg=document.getElementById('p-good');var pb=document.getElementById('p-better');var pbs=document.getElementById('p-best');
+  if(ops.length===0){if(pg)pg.textContent='—';if(pb)pb.textContent='—';if(pbs)pbs.textContent='—'}
+  else{if(pg)pg.textContent=Math.round(bSub(1.0)+a).toLocaleString('en-CA');if(pb)pb.textContent=Math.round(bSub(1.2)+a).toLocaleString('en-CA');if(pbs)pbs.textContent=Math.round(bSub(1.4)+a).toLocaleString('en-CA')}
+}
+function buildSum(){
+  var sub=0,rows='';
+  ops.forEach(function(op){var t=TY[op.type]||TY['window_dh'];var c=opCost(op);sub+=c;rows+='<div class="sum-row"><span>'+t.icon+' '+t.name+' \xd7'+(op.qty||1)+'</span><span>'+fmt(c)+'</span></div>'});
+  var a=adT();if(a>0)rows+='<div class="sum-row"><span>Add-ons &amp; Services</span><span>'+fmt(a)+'</span></div>';
+  var total=sub+a,tax=total*taxRate,grand=total+tax;
+  rows+='<div class="sum-row"><span>'+taxLbl+'</span><span>'+fmt(tax)+'</span></div>';
+  document.getElementById('sumRows').innerHTML=rows;
+  document.getElementById('sumTot').textContent=fmt(grand);
+  document.getElementById('taxLblS').textContent=taxLbl;
+  calcDep();
+}
+function calcDep(){var pct=parseInt(document.getElementById('depType').value)||0;var tot=0;ops.forEach(function(op){tot+=opCost(op)});tot+=adT();var dep=tot*(pct/100);document.getElementById('depAmt').textContent=dep>0?fmt(dep):'No deposit'}
+addOp();
+var d=new Date();d.setDate(d.getDate()+30);var vd=document.getElementById('validDate');if(vd)vd.value=d.toISOString().split('T')[0];
+</script>
+</body>
+</html>

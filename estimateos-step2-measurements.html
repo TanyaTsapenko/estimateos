@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>EstimateOS — Step 2 Measurements</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --jet:#1A1A1A;--onyx:#222526;--graphite:#353A3E;
+  --platinum:#E0E0E0;--ash:#BFBFBF;--surface:#F5F5F5;
+  --white:#fff;--border:#D0D0D0;--bl:#E8E8E8;
+  --amber:#D97706;--amber-light:rgba(217,119,6,.08);
+}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--platinum);min-height:100vh}
+.app{max-width:390px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+
+/* HEADER */
+.gh{background:linear-gradient(150deg,#111 0%,#1A1A1A 30%,#222526 60%,#353A3E 100%);padding:20px 20px 52px;position:relative;overflow:hidden;flex-shrink:0}
+.gh::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(217,119,6,.06) 0%,transparent 70%);border-radius:50%}
+.logo{font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.logo span{color:var(--amber)}
+.h-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;position:relative;z-index:2}
+.pills{display:flex;gap:4px}
+.pill{height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
+.pill.done{background:var(--graphite);width:20px}
+.pill.active{background:#fff;width:28px}
+.pill.upcoming{width:20px}
+.h-eye{font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:4px;position:relative;z-index:2}
+.h-big{font-size:34px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1;position:relative;z-index:2}
+.h-sub{font-size:12px;color:rgba(255,255,255,.35);margin-top:5px;position:relative;z-index:2}
+
+/* RUNNING TOTAL IN HEADER */
+.running-total{position:relative;z-index:2;margin-top:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center}
+.rt-label{font-size:11px;color:rgba(255,255,255,.4);font-weight:500}
+.rt-val{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.rt-count{font-size:10px;color:rgba(255,255,255,.3);margin-top:1px}
+
+/* CARD */
+.card{background:var(--platinum);border-radius:24px 24px 0 0;margin-top:-22px;flex:1;padding:20px 16px 100px;overflow-y:auto;position:relative;z-index:3}
+
+/* OPENING CARD */
+.opening{background:var(--white);border-radius:16px;margin-bottom:12px;border:1px solid var(--border);overflow:hidden;transition:all .2s}
+.opening.expanded .op-body{display:block}
+.opening.collapsed .op-body{display:none}
+
+.op-head{padding:14px 14px 12px;cursor:pointer;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.op-head-left{flex:1;min-width:0}
+.op-num{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:3px}
+.op-title{font-size:14px;font-weight:700;color:var(--jet);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-dims{font-size:11px;color:var(--ash);margin-top:2px}
+.op-head-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.op-price{font-size:16px;font-weight:800;color:var(--graphite)}
+.op-toggle{width:24px;height:24px;background:var(--surface);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ash);transition:transform .2s}
+.opening.expanded .op-toggle{transform:rotate(180deg)}
+.op-delete{width:24px;height:24px;background:rgba(239,68,68,.08);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;color:#ef4444}
+
+.op-body{padding:0 14px 14px;border-top:1px solid var(--bl)}
+
+/* TYPE SELECTOR */
+.type-scroll{display:flex;gap:7px;overflow-x:auto;padding:12px 0 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.type-scroll::-webkit-scrollbar{display:none}
+.type-chip{flex-shrink:0;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--ash);cursor:pointer;white-space:nowrap;transition:all .15s}
+.type-chip.on{background:var(--jet);color:#fff;border-color:var(--jet)}
+
+/* MEASUREMENTS */
+.measurements{background:var(--surface);border-radius:12px;padding:12px;margin:10px 0;border:1px solid var(--border)}
+.meas-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ash);margin-bottom:10px}
+.meas-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.meas-field{display:flex;flex-direction:column;gap:4px}
+.meas-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.meas-input-wrap{position:relative}
+.meas-input{background:#fff;border:1.5px solid var(--border);border-radius:8px;padding:10px 32px 10px 10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--jet);outline:none;transition:all .15s;width:100%;text-align:center}
+.meas-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(217,119,6,.08)}
+.meas-unit{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;color:var(--ash)}
+.meas-calc{background:rgba(26,26,26,.05);border-radius:8px;padding:8px 10px;text-align:center;border:1px solid var(--bl)}
+.meas-calc-val{font-size:13px;font-weight:800;color:var(--jet)}
+.meas-calc-lbl{font-size:8px;color:var(--ash);margin-top:1px}
+
+/* WINDOW DIAGRAM */
+.win-diagram{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:12px;margin:8px 0;position:relative}
+.win-diagram-label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin-bottom:8px;text-align:center}
+.win-svg-wrap{display:flex;justify-content:center}
+
+/* FIELDS */
+.f{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.f label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash)}
+.f select,.f input{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--jet);outline:none;transition:all .15s;width:100%;-webkit-appearance:none}
+.f select:focus,.f input:focus{border-color:var(--amber);background:#fff}
+.f select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BFBFBF' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* TOGGLES */
+.tog-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--bl)}
+.tog-row:last-child{border-bottom:none}
+.tog-info{flex:1}
+.tog-name{font-size:12px;font-weight:500;color:var(--jet)}
+.tog-price{font-size:11px;color:var(--amber);font-weight:600;margin-top:1px}
+.sw{width:38px;height:22px;background:#e2e8f0;border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.sw.on{background:var(--graphite)}
+.swk{width:16px;height:16px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.sw.on .swk{left:19px}
+
+/* PRICE BREAKDOWN */
+.price-breakdown{background:var(--amber-light);border:1px solid rgba(217,119,6,.2);border-radius:10px;padding:10px 12px;margin-top:10px}
+.pb-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#92400e;margin-bottom:7px}
+.pb-row{display:flex;justify-content:space-between;font-size:11px;color:#92400e;padding:2px 0}
+.pb-total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:var(--amber);padding-top:7px;margin-top:5px;border-top:1px solid rgba(217,119,6,.2)}
+
+/* ADD OPENING */
+.add-btn{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:14px;width:100%;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:var(--ash);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-bottom:12px}
+.add-btn:active{background:var(--surface)}
+
+/* TOTAL BOX */
+.total-box{background:var(--white);border-radius:14px;padding:14px;border:1px solid var(--border);margin-bottom:12px}
+.total-row{display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:4px 0;border-bottom:1px solid var(--bl)}
+.total-row:last-of-type{border-bottom:none}
+.total-final{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px;margin-top:4px;border-top:1.5px solid var(--jet)}
+.total-final-l{font-size:13px;font-weight:700;color:var(--jet)}
+.total-final-v{font-size:24px;font-weight:800;color:var(--jet);letter-spacing:-.02em}
+
+/* NAV */
+.nav-bar{position:fixed;bottom:0;left:0;right:0;max-width:390px;margin:0 auto;background:#fff;border-top:1px solid var(--bl);padding:12px 16px;display:flex;gap:10px;z-index:50;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.btn-back{background:var(--surface);color:var(--ash);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;min-width:76px}
+.btn-next{background:linear-gradient(135deg,var(--jet),var(--graphite));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;flex:1;box-shadow:0 4px 14px rgba(26,26,26,.2)}
+
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--jet);color:#fff;padding:10px 18px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="gh">
+  <div class="h-top">
+    <div class="logo">Estimate<span>OS</span></div>
+    <div class="pills">
+      <div class="pill done"></div>
+      <div class="pill active"></div>
+      <div class="pill upcoming"></div>
+      <div class="pill upcoming"></div>
+    </div>
+  </div>
+  <div>
+    <div class="h-eye">Step 2 of 4 · Measurements</div>
+    <div class="h-big">Windows<br>& Doors</div>
+    <div class="h-sub">Sarah Johnson · 4521 Elbow Dr SW</div>
+  </div>
+  <div class="running-total">
+    <div>
+      <div class="rt-label">Running Total</div>
+      <div class="rt-count" id="opCount">0 openings added</div>
+    </div>
+    <div class="rt-val" id="runningTotal">CA$0</div>
+  </div>
+</div>
+
+<div class="card" id="card">
+
+  <!-- OPENINGS CONTAINER -->
+  <div id="openingsContainer"></div>
+
+  <!-- ADD OPENING -->
+  <button class="add-btn" onclick="addOpening()">
+    <span style="font-size:18px">＋</span> Add Window or Door
+  </button>
+
+  <!-- TOTAL SUMMARY -->
+  <div class="total-box" id="totalBox" style="display:none">
+    <div id="totalRows"></div>
+    <div class="total-final">
+      <div class="total-final-l">Subtotal</div>
+      <div class="total-final-v" id="totalFinal">CA$0</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav-bar">
+  <button class="btn-back" onclick="toast('← Step 1')">← Back</button>
+  <button class="btn-next" onclick="goNext()">Continue → Step 3</button>
+</div>
+
+</div>
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ── BASE PRICES per sq.ft (CA$) ──
+var BASE_RATES = {
+  // WINDOWS
+  'Double-Hung':      12.50,
+  'Single-Hung':      11.20,
+  'Hung-Tilt':        13.80,
+  'Casement':         14.20,
+  'Awning':           13.40,
+  'Sliding':          11.80,
+  'Lift & Slide':     18.50,
+  'Fixed / Picture':   9.50,
+  'Bay Window':       24.00,
+  'Bow Window':       26.00,
+  'Garden Window':    22.00,
+  'Tilt & Turn':      16.80,
+  'Hopper':            9.20,
+  'Skylight':         20.00,
+  'Architectural':    22.00,
+  // DOORS
+  'Entry Door':            18.00,
+  'Double Entry Door':     22.00,
+  'Entry + Sidelight':     24.00,
+  'Entry + Transom':       23.00,
+  'Patio Sliding Door':    16.50,
+  'French Door':           20.00,
+  'Bi-Fold Door':          17.50,
+  'Storm Door':             9.80,
+  'Screen Door':            7.50,
+  'Interior Door':          8.00
+};
+
+var WINDOW_TYPES = Object.keys(BASE_RATES);
+var DOOR_TYPES = ['Entry Door','Double Entry Door','Entry + Sidelight','Entry + Transom','Patio Sliding Door','French Door','Bi-Fold Door','Storm Door','Screen Door','Interior Door'];
+
+// ADD-ON PRICES
+var ADDONS = {
+  glass: { 'Standard Clear': 0, 'Low-E Argon +$80': 80, 'Low-E Triple +$160': 160, 'Tempered +$120': 120 },
+  frame: { 'White Vinyl': 0, 'Black Vinyl +$85': 85, 'Beige Vinyl +$40': 40, 'Bronze Vinyl +$85': 85, 'Fiberglass +$180': 180 },
+  install: { 'Retrofit (existing frame)': 0, 'Full-frame replace +$280': 280 },
+  floor: { 'Ground floor': 0, '2nd floor +$80': 80, '3rd floor +$160': 160 }
+};
+
+var openings = [];
+var nextId = 1;
+
+function addOpening() {
+  var id = nextId++;
+  var op = {
+    id: id,
+    type: 'Double-Hung',
+    width: 36,
+    height: 48,
+    qty: 1,
+    glass: 'Standard Clear',
+    frame: 'White Vinyl',
+    install: 'Retrofit (existing frame)',
+    floor: 'Ground floor',
+    hasSidelight: false,
+    hasTransom: false,
+    room: ''
+  };
+  openings.push(op);
+  renderOpening(op);
+  updateTotals();
+
+  // scroll to new opening
+  setTimeout(function() {
+    var el = document.getElementById('op-' + id);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 100);
+}
+
+function renderOpening(op) {
+  var container = document.getElementById('openingsContainer');
+  var div = document.createElement('div');
+  div.className = 'opening expanded';
+  div.id = 'op-' + op.id;
+  div.innerHTML = buildOpeningHTML(op);
+  container.appendChild(div);
+}
+
+function buildOpeningHTML(op) {
+  var price = calcPrice(op);
+  var area = calcArea(op);
+  var isDoor = DOOR_TYPES.includes(op.type);
+
+  var typeChips = WINDOW_TYPES.map(function(t) {
+    return '<div class="type-chip' + (op.type === t ? ' on' : '') + '" onclick="setType(' + op.id + ',\'' + t + '\')">' + t + '</div>';
+  }).join('');
+
+  var glassOpts = Object.keys(ADDONS.glass).map(function(g) {
+    return '<option' + (op.glass === g ? ' selected' : '') + '>' + g + '</option>';
+  }).join('');
+
+  var frameOpts = Object.keys(ADDONS.frame).map(function(f) {
+    return '<option' + (op.frame === f ? ' selected' : '') + '>' + f + '</option>';
+  }).join('');
+
+  var installOpts = Object.keys(ADDONS.install).map(function(i) {
+    return '<option' + (op.install === i ? ' selected' : '') + '>' + i + '</option>';
+  }).join('');
+
+  var floorOpts = Object.keys(ADDONS.floor).map(function(f) {
+    return '<option' + (op.floor === f ? ' selected' : '') + '>' + f + '</option>';
+  }).join('');
+
+  var pbRows = buildPriceBreakdown(op);
+
+  return `
+    <div class="op-head" onclick="toggleOpening(${op.id})">
+      <div class="op-head-left">
+        <div class="op-num">Opening #${op.id}</div>
+        <div class="op-title">${op.type} ${op.qty > 1 ? '×' + op.qty : ''}</div>
+        <div class="op-dims">${op.width}" × ${op.height}" · ${area} sq.ft</div>
+      </div>
+      <div class="op-head-right">
+        <div class="op-price">CA$${price.toLocaleString('en-CA')}</div>
+        <div class="op-delete" onclick="event.stopPropagation();deleteOpening(${op.id})">✕</div>
+        <div class="op-toggle">▼</div>
+      </div>
+    </div>
+    <div class="op-body">
+
+      <!-- TYPE -->
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin-bottom:4px;padding-top:4px">Type</div>
+      <div class="type-scroll">${typeChips}</div>
+
+      <!-- MEASUREMENTS -->
+      <div class="measurements">
+        <div class="meas-title">Measurements (inches)</div>
+        <div class="meas-row">
+          <div class="meas-field">
+            <div class="meas-label">Width</div>
+            <div class="meas-input-wrap">
+              <input class="meas-input" type="number" value="${op.width}" min="12" max="120" onchange="setMeas(${op.id},'width',this.value)" oninput="setMeas(${op.id},'width',this.value)"/>
+              <span class="meas-unit">in</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <div class="meas-label">Height</div>
+            <div class="meas-input-wrap">
+              <input class="meas-input" type="number" value="${op.height}" min="12" max="120" onchange="setMeas(${op.id},'height',this.value)" oninput="setMeas(${op.id},'height',this.value)"/>
+              <span class="meas-unit">in</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <div class="meas-label">Qty</div>
+            <div class="meas-input-wrap">
+              <input class="meas-input" type="number" value="${op.qty}" min="1" max="20" onchange="setMeas(${op.id},'qty',this.value)" oninput="setMeas(${op.id},'qty',this.value)"/>
+              <span class="meas-unit">pcs</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="meas-calc">
+            <div class="meas-calc-val">${area} sq.ft</div>
+            <div class="meas-calc-lbl">Area per unit</div>
+          </div>
+          <div class="meas-calc">
+            <div class="meas-calc-val">${(area * op.qty).toFixed(2)} sq.ft</div>
+            <div class="meas-calc-lbl">Total area</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WINDOW DIAGRAM -->
+      <div class="win-diagram">
+        <div class="win-diagram-label">Outside View</div>
+        <div class="win-svg-wrap">
+          ${buildDiagram(op)}
+        </div>
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="r2" style="margin-top:8px">
+        <div class="f">
+          <label>Glass</label>
+          <select onchange="setOpt(${op.id},'glass',this.value)">${glassOpts}</select>
+        </div>
+        <div class="f">
+          <label>Frame Colour</label>
+          <select onchange="setOpt(${op.id},'frame',this.value)">${frameOpts}</select>
+        </div>
+      </div>
+      <div class="r2">
+        <div class="f">
+          <label>Install Type</label>
+          <select onchange="setOpt(${op.id},'install',this.value)">${installOpts}</select>
+        </div>
+        <div class="f">
+          <label>Floor Level</label>
+          <select onchange="setOpt(${op.id},'floor',this.value)">${floorOpts}</select>
+        </div>
+      </div>
+      <div class="f">
+        <label>Room / Location</label>
+        <input placeholder="e.g. Living Room, Master Bedroom..." value="${op.room}" onchange="setOpt(${op.id},'room',this.value)"/>
+      </div>
+
+      <!-- EXTRAS -->
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ash);margin-bottom:6px">Extras</div>
+      <div style="background:var(--surface);border-radius:10px;overflow:hidden;border:1px solid var(--border)">
+        <div class="tog-row" style="padding:9px 12px">
+          <div class="tog-info">
+            <div class="tog-name">Sidelight</div>
+            <div class="tog-price">+CA$320</div>
+          </div>
+          <div class="sw${op.hasSidelight ? ' on' : ''}" onclick="toggleExtra(${op.id},'hasSidelight',this)"><div class="swk"></div></div>
+        </div>
+        <div class="tog-row" style="padding:9px 12px">
+          <div class="tog-info">
+            <div class="tog-name">Transom</div>
+            <div class="tog-price">+CA$280</div>
+          </div>
+          <div class="sw${op.hasTransom ? ' on' : ''}" onclick="toggleExtra(${op.id},'hasTransom',this)"><div class="swk"></div></div>
+        </div>
+      </div>
+
+      <!-- PRICE BREAKDOWN -->
+      <div class="price-breakdown">
+        <div class="pb-title">Price Breakdown</div>
+        ${pbRows}
+        <div class="pb-total"><span>Total (×${op.qty})</span><span>CA$${price.toLocaleString('en-CA')}</span></div>
+      </div>
+
+    </div>
+  `;
+}
+
+function buildDiagram(op) {
+  var W = Math.min(200, Math.max(80, op.width * 1.8));
+  var H = Math.min(130, Math.max(50, op.height * 1.2));
+  var t = op.type;
+  var lbl = `<text x="${W/2}" y="${H+14}" text-anchor="middle" font-size="9" fill="#BFBFBF" font-family="Plus Jakarta Sans">${op.width}" × ${op.height}"</text>`;
+
+  // DOORS
+  if (t === 'Entry Door') {
+    return `<svg width="${W*0.6}" height="${H}" viewBox="0 0 ${W*0.6} ${H}">
+      <rect x="2" y="2" width="${W*0.6-4}" height="${H-4}" fill="rgba(245,158,11,.04)" stroke="#353A3E" stroke-width="2.5" rx="3"/>
+      <rect x="${W*0.06}" y="${H*0.06}" width="${W*0.48}" height="${H*0.32}" fill="rgba(219,234,254,.3)" stroke="#D0D0D0" stroke-width="1" rx="2"/>
+      <rect x="${W*0.06}" y="${H*0.44}" width="${W*0.48}" height="${H*0.32}" fill="rgba(219,234,254,.3)" stroke="#D0D0D0" stroke-width="1" rx="2"/>
+      <circle cx="${W*0.52}" cy="${H*0.55}" r="4" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Double Entry Door') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W/2-3}" height="${H-4}" fill="rgba(245,158,11,.04)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${W/2+1}" y="2" width="${W/2-3}" height="${H-4}" fill="rgba(245,158,11,.04)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${W*0.06}" y="${H*0.06}" width="${W*0.38}" height="${H*0.32}" fill="rgba(219,234,254,.3)" stroke="#D0D0D0" stroke-width="1" rx="1"/>
+      <rect x="${W*0.56}" y="${H*0.06}" width="${W*0.38}" height="${H*0.32}" fill="rgba(219,234,254,.3)" stroke="#D0D0D0" stroke-width="1" rx="1"/>
+      <circle cx="${W*0.44}" cy="${H*0.6}" r="3.5" fill="#353A3E"/>
+      <circle cx="${W*0.56}" cy="${H*0.6}" r="3.5" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Entry + Sidelight') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W*0.72}" height="${H-4}" fill="rgba(245,158,11,.04)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <rect x="${W*0.76}" y="2" width="${W*0.22}" height="${H-4}" fill="rgba(219,234,254,.2)" stroke="#353A3E" stroke-width="1.5" rx="2"/>
+      <rect x="${W*0.06}" y="${H*0.06}" width="${W*0.6}" height="${H*0.3}" fill="rgba(219,234,254,.3)" stroke="#D0D0D0" stroke-width="1" rx="1"/>
+      <line x1="${W*0.8}" y1="${H*0.25}" x2="${W*0.94}" y2="${H*0.25}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.8}" y1="${H*0.5}" x2="${W*0.94}" y2="${H*0.5}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.8}" y1="${H*0.75}" x2="${W*0.94}" y2="${H*0.75}" stroke="#D0D0D0" stroke-width="1"/>
+      <circle cx="${W*0.66}" cy="${H*0.6}" r="4" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Entry + Transom') {
+    return `<svg width="${W*0.65}" height="${H}" viewBox="0 0 ${W*0.65} ${H}">
+      <rect x="2" y="2" width="${W*0.65-4}" height="${H*0.28}" fill="rgba(219,234,254,.3)" stroke="#353A3E" stroke-width="1.5" rx="2"/>
+      <rect x="2" y="${H*0.3}" width="${W*0.65-4}" height="${H*0.68}" fill="rgba(245,158,11,.04)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.22}" y1="2" x2="${W*0.22}" y2="${H*0.28}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.43}" y1="2" x2="${W*0.43}" y2="${H*0.28}" stroke="#D0D0D0" stroke-width="1"/>
+      <circle cx="${W*0.55}" cy="${H*0.65}" r="4" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Patio Sliding Door') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H-2}" stroke="#353A3E" stroke-width="2"/>
+      <line x1="${W*0.15}" y1="${H*0.5}" x2="${W*0.42}" y2="${H*0.5}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <polygon points="${W*0.42},${H*0.44} ${W*0.48},${H*0.5} ${W*0.42},${H*0.56}" fill="#BFBFBF"/>
+      <circle cx="${W*0.46}" cy="${H*0.5}" r="3" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'French Door') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W/2-3}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${W/2+1}" y="2" width="${W/2-3}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <line x1="${W*0.1}" y1="${H*0.3}" x2="${W*0.42}" y2="${H*0.3}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.58}" y1="${H*0.3}" x2="${W*0.9}" y2="${H*0.3}" stroke="#D0D0D0" stroke-width="1"/>
+      <path d="M ${W*0.08} ${H*0.15} L ${W*0.44} ${H*0.5} L ${W*0.08} ${H*0.85}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      <path d="M ${W*0.92} ${H*0.15} L ${W*0.56} ${H*0.5} L ${W*0.92} ${H*0.85}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      <circle cx="${W*0.44}" cy="${H*0.55}" r="3.5" fill="#353A3E"/>
+      <circle cx="${W*0.56}" cy="${H*0.55}" r="3.5" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Storm Door' || t === 'Screen Door' || t === 'Interior Door' || t === 'Bi-Fold Door') {
+    return `<svg width="${W*0.6}" height="${H}" viewBox="0 0 ${W*0.6} ${H}">
+      <rect x="2" y="2" width="${W*0.6-4}" height="${H-4}" fill="rgba(219,234,254,.1)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${W*0.06}" y="${H*0.08}" width="${W*0.48}" height="${H*0.38}" fill="rgba(219,234,254,.2)" stroke="#D0D0D0" stroke-width="1" rx="1"/>
+      <rect x="${W*0.06}" y="${H*0.52}" width="${W*0.48}" height="${H*0.38}" fill="rgba(219,234,254,.2)" stroke="#D0D0D0" stroke-width="1" rx="1"/>
+      <circle cx="${W*0.52}" cy="${H*0.5}" r="3.5" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+
+  // WINDOWS
+  if (t === 'Bay Window') {
+    var TW = W + 40;
+    return `<svg width="${TW}" height="${H}" viewBox="0 0 ${TW} ${H}">
+      <rect x="0" y="${H*0.15}" width="${TW*0.28}" height="${H*0.78}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2" transform="rotate(-15,${TW*0.14},${H*0.54})"/>
+      <rect x="${TW*0.3}" y="2" width="${TW*0.4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <rect x="${TW*0.72}" y="${H*0.15}" width="${TW*0.28}" height="${H*0.78}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2" transform="rotate(15,${TW*0.86},${H*0.54})"/>
+      <line x1="${TW*0.3}" y1="${H*0.5}" x2="${TW*0.7}" y2="${H*0.5}" stroke="#D0D0D0" stroke-width="1"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Bow Window') {
+    var TW = W + 60;
+    return `<svg width="${TW}" height="${H}" viewBox="0 0 ${TW} ${H}">
+      <rect x="0" y="${H*0.2}" width="${TW*0.2}" height="${H*0.65}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="1.5" rx="2"/>
+      <rect x="${TW*0.22}" y="${H*0.08}" width="${TW*0.18}" height="${H*0.82}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${TW*0.42}" y="2" width="${TW*0.16}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <rect x="${TW*0.6}" y="${H*0.08}" width="${TW*0.18}" height="${H*0.82}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2" rx="2"/>
+      <rect x="${TW*0.8}" y="${H*0.2}" width="${TW*0.2}" height="${H*0.65}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="1.5" rx="2"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Garden Window') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="${H*0.3}" width="${W-4}" height="${H*0.68}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <rect x="${W*0.1}" y="2" width="${W*0.8}" height="${H*0.3}" fill="rgba(219,234,254,.2)" stroke="#353A3E" stroke-width="1.5" rx="2"/>
+      <line x1="${W*0.4}" y1="2" x2="${W*0.4}" y2="${H*0.3}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.6}" y1="2" x2="${W*0.6}" y2="${H*0.3}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="2" y1="${H*0.6}" x2="${W-2}" y2="${H*0.6}" stroke="#D0D0D0" stroke-width="1"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Casement') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H-2}" stroke="#353A3E" stroke-width="1.5"/>
+      <path d="M ${W*0.14} ${H*0.2} L ${W*0.46} ${H*0.5} L ${W*0.14} ${H*0.8}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      <path d="M ${W*0.86} ${H*0.2} L ${W*0.54} ${H*0.5} L ${W*0.86} ${H*0.8}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Awning') {
+    return `<svg width="${W}" height="${H*0.75}" viewBox="0 0 ${W} ${H*0.75}">
+      <rect x="2" y="2" width="${W-4}" height="${H*0.75-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="2" y1="${H*0.25}" x2="${W-2}" y2="${H*0.25}" stroke="#353A3E" stroke-width="1.5"/>
+      <path d="M ${W*0.2} ${H*0.06} L ${W*0.5} ${H*0.24} L ${W*0.8} ${H*0.06}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Sliding') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H-2}" stroke="#353A3E" stroke-width="1.5"/>
+      <line x1="${W*0.18}" y1="${H*0.5}" x2="${W*0.44}" y2="${H*0.5}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <polygon points="${W*0.44},${H*0.44} ${W*0.5},${H*0.5} ${W*0.44},${H*0.56}" fill="#BFBFBF"/>
+      <circle cx="${W*0.47}" cy="${H*0.5}" r="3" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Lift & Slide') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H-2}" stroke="#353A3E" stroke-width="2"/>
+      <line x1="${W*0.15}" y1="${H*0.45}" x2="${W*0.44}" y2="${H*0.45}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <line x1="${W*0.15}" y1="${H*0.55}" x2="${W*0.44}" y2="${H*0.55}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <polygon points="${W*0.44},${H*0.42} ${W*0.5},${H*0.5} ${W*0.44},${H*0.58}" fill="#BFBFBF"/>
+      <circle cx="${W*0.46}" cy="${H*0.5}" r="4" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Tilt & Turn') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <path d="M ${W*0.1} ${H*0.9} L ${W*0.5} ${H*0.1} L ${W*0.9} ${H*0.9}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      <path d="M ${W*0.9} ${H*0.2} L ${W*0.1} ${H*0.5} L ${W*0.9} ${H*0.8}" fill="none" stroke="#D0D0D0" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="${W*0.88}" cy="${H*0.5}" r="4" fill="#353A3E"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Hopper') {
+    return `<svg width="${W}" height="${H*0.6}" viewBox="0 0 ${W} ${H*0.6}">
+      <rect x="2" y="2" width="${W-4}" height="${H*0.6-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="2" y1="${H*0.45}" x2="${W-2}" y2="${H*0.45}" stroke="#353A3E" stroke-width="1.5"/>
+      <path d="M ${W*0.2} ${H*0.56} L ${W*0.5} ${H*0.44} L ${W*0.8} ${H*0.56}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Skylight') {
+    return `<svg width="${W}" height="${H*0.75}" viewBox="0 0 ${W} ${H*0.75}">
+      <rect x="2" y="2" width="${W-4}" height="${H*0.75-4}" fill="rgba(219,234,254,.25)" stroke="#353A3E" stroke-width="2.5" rx="4"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H*0.75-2}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="2" y1="${H*0.375}" x2="${W-2}" y2="${H*0.375}" stroke="#D0D0D0" stroke-width="1"/>
+      <path d="M ${W*0.3} ${H*0.15} L ${W*0.5} ${H*0.05} L ${W*0.7} ${H*0.15}" fill="none" stroke="#BFBFBF" stroke-width="1.5"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Fixed / Picture' || t === 'Architectural') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.2)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="${W*0.15}" y1="${H*0.15}" x2="${W*0.85}" y2="${H*0.85}" stroke="rgba(219,234,254,.5)" stroke-width="1"/>
+      <line x1="${W*0.85}" y1="${H*0.15}" x2="${W*0.15}" y2="${H*0.85}" stroke="rgba(219,234,254,.5)" stroke-width="1"/>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Single-Hung') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="2" y1="${H*0.5}" x2="${W-2}" y2="${H*0.5}" stroke="#353A3E" stroke-width="1.5"/>
+      <line x1="${W*0.5}" y1="${H*0.5}" x2="${W*0.5}" y2="${H-2}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.25}" y1="${H*0.75}" x2="${W*0.75}" y2="${H*0.75}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <text x="${W*0.5}" y="${H*0.3}" text-anchor="middle" font-size="8" fill="#BFBFBF">fixed</text>
+      ${lbl}</svg>`;
+  }
+  if (t === 'Hung-Tilt') {
+    return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+      <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+      <line x1="2" y1="${H*0.5}" x2="${W-2}" y2="${H*0.5}" stroke="#353A3E" stroke-width="1.5"/>
+      <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H*0.5-1}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.5}" y1="${H*0.5+1}" x2="${W*0.5}" y2="${H-2}" stroke="#D0D0D0" stroke-width="1"/>
+      <line x1="${W*0.25}" y1="${H*0.48}" x2="${W*0.75}" y2="${H*0.48}" stroke="#BFBFBF" stroke-width="1.5"/>
+      <path d="M ${W*0.1} ${H*0.1} L ${W*0.9} ${H*0.48}" fill="none" stroke="#D97706" stroke-width="1" stroke-dasharray="3,3"/>
+      ${lbl}</svg>`;
+  }
+
+  // DEFAULT Double-Hung
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <rect x="2" y="2" width="${W-4}" height="${H-4}" fill="rgba(219,234,254,.15)" stroke="#353A3E" stroke-width="2.5" rx="2"/>
+    <line x1="2" y1="${H*0.5}" x2="${W-2}" y2="${H*0.5}" stroke="#353A3E" stroke-width="1.5"/>
+    <line x1="${W*0.5}" y1="2" x2="${W*0.5}" y2="${H*0.5-1}" stroke="#D0D0D0" stroke-width="1"/>
+    <line x1="${W*0.5}" y1="${H*0.5+1}" x2="${W*0.5}" y2="${H-2}" stroke="#D0D0D0" stroke-width="1"/>
+    <line x1="${W*0.25}" y1="${H*0.48}" x2="${W*0.75}" y2="${H*0.48}" stroke="#BFBFBF" stroke-width="1.5"/>
+    ${lbl}</svg>`;
+}
+
+function buildPriceBreakdown(op) {
+  var area = calcArea(op);
+  var rate = BASE_RATES[op.type] || 12;
+  var basePrice = Math.round(area * rate);
+  var glassAddon = ADDONS.glass[op.glass] || 0;
+  var frameAddon = ADDONS.frame[op.frame] || 0;
+  var installAddon = ADDONS.install[op.install] || 0;
+  var floorAddon = ADDONS.floor[op.floor] || 0;
+  var sidelightAddon = op.hasSidelight ? 320 : 0;
+  var transomAddon = op.hasTransom ? 280 : 0;
+
+  var rows = '';
+  rows += `<div class="pb-row"><span>${op.type} (${area} sq.ft × CA$${rate}/sq.ft)</span><span>CA$${basePrice}</span></div>`;
+  if (glassAddon) rows += `<div class="pb-row"><span>${op.glass}</span><span>+CA$${glassAddon}</span></div>`;
+  if (frameAddon) rows += `<div class="pb-row"><span>${op.frame}</span><span>+CA$${frameAddon}</span></div>`;
+  if (installAddon) rows += `<div class="pb-row"><span>Full-frame replace</span><span>+CA$${installAddon}</span></div>`;
+  if (floorAddon) rows += `<div class="pb-row"><span>Floor level</span><span>+CA$${floorAddon}</span></div>`;
+  if (sidelightAddon) rows += `<div class="pb-row"><span>Sidelight</span><span>+CA$${sidelightAddon}</span></div>`;
+  if (transomAddon) rows += `<div class="pb-row"><span>Transom</span><span>+CA$${transomAddon}</span></div>`;
+  if (op.qty > 1) rows += `<div class="pb-row"><span>× ${op.qty} units</span><span></span></div>`;
+  return rows;
+}
+
+function calcArea(op) {
+  return ((op.width * op.height) / 144).toFixed(2) * 1;
+}
+
+function calcPrice(op) {
+  var area = calcArea(op);
+  var rate = BASE_RATES[op.type] || 12;
+  var base = Math.round(area * rate);
+  var addons = (ADDONS.glass[op.glass] || 0) +
+               (ADDONS.frame[op.frame] || 0) +
+               (ADDONS.install[op.install] || 0) +
+               (ADDONS.floor[op.floor] || 0) +
+               (op.hasSidelight ? 320 : 0) +
+               (op.hasTransom ? 280 : 0);
+  return (base + addons) * op.qty;
+}
+
+function getOp(id) {
+  return openings.find(function(o) { return o.id === id; });
+}
+
+function refreshOpening(id) {
+  var op = getOp(id);
+  if (!op) return;
+  var el = document.getElementById('op-' + id);
+  if (!el) return;
+  var wasExpanded = el.classList.contains('expanded');
+  el.outerHTML = '<div class="opening ' + (wasExpanded ? 'expanded' : 'collapsed') + '" id="op-' + id + '">' + buildOpeningHTML(op) + '</div>';
+  updateTotals();
+}
+
+function setType(id, type) {
+  var op = getOp(id);
+  if (op) { op.type = type; refreshOpening(id); }
+}
+
+function setMeas(id, field, val) {
+  var op = getOp(id);
+  if (op) {
+    op[field] = Math.max(field === 'qty' ? 1 : 12, parseFloat(val) || 0);
+    refreshOpening(id);
+  }
+}
+
+function setOpt(id, field, val) {
+  var op = getOp(id);
+  if (op) { op[field] = val; refreshOpening(id); }
+}
+
+function toggleExtra(id, field, sw) {
+  var op = getOp(id);
+  if (op) {
+    op[field] = !op[field];
+    sw.classList.toggle('on');
+    refreshOpening(id);
+  }
+}
+
+function toggleOpening(id) {
+  var el = document.getElementById('op-' + id);
+  if (el) {
+    el.classList.toggle('expanded');
+    el.classList.toggle('collapsed');
+  }
+}
+
+function deleteOpening(id) {
+  openings = openings.filter(function(o) { return o.id !== id; });
+  var el = document.getElementById('op-' + id);
+  if (el) el.remove();
+  updateTotals();
+}
+
+function updateTotals() {
+  var total = openings.reduce(function(sum, op) { return sum + calcPrice(op); }, 0);
+  document.getElementById('runningTotal').textContent = 'CA$' + total.toLocaleString('en-CA');
+  document.getElementById('opCount').textContent = openings.length + ' opening' + (openings.length !== 1 ? 's' : '') + ' added';
+
+  var totalBox = document.getElementById('totalBox');
+  if (openings.length > 0) {
+    totalBox.style.display = 'block';
+    var rows = openings.map(function(op) {
+      return '<div class="total-row"><span>Opening #' + op.id + ' — ' + op.type + (op.qty > 1 ? ' ×' + op.qty : '') + '</span><span>CA$' + calcPrice(op).toLocaleString('en-CA') + '</span></div>';
+    }).join('');
+    document.getElementById('totalRows').innerHTML = rows;
+    document.getElementById('totalFinal').textContent = 'CA$' + total.toLocaleString('en-CA');
+  } else {
+    totalBox.style.display = 'none';
+  }
+}
+
+function goNext() {
+  if (openings.length === 0) {
+    toast('⚠️ Add at least one window or door');
+    return;
+  }
+  toast('→ Step 3: Services & Package');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toastEl');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+// Init with one opening
+addOpening();
+</script>
+</body>
+</html>
