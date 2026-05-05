@@ -144,12 +144,12 @@ export default function EstimateDetailPage() {
 
       <div className="dash-bg screen-enter">
         {/* Total card */}
-        <div style={{ background: 'linear-gradient(135deg,#0A0E1A,#1A2744)', borderRadius: 16, padding: 16, marginBottom: 12, color: '#fff' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', opacity: .5, marginBottom: 6 }}>
+        <div style={{ background: '#F4F5F7', border: '1.5px solid #1A2744', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#999', marginBottom: 6 }}>
             {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Tier
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#3B6CFF' }}>{fmtCAD(estimate.total)}</div>
-          <div style={{ fontSize: 11, opacity: .5, marginTop: 3 }}>inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}</div>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
+          <div style={{ fontSize: 11, color: '#999', marginTop: 3 }}>inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}</div>
         </div>
 
         {/* Client info */}
