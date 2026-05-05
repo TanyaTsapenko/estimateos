@@ -30,17 +30,24 @@ export default function EstimateDetailPage() {
   const supabase = createClient()
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
+  const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState('')
 
   useEffect(() => {
     async function load() {
-      const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
-      const { data: ops } = await supabase.from('estimate_openings')
-        .select('id, type, qty, width, room, total_cost').eq('estimate_id', id).order('sort_order')
+      const [{ data: est }, { data: ops }] = await Promise.all([
+        supabase.from('estimates').select('*').eq('id', id).single(),
+        supabase.from('estimate_openings').select('id, type, qty, width, room, total_cost').eq('estimate_id', id).order('sort_order'),
+      ])
       setEstimate(est)
       setOpenings(ops || [])
+      if (est?.status === 'signed' || est?.status === 'invoiced') {
+        const { data: dep } = await supabase.from('invoices')
+          .select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single()
+        setDepositInvoice(dep)
+      }
       setLoading(false)
     }
     load()
@@ -205,6 +212,25 @@ export default function EstimateDetailPage() {
           </div>
         )}
 
+        {/* Deposit invoice summary */}
+        {depositInvoice && (
+          <div style={{ background: 'rgba(217,119,6,.06)', border: '1.5px solid rgba(217,119,6,.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#b45309', marginBottom: 8 }}>Deposit Invoice</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+              <span style={{ color: 'var(--ash)' }}>Deposit amount</span>
+              <span style={{ fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(depositInvoice.amount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+              <span style={{ color: 'var(--ash)' }}>Remaining balance</span>
+              <span style={{ fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(estimate.total - depositInvoice.amount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: 'var(--ash)' }}>Deposit status</span>
+              <span style={{ fontWeight: 700, color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563eb', textTransform: 'capitalize' }}>{depositInvoice.status}</span>
+            </div>
+          </div>
+        )}
+
         {/* Action buttons */}
         <div className="sl">Actions</div>
         {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
@@ -226,7 +252,11 @@ export default function EstimateDetailPage() {
         {estimate.status === 'signed' && (
           <button className="send-btn" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
             <span>🧾</span>
-            <span>Create invoice from this estimate</span>
+            <span>
+              {depositInvoice
+                ? `Create final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)} remaining`
+                : 'Create invoice from this estimate'}
+            </span>
           </button>
         )}
         <button className="send-btn" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>

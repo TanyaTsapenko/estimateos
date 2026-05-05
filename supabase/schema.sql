@@ -165,6 +165,7 @@ create table if not exists public.invoices (
   estimate_id    uuid references public.estimates(id) on delete set null,
   user_id        uuid not null references public.profiles(id) on delete cascade,
   invoice_number text not null,
+  invoice_type   text default 'standard',
   status         text default 'pending',
   amount         numeric(12,2) default 0,
   due_date       date,
@@ -195,7 +196,8 @@ create policy "Users delete own invoices"
 
 alter table public.profiles
   add column if not exists team_owner_id uuid references public.profiles(id) on delete set null,
-  add column if not exists member_role text;
+  add column if not exists member_role text,
+  add column if not exists deposit_pct numeric default 30;
 
 create table if not exists public.team_invitations (
   id            uuid primary key default gen_random_uuid(),

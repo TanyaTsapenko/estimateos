@@ -119,16 +119,19 @@ export default function SignPage() {
 
     if (updateErr) { setError(updateErr.message); setSaving(false); return }
 
-    // Send confirmation email if client email exists
-    if (estimate?.client_email) {
-      try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ estimateId: id, type: 'signed' }),
-        })
-      } catch {}
-    }
+    // Send confirmation email + auto-create deposit invoice
+    await Promise.allSettled([
+      estimate?.client_email
+        ? fetch('/api/send-email', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estimateId: id, type: 'signed' }),
+          })
+        : Promise.resolve(),
+      fetch('/api/deposit-invoice', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: id }),
+      }),
+    ])
 
     setStep('success')
     setSaving(false)

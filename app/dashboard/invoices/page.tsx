@@ -7,7 +7,7 @@ import { fmtCAD } from '@/lib/pricing'
 
 interface Invoice {
   id: string; invoice_number: string; status: string; amount: number
-  due_date: string | null; created_at: string
+  invoice_type: string | null; due_date: string | null; created_at: string
   estimates: { client_name: string | null; estimate_number: string } | null
 }
 
@@ -25,7 +25,7 @@ export default function InvoicesPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
       const { data } = await supabase.from('invoices')
-        .select('id, invoice_number, status, amount, due_date, created_at, estimates(client_name, estimate_number)')
+        .select('id, invoice_number, status, amount, invoice_type, due_date, created_at, estimates(client_name, estimate_number)')
         .eq('user_id', user.id).order('created_at', { ascending: false })
       setInvoices((data as unknown as Invoice[]) || [])
       setLoading(false)
@@ -82,7 +82,15 @@ export default function InvoicesPage() {
           <div key={inv.id} className="ec">
             <div className="ec-top">
               <div>
-                <div className="ec-name">{inv.estimates?.client_name || 'Client'}</div>
+                <div className="ec-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {inv.estimates?.client_name || 'Client'}
+                  {inv.invoice_type === 'deposit' && (
+                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(217,119,6,.1)', color: '#b45309', padding: '2px 6px', borderRadius: 5 }}>DEPOSIT</span>
+                  )}
+                  {inv.invoice_type === 'final' && (
+                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(22,163,74,.1)', color: '#15803d', padding: '2px 6px', borderRadius: 5 }}>FINAL</span>
+                  )}
+                </div>
                 <div className="ec-date">
                   {inv.invoice_number}
                   {inv.estimates?.estimate_number ? ` · from ${inv.estimates.estimate_number}` : ''}

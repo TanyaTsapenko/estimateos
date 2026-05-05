@@ -119,12 +119,16 @@ export default function ClientEstimatePage() {
 
     if (updateErr) { setError(updateErr.message); setSaving(false); return }
 
-    try {
-      await fetch('/api/send-email', {
+    await Promise.allSettled([
+      fetch('/api/send-email', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estimateId: id, type: 'signed' }),
-      })
-    } catch {}
+      }),
+      fetch('/api/deposit-invoice', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: id }),
+      }),
+    ])
 
     setScreen('success')
     setSaving(false)

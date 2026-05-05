@@ -9,6 +9,7 @@ interface Profile {
   company_name: string | null; phone: string | null; website: string | null
   city: string | null; province: string | null; licence: string | null
   insurance: string | null; contract_terms: string | null; plan: string | null
+  deposit_pct: number | null
 }
 
 const PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
@@ -170,6 +171,13 @@ export default function SettingsPage() {
               <div className="f"><label>Insurance</label>
                 <input value={form.insurance || ''} onChange={e => set('insurance', e.target.value)} /></div>
             </div>
+            <div className="r1" style={{ marginBottom: 10 }}><div className="f">
+              <label>Deposit %</label>
+              <input type="number" min="0" max="100"
+                value={form.deposit_pct ?? 30}
+                onChange={e => set('deposit_pct', e.target.value)} />
+              <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 2 }}>Deposit invoice auto-sent when client signs · Default 30%</div>
+            </div></div>
           </>
         )}
 
