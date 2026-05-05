@@ -13,7 +13,7 @@ interface Estimate {
   client_province: string | null; scope_notes: string | null; status: string
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
-  created_at: string
+  sent_method: string | null; created_at: string
 }
 
 const statusColor: Record<string, string> = {
@@ -51,14 +51,6 @@ export default function EstimateDetailPage() {
     setTimeout(() => setToast(''), 2500)
   }
 
-  async function markSent() {
-    setSending(true)
-    await supabase.from('estimates').update({ status: 'sent' }).eq('id', id)
-    setEstimate(p => p ? { ...p, status: 'sent' } : p)
-    showToast('✅ Marked as sent')
-    setSending(false)
-  }
-
   async function sendByEmail() {
     if (!estimate?.client_email) { showToast('⚠️ No client email on this estimate'); return }
     setSending(true)
@@ -70,8 +62,8 @@ export default function EstimateDetailPage() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed')
-      await supabase.from('estimates').update({ status: 'sent' }).eq('id', id)
-      setEstimate(p => p ? { ...p, status: 'sent' } : p)
+      await supabase.from('estimates').update({ status: 'sent', sent_method: 'email' }).eq('id', id)
+      setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'email' } : p)
       showToast('📧 Estimate sent to ' + estimate.client_email)
     } catch (e: any) {
       showToast('⚠️ ' + e.message)
@@ -85,9 +77,13 @@ export default function EstimateDetailPage() {
     router.push('/dashboard/estimates')
   }
 
-  function copyLink() {
+  async function copyLink() {
     const link = `${window.location.origin}/estimate/${id}`
     navigator.clipboard.writeText(link)
+    if (estimate?.status === 'draft') {
+      await supabase.from('estimates').update({ status: 'sent', sent_method: 'link' }).eq('id', id)
+      setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'link' } : p)
+    }
     showToast('📋 Client link copied!')
   }
 
@@ -221,12 +217,6 @@ export default function EstimateDetailPage() {
           <span>🔗</span>
           <span>Copy client link (view &amp; sign)</span>
         </button>
-        {estimate.status === 'draft' && (
-          <button className="send-btn" onClick={markSent} disabled={sending}>
-            <span>📤</span>
-            <span>{sending ? 'Updating...' : 'Mark as sent (no email)'}</span>
-          </button>
-        )}
         {estimate.status !== 'signed' && (
           <button className="send-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
             <span>✍️</span>

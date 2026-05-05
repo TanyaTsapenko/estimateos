@@ -77,6 +77,7 @@ create table if not exists public.estimates (
   pdf_url              text,
   notes                text,
   valid_until          date,
+  sent_method          text,
   created_at           timestamptz default now(),
   updated_at           timestamptz default now()
 );

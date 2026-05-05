@@ -38,19 +38,23 @@ export default function ClientEstimatePage() {
     async function load() {
       const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
       if (!est) return
+
+      if (est.status === 'signed') {
+        setEstimate(est)
+        setScreen('already_signed')
+        return
+      }
+
+      const [{ data: ops }, { data: prof }] = await Promise.all([
+        supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
+        supabase.from('profiles').select('company_name, city, province, logo_url').eq('id', (est as any).user_id).single(),
+      ])
+
+      // Set all state in one batch so selectedTier is never overridden after user interaction
       setEstimate(est)
-      if (est.status === 'signed') { setScreen('already_signed'); return }
-
-      const { data: ops } = await supabase.from('estimate_openings')
-        .select('*').eq('estimate_id', id).order('sort_order')
+      setSelectedTier(est.tier || 'better')
       setOpenings(ops || [])
-
-      // Get profile by joining through estimates
-      const { data: prof } = await supabase.from('profiles')
-        .select('company_name, city, province, logo_url')
-        .eq('id', (est as any).user_id).single()
       setProfile(prof)
-      if (est.tier) setSelectedTier(est.tier)
     }
     load()
   }, [id])

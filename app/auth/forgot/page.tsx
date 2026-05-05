@@ -41,7 +41,7 @@ export default function ForgotPage() {
           <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 28, maxWidth: 280 }}>
             We sent a password reset link to <strong>{email}</strong>. Check your inbox and spam folder.
           </div>
-          <button className="btn-next" style={{ maxWidth: 280 }} onClick={() => router.push('/auth')}>
+          <button className="btn-next" style={{ maxWidth: 280, flex: 'none' }} onClick={() => router.push('/auth')}>
             Back to Sign In →
           </button>
         </div>
