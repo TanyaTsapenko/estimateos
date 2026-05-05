@@ -292,7 +292,23 @@ export default function CompanyProfilePage() {
                 style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 13, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical', lineHeight: 1.7 }}
               />
             </div></div>
-            <button className="gen-btn" onClick={save} disabled={saving}>{saving ? '⏳ Saving…' : '💾 Save Terms'}</button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="gen-btn" onClick={save} disabled={saving} style={{ flex: 1 }}>
+                {saving ? '⏳ Saving…' : '💾 Save Terms'}
+              </button>
+              <button
+                onClick={() => window.open('/api/contract-pdf', '_blank')}
+                disabled={!form.contract_terms?.trim()}
+                style={{
+                  flex: 1, background: form.contract_terms?.trim() ? 'rgba(217,119,6,.08)' : 'var(--surface)',
+                  border: `1.5px solid ${form.contract_terms?.trim() ? 'var(--amber)' : 'var(--border)'}`,
+                  borderRadius: 12, padding: '13px 0', fontSize: 13, fontWeight: 700,
+                  color: form.contract_terms?.trim() ? '#92400e' : 'var(--ash)',
+                  cursor: form.contract_terms?.trim() ? 'pointer' : 'not-allowed',
+                }}>
+                📄 Preview Contract
+              </button>
+            </div>
           </>
         )}
 

@@ -193,6 +193,33 @@ create policy "Users update own invoices"
 create policy "Users delete own invoices"
   on public.invoices for delete using (auth.uid() = user_id);
 
+alter table public.profiles
+  add column if not exists team_owner_id uuid references public.profiles(id) on delete set null,
+  add column if not exists member_role text;
+
+create table if not exists public.team_invitations (
+  id            uuid primary key default gen_random_uuid(),
+  owner_id      uuid not null references public.profiles(id) on delete cascade,
+  invitee_email text not null,
+  invitee_name  text,
+  role          text not null default 'estimator',
+  token         text not null unique default gen_random_uuid()::text,
+  status        text not null default 'pending',
+  created_at    timestamptz default now(),
+  expires_at    timestamptz default (now() + interval '7 days')
+);
+
+alter table public.team_invitations enable row level security;
+
+drop policy if exists "Owners manage own invitations"      on public.team_invitations;
+drop policy if exists "Public read pending invitation"     on public.team_invitations;
+
+create policy "Owners manage own invitations"
+  on public.team_invitations for all using (auth.uid() = owner_id);
+
+create policy "Public read pending invitation"
+  on public.team_invitations for select using (status = 'pending');
+
 insert into storage.buckets (id, name, public)
   values ('logos', 'logos', true)
   on conflict (id) do nothing;

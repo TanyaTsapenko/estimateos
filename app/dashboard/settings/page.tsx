@@ -93,21 +93,27 @@ export default function SettingsPage() {
         {saved && <div className="success-msg">✅ Settings saved</div>}
 
         {/* Quick links */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
           <button onClick={() => router.push('/dashboard/company')}
-            style={{ flex: 1, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+            style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ fontSize: 18, marginBottom: 3 }}>🏢</div>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Company Profile</div>
             <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Logo · Signature</div>
           </button>
+          <button onClick={() => router.push('/dashboard/team')}
+            style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+            <div style={{ fontSize: 18, marginBottom: 3 }}>👥</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Team</div>
+            <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Members · Invites</div>
+          </button>
           <button onClick={() => router.push('/dashboard/invoices')}
-            style={{ flex: 1, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+            style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ fontSize: 18, marginBottom: 3 }}>🧾</div>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Invoices</div>
             <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Billing history</div>
           </button>
           <button onClick={() => router.push('/dashboard/price-list')}
-            style={{ flex: 1, background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+            style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
             <div style={{ fontSize: 18, marginBottom: 3 }}>💰</div>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Price List</div>
             <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Opening types</div>

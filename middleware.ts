@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
-  const publicPaths = ['/auth', '/estimate']
+  const publicPaths = ['/auth', '/estimate', '/team/join']
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
   if (!user && !isPublic) {
@@ -38,5 +38,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/pdf|api/send-email).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/pdf|api/send-email|api/contract-pdf).*)'],
 }
