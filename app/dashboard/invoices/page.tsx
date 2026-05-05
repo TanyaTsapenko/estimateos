@@ -85,7 +85,7 @@ export default function InvoicesPage() {
                 <div className="ec-name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {inv.estimates?.client_name || 'Client'}
                   {inv.invoice_type === 'deposit' && (
-                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(217,119,6,.1)', color: '#b45309', padding: '2px 6px', borderRadius: 5 }}>DEPOSIT</span>
+                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(59,108,255,.1)', color: '#2045B8', padding: '2px 6px', borderRadius: 5 }}>DEPOSIT</span>
                   )}
                   {inv.invoice_type === 'final' && (
                     <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(22,163,74,.1)', color: '#15803d', padding: '2px 6px', borderRadius: 5 }}>FINAL</span>

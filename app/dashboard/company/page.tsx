@@ -144,7 +144,7 @@ export default function CompanyProfilePage() {
             </button>
             <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
           </div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: completion === 100 ? '#4ade80' : '#f59e0b' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: completion === 100 ? '#4ade80' : '#3B6CFF' }}>
             {completion}% complete
           </div>
         </div>
@@ -170,12 +170,12 @@ export default function CompanyProfilePage() {
             <div key={s.key}
               onClick={() => { setSection(s.key); setError(''); setSaved(false) }}
               style={{
-                background: section === s.key ? 'rgba(217,119,6,.08)' : '#fff',
+                background: section === s.key ? 'rgba(59,108,255,.08)' : '#fff',
                 border: `1.5px solid ${section === s.key ? 'var(--amber)' : 'var(--border)'}`,
                 borderRadius: 10, padding: '8px 4px', textAlign: 'center', cursor: 'pointer',
               }}>
               <div style={{ fontSize: 18, marginBottom: 2 }}>{s.icon}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: section === s.key ? '#92400e' : 'var(--ash)' }}>{s.label}</div>
+              <div style={{ fontSize: 9, fontWeight: 700, color: section === s.key ? '#2045B8' : 'var(--ash)' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -300,10 +300,10 @@ export default function CompanyProfilePage() {
                 onClick={() => window.open('/api/contract-pdf', '_blank')}
                 disabled={!form.contract_terms?.trim()}
                 style={{
-                  flex: 1, background: form.contract_terms?.trim() ? 'rgba(217,119,6,.08)' : 'var(--surface)',
+                  flex: 1, background: form.contract_terms?.trim() ? 'rgba(59,108,255,.08)' : 'var(--surface)',
                   border: `1.5px solid ${form.contract_terms?.trim() ? 'var(--amber)' : 'var(--border)'}`,
                   borderRadius: 12, padding: '13px 0', fontSize: 13, fontWeight: 700,
-                  color: form.contract_terms?.trim() ? '#92400e' : 'var(--ash)',
+                  color: form.contract_terms?.trim() ? '#2045B8' : 'var(--ash)',
                   cursor: form.contract_terms?.trim() ? 'pointer' : 'not-allowed',
                 }}>
                 📄 Preview Contract

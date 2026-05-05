@@ -114,7 +114,7 @@ export default function EstimatesPage() {
             </div>
             <div className="ec-bot">
               <div className="ec-tags">
-                {e.tier && <span className="badge" style={{ background: 'rgba(217,119,6,.1)', color: 'var(--amber)' }}>{e.tier.toUpperCase()}</span>}
+                {e.tier && <span className="badge" style={{ background: 'rgba(59,108,255,.1)', color: 'var(--amber)' }}>{e.tier.toUpperCase()}</span>}
                 <span className="badge" style={{ background: 'rgba(53,58,62,.08)', color: 'var(--graphite)' }}>W&D</span>
               </div>
               <div className="ec-amt">{fmtCAD(e.total || 0)}</div>

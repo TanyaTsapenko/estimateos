@@ -135,8 +135,8 @@ export default function JoinPage() {
           </div>
         </div>
 
-        <div style={{ background: 'rgba(217,119,6,.06)', border: '1.5px solid rgba(217,119,6,.2)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#b45309', marginBottom: 8 }}>Your Role</div>
+        <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2045B8', marginBottom: 8 }}>Your Role</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ fontSize: 28 }}>{role.icon}</div>
             <div>

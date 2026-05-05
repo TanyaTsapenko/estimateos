@@ -58,7 +58,7 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => router.push('/dashboard/estimates/new')}
-              style={{ background: 'rgba(217,119,6,.15)', border: '1px solid rgba(217,119,6,.3)', color: '#f59e0b', borderRadius: 10, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              style={{ background: 'rgba(59,108,255,.15)', border: '1px solid rgba(59,108,255,.3)', color: '#3B6CFF', borderRadius: 10, padding: '7px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               + New
             </button>
           </div>

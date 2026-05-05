@@ -144,11 +144,11 @@ export default function EstimateDetailPage() {
 
       <div className="dash-bg screen-enter">
         {/* Total card */}
-        <div style={{ background: 'linear-gradient(135deg,#1A1A1A,#353A3E)', borderRadius: 16, padding: 16, marginBottom: 12, color: '#fff' }}>
+        <div style={{ background: 'linear-gradient(135deg,#0A0E1A,#1A2744)', borderRadius: 16, padding: 16, marginBottom: 12, color: '#fff' }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', opacity: .5, marginBottom: 6 }}>
             {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Tier
           </div>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#f59e0b' }}>{fmtCAD(estimate.total)}</div>
+          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#3B6CFF' }}>{fmtCAD(estimate.total)}</div>
           <div style={{ fontSize: 11, opacity: .5, marginTop: 3 }}>inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}</div>
         </div>
 
@@ -214,8 +214,8 @@ export default function EstimateDetailPage() {
 
         {/* Deposit invoice summary */}
         {depositInvoice && (
-          <div style={{ background: 'rgba(217,119,6,.06)', border: '1.5px solid rgba(217,119,6,.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#b45309', marginBottom: 8 }}>Deposit Invoice</div>
+          <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2045B8', marginBottom: 8 }}>Deposit Invoice</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
               <span style={{ color: 'var(--ash)' }}>Deposit amount</span>
               <span style={{ fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(depositInvoice.amount)}</span>

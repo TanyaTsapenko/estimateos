@@ -45,9 +45,9 @@ export default function PriceListPage() {
               style={{
                 flex: 1, border: `1.5px solid ${tier === t.key ? 'var(--amber)' : 'var(--border)'}`,
                 borderRadius: 10, padding: '8px 6px', textAlign: 'center', cursor: 'pointer',
-                background: tier === t.key ? 'rgba(217,119,6,.06)' : '#fff', transition: 'all .15s',
+                background: tier === t.key ? 'rgba(59,108,255,.06)' : '#fff', transition: 'all .15s',
               }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: tier === t.key ? '#92400e' : 'var(--jet)' }}>{t.label}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: tier === t.key ? '#2045B8' : 'var(--jet)' }}>{t.label}</div>
               <div style={{ fontSize: 9, color: tier === t.key ? 'var(--amber)' : 'var(--ash)', marginTop: 2 }}>{t.desc}</div>
             </div>
           ))}

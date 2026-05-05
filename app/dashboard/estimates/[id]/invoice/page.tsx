@@ -109,7 +109,7 @@ export default function CreateInvoicePage() {
         {error && <div className="error-msg">{error}</div>}
 
         {/* Amount breakdown */}
-        <div style={{ background: 'linear-gradient(135deg,#1A1A1A,#353A3E)', borderRadius: 14, padding: 16, marginBottom: 16, color: '#fff' }}>
+        <div style={{ background: 'linear-gradient(135deg,#0A0E1A,#1A2744)', borderRadius: 14, padding: 16, marginBottom: 16, color: '#fff' }}>
           {isFinal ? (
             <>
               <div style={{ fontSize: 10, opacity: .5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Invoice breakdown</div>
@@ -122,13 +122,13 @@ export default function CreateInvoicePage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,.15)', paddingTop: 10 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, opacity: .7 }}>Remaining balance</span>
-                <span style={{ fontSize: 28, fontWeight: 800, color: '#f59e0b' }}>{fmtCAD(invoiceAmount)}</span>
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#3B6CFF' }}>{fmtCAD(invoiceAmount)}</span>
               </div>
             </>
           ) : (
             <>
               <div style={{ fontSize: 10, opacity: .5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>Invoice amount</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#f59e0b' }}>{fmtCAD(invoiceAmount)}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#3B6CFF' }}>{fmtCAD(invoiceAmount)}</div>
               <div style={{ fontSize: 11, opacity: .5, marginTop: 2 }}>from signed estimate {estimate.estimate_number}</div>
             </>
           )}

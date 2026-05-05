@@ -172,7 +172,7 @@ export default function ReportsPage() {
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jet)', textTransform: 'capitalize' }}>{tier}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <div style={{ fontSize: 11, color: 'var(--ash)' }}>{count} job{count !== 1 ? 's' : ''}</div>
-                      <span className="badge" style={{ background: 'rgba(217,119,6,.1)', color: 'var(--amber)' }}>
+                      <span className="badge" style={{ background: 'rgba(59,108,255,.1)', color: 'var(--amber)' }}>
                         {Math.round(count / signed.length * 100)}%
                       </span>
                     </div>

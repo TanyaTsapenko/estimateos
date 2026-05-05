@@ -127,10 +127,10 @@ export default function SettingsPage() {
             <div key={s.key}
               onClick={() => setActiveSection(activeSection === s.key ? null : s.key)}
               style={{
-                flex: 1, background: activeSection === s.key ? 'rgba(217,119,6,.08)' : '#fff',
+                flex: 1, background: activeSection === s.key ? 'rgba(59,108,255,.08)' : '#fff',
                 border: `1.5px solid ${activeSection === s.key ? 'var(--amber)' : 'var(--border)'}`,
                 borderRadius: 10, padding: '8px 6px', textAlign: 'center', cursor: 'pointer',
-                fontSize: 10, fontWeight: 700, color: activeSection === s.key ? '#92400e' : 'var(--ash)',
+                fontSize: 10, fontWeight: 700, color: activeSection === s.key ? '#2045B8' : 'var(--ash)',
               }}>
               <div style={{ fontSize: 16, marginBottom: 2 }}>{s.icon}</div>
               {s.label}
@@ -197,7 +197,7 @@ export default function SettingsPage() {
 
         {/* Subscription */}
         {activeSection === 'billing' && (
-          <div style={{ background: 'rgba(217,119,6,.06)', border: '1.5px solid rgba(217,119,6,.2)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
+          <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{form.plan || 'Pro'} Plan</div>

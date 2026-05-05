@@ -242,11 +242,11 @@ export default function TeamPage() {
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--jet)' }}>
                       {profile?.first_name} {profile?.last_name}
                     </div>
-                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(217,119,6,.1)', color: 'var(--amber)', padding: '2px 7px', borderRadius: 6 }}>YOU</span>
+                    <span style={{ fontSize: 8, fontWeight: 700, background: 'rgba(59,108,255,.1)', color: 'var(--amber)', padding: '2px 7px', borderRadius: 6 }}>YOU</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 2 }}>Owner · Full access</div>
                 </div>
-                <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(217,119,6,.1)', color: 'var(--amber)', padding: '3px 8px', borderRadius: 6 }}>Owner</span>
+                <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(59,108,255,.1)', color: 'var(--amber)', padding: '3px 8px', borderRadius: 6 }}>Owner</span>
               </div>
             </div>
 
@@ -305,19 +305,19 @@ export default function TeamPage() {
               <>
                 <div className="sl">Pending Invite ({invitations.length})</div>
                 {invitations.map(inv => (
-                  <div key={inv.id} style={{ background: 'rgba(217,119,6,.06)', border: '1px solid rgba(217,119,6,.2)', borderRadius: 14, padding: 14, marginBottom: 8 }}>
+                  <div key={inv.id} style={{ background: 'rgba(59,108,255,.06)', border: '1px solid rgba(59,108,255,.2)', borderRadius: 14, padding: 14, marginBottom: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(217,119,6,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--amber)', flexShrink: 0 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(59,108,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: 'var(--amber)', flexShrink: 0 }}>
                         {(inv.invitee_name || inv.invitee_email)[0]?.toUpperCase()}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>{inv.invitee_name || inv.invitee_email}</div>
-                        <div style={{ fontSize: 11, color: '#b45309', marginTop: 1 }}>{inv.invitee_email}</div>
-                        <div style={{ fontSize: 10, color: 'rgba(217,119,6,.6)', marginTop: 2 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#2045B8' }}>{inv.invitee_name || inv.invitee_email}</div>
+                        <div style={{ fontSize: 11, color: '#2045B8', marginTop: 1 }}>{inv.invitee_email}</div>
+                        <div style={{ fontSize: 10, color: 'rgba(59,108,255,.6)', marginTop: 2 }}>
                           Sent {new Date(inv.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {ROLES.find(r => r.key === inv.role)?.label || inv.role}
                         </div>
                       </div>
-                      <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(217,119,6,.15)', color: 'var(--amber)', padding: '3px 8px', borderRadius: 6 }}>Pending</span>
+                      <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(59,108,255,.15)', color: 'var(--amber)', padding: '3px 8px', borderRadius: 6 }}>Pending</span>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => cancelInvite(inv.id)}
@@ -357,7 +357,7 @@ export default function TeamPage() {
 
             {/* Upgrade promo */}
             {plan !== 'team' && (
-              <div style={{ background: 'linear-gradient(135deg,#1A1A1A,#353A3E)', borderRadius: 14, padding: 16, marginTop: 4 }}>
+              <div style={{ background: 'linear-gradient(135deg,#0A0E1A,#1A2744)', borderRadius: 14, padding: 16, marginTop: 4 }}>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginBottom: 6 }}>Need more seats?</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', marginBottom: 4 }}>Upgrade to Team</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.4)', marginBottom: 12 }}>Unlimited members · CA$299/mo</div>

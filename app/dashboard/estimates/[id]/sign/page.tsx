@@ -190,7 +190,7 @@ export default function SignPage() {
             </button>
             <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
           </div>
-          <div style={{ background: 'rgba(217,119,6,.15)', border: '1px solid rgba(217,119,6,.3)', color: '#f59e0b', borderRadius: 8, padding: '4px 10px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em' }}>
+          <div style={{ background: 'rgba(59,108,255,.15)', border: '1px solid rgba(59,108,255,.3)', color: '#3B6CFF', borderRadius: 8, padding: '4px 10px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em' }}>
             CONTRACTOR VIEW
           </div>
         </div>
