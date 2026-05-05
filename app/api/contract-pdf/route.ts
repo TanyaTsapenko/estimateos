@@ -32,12 +32,12 @@ export async function GET() {
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;padding:48px 56px;max-width:780px;margin:0 auto}
-  .print-bar{background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:10px 16px;margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#92400E;font-weight:600}
-  .print-bar button{background:#D97706;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .print-bar{background:#EEF2FF;border:1px solid #c7d2fe;border-radius:8px;padding:10px 16px;margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#2045B8;font-weight:600}
+  .print-bar button{background:#3B6CFF;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
   .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:24px;border-bottom:2px solid #E0E0E0;margin-bottom:32px}
   .logo-img{max-height:64px;max-width:160px;object-fit:contain}
   .logo-text{font-size:20px;font-weight:800;color:#1A1A1A}
-  .logo-text span{color:#D97706}
+  .logo-text span{color:#3B6CFF}
   .company-meta{font-size:11px;color:#6b7280;line-height:1.7;margin-top:4px}
   .doc-info{text-align:right}
   .doc-title{font-size:22px;font-weight:800;color:#1A1A1A;letter-spacing:-.02em}
