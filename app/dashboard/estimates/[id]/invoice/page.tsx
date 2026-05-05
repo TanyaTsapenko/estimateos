@@ -109,27 +109,27 @@ export default function CreateInvoicePage() {
         {error && <div className="error-msg">{error}</div>}
 
         {/* Amount breakdown */}
-        <div style={{ background: 'linear-gradient(135deg,#0A0E1A,#1A2744)', borderRadius: 14, padding: 16, marginBottom: 16, color: '#fff' }}>
+        <div style={{ background: '#F4F5F7', border: '1.5px solid #1A2744', borderRadius: 14, padding: 16, marginBottom: 16 }}>
           {isFinal ? (
             <>
-              <div style={{ fontSize: 10, opacity: .5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Invoice breakdown</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, opacity: .6 }}>
+              <div style={{ fontSize: 10, color: '#999', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Invoice breakdown</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: '#999' }}>
                 <span>Project total</span><span>{fmtCAD(estimate.total)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 10, opacity: .6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 10, color: '#999' }}>
                 <span>Deposit paid ({depositInvoice!.status === 'paid' ? '✅' : '⏳'})</span>
                 <span>− {fmtCAD(depositInvoice!.amount)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,.15)', paddingTop: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, opacity: .7 }}>Remaining balance</span>
-                <span style={{ fontSize: 28, fontWeight: 800, color: '#3B6CFF' }}>{fmtCAD(invoiceAmount)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1.5px solid #1A2744', paddingTop: 10 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#999' }}>Remaining balance</span>
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#2045B8' }}>{fmtCAD(invoiceAmount)}</span>
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 10, opacity: .5, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>Invoice amount</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#3B6CFF' }}>{fmtCAD(invoiceAmount)}</div>
-              <div style={{ fontSize: 11, opacity: .5, marginTop: 2 }}>from signed estimate {estimate.estimate_number}</div>
+              <div style={{ fontSize: 10, color: '#999', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>Invoice amount</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#2045B8' }}>{fmtCAD(invoiceAmount)}</div>
+              <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>from signed estimate {estimate.estimate_number}</div>
             </>
           )}
         </div>
