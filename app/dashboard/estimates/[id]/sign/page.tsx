@@ -166,11 +166,11 @@ export default function SignPage() {
           {estimate.client_name} has signed {estimate.estimate_number} for <strong>{fmtCAD(estimate.total)}</strong>.
           {estimate.client_email ? ' A confirmation has been sent to their email.' : ''}
         </div>
-        <button className="btn-next" style={{ maxWidth: 280, marginBottom: 12 }}
+        <button className="btn-next" style={{ width: 280, flex: 'none', marginBottom: 12 }}
           onClick={() => router.push(`/dashboard/estimates/${id}`)}>
           View Estimate →
         </button>
-        <button className="btn-back" style={{ maxWidth: 280 }}
+        <button className="btn-back" style={{ width: 280, flex: 'none' }}
           onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
           Create Invoice →
         </button>
