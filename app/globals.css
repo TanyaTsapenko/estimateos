@@ -24,6 +24,10 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
 .app { max-width: 390px; margin: 0 auto; min-height: 100vh; position: relative; }
 
+@media (min-width: 1024px) {
+  .app { max-width: none; margin: 0; }
+}
+
 /* ── HEADER ── */
 .gh {
   background: linear-gradient(150deg, #0A0E1A 0%, #0D1630 40%, #1A2744 100%);
