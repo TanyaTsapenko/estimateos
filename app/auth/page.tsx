@@ -35,6 +35,15 @@ export default function AuthPage() {
     router.push('/dashboard')
   }
 
+  async function handleOAuth(provider: 'google' | 'apple') {
+    setError(''); setLoading(true)
+    const { error: e } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (e) { setError(e.message); setLoading(false) }
+  }
+
   async function handleRegister() {
     setError('')
     if (!firstName.trim()) return setError('First name is required')
@@ -118,8 +127,8 @@ export default function AuthPage() {
           {loading ? 'Signing in...' : 'Sign In →'}
         </button>
         <div className="divider"><span>or continue with</span></div>
-        <button className="social-btn">🍎 Continue with Apple</button>
-        <button className="social-btn">🔵 Continue with Google</button>
+        <button className="social-btn" onClick={() => handleOAuth('apple')} disabled={loading}>Continue with Apple</button>
+        <button className="social-btn" onClick={() => handleOAuth('google')} disabled={loading}>Continue with Google</button>
         <div className="login-link">
           Don&apos;t have an account? <span onClick={() => go('register')}>Sign up free</span>
         </div>
@@ -175,8 +184,8 @@ export default function AuthPage() {
           {loading ? 'Creating account...' : 'Create Account →'}
         </button>
         <div className="divider"><span>or continue with</span></div>
-        <button className="social-btn">🍎 Continue with Apple</button>
-        <button className="social-btn">🔵 Continue with Google</button>
+        <button className="social-btn" onClick={() => handleOAuth('apple')} disabled={loading}>Continue with Apple</button>
+        <button className="social-btn" onClick={() => handleOAuth('google')} disabled={loading}>Continue with Google</button>
         <div className="login-link">
           Already have an account? <span onClick={() => go('login')}>Sign in</span>
         </div>
