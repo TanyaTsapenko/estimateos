@@ -216,7 +216,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 @media (min-width: 422px) {
   .bot-nav { left: calc(50% - 179px); right: auto; width: 358px; }
 }
-.ni { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 14px; cursor: pointer; border-radius: 20px; transition: background .15s; }
+.ni { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 10px; cursor: pointer; border-radius: 20px; transition: background .15s; }
 .ni:active { background: rgba(59,108,255,.06); }
 .ni-ic { font-size: 19px; }
 .ni-lb { font-size: 8px; font-weight: 600; color: var(--ash); white-space: nowrap; }

@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 
 // ─── TYPES ───────────────────────────────────
@@ -25,17 +26,24 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
 }
 
 // ─── MAIN COMPONENT ──────────────────────────
-export default function NewEstimatePage() {
+function NewEstimateForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const [step, setStep] = useState(1)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // Appointment pre-fill
+  const apptId = searchParams.get('appt') || ''
+
   // Step 1 — Client info
   const [client, setClient] = useState<ClientInfo>({
-    client_name: '', client_email: '', client_phone: '',
-    client_address: '', client_city: '', client_province: 'AB',
+    client_name: searchParams.get('name') || '',
+    client_email: '',
+    client_phone: searchParams.get('phone') || '',
+    client_address: searchParams.get('address') || '',
+    client_city: '', client_province: 'AB',
     scope_notes: '',
   })
 
@@ -168,6 +176,13 @@ export default function NewEstimatePage() {
 
     const { error: opErr } = await supabase.from('estimate_openings').insert(rows)
     if (opErr) { setError(opErr.message); setSaving(false); return }
+
+    // Link back to appointment if created from one
+    if (apptId) {
+      await supabase.from('appointments')
+        .update({ estimate_id: est.id, status: 'completed' })
+        .eq('id', apptId)
+    }
 
     router.push(`/dashboard/estimates/${est.id}`)
   }
@@ -511,5 +526,13 @@ export default function NewEstimatePage() {
         }
       </div>
     </div>
+  )
+}
+
+export default function NewEstimatePage() {
+  return (
+    <Suspense fallback={null}>
+      <NewEstimateForm />
+    </Suspense>
   )
 }
