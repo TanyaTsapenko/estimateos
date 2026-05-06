@@ -129,7 +129,9 @@ export async function GET(request: NextRequest) {
     </table>
     <div class="totals">
       <div class="t-row"><span>Subtotal</span><span>${fmtCAD(est.subtotal)}</span></div>
+      ${est.discount_amount > 0 ? `<div class="t-row" style="color:#16a34a"><span>Discount${est.discount_type === 'percent' ? ` (${est.discount_value}%)` : ''}</span><span>−${fmtCAD(est.discount_amount)}</span></div>` : ''}
       <div class="t-row"><span>${taxLabel}</span><span>${fmtCAD(est.tax_amount)}</span></div>
+      ${est.payment_method ? `<div class="t-row"><span>Payment</span><span>${est.payment_method}</span></div>` : ''}
       <div class="t-total">
         <span class="t-total-label">Total</span>
         <span class="t-total-val">${fmtCAD(est.total)}</span>

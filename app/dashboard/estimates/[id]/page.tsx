@@ -12,6 +12,8 @@ interface Estimate {
   client_phone: string | null; client_address: string | null; client_city: string | null
   client_province: string | null; scope_notes: string | null; status: string
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
+  discount_type: string | null; discount_value: number | null; discount_amount: number
+  payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
   sent_method: string | null; created_at: string
 }
@@ -168,9 +170,15 @@ export default function EstimateDetailPage() {
             </div>
           )}
           {estimate.client_address && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
               <span style={{ color: 'var(--ash)' }}>Address</span>
               <span style={{ fontWeight: 500, color: 'var(--jet)', textAlign: 'right' }}>{estimate.client_address}{estimate.client_city ? `, ${estimate.client_city}` : ''}</span>
+            </div>
+          )}
+          {estimate.payment_method && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+              <span style={{ color: 'var(--ash)' }}>Payment</span>
+              <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.payment_method}</span>
             </div>
           )}
         </div>
@@ -192,6 +200,12 @@ export default function EstimateDetailPage() {
         {/* Price breakdown */}
         <div className="sum-box" style={{ marginTop: 12 }}>
           <div className="sum-row"><span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span></div>
+          {estimate.discount_amount > 0 && (
+            <div className="sum-row" style={{ color: '#16a34a' }}>
+              <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+              <span>−{fmtCAD(estimate.discount_amount)}</span>
+            </div>
+          )}
           <div className="sum-row"><span>{taxLabel}</span><span>{fmtCAD(estimate.tax_amount)}</span></div>
           <div className="sum-total">
             <span className="sum-total-l">Total</span>

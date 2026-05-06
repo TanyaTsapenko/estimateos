@@ -50,6 +50,9 @@ export default function NewEstimatePage() {
   // Step 4 — Summary / save
   const [profile, setProfile] = useState<{ province: string } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
+  const [discountValue, setDiscountValue] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('')
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -80,8 +83,14 @@ export default function NewEstimatePage() {
   const province = client.client_province || profile?.province || 'AB'
   const [taxRate, taxLabel] = TAX_RATES[province] || [0.05, 'GST (5%)']
   const subtotal = openings.reduce((s, op) => s + opCost(op, mult, customPrices), 0)
-  const taxAmount = subtotal * taxRate
-  const total = subtotal + taxAmount
+  const discountAmt = discountValue
+    ? discountType === 'percent'
+      ? subtotal * (Math.min(parseFloat(discountValue) || 0, 100) / 100)
+      : Math.min(parseFloat(discountValue) || 0, subtotal)
+    : 0
+  const afterDiscount = subtotal - discountAmt
+  const taxAmount = afterDiscount * taxRate
+  const total = afterDiscount + taxAmount
 
   // ─── OPENING HELPERS ───
   function addOpening() {
@@ -130,6 +139,10 @@ export default function NewEstimatePage() {
       status: 'draft',
       tier,
       subtotal: Math.round(subtotal * 100) / 100,
+      discount_type: discountAmt > 0 ? discountType : null,
+      discount_value: discountAmt > 0 ? parseFloat(discountValue) : null,
+      discount_amount: Math.round(discountAmt * 100) / 100,
+      payment_method: paymentMethod || null,
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
@@ -387,7 +400,7 @@ export default function NewEstimatePage() {
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
                 {client.client_name} — {client.client_city || 'N/A'}
               </div>
-              {openings.map((op, i) => (
+              {openings.map((op) => (
                 <div key={op.id} className="sum-row">
                   <span>{OPENING_TYPES[op.type]?.name} × {op.qty}</span>
                   <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
@@ -397,6 +410,12 @@ export default function NewEstimatePage() {
                 <span>Subtotal ({tier.charAt(0).toUpperCase() + tier.slice(1)})</span>
                 <span>{fmtCAD(subtotal)}</span>
               </div>
+              {discountAmt > 0 && (
+                <div className="sum-row" style={{ color: '#16a34a' }}>
+                  <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
+                  <span>−{fmtCAD(discountAmt)}</span>
+                </div>
+              )}
               <div className="sum-row">
                 <span>{taxLabel}</span>
                 <span>{fmtCAD(taxAmount)}</span>
@@ -404,6 +423,46 @@ export default function NewEstimatePage() {
               <div className="sum-total">
                 <span className="sum-total-l">Total</span>
                 <span className="sum-total-v">{fmtCAD(total)}</span>
+              </div>
+            </div>
+
+            {/* Discount */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 8 }}>Discount (optional)</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', borderRadius: 8, border: '1.5px solid var(--border)', overflow: 'hidden', flexShrink: 0 }}>
+                  <button onClick={() => setDiscountType('fixed')}
+                    style={{ padding: '9px 14px', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      background: discountType === 'fixed' ? '#2045B8' : 'var(--surface)',
+                      color: discountType === 'fixed' ? '#fff' : 'var(--ash)' }}>
+                    $
+                  </button>
+                  <button onClick={() => setDiscountType('percent')}
+                    style={{ padding: '9px 14px', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      background: discountType === 'percent' ? '#2045B8' : 'var(--surface)',
+                      color: discountType === 'percent' ? '#fff' : 'var(--ash)' }}>
+                    %
+                  </button>
+                </div>
+                <input type="number" min="0" placeholder={discountType === 'fixed' ? '0.00' : '0'}
+                  value={discountValue} onChange={e => setDiscountValue(e.target.value)}
+                  style={{ flex: 1, background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 14, color: 'var(--jet)', outline: 'none', fontFamily: 'inherit' }} />
+              </div>
+            </div>
+
+            {/* Payment method */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 8 }}>Payment Method (optional)</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {['Cash', 'E-transfer', 'Cheque', 'Financing'].map(m => (
+                  <button key={m} onClick={() => setPaymentMethod(paymentMethod === m ? '' : m)}
+                    style={{ padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1.5px solid', cursor: 'pointer', fontFamily: 'inherit',
+                      borderColor: paymentMethod === m ? '#2045B8' : 'var(--border)',
+                      background: paymentMethod === m ? 'rgba(32,69,184,.1)' : 'var(--surface)',
+                      color: paymentMethod === m ? '#2045B8' : 'var(--ash)' }}>
+                    {m}
+                  </button>
+                ))}
               </div>
             </div>
 
