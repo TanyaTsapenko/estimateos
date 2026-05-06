@@ -8,6 +8,7 @@ const ALL_ITEMS = [
   { path: '/dashboard',              label: 'Dashboard',    icon: '🏠', exact: true,  ownerOnly: false },
   { path: '/dashboard/estimates',    label: 'Estimates',    icon: '📋', exact: false, ownerOnly: false },
   { path: '/dashboard/appointments', label: 'Appointments', icon: '📅', exact: false, ownerOnly: false },
+  { path: '/dashboard/clients',      label: 'Clients',      icon: '👤', exact: false, ownerOnly: false },
   { path: '/dashboard/reports',      label: 'Reports',      icon: '📊', exact: false, ownerOnly: true  },
   { path: '/dashboard/invoices',     label: 'Invoices',     icon: '🧾', exact: false, ownerOnly: true  },
   { path: '/dashboard/settings',     label: 'Settings',     icon: '⚙️', exact: false, ownerOnly: true  },

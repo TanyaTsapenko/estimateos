@@ -120,6 +120,101 @@ export default function EstimateDetailPage() {
 
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
 
+  // ── SHARED SUB-COMPONENTS ──────────────────
+
+  const TotalCard = () => (
+    <div style={{ background: '#F4F5F7', border: '1.5px solid #1A2744', borderRadius: 16, padding: 16, marginBottom: 12 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#999', marginBottom: 6 }}>
+        {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Tier
+      </div>
+      <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
+      <div style={{ fontSize: 11, color: '#999', marginTop: 3 }}>inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}</div>
+    </div>
+  )
+
+  const ClientCard = () => (
+    <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid var(--border-light)' }}>
+      {estimate.client_email && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+          <span style={{ color: 'var(--ash)' }}>Email</span>
+          <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.client_email}</span>
+        </div>
+      )}
+      {estimate.client_phone && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
+          <span style={{ color: 'var(--ash)' }}>Phone</span>
+          <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.client_phone}</span>
+        </div>
+      )}
+      {estimate.client_address && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: estimate.payment_method ? 6 : 0 }}>
+          <span style={{ color: 'var(--ash)' }}>Address</span>
+          <span style={{ fontWeight: 500, color: 'var(--jet)', textAlign: 'right' }}>{estimate.client_address}{estimate.client_city ? `, ${estimate.client_city}` : ''}</span>
+        </div>
+      )}
+      {estimate.payment_method && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+          <span style={{ color: 'var(--ash)' }}>Payment</span>
+          <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.payment_method}</span>
+        </div>
+      )}
+    </div>
+  )
+
+  const OpeningsList = () => (
+    <>
+      {openings.map(op => (
+        <div key={op.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--border-light)' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jet)' }}>
+              {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+            </div>
+            {(op.width_in || op.height_in) && (
+              <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.width_in}" × {op.height_in}"</div>
+            )}
+            {op.room && <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.room}</div>}
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(op.total_cost)}</div>
+        </div>
+      ))}
+    </>
+  )
+
+  const PriceBreakdown = () => (
+    <div className="sum-box" style={{ marginTop: 12 }}>
+      <div className="sum-row"><span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span></div>
+      {estimate.discount_amount > 0 && (
+        <div className="sum-row" style={{ color: '#16a34a' }}>
+          <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+          <span>−{fmtCAD(estimate.discount_amount)}</span>
+        </div>
+      )}
+      <div className="sum-row"><span>{taxLabel}</span><span>{fmtCAD(estimate.tax_amount)}</span></div>
+      <div className="sum-total">
+        <span className="sum-total-l">Total</span>
+        <span className="sum-total-v">{fmtCAD(estimate.total)}</span>
+      </div>
+    </div>
+  )
+
+  const DepositBlock = () => depositInvoice ? (
+    <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2045B8', marginBottom: 8 }}>Deposit Invoice</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+        <span style={{ color: 'var(--ash)' }}>Deposit amount</span>
+        <span style={{ fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(depositInvoice.amount)}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+        <span style={{ color: 'var(--ash)' }}>Remaining balance</span>
+        <span style={{ fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(estimate.total - depositInvoice.amount)}</span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+        <span style={{ color: 'var(--ash)' }}>Deposit status</span>
+        <span style={{ fontWeight: 700, color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563eb', textTransform: 'capitalize' }}>{depositInvoice.status}</span>
+      </div>
+    </div>
+  ) : null
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Header */}
@@ -146,77 +241,85 @@ export default function EstimateDetailPage() {
         </div>
       </div>
 
-      <div className="dash-bg screen-enter">
-        {/* Total card */}
-        <div style={{ background: '#F4F5F7', border: '1.5px solid #1A2744', borderRadius: 16, padding: 16, marginBottom: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#999', marginBottom: 6 }}>
-            {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Tier
-          </div>
-          <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
-          <div style={{ fontSize: 11, color: '#999', marginTop: 3 }}>inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}</div>
-        </div>
+      {/* ── DESKTOP STICKY ACTION BAR ── */}
+      <div className="action-bar desktop-only">
+        <button className="action-bar-btn" onClick={() => router.push('/dashboard/estimates')}>
+          ← Estimates
+        </button>
+        <div className="action-bar-sep" />
+        {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
+          <button className="action-bar-btn primary" onClick={sendByEmail} disabled={sending}>
+            📧 {sending ? 'Sending…' : 'Email client'}
+          </button>
+        )}
+        <button className="action-bar-btn primary" onClick={copyLink}>
+          🔗 Copy link
+        </button>
+        {estimate.status !== 'signed' && (
+          <button className="action-bar-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
+            ✍️ Sign in-person
+          </button>
+        )}
+        {estimate.status === 'signed' && (
+          <button className="action-bar-btn primary" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
+            🧾 {depositInvoice ? 'Create final invoice' : 'Create invoice'}
+          </button>
+        )}
+        <button className="action-bar-btn" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>
+          📄 PDF
+        </button>
+        <div className="action-bar-sep" />
+        <button className="action-bar-btn danger" onClick={deleteEstimate}>
+          Delete
+        </button>
+      </div>
 
-        {/* Client info */}
-        <div className="sl">Client details</div>
-        <div style={{ background: 'var(--surface)', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid var(--border-light)' }}>
-          {estimate.client_email && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-              <span style={{ color: 'var(--ash)' }}>Email</span>
-              <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.client_email}</span>
-            </div>
-          )}
-          {estimate.client_phone && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-              <span style={{ color: 'var(--ash)' }}>Phone</span>
-              <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.client_phone}</span>
-            </div>
-          )}
-          {estimate.client_address && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-              <span style={{ color: 'var(--ash)' }}>Address</span>
-              <span style={{ fontWeight: 500, color: 'var(--jet)', textAlign: 'right' }}>{estimate.client_address}{estimate.client_city ? `, ${estimate.client_city}` : ''}</span>
-            </div>
-          )}
-          {estimate.payment_method && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: 'var(--ash)' }}>Payment</span>
-              <span style={{ fontWeight: 500, color: 'var(--jet)' }}>{estimate.payment_method}</span>
-            </div>
-          )}
-        </div>
+      {/* ── DESKTOP TWO-COL CONTENT ── */}
+      <div className="dash-bg screen-enter desktop-only">
+        <div className="est-detail-2col">
+          {/* Left: client + estimate info */}
+          <div>
+            <TotalCard />
 
-        {/* Openings */}
-        <div className="sl">Openings ({openings.length})</div>
-        {openings.map(op => (
-          <div key={op.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--border-light)' }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jet)' }}>
-                {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+            <div className="sl">Client details</div>
+            <ClientCard />
+
+            {estimate.scope_notes && (
+              <>
+                <div className="sl">Scope of work</div>
+                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7, marginBottom: 12 }}>{estimate.scope_notes}</div>
+              </>
+            )}
+
+            {estimate.status === 'signed' && estimate.signed_at && (
+              <div className="success-msg">
+                ✅ Signed on {new Date(estimate.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}
               </div>
-              {(op.width_in || op.height_in) && (
-                <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.width_in}" × {op.height_in}"</div>
-              )}
-              {op.room && <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.room}</div>}
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(op.total_cost)}</div>
-          </div>
-        ))}
+            )}
 
-        {/* Price breakdown */}
-        <div className="sum-box" style={{ marginTop: 12 }}>
-          <div className="sum-row"><span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span></div>
-          {estimate.discount_amount > 0 && (
-            <div className="sum-row" style={{ color: '#16a34a' }}>
-              <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-              <span>−{fmtCAD(estimate.discount_amount)}</span>
-            </div>
-          )}
-          <div className="sum-row"><span>{taxLabel}</span><span>{fmtCAD(estimate.tax_amount)}</span></div>
-          <div className="sum-total">
-            <span className="sum-total-l">Total</span>
-            <span className="sum-total-v">{fmtCAD(estimate.total)}</span>
+            <DepositBlock />
+          </div>
+
+          {/* Right: openings + pricing */}
+          <div>
+            <div className="sl">Openings ({openings.length})</div>
+            <OpeningsList />
+            <PriceBreakdown />
           </div>
         </div>
+      </div>
+
+      {/* ── MOBILE LAYOUT ── */}
+      <div className="dash-bg screen-enter mobile-only">
+        <TotalCard />
+
+        <div className="sl">Client details</div>
+        <ClientCard />
+
+        <div className="sl">Openings ({openings.length})</div>
+        <OpeningsList />
+
+        <PriceBreakdown />
 
         {estimate.scope_notes && (
           <>
@@ -231,26 +334,8 @@ export default function EstimateDetailPage() {
           </div>
         )}
 
-        {/* Deposit invoice summary */}
-        {depositInvoice && (
-          <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2045B8', marginBottom: 8 }}>Deposit Invoice</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-              <span style={{ color: 'var(--ash)' }}>Deposit amount</span>
-              <span style={{ fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(depositInvoice.amount)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
-              <span style={{ color: 'var(--ash)' }}>Remaining balance</span>
-              <span style={{ fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(estimate.total - depositInvoice.amount)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-              <span style={{ color: 'var(--ash)' }}>Deposit status</span>
-              <span style={{ fontWeight: 700, color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563eb', textTransform: 'capitalize' }}>{depositInvoice.status}</span>
-            </div>
-          </div>
-        )}
+        <DepositBlock />
 
-        {/* Action buttons */}
         <div className="sl">Actions</div>
         {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
           <button className="send-btn" onClick={sendByEmail} disabled={sending}>
@@ -259,13 +344,11 @@ export default function EstimateDetailPage() {
           </button>
         )}
         <button className="send-btn" onClick={copyLink}>
-          <span>🔗</span>
-          <span>Copy client link (view &amp; sign)</span>
+          <span>🔗</span><span>Copy client link (view &amp; sign)</span>
         </button>
         {estimate.status !== 'signed' && (
           <button className="send-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
-            <span>✍️</span>
-            <span>Sign in-person (hand phone to client)</span>
+            <span>✍️</span><span>Sign in-person (hand phone to client)</span>
           </button>
         )}
         {estimate.status === 'signed' && (
@@ -279,8 +362,7 @@ export default function EstimateDetailPage() {
           </button>
         )}
         <button className="send-btn" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>
-          <span>📄</span>
-          <span>Download PDF</span>
+          <span>📄</span><span>Download PDF</span>
         </button>
         <button onClick={deleteEstimate}
           style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 600, padding: '10px 0', cursor: 'pointer', marginTop: 4 }}>
