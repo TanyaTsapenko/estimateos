@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 
-interface Estimate { id: string; estimate_number: string; client_name: string | null; total: number; status: string }
+interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string }
 interface DepositInvoice { id: string; amount: number; status: string }
 
 export default function CreateInvoicePage() {
@@ -22,7 +22,7 @@ export default function CreateInvoicePage() {
   useEffect(() => {
     async function load() {
       const [{ data: est }, { data: dep }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, total, status').eq('id', id).single(),
+        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single(),
       ])
       setEstimate(est)

@@ -44,9 +44,19 @@ export interface Opening {
   screen: number
 }
 
-export function opCost(op: Opening, mult: number): number {
-  const t = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
-  const sz = op.width === 'sm' ? 0.85 : op.width === 'lg' ? 1.2 : op.width === 'xl' ? 1.4 : 1.0
+export const DEFAULT_SIZE_MULTS = { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 }
+
+export interface CustomPrices {
+  sizes: { sm: number; md: number; lg: number; xl: number }
+  types: Record<string, { base: number; lab: number }>
+}
+
+export function opCost(op: Opening, mult: number, custom?: CustomPrices): number {
+  const defaults = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
+  const base = custom?.types[op.type]?.base ?? defaults.base
+  const lab  = custom?.types[op.type]?.lab  ?? defaults.lab
+  const sizes = custom?.sizes ?? DEFAULT_SIZE_MULTS
+  const sz = op.width === 'sm' ? sizes.sm : op.width === 'lg' ? sizes.lg : op.width === 'xl' ? sizes.xl : sizes.md
   const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
   const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
   const ia = op.install === 'fullframe' ? 200 : 0
@@ -54,7 +64,7 @@ export function opCost(op: Opening, mult: number): number {
   const col = op.colour === 'black' || op.colour === 'grey' ? 80 : op.colour === 'custom' ? 150 : 0
   const gl = op.glass === 'lowe' ? 60 : op.glass === 'frosted' ? 90 : op.glass === 'tinted' ? 70 : op.glass === 'tempered' ? 110 : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
-  return ((t.base + t.lab) * sz * sh + fa + ia + fc + col + gl + ex) * mult * (op.qty || 1)
+  return ((base + lab) * sz * sh + fa + ia + fc + col + gl + ex) * mult * (op.qty || 1)
 }
 
 export function fmtCAD(n: number): string {

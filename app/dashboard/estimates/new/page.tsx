@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening } from '@/lib/pricing'
+import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening, type CustomPrices } from '@/lib/pricing'
 
 // ─── TYPES ───────────────────────────────────
 interface ClientInfo {
@@ -49,12 +49,29 @@ export default function NewEstimatePage() {
 
   // Step 4 — Summary / save
   const [profile, setProfile] = useState<{ province: string } | null>(null)
+  const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      supabase.from('profiles').select('province').eq('id', user.id).single()
-        .then(({ data }) => { if (data) setProfile(data) })
+      const [{ data: prof }, { data: priceRows }] = await Promise.all([
+        supabase.from('profiles').select('province').eq('id', user.id).single(),
+        supabase.from('price_lists').select('*').eq('user_id', user.id),
+      ])
+      if (prof) setProfile(prof)
+      if (priceRows && priceRows.length > 0) {
+        const sizesRow = priceRows.find((r: any) => r.opening_type === '_sizes')
+        const types: Record<string, { base: number; lab: number }> = {}
+        priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
+          types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
+        })
+        setCustomPrices({
+          sizes: sizesRow
+            ? { sm: sizesRow.sz_sm, md: sizesRow.sz_md, lg: sizesRow.sz_lg, xl: sizesRow.sz_xl }
+            : { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 },
+          types,
+        })
+      }
     })
   }, [])
 
@@ -62,7 +79,7 @@ export default function NewEstimatePage() {
   const mult = TIERS.find(t => t.key === tier)?.mult || 1.2
   const province = client.client_province || profile?.province || 'AB'
   const [taxRate, taxLabel] = TAX_RATES[province] || [0.05, 'GST (5%)']
-  const subtotal = openings.reduce((s, op) => s + opCost(op, mult), 0)
+  const subtotal = openings.reduce((s, op) => s + opCost(op, mult, customPrices), 0)
   const taxAmount = subtotal * taxRate
   const total = subtotal + taxAmount
 
@@ -128,8 +145,8 @@ export default function NewEstimatePage() {
       colour: op.colour, glass: op.glass, frame: op.frame,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom, screen: op.screen,
-      unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult) * 100) / 100,
-      total_cost: Math.round(opCost(op, mult) * 100) / 100,
+      unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices) * 100) / 100,
+      total_cost: Math.round(opCost(op, mult, customPrices) * 100) / 100,
       sort_order: i,
     }))
 
@@ -244,7 +261,7 @@ export default function NewEstimatePage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
-                      {fmtCAD(opCost(op, 1.0))}
+                      {fmtCAD(opCost(op, 1.0, customPrices))}
                     </div>
                     {openings.length > 1 && (
                       <button onClick={() => removeOpening(op.id)}
@@ -373,7 +390,7 @@ export default function NewEstimatePage() {
               {openings.map((op, i) => (
                 <div key={op.id} className="sum-row">
                   <span>{OPENING_TYPES[op.type]?.name} × {op.qty}</span>
-                  <span>{fmtCAD(opCost(op, mult))}</span>
+                  <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
                 </div>
               ))}
               <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
