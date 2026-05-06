@@ -23,6 +23,10 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [activeSection, setActiveSection] = useState<string | null>('company')
+  const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwError, setPwError] = useState('')
+  const [pwSaved, setPwSaved] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -52,9 +56,27 @@ export default function SettingsPage() {
     router.push('/auth')
   }
 
+  async function changePassword() {
+    setPwError(''); setPwSaved(false)
+    if (!pwForm.current) return setPwError('Current password is required')
+    if (pwForm.next.length < 8) return setPwError('New password must be at least 8 characters')
+    if (pwForm.next !== pwForm.confirm) return setPwError('New passwords do not match')
+    setPwSaving(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) { setPwError('Could not get user'); setPwSaving(false); return }
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: user.email, password: pwForm.current })
+    if (signInErr) { setPwError('Current password is incorrect'); setPwSaving(false); return }
+    const { error: updateErr } = await supabase.auth.updateUser({ password: pwForm.next })
+    if (updateErr) { setPwError(updateErr.message); setPwSaving(false); return }
+    setPwSaved(true); setPwSaving(false)
+    setPwForm({ current: '', next: '', confirm: '' })
+    setTimeout(() => setPwSaved(false), 3000)
+  }
+
   const sections = [
     { key: 'company', label: 'Company Info', icon: '🏢' },
     { key: 'contract', label: 'Contract Terms', icon: '📝' },
+    { key: 'password', label: 'Password', icon: '🔒' },
     { key: 'billing', label: 'Subscription', icon: '💳' },
   ]
 
@@ -195,6 +217,33 @@ export default function SettingsPage() {
           </div></div>
         )}
 
+        {/* Password */}
+        {activeSection === 'password' && (
+          <>
+            {pwError && <div className="error-msg">{pwError}</div>}
+            {pwSaved && <div className="success-msg">✅ Password updated successfully</div>}
+            <div className="r1" style={{ marginBottom: 10 }}><div className="f">
+              <label>Current Password</label>
+              <input type="password" value={pwForm.current} autoComplete="current-password"
+                onChange={e => setPwForm(p => ({ ...p, current: e.target.value }))} />
+            </div></div>
+            <div className="r1" style={{ marginBottom: 10 }}><div className="f">
+              <label>New Password</label>
+              <input type="password" value={pwForm.next} autoComplete="new-password"
+                placeholder="Minimum 8 characters"
+                onChange={e => setPwForm(p => ({ ...p, next: e.target.value }))} />
+            </div></div>
+            <div className="r1" style={{ marginBottom: 10 }}><div className="f">
+              <label>Confirm New Password</label>
+              <input type="password" value={pwForm.confirm} autoComplete="new-password"
+                onChange={e => setPwForm(p => ({ ...p, confirm: e.target.value }))} />
+            </div></div>
+            <button className="gen-btn" onClick={changePassword} disabled={pwSaving}>
+              {pwSaving ? '⏳ Updating...' : '🔒 Update Password'}
+            </button>
+          </>
+        )}
+
         {/* Subscription */}
         {activeSection === 'billing' && (
           <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 14, padding: 16, marginBottom: 14 }}>
@@ -213,11 +262,11 @@ export default function SettingsPage() {
           </div>
         )}
 
-        {activeSection === 'company' || activeSection === 'contract' ? (
+        {(activeSection === 'company' || activeSection === 'contract') && (
           <button className="gen-btn" onClick={save} disabled={saving}>
             {saving ? '⏳ Saving...' : '💾 Save Changes'}
           </button>
-        ) : null}
+        )}
 
         <div style={{ height: 90 }} />
       </div>
