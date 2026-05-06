@@ -52,6 +52,8 @@ export default function EstimatesPage() {
     return matchFilter && matchSearch
   })
 
+  function openEstimate(id: string) { router.push(`/dashboard/estimates/${id}`) }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
@@ -97,30 +99,67 @@ export default function EstimatesPage() {
           </div>
         )}
 
-        {visible.map(e => (
-          <div key={e.id} className="ec" onClick={() => router.push(`/dashboard/estimates/${e.id}`)}>
-            <div className="ec-top">
-              <div>
-                <div className="ec-name">{e.client_name || 'Unnamed client'}</div>
-                <div className="ec-date">
-                  {e.estimate_number}
-                  {e.client_city ? ` · ${e.client_city}` : ''}
-                  {' · '}{new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+        {/* ── DESKTOP TABLE ── */}
+        {!loading && visible.length > 0 && (
+          <div className="desktop-only">
+            <div className="dt">
+              <div className="dt-head dt-est">
+                <span>#</span>
+                <span>Client</span>
+                <span>City</span>
+                <span>Date</span>
+                <span>Total</span>
+                <span>Status</span>
+                <span />
+              </div>
+              {visible.map(e => (
+                <div key={e.id} className="dt-row dt-est" onClick={() => openEstimate(e.id)}>
+                  <span className="dt-num">{e.estimate_number}</span>
+                  <span className="dt-name">{e.client_name || '—'}</span>
+                  <span className="dt-city">{e.client_city || '—'}</span>
+                  <span className="dt-date">
+                    {new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <span className="dt-amt">{fmtCAD(e.total || 0)}</span>
+                  <span>
+                    <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
+                      {e.status.toUpperCase()}
+                    </span>
+                  </span>
+                  <span className="dt-arr">›</span>
                 </div>
-              </div>
-              <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
-                {e.status.toUpperCase()}
-              </span>
-            </div>
-            <div className="ec-bot">
-              <div className="ec-tags">
-                {e.tier && <span className="badge" style={{ background: 'rgba(59,108,255,.1)', color: 'var(--amber)' }}>{e.tier.toUpperCase()}</span>}
-                <span className="badge" style={{ background: 'rgba(53,58,62,.08)', color: 'var(--graphite)' }}>W&D</span>
-              </div>
-              <div className="ec-amt">{fmtCAD(e.total || 0)}</div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
+
+        {/* ── MOBILE CARDS ── */}
+        <div className="mobile-only">
+          {visible.map(e => (
+            <div key={e.id} className="ec" onClick={() => openEstimate(e.id)}>
+              <div className="ec-top">
+                <div>
+                  <div className="ec-name">{e.client_name || 'Unnamed client'}</div>
+                  <div className="ec-date">
+                    {e.estimate_number}
+                    {e.client_city ? ` · ${e.client_city}` : ''}
+                    {' · '}{new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+                <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
+                  {e.status.toUpperCase()}
+                </span>
+              </div>
+              <div className="ec-bot">
+                <div className="ec-tags">
+                  {e.tier && <span className="badge" style={{ background: 'rgba(59,108,255,.1)', color: 'var(--amber)' }}>{e.tier.toUpperCase()}</span>}
+                  <span className="badge" style={{ background: 'rgba(53,58,62,.08)', color: 'var(--graphite)' }}>W&D</span>
+                </div>
+                <div className="ec-amt">{fmtCAD(e.total || 0)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div style={{ height: 100 }} />
       </div>

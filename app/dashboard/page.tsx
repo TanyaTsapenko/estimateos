@@ -11,6 +11,15 @@ interface Estimate {
   status: string; total: number; created_at: string
 }
 
+const statusColor: Record<string, string> = {
+  draft: '#6b7280', sent: '#2563eb', signed: '#16a34a',
+  declined: '#dc2626', invoiced: '#9333ea',
+}
+const statusBg: Record<string, string> = {
+  draft: 'rgba(107,114,128,.1)', sent: 'rgba(37,99,235,.1)', signed: 'rgba(22,163,74,.1)',
+  declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -40,15 +49,6 @@ export default function DashboardPage() {
   const winRate = estimates.length > 0 ? Math.round(signed.length / estimates.length * 100) : 0
   const avgDeal = signed.length > 0 ? monthRevenue / signed.length : 0
 
-  const statusColor: Record<string, string> = {
-    draft: '#6b7280', sent: '#2563eb', signed: '#16a34a',
-    declined: '#dc2626', invoiced: '#9333ea',
-  }
-  const statusBg: Record<string, string> = {
-    draft: 'rgba(107,114,128,.1)', sent: 'rgba(37,99,235,.1)', signed: 'rgba(22,163,74,.1)',
-    declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh" style={{ paddingBottom: 56 }}>
@@ -71,36 +71,25 @@ export default function DashboardPage() {
       </div>
 
       <div className="dash-bg screen-enter">
+        {/* Stats — 2-col mobile, 4-col desktop via CSS */}
         <div className="stats">
           <div className="stat">
-            <div className="stat-top">
-              <div className="stat-ic">💰</div>
-              <div className="stat-tr">This month</div>
-            </div>
+            <div className="stat-top"><div className="stat-ic">💰</div><div className="stat-tr">This month</div></div>
             <div className="stat-val">{loading ? '...' : fmtCAD(monthRevenue)}</div>
             <div className="stat-lbl">Revenue</div>
           </div>
           <div className="stat">
-            <div className="stat-top">
-              <div className="stat-ic">📋</div>
-              <div className="stat-tr">Active</div>
-            </div>
+            <div className="stat-top"><div className="stat-ic">📋</div><div className="stat-tr">Active</div></div>
             <div className="stat-val">{loading ? '...' : open.length}</div>
             <div className="stat-lbl">Open estimates</div>
           </div>
           <div className="stat">
-            <div className="stat-top">
-              <div className="stat-ic">🎯</div>
-              <div className="stat-tr">All time</div>
-            </div>
+            <div className="stat-top"><div className="stat-ic">🎯</div><div className="stat-tr">All time</div></div>
             <div className="stat-val">{loading ? '...' : winRate + '%'}</div>
             <div className="stat-lbl">Win rate</div>
           </div>
           <div className="stat">
-            <div className="stat-top">
-              <div className="stat-ic">📈</div>
-              <div className="stat-tr">Average</div>
-            </div>
+            <div className="stat-top"><div className="stat-ic">📈</div><div className="stat-tr">Average</div></div>
             <div className="stat-val">{loading ? '...' : fmtCAD(avgDeal)}</div>
             <div className="stat-lbl">Per job</div>
           </div>
@@ -127,25 +116,60 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {estimates.map(e => (
-          <div key={e.id} className="ec" onClick={() => router.push(`/dashboard/estimates/${e.id}`)}>
-            <div className="ec-top">
-              <div>
-                <div className="ec-name">{e.client_name || 'Client name TBD'}</div>
-                <div className="ec-date">{e.estimate_number} · {new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</div>
+        {/* ── DESKTOP TABLE ── */}
+        {!loading && estimates.length > 0 && (
+          <div className="desktop-only">
+            <div className="dt">
+              <div className="dt-head dt-dash">
+                <span>#</span>
+                <span>Client</span>
+                <span>Date</span>
+                <span>Total</span>
+                <span>Status</span>
+                <span />
               </div>
-              <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
-                {e.status.toUpperCase()}
-              </span>
-            </div>
-            <div className="ec-bot">
-              <div className="ec-tags">
-                <span className="badge" style={{ background: 'rgba(53,58,62,.08)', color: 'var(--graphite)' }}>W&D</span>
-              </div>
-              <div className="ec-amt">{fmtCAD(e.total || 0)}</div>
+              {estimates.map(e => (
+                <div key={e.id} className="dt-row dt-dash" onClick={() => router.push(`/dashboard/estimates/${e.id}`)}>
+                  <span className="dt-num">{e.estimate_number}</span>
+                  <span className="dt-name">{e.client_name || '—'}</span>
+                  <span className="dt-date">
+                    {new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <span className="dt-amt">{fmtCAD(e.total || 0)}</span>
+                  <span>
+                    <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
+                      {e.status.toUpperCase()}
+                    </span>
+                  </span>
+                  <span className="dt-arr">›</span>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
+
+        {/* ── MOBILE CARDS ── */}
+        <div className="mobile-only">
+          {estimates.map(e => (
+            <div key={e.id} className="ec" onClick={() => router.push(`/dashboard/estimates/${e.id}`)}>
+              <div className="ec-top">
+                <div>
+                  <div className="ec-name">{e.client_name || 'Client name TBD'}</div>
+                  <div className="ec-date">{e.estimate_number} · {new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</div>
+                </div>
+                <span className="badge" style={{ color: statusColor[e.status] || '#6b7280', background: statusBg[e.status] || 'rgba(107,114,128,.1)' }}>
+                  {e.status.toUpperCase()}
+                </span>
+              </div>
+              <div className="ec-bot">
+                <div className="ec-tags">
+                  <span className="badge" style={{ background: 'rgba(53,58,62,.08)', color: 'var(--graphite)' }}>W&D</span>
+                </div>
+                <div className="ec-amt">{fmtCAD(e.total || 0)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <div style={{ height: 90 }} />
       </div>

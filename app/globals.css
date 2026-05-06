@@ -399,6 +399,31 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 .app-shell { display: flex; min-height: 100vh; }
 .main-content { flex: 1; min-width: 0; }
 
+/* ── RESPONSIVE VISIBILITY ── */
+.mobile-only { display: block; }
+.desktop-only { display: none; }
+
+/* ── DESKTOP TABLE ── */
+.dt { background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-light); margin-bottom: 16px; }
+.dt-head { display: grid; padding: 9px 16px; background: var(--surface); border-bottom: 1.5px solid var(--border-light); }
+.dt-head span { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--ash); }
+.dt-row { display: grid; padding: 11px 16px; border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background .1s; align-items: center; gap: 0; }
+.dt-row:last-child { border-bottom: none; }
+.dt-row:hover { background: #F8F9FB; }
+.dt-est { grid-template-columns: 92px 1fr 120px 82px 108px 82px 22px; }
+.dt-dash { grid-template-columns: 92px 1fr 82px 108px 82px 22px; }
+.dt-num { font-size: 11px; font-weight: 600; color: var(--ash); }
+.dt-name { font-size: 13px; font-weight: 700; color: var(--jet); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 12px; }
+.dt-city { font-size: 12px; color: var(--ash); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-date { font-size: 12px; color: var(--ash); }
+.dt-amt { font-size: 13px; font-weight: 800; color: var(--jet); }
+.dt-arr { font-size: 12px; color: var(--border); }
+
+/* ── APPOINTMENTS DESKTOP ── */
+.appt-compact-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; cursor: pointer; border: 1.5px solid var(--border-light); margin-bottom: 5px; background: #fff; transition: all .12s; }
+.appt-compact-row:hover { border-color: rgba(59,108,255,.35); }
+.appt-compact-row.sel { border-color: var(--blue); background: rgba(59,108,255,.04); }
+
 /* ── SIDEBAR ── */
 .sidebar {
   display: none;
@@ -523,5 +548,36 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
     left: calc(240px + 50%);
     bottom: 24px;
   }
+
+  /* Visibility helpers */
+  .mobile-only { display: none !important; }
+  .desktop-only { display: block !important; }
+  .desktop-flex { display: flex !important; }
+
+  /* Header: less bottom padding (no overlap needed) */
+  .gh { padding-bottom: 28px; }
+  .dash-bg { margin-top: 0; border-radius: 0; padding: 24px 28px 60px; }
+  .card { margin-top: 0; border-radius: 0; padding: 24px 28px 60px; }
+
+  /* Stats 4-across */
+  .stats { grid-template-columns: repeat(4, 1fr); }
+
+  /* Wizard nav bar: inline not fixed */
+  .nav { position: static; max-width: none; box-shadow: none; border-top: 1px solid var(--border-light); padding: 16px 0 0; margin-top: 8px; }
+
+  /* Opening cards 2-col grid on desktop */
+  .op-cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Tier 3-col on desktop */
+  .tier-grid { flex-direction: row; }
+  .tier { flex: 1; }
+
+  /* Form two-col */
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .form-sticky { position: sticky; top: 20px; }
+
+  /* Appointments two-col */
+  .appts-2col { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+  .appts-right-panel { background: #fff; border-radius: 14px; border: 1px solid var(--border-light); padding: 18px; position: sticky; top: 20px; }
 }
 @keyframes popIn { from { transform: scale(0) } to { transform: scale(1) } }
