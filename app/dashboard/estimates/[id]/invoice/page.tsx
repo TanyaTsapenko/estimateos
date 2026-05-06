@@ -55,7 +55,7 @@ export default function CreateInvoicePage() {
     const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
 
-    const { error: invErr } = await supabase.from('invoices').insert({
+    const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
       estimate_id:    estimate.id,
       user_id:        user.id,
       invoice_number: num,
@@ -64,11 +64,20 @@ export default function CreateInvoicePage() {
       amount:         Math.round(invoiceAmount * 100) / 100,
       due_date:       dueDate,
       notes,
-    })
+    }).select('id').single()
 
     if (invErr) { setError(invErr.message); setSaving(false); return }
 
     await supabase.from('estimates').update({ status: 'invoiced' }).eq('id', id)
+
+    if (newInv && estimate.client_email) {
+      fetch('/api/send-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoiceId: newInv.id }),
+      }).catch(() => {})
+    }
+
     router.push('/dashboard/invoices')
   }
 
