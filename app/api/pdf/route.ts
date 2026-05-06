@@ -26,12 +26,12 @@ export async function GET(request: NextRequest) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#1A1A1A;background:#E8E9EC;min-height:100vh}
-  .top-bar{background:#fff;border-bottom:1px solid #E0E0E0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-  .back-btn{background:#F4F5F7;border:1px solid #E0E0E0;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#1A1A1A;cursor:pointer;font-family:inherit}
-  .print-btn{background:#3B6CFF;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit}
-  .wrap{max-width:600px;margin:0 auto;padding:16px}
-  .header{background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px;padding:24px 20px;margin-bottom:12px}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#1A1A1A;background:#E8E9EC}
+  .top-bar{background:#fff;border-bottom:1px solid #E0E0E0;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .back-btn{background:#F4F5F7;border:1px solid #E0E0E0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#1A1A1A;cursor:pointer;font-family:inherit}
+  .print-btn{background:#3B6CFF;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit}
+  .wrap{max-width:600px;margin:0 auto;padding:10px 12px 16px}
+  .header{background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:14px;padding:18px 16px;margin-bottom:8px}
   .header-inner{display:flex;justify-content:space-between;align-items:flex-start}
   .logo{font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
   .logo span{color:#3B6CFF}
@@ -40,8 +40,8 @@ export async function GET(request: NextRequest) {
   .est-num{font-size:20px;font-weight:800;color:#3B6CFF;line-height:1}
   .est-date{font-size:10px;color:rgba(255,255,255,.5);margin-top:4px;line-height:1.6}
   .badge{display:inline-block;background:rgba(59,108,255,.2);color:#9BB4FF;font-size:8px;font-weight:700;padding:3px 8px;border-radius:5px;margin-top:5px;letter-spacing:.06em}
-  .card{background:#fff;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #E8E9EC}
-  .party-row{display:flex;gap:10px;margin-bottom:10px}
+  .card{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid #E8E9EC}
+  .party-row{display:flex;gap:8px;margin-bottom:8px}
   .party-box{flex:1;background:#F4F5F7;border:1.5px solid #1A2744;border-radius:10px;padding:12px}
   .party-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:5px}
   .party-name{font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:2px}
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   .sig-lbl{font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2045B8;margin-bottom:3px}
   .sig-name{font-size:12px;color:#1A1A1A}
   .sig-date{font-size:10px;color:#9ca3af;margin-top:2px}
-  .footer{text-align:center;font-size:10px;color:#BFBFBF;padding:16px;margin-top:4px}
+  .footer{text-align:center;font-size:10px;color:#BFBFBF;padding:10px 0 4px}
   @media print{
     .top-bar{display:none}
     body{background:#fff}
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 <body>
 
 <div class="top-bar">
-  <button class="back-btn" onclick="window.history.length > 1 ? history.back() : window.close()">← Back</button>
+  <button class="back-btn" onclick="window.location.href='/dashboard/estimates/${id}'">← Back</button>
   <button class="print-btn" onclick="window.print()">Save PDF</button>
 </div>
 
