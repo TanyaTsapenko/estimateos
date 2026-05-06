@@ -102,13 +102,18 @@ export default function InvoicesPage() {
               </span>
             </div>
             <div className="ec-bot">
-              {inv.status === 'pending' && (
-                <button onClick={() => markPaid(inv.id)}
-                  style={{ background: 'rgba(22,163,74,.1)', border: 'none', borderRadius: 8, padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#16a34a', cursor: 'pointer' }}>
-                  Mark paid
+              <div style={{ display: 'flex', gap: 6 }}>
+                {inv.status === 'pending' && (
+                  <button onClick={() => markPaid(inv.id)}
+                    style={{ background: 'rgba(22,163,74,.1)', border: 'none', borderRadius: 8, padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#16a34a', cursor: 'pointer' }}>
+                    Mark paid
+                  </button>
+                )}
+                <button onClick={() => window.open(`/api/invoice-pdf?id=${inv.id}`, '_blank')}
+                  style={{ background: 'rgba(59,108,255,.08)', border: 'none', borderRadius: 8, padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#2045B8', cursor: 'pointer' }}>
+                  PDF
                 </button>
-              )}
-              {inv.status !== 'pending' && <div />}
+              </div>
               <div className="ec-amt">{fmtCAD(inv.amount)}</div>
             </div>
           </div>
