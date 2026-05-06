@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
 interface Opening {
-  id: string; type: string; qty: number; width: string; room: string | null; total_cost: number
+  id: string; type: string; qty: number; width: string
+  width_in: number | null; height_in: number | null
+  room: string | null; total_cost: number
 }
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
@@ -41,7 +43,7 @@ export default function EstimateDetailPage() {
     async function load() {
       const [{ data: est }, { data: ops }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
-        supabase.from('estimate_openings').select('id, type, qty, width, room, total_cost').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost').eq('estimate_id', id).order('sort_order'),
       ])
       setEstimate(est)
       setOpenings(ops || [])
@@ -191,6 +193,9 @@ export default function EstimateDetailPage() {
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jet)' }}>
                 {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
               </div>
+              {(op.width_in || op.height_in) && (
+                <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.width_in}" × {op.height_in}"</div>
+              )}
               {op.room && <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.room}</div>}
             </div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(op.total_cost)}</div>

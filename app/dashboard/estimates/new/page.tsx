@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening, type CustomPrices } from '@/lib/pricing'
+import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 
 // ─── TYPES ───────────────────────────────────
 interface ClientInfo {
@@ -19,9 +19,9 @@ const TIERS = [
 ]
 
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
-  type: 'window_dh', qty: 1, width: 'md', shape: 'rect', colour: 'white',
-  glass: 'clear', frame: 'none', install: 'insert', floor: 'first',
-  room: '', sidelight: 0, transom: 0, screen: 0,
+  type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
+  shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
+  install: 'insert', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
 }
 
 // ─── MAIN COMPONENT ──────────────────────────
@@ -154,8 +154,11 @@ export default function NewEstimatePage() {
     // Save openings
     const rows = openings.map((op, i) => ({
       estimate_id: est.id,
-      type: op.type, qty: op.qty, width: op.width, shape: op.shape,
-      colour: op.colour, glass: op.glass, frame: op.frame,
+      type: op.type, qty: op.qty,
+      width: (op.width_in && op.height_in) ? dimToSizeBucket(op.width_in, op.height_in) : op.width,
+      width_in: op.width_in || null,
+      height_in: op.height_in || null,
+      shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom, screen: op.screen,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices) * 100) / 100,
@@ -299,22 +302,30 @@ export default function NewEstimatePage() {
                 </div>
 
                 <div className="r2" style={{ marginBottom: 8 }}>
-                  <div className="f"><label>Size</label>
-                    <select value={op.width} onChange={e => updateOpening(op.id, 'width', e.target.value)}>
-                      <option value="sm">Small (−15%)</option>
-                      <option value="md">Medium (std)</option>
-                      <option value="lg">Large (+20%)</option>
-                      <option value="xl">XL (+40%)</option>
-                    </select></div>
+                  <div className="f"><label>Width</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type="number" min="0" step="0.5" placeholder="32"
+                        value={op.width_in || ''}
+                        onChange={e => updateOpening(op.id, 'width_in', e.target.value ? parseFloat(e.target.value) : 0)}
+                        style={{ paddingRight: 28 }} />
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
+                    </div></div>
+                  <div className="f"><label>Height</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type="number" min="0" step="0.5" placeholder="48"
+                        value={op.height_in || ''}
+                        onChange={e => updateOpening(op.id, 'height_in', e.target.value ? parseFloat(e.target.value) : 0)}
+                        style={{ paddingRight: 28 }} />
+                      <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
+                    </div></div>
+                </div>
+                <div className="r2" style={{ marginBottom: 8 }}>
                   <div className="f"><label>Shape</label>
                     <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)}>
                       <option value="rect">Rectangle</option>
                       <option value="arch">Arch (+30%)</option>
                       <option value="custom">Custom (+50%)</option>
                     </select></div>
-                </div>
-
-                <div className="r2" style={{ marginBottom: 8 }}>
                   <div className="f"><label>Colour</label>
                     <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
                       <option value="white">White</option>
@@ -322,6 +333,9 @@ export default function NewEstimatePage() {
                       <option value="grey">Grey (+$80)</option>
                       <option value="custom">Custom (+$150)</option>
                     </select></div>
+                </div>
+
+                <div className="r2" style={{ marginBottom: 8 }}>
                   <div className="f"><label>Glass</label>
                     <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
                       <option value="clear">Clear</option>
@@ -330,29 +344,29 @@ export default function NewEstimatePage() {
                       <option value="tinted">Tinted (+$70)</option>
                       <option value="tempered">Tempered (+$110)</option>
                     </select></div>
-                </div>
-
-                <div className="r2" style={{ marginBottom: 8 }}>
                   <div className="f"><label>Frame</label>
                     <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
                       <option value="none">Good condition</option>
                       <option value="repair">Needs repair (+$120)</option>
                       <option value="rotted">Rotted (+$280)</option>
                     </select></div>
+                </div>
+
+                <div className="r2" style={{ marginBottom: 8 }}>
                   <div className="f"><label>Install type</label>
                     <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
                       <option value="insert">Insert / retrofit</option>
                       <option value="fullframe">Full frame (+$200)</option>
                     </select></div>
-                </div>
-
-                <div className="r2">
                   <div className="f"><label>Floor</label>
                     <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
                       <option value="first">Ground floor</option>
                       <option value="second">2nd floor (+$80)</option>
                       <option value="third">3rd+ floor (+$180)</option>
                     </select></div>
+                </div>
+
+                <div className="r2">
                   <div className="f"><label>Room (optional)</label>
                     <input placeholder="Living room" value={op.room}
                       onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>

@@ -31,7 +31,9 @@ export interface Opening {
   id: string
   type: string
   qty: number
-  width: string
+  width: string        // size bucket: sm|md|lg|xl (derived from dims or set manually)
+  width_in?: number    // actual width in inches
+  height_in?: number   // actual height in inches
   shape: string
   colour: string
   glass: string
@@ -42,6 +44,12 @@ export interface Opening {
   sidelight: number
   transom: number
   screen: number
+}
+
+// Derive sm/md/lg/xl from measured area (sq in)
+export function dimToSizeBucket(wIn: number, hIn: number): string {
+  const area = wIn * hIn
+  return area >= 2500 ? 'xl' : area >= 1400 ? 'lg' : area >= 700 ? 'md' : 'sm'
 }
 
 export const DEFAULT_SIZE_MULTS = { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 }
@@ -56,7 +64,8 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices): number
   const base = custom?.types[op.type]?.base ?? defaults.base
   const lab  = custom?.types[op.type]?.lab  ?? defaults.lab
   const sizes = custom?.sizes ?? DEFAULT_SIZE_MULTS
-  const sz = op.width === 'sm' ? sizes.sm : op.width === 'lg' ? sizes.lg : op.width === 'xl' ? sizes.xl : sizes.md
+  const bucket = (op.width_in && op.height_in) ? dimToSizeBucket(op.width_in, op.height_in) : op.width
+  const sz = bucket === 'sm' ? sizes.sm : bucket === 'lg' ? sizes.lg : bucket === 'xl' ? sizes.xl : sizes.md
   const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
   const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
   const ia = op.install === 'fullframe' ? 200 : 0

@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       <tbody>
         ${(ops || []).map(op => `
         <tr>
-          <td><span class="icon-pill">${OPENING_TYPES[op.type]?.icon || ''}</span>${OPENING_TYPES[op.type]?.name || op.type}${op.room ? `<br><span style="font-size:10px;color:#9ca3af">${op.room}</span>` : ''}</td>
+          <td><span class="icon-pill">${OPENING_TYPES[op.type]?.icon || ''}</span>${OPENING_TYPES[op.type]?.name || op.type}${(op.width_in || op.height_in) ? `<br><span style="font-size:10px;color:#9ca3af">${op.width_in}" × ${op.height_in}"</span>` : ''}${op.room ? `<br><span style="font-size:10px;color:#9ca3af">${op.room}</span>` : ''}</td>
           <td style="text-align:center;color:#6b7280">${op.qty}</td>
           <td style="font-weight:700;color:#1A1A1A">${fmtCAD(op.total_cost)}</td>
         </tr>`).join('')}
