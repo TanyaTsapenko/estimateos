@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { fmtCAD } from '@/lib/pricing'
+import { useRole } from '@/lib/useRole'
 
 interface Estimate {
   id: string; status: string; total: number; tier: string | null
@@ -15,9 +16,14 @@ type Period = '30d' | '90d' | 'ytd' | 'all'
 export default function ReportsPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { role, loading: roleLoading } = useRole()
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<Period>('30d')
+
+  useEffect(() => {
+    if (!roleLoading && role !== 'owner') router.replace('/dashboard')
+  }, [role, roleLoading])
 
   useEffect(() => {
     async function load() {

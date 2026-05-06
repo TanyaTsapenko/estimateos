@@ -29,9 +29,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You cannot accept your own invite' }, { status: 400 })
   }
 
+  const appRole = invite.role === 'owner' ? 'owner' : 'estimator'
+
   const { error: profileErr } = await supabase
     .from('profiles')
-    .update({ team_owner_id: invite.owner_id, member_role: invite.role })
+    .update({ team_owner_id: invite.owner_id, member_role: invite.role, role: appRole })
     .eq('id', user.id)
 
   if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })

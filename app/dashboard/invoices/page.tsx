@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { fmtCAD } from '@/lib/pricing'
+import { useRole } from '@/lib/useRole'
 
 interface Invoice {
   id: string; invoice_number: string; status: string; amount: number
@@ -17,7 +18,12 @@ const statusBg: Record<string, string> = { pending: 'rgba(37,99,235,.1)', paid: 
 export default function InvoicesPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { role, loading: roleLoading } = useRole()
   const [invoices, setInvoices] = useState<Invoice[]>([])
+
+  useEffect(() => {
+    if (!roleLoading && role !== 'owner') router.replace('/dashboard')
+  }, [role, roleLoading])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

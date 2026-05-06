@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
+import { useRole } from '@/lib/useRole'
 
 interface Member {
   id: string; first_name: string | null; last_name: string | null
@@ -37,6 +38,11 @@ function initials(m: { first_name: string | null; last_name: string | null; emai
 export default function TeamPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { role, loading: roleLoading } = useRole()
+
+  useEffect(() => {
+    if (!roleLoading && role !== 'owner') router.replace('/dashboard')
+  }, [role, roleLoading])
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [myId, setMyId] = useState('')

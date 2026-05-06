@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
+import { useRole } from '@/lib/useRole'
 
 interface Profile {
   first_name: string | null; last_name: string | null; email: string | null
@@ -12,11 +13,17 @@ interface Profile {
   deposit_pct: number | null
 }
 
+interface TeamMember {
+  id: string; first_name: string | null; last_name: string | null
+  email: string | null; member_role: string | null; role: string | null
+}
+
 const PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
 
 export default function SettingsPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { role, loading: roleLoading } = useRole()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [form, setForm] = useState<Partial<Profile>>({})
   const [saving, setSaving] = useState(false)
@@ -27,14 +34,26 @@ export default function SettingsPage() {
   const [pwSaving, setPwSaving] = useState(false)
   const [pwError, setPwError] = useState('')
   const [pwSaved, setPwSaved] = useState(false)
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [roleUpdating, setRoleUpdating] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!roleLoading && role !== 'owner') router.replace('/dashboard')
+  }, [role, roleLoading])
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-      setProfile(data)
-      setForm(data || {})
+      const [{ data: prof }, { data: members }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('profiles')
+          .select('id, first_name, last_name, email, member_role, role')
+          .eq('team_owner_id', user.id),
+      ])
+      setProfile(prof)
+      setForm(prof || {})
+      setTeamMembers(members || [])
     }
     load()
   }, [])
@@ -73,11 +92,19 @@ export default function SettingsPage() {
     setTimeout(() => setPwSaved(false), 3000)
   }
 
+  async function updateMemberRole(memberId: string, newRole: 'owner' | 'estimator') {
+    setRoleUpdating(memberId)
+    await supabase.from('profiles').update({ role: newRole, member_role: newRole }).eq('id', memberId)
+    setTeamMembers(p => p.map(m => m.id === memberId ? { ...m, role: newRole, member_role: newRole } : m))
+    setRoleUpdating(null)
+  }
+
   const sections = [
-    { key: 'company', label: 'Company Info', icon: '🏢' },
-    { key: 'contract', label: 'Contract Terms', icon: '📝' },
+    { key: 'company',  label: 'Company',  icon: '🏢' },
+    { key: 'contract', label: 'Contract', icon: '📝' },
     { key: 'password', label: 'Password', icon: '🔒' },
-    { key: 'billing', label: 'Subscription', icon: '💳' },
+    { key: 'billing',  label: 'Billing',  icon: '💳' },
+    { key: 'team',     label: 'Team',     icon: '👥' },
   ]
 
   return (
@@ -260,6 +287,57 @@ export default function SettingsPage() {
               {form.plan === 'starter' ? 'Estimates, e-signature, 1 user' : form.plan === 'team' ? 'Everything + Unlimited users + Priority support' : 'Everything + AI follow-ups + CRM + 3 users'}
             </div>
           </div>
+        )}
+
+        {/* Team roles */}
+        {activeSection === 'team' && (
+          <>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6, marginBottom: 14 }}>
+                Manage your team members' access level. <strong>Owner</strong> has full access. <strong>Estimator</strong> can create estimates and appointments only.
+              </div>
+              {teamMembers.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <div style={{ fontSize: 28, marginBottom: 8 }}>👥</div>
+                  <div style={{ fontSize: 13, color: 'var(--ash)' }}>No team members yet.</div>
+                  <button onClick={() => router.push('/dashboard/team')}
+                    style={{ marginTop: 12, background: 'rgba(59,108,255,.1)', border: 'none', borderRadius: 10, padding: '8px 18px', fontSize: 12, fontWeight: 700, color: 'var(--blue-dark)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                    Invite team member →
+                  </button>
+                </div>
+              )}
+              {teamMembers.map(m => {
+                const displayName = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Team member'
+                const currentRole = (m.role as 'owner' | 'estimator' | null) ?? (m.member_role === 'owner' ? 'owner' : 'estimator')
+                return (
+                  <div key={m.id} style={{
+                    background: '#fff', borderRadius: 12, padding: '12px 14px', marginBottom: 8,
+                    border: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: 12,
+                  }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--amber)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                      {(m.first_name || m.email || '?')[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName}</div>
+                      <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{m.email}</div>
+                    </div>
+                    <select
+                      value={currentRole}
+                      disabled={roleUpdating === m.id}
+                      onChange={e => updateMemberRole(m.id, e.target.value as 'owner' | 'estimator')}
+                      style={{ background: '#F4F5F7', border: '1.5px solid var(--border)', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700, color: 'var(--jet)', cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit' }}>
+                      <option value="owner">Owner</option>
+                      <option value="estimator">Estimator</option>
+                    </select>
+                  </div>
+                )
+              })}
+            </div>
+            <button onClick={() => router.push('/dashboard/team')}
+              style={{ width: '100%', background: 'transparent', border: '1.5px solid var(--border)', borderRadius: 12, padding: 12, fontSize: 12, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Manage invites →
+            </button>
+          </>
         )}
 
         {(activeSection === 'company' || activeSection === 'contract') && (

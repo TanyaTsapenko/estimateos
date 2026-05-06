@@ -1,17 +1,23 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
+import { useRole } from '@/lib/useRole'
 
-const items = [
-  { path: '/dashboard',                label: 'Home',   icon: '🏠', exact: true },
-  { path: '/dashboard/estimates',      label: 'Jobs',   icon: '📋', exact: false },
-  { path: '/dashboard/appointments',   label: 'Appts',  icon: '📅', exact: false },
-  { path: '/dashboard/reports',        label: 'Reports',icon: '📊', exact: false },
-  { path: '/dashboard/settings',       label: 'Settings',icon: '⚙️', exact: false },
+const ALL_ITEMS = [
+  { path: '/dashboard',              label: 'Home',    icon: '🏠', exact: true,  ownerOnly: false },
+  { path: '/dashboard/estimates',    label: 'Jobs',    icon: '📋', exact: false, ownerOnly: false },
+  { path: '/dashboard/appointments', label: 'Appts',   icon: '📅', exact: false, ownerOnly: false },
+  { path: '/dashboard/reports',      label: 'Reports', icon: '📊', exact: false, ownerOnly: true  },
+  { path: '/dashboard/settings',     label: 'Settings',icon: '⚙️', exact: false, ownerOnly: true  },
 ]
 
 export default function BottomNav() {
   const router = useRouter()
   const path = usePathname()
+  const { role, loading } = useRole()
+
+  const items = !loading && role === 'estimator'
+    ? ALL_ITEMS.filter(i => !i.ownerOnly)
+    : ALL_ITEMS
 
   return (
     <div className="bot-nav">
