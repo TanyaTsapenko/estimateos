@@ -24,48 +24,54 @@ export async function POST(request: NextRequest) {
   let html = ''
 
   if (type === 'signed') {
-    subject = `✅ Signed! ${est.estimate_number} — ${fmtCAD(est.total)}`
+    subject = `Signed — ${est.estimate_number} · ${fmtCAD(est.total)}`
     html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F5F5F5">
-<div style="max-width:500px;margin:0 auto;padding:24px 16px">
-  <div style="background:linear-gradient(135deg,#1A1A1A,#353A3E);border-radius:16px 16px 0 0;padding:28px 24px;text-align:center">
-    <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.02em">Estimate<span style="color:#D97706">OS</span></div>
-    <div style="font-size:32px;margin:16px 0">✅</div>
-    <div style="font-size:20px;font-weight:800;color:#fff">Estimate Signed!</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:6px">${est.estimate_number}</div>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
+<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+
+  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B6CFF">OS</span></div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Estimate confirmed</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5)">${est.estimate_number} · ${companyName}</div>
   </div>
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:24px">
-    <p style="font-size:14px;color:#1A1A1A;margin-bottom:16px">Hi ${est.client_name || 'there'},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px">
-      Thank you for approving <strong>${est.estimate_number}</strong> from <strong>${companyName}</strong>. Your estimate is confirmed!
+
+  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
+    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est.client_name || 'there'},</p>
+    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
+      Thank you for signing <strong style="color:#1A1A1A">${est.estimate_number}</strong>. Your project with <strong style="color:#1A1A1A">${companyName}</strong> is confirmed and ready to move forward.
     </p>
-    <div style="background:#F5F5F5;border-radius:12px;padding:16px;margin-bottom:20px">
+
+    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:12px">Project Summary</div>
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-        <span>Tier</span><span style="font-weight:700;color:#1A1A1A">${(est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)}</span>
+        <span>${(est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)} Package</span>
+        <span style="color:#1A1A1A;font-weight:600">${fmtCAD(est.subtotal)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-        <span>Subtotal</span><span>${fmtCAD(est.subtotal)}</span>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:12px">
+        <span>${taxLabel}</span>
+        <span style="color:#1A1A1A;font-weight:600">${fmtCAD(est.tax_amount)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:10px">
-        <span>${taxLabel}</span><span>${fmtCAD(est.tax_amount)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;color:#D97706;border-top:1px solid #E0E0E0;padding-top:10px">
-        <span style="color:#1A1A1A;font-size:13px;font-weight:600">Total</span><span>${fmtCAD(est.total)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #1A2744;padding-top:12px">
+        <span style="font-size:13px;font-weight:700;color:#1A1A1A">Total</span>
+        <span style="font-size:24px;font-weight:800;color:#2045B8">${fmtCAD(est.total)}</span>
       </div>
     </div>
-    <p style="font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:20px">
-      <strong>${companyName}</strong> will contact you shortly to schedule the work and collect the deposit.
+
+    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 24px">
+      ${companyName} will be in touch shortly to schedule the work and arrange the deposit.
     </p>
+
     <div style="text-align:center">
-      <a href="${clientLink}" style="background:linear-gradient(135deg,#b45309,#D97706);color:#fff;text-decoration:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:700;display:inline-block">
-        View Your Estimate →
+      <a href="${clientLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:13px 28px;font-size:13px;font-weight:700;display:inline-block">
+        View Signed Estimate →
       </a>
     </div>
   </div>
-  <p style="text-align:center;font-size:10px;color:#BFBFBF;margin-top:16px">
+
+  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">
     Sent via EstimateOS · ${companyName}${prof?.phone ? ` · ${prof.phone}` : ''}
   </p>
 </div>
@@ -77,33 +83,39 @@ export async function POST(request: NextRequest) {
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F5F5F5">
-<div style="max-width:500px;margin:0 auto;padding:24px 16px">
-  <div style="background:linear-gradient(135deg,#1A1A1A,#353A3E);border-radius:16px 16px 0 0;padding:28px 24px">
-    <div style="font-size:20px;font-weight:800;color:#fff">Estimate<span style="color:#D97706">OS</span></div>
-    <div style="font-size:24px;font-weight:800;color:#fff;margin-top:12px">Your estimate is ready</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.6);margin-top:4px">${est.estimate_number} from ${companyName}</div>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
+<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+
+  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B6CFF">OS</span></div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Your estimate is ready</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5)">${est.estimate_number} · ${companyName}</div>
   </div>
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:24px">
-    <p style="font-size:14px;color:#1A1A1A;margin-bottom:16px">Hi ${est.client_name || 'there'},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px">
-      <strong>${companyName}</strong> has prepared an estimate for your project. Review the options below and sign online — it takes less than a minute.
+
+  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
+    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est.client_name || 'there'},</p>
+    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
+      <strong style="color:#1A1A1A">${companyName}</strong> has prepared an estimate for your project. Review the details and sign online — it takes less than a minute.
     </p>
-    <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px;margin-bottom:20px;text-align:center">
-      <div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:4px">ESTIMATE TOTAL (Better Package)</div>
-      <div style="font-size:28px;font-weight:800;color:#D97706">${fmtCAD(est.total)}</div>
-      <div style="font-size:11px;color:#92400E">inc. ${taxLabel} · Valid until ${est.valid_until || '30 days'}</div>
+
+    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px;text-align:center">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:8px">${(est.tier || 'better').toUpperCase()} PACKAGE</div>
+      <div style="font-size:32px;font-weight:800;color:#2045B8;line-height:1">${fmtCAD(est.total)}</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:6px">inc. ${taxLabel} · Valid until ${est.valid_until || '30 days'}</div>
     </div>
-    <div style="text-align:center;margin-bottom:20px">
-      <a href="${clientLink}" style="background:linear-gradient(135deg,#b45309,#D97706);color:#fff;text-decoration:none;border-radius:10px;padding:14px 28px;font-size:14px;font-weight:700;display:inline-block">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="${clientLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:14px 32px;font-size:14px;font-weight:700;display:inline-block">
         View &amp; Sign Estimate →
       </a>
     </div>
-    <p style="font-size:11px;color:#BFBFBF;line-height:1.6">
-      You can also choose from Good, Better, or Best packages. This estimate expires on ${est.valid_until || '30 days from now'}.
+
+    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
+      You can choose from Good, Better, or Best packages. Estimate expires ${est.valid_until || '30 days from now'}.
     </p>
   </div>
-  <p style="text-align:center;font-size:10px;color:#BFBFBF;margin-top:16px">
+
+  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">
     Sent via EstimateOS · ${companyName}
   </p>
 </div>

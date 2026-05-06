@@ -59,42 +59,52 @@ export async function POST(request: NextRequest) {
     const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#F5F5F5">
-<div style="max-width:500px;margin:0 auto;padding:24px 16px">
-  <div style="background:linear-gradient(135deg,#1A1A1A,#353A3E);border-radius:16px 16px 0 0;padding:28px 24px">
-    <div style="font-size:20px;font-weight:800;color:#fff">Estimate<span style="color:#D97706">OS</span></div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-top:12px">Deposit Invoice</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.55);margin-top:4px">${invoiceNum} · ${companyName}</div>
+<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
+<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+
+  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B6CFF">OS</span></div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Deposit Invoice</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5)">${invoiceNum} · ${companyName}</div>
   </div>
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:24px">
-    <p style="font-size:14px;color:#1A1A1A;margin-bottom:14px">Hi ${est.client_name || 'there'},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.6;margin-bottom:20px">
-      Thank you for signing ${est.estimate_number}! To get started, a <strong>${depositPct}% deposit</strong> is due within 7 days.
+
+  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
+    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est.client_name || 'there'},</p>
+    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
+      Thank you for signing <strong style="color:#1A1A1A">${est.estimate_number}</strong>! To get started, a <strong style="color:#1A1A1A">${depositPct}% deposit</strong> is due within 7 days.
     </p>
-    <div style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;padding:16px;margin-bottom:20px">
-      <div style="font-size:10px;color:#92400E;font-weight:700;letter-spacing:.1em;margin-bottom:8px">DEPOSIT INVOICE ${invoiceNum}</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:4px">
-        <span>Project total</span><span style="font-weight:600;color:#1A1A1A">${fmtCAD(est.total)} inc. ${taxLabel}</span>
+
+    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:12px">Deposit Invoice ${invoiceNum}</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
+        <span>Project total</span>
+        <span style="font-weight:600;color:#1A1A1A">${fmtCAD(est.total)} inc. ${taxLabel}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:10px">
-        <span>Deposit (${depositPct}%)</span><span style="font-weight:700;color:#D97706">${fmtCAD(depositAmount)}</span>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:14px">
+        <span>Deposit rate</span>
+        <span style="font-weight:600;color:#1A1A1A">${depositPct}%</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1px solid #FCD34D;padding-top:10px">
-        <span style="color:#92400E">Amount due now</span><span style="color:#D97706">${fmtCAD(depositAmount)}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #1A2744;padding-top:14px">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1A1A1A">Amount due now</div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:2px">Due by ${new Date(dueDateStr).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+        </div>
+        <span style="font-size:26px;font-weight:800;color:#2045B8">${fmtCAD(depositAmount)}</span>
       </div>
-      <div style="font-size:11px;color:#B45309;margin-top:6px">Due by ${new Date(dueDateStr).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
     </div>
-    <div style="text-align:center;margin-bottom:20px">
-      <a href="${estimateLink}" style="background:linear-gradient(135deg,#b45309,#D97706);color:#fff;text-decoration:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:700;display:inline-block">
+
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="${estimateLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:13px 28px;font-size:13px;font-weight:700;display:inline-block">
         View Signed Estimate →
       </a>
     </div>
-    <p style="font-size:11px;color:#BFBFBF;line-height:1.6">
-      The remaining balance of <strong>${fmtCAD(est.total - depositAmount)}</strong> will be due upon project completion.
-      ${prof?.phone ? `Contact us at ${prof.phone} with any questions.` : ''}
+
+    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
+      Remaining balance of <strong style="color:#6b7280">${fmtCAD(est.total - depositAmount)}</strong> is due upon project completion.${prof?.phone ? `<br>Questions? Call ${prof.phone}` : ''}
     </p>
   </div>
-  <p style="text-align:center;font-size:10px;color:#BFBFBF;margin-top:16px">Sent via EstimateOS · ${companyName}</p>
+
+  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Sent via EstimateOS · ${companyName}</p>
 </div>
 </body>
 </html>`
