@@ -3,11 +3,16 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 
 interface Opening {
   id: string; type: string; qty: number; width: string
   width_in: number | null; height_in: number | null
-  room: string | null; total_cost: number
+  room: string | null; total_cost: number; install: string | null
+}
+
+const INSTALL_LABELS: Record<string, string> = {
+  insert: 'Retrofit', retrofit: 'Retrofit', fullframe: 'Full Frame', stud_to_stud: 'Stud to Stud',
 }
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
@@ -17,7 +22,7 @@ interface Estimate {
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
-  sent_method: string | null; created_at: string
+  sent_method: string | null; created_at: string; user_id: string
 }
 
 const statusColor: Record<string, string> = {
@@ -37,16 +42,22 @@ export default function EstimateDetailPage() {
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
+  const [showEmailModal, setShowEmailModal] = useState(false)
   const [toast, setToast] = useState('')
 
   useEffect(() => {
     async function load() {
       const [{ data: est }, { data: ops }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install').eq('estimate_id', id).order('sort_order'),
       ])
       setEstimate(est)
       setOpenings(ops || [])
+      if (est?.user_id) {
+        const { data: prof } = await supabase.from('profiles').select('contract_pdf_url').eq('id', est.user_id).single()
+        setContractPdfUrl((prof as any)?.contract_pdf_url || null)
+      }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
         const { data: dep } = await supabase.from('invoices')
           .select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single()
@@ -62,20 +73,21 @@ export default function EstimateDetailPage() {
     setTimeout(() => setToast(''), 2500)
   }
 
-  async function sendByEmail() {
+  async function handleSendEmail(mode: 'estimate' | 'estimate_contract' | 'contract') {
     if (!estimate?.client_email) { showToast('⚠️ No client email on this estimate'); return }
-    setSending(true)
+    setSending(true); setShowEmailModal(false)
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estimateId: id, type: 'send' }),
+        body: JSON.stringify({ estimateId: id, type: 'send', sendMode: mode }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed')
-      await supabase.from('estimates').update({ status: 'sent', sent_method: 'email' }).eq('id', id)
-      setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'email' } : p)
-      showToast('📧 Estimate sent to ' + estimate.client_email)
+      const sentMethod = mode === 'estimate' ? 'email_estimate' : mode === 'estimate_contract' ? 'email_estimate_contract' : 'email_contract'
+      await supabase.from('estimates').update({ status: 'sent', sent_method: sentMethod }).eq('id', id)
+      setEstimate(p => p ? { ...p, status: 'sent', sent_method: sentMethod } : p)
+      showToast('📧 Sent to ' + estimate.client_email)
     } catch (e: any) {
       showToast('⚠️ ' + e.message)
     }
@@ -172,6 +184,9 @@ export default function EstimateDetailPage() {
             {(op.width_in || op.height_in) && (
               <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.width_in}" × {op.height_in}"</div>
             )}
+            {op.install && (
+              <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{INSTALL_LABELS[op.install] || op.install}</div>
+            )}
             {op.room && <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 1 }}>{op.room}</div>}
           </div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(op.total_cost)}</div>
@@ -244,33 +259,35 @@ export default function EstimateDetailPage() {
       {/* ── DESKTOP STICKY ACTION BAR ── */}
       <div className="action-bar desktop-only">
         <button className="action-bar-btn" onClick={() => router.push('/dashboard/estimates')}>
-          ← Estimates
+          <ArrowLeft size={14} /> Estimates
         </button>
         <div className="action-bar-sep" />
         {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
-          <button className="action-bar-btn primary" onClick={sendByEmail} disabled={sending}>
-            📧 {sending ? 'Sending…' : 'Email client'}
-          </button>
-        )}
-        <button className="action-bar-btn primary" onClick={copyLink}>
-          🔗 Copy link
-        </button>
-        {estimate.status !== 'signed' && (
-          <button className="action-bar-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
-            ✍️ Sign in-person
+          <button className="action-bar-btn filled" onClick={() => setShowEmailModal(true)} disabled={sending}>
+            {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+            {sending ? 'Sending…' : 'Email client'}
           </button>
         )}
         {estimate.status === 'signed' && (
-          <button className="action-bar-btn primary" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
-            🧾 {depositInvoice ? 'Create final invoice' : 'Create invoice'}
+          <button className="action-bar-btn filled" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
+            <Receipt size={14} />
+            {depositInvoice ? 'Final invoice' : 'Create invoice'}
+          </button>
+        )}
+        <button className="action-bar-btn" onClick={copyLink}>
+          <Link2 size={14} /> Copy link
+        </button>
+        {estimate.status !== 'signed' && (
+          <button className="action-bar-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
+            <PenLine size={14} /> Sign in-person
           </button>
         )}
         <button className="action-bar-btn" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>
-          📄 PDF
+          <FileDown size={14} /> PDF
         </button>
         <div className="action-bar-sep" />
         <button className="action-bar-btn danger" onClick={deleteEstimate}>
-          Delete
+          <Trash2 size={14} /> Delete
         </button>
       </div>
 
@@ -337,42 +354,76 @@ export default function EstimateDetailPage() {
         <DepositBlock />
 
         <div className="sl">Actions</div>
-        {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
-          <button className="send-btn" onClick={sendByEmail} disabled={sending}>
-            <span>📧</span>
-            <span>{sending ? 'Sending…' : `Email estimate to ${estimate.client_email}`}</span>
-          </button>
-        )}
-        <button className="send-btn" onClick={copyLink}>
-          <span>🔗</span><span>Copy client link (view &amp; sign)</span>
-        </button>
-        {estimate.status !== 'signed' && (
-          <button className="send-btn" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
-            <span>✍️</span><span>Sign in-person (hand phone to client)</span>
-          </button>
-        )}
-        {estimate.status === 'signed' && (
-          <button className="send-btn" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
-            <span>🧾</span>
-            <span>
+        <div className="est-actions">
+          {estimate.client_email && estimate.status !== 'signed' && estimate.status !== 'declined' && (
+            <button className="est-act-primary" onClick={() => setShowEmailModal(true)} disabled={sending}>
+              {sending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={16} />}
+              {sending ? 'Sending…' : 'Email client'}
+            </button>
+          )}
+          {estimate.status === 'signed' && (
+            <button className="est-act-primary" onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
+              <Receipt size={16} />
               {depositInvoice
-                ? `Create final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)} remaining`
-                : 'Create invoice from this estimate'}
-            </span>
+                ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)} remaining`
+                : 'Create invoice'}
+            </button>
+          )}
+          <div className="est-act-row">
+            <button className="est-act-secondary" onClick={copyLink}>
+              <Link2 size={15} /> Copy link
+            </button>
+            {estimate.status !== 'signed' && (
+              <button className="est-act-secondary" onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}>
+                <PenLine size={15} /> Sign in-person
+              </button>
+            )}
+            <button className="est-act-secondary" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>
+              <FileDown size={15} /> PDF
+            </button>
+          </div>
+          <div className="est-act-divider" />
+          <button className="est-act-delete" onClick={deleteEstimate}>
+            <Trash2 size={14} /> Delete estimate
           </button>
-        )}
-        <button className="send-btn" onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}>
-          <span>📄</span><span>Download PDF</span>
-        </button>
-        <button onClick={deleteEstimate}
-          style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc2626', fontSize: 12, fontWeight: 600, padding: '10px 0', cursor: 'pointer', marginTop: 4 }}>
-          Delete estimate
-        </button>
+        </div>
 
         <div style={{ height: 20 }} />
       </div>
 
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
+
+      {showEmailModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => setShowEmailModal(false)}>
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: 520 }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--jet)' }}>Send to client</div>
+              <button onClick={() => setShowEmailModal(false)}
+                style={{ background: 'var(--surface)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: 'var(--ash)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--ash)', marginBottom: 14 }}>Choose what to send to {estimate.client_email}:</div>
+            <button style={{ width: '100%', background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 12, padding: '13px 16px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+              onClick={() => handleSendEmail('estimate')}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#2045B8', marginBottom: 3 }}>📋 Estimate only</div>
+              <div style={{ fontSize: 11, color: 'var(--ash)' }}>Send the estimate with pricing and tier selection</div>
+            </button>
+            <button style={{ width: '100%', background: contractPdfUrl ? 'rgba(59,108,255,.06)' : 'rgba(107,114,128,.04)', border: `1.5px solid ${contractPdfUrl ? 'rgba(59,108,255,.2)' : 'var(--border)'}`, borderRadius: 12, padding: '13px 16px', marginBottom: 8, cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.55 }}
+              disabled={!contractPdfUrl}
+              onClick={() => contractPdfUrl && handleSendEmail('estimate_contract')}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: contractPdfUrl ? '#2045B8' : 'var(--ash)', marginBottom: 3 }}>📋 Estimate + Contract</div>
+              <div style={{ fontSize: 11, color: 'var(--ash)' }}>{contractPdfUrl ? 'Client reads contract first, then reviews and signs the estimate' : 'No contract uploaded — go to Settings → Contract to upload one'}</div>
+            </button>
+            <button style={{ width: '100%', background: contractPdfUrl ? 'rgba(59,108,255,.06)' : 'rgba(107,114,128,.04)', border: `1.5px solid ${contractPdfUrl ? 'rgba(59,108,255,.2)' : 'var(--border)'}`, borderRadius: 12, padding: '13px 16px', cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.55 }}
+              disabled={!contractPdfUrl}
+              onClick={() => contractPdfUrl && handleSendEmail('contract')}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: contractPdfUrl ? '#2045B8' : 'var(--ash)', marginBottom: 3 }}>📄 Contract only</div>
+              <div style={{ fontSize: 11, color: 'var(--ash)' }}>{contractPdfUrl ? 'Send only the contract PDF for client signature' : 'No contract uploaded — go to Settings → Contract to upload one'}</div>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

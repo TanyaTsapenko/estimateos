@@ -6,7 +6,7 @@ import { TAX_RATES, fmtCAD } from '@/lib/pricing'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
-  const { estimateId, type } = await request.json()
+  const { estimateId, type, sendMode } = await request.json()
   if (!estimateId) return NextResponse.json({ error: 'Missing estimateId' }, { status: 400 })
 
   const supabase = await createClient()
@@ -78,7 +78,20 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
   } else if (type === 'send') {
-    subject = `Your estimate from ${companyName} — ${est.estimate_number}`
+    const isContractOnly = sendMode === 'contract'
+    const isEstimateContract = sendMode === 'estimate_contract'
+    subject = isContractOnly
+      ? `Your contract from ${companyName} — ${est.estimate_number}`
+      : isEstimateContract
+        ? `Your estimate & contract from ${companyName} — ${est.estimate_number}`
+        : `Your estimate from ${companyName} — ${est.estimate_number}`
+    const headerTitle = isContractOnly ? 'Your contract is ready' : 'Your estimate is ready'
+    const bodyText = isContractOnly
+      ? `<strong style="color:#1A1A1A">${companyName}</strong> has sent you a contract to review and sign.`
+      : isEstimateContract
+        ? `<strong style="color:#1A1A1A">${companyName}</strong> has sent you an estimate and contract. Please review the contract first, then review the estimate and sign.`
+        : `<strong style="color:#1A1A1A">${companyName}</strong> has prepared an estimate for your project. Review the details and sign online — it takes less than a minute.`
+    const btnText = isContractOnly ? 'Review &amp; Sign Contract →' : isEstimateContract ? 'View Contract &amp; Estimate →' : 'View &amp; Sign Estimate →'
     html = `
 <!DOCTYPE html>
 <html>
@@ -88,31 +101,31 @@ export async function POST(request: NextRequest) {
 
   <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
     <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B6CFF">OS</span></div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Your estimate is ready</div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">${headerTitle}</div>
     <div style="font-size:13px;color:rgba(255,255,255,.5)">${est.estimate_number} · ${companyName}</div>
   </div>
 
   <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
     <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est.client_name || 'there'},</p>
     <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
-      <strong style="color:#1A1A1A">${companyName}</strong> has prepared an estimate for your project. Review the details and sign online — it takes less than a minute.
+      ${bodyText}
     </p>
 
-    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px;text-align:center">
+    ${!isContractOnly ? `<div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px;text-align:center">
       <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:8px">${(est.tier || 'better').toUpperCase()} PACKAGE</div>
       <div style="font-size:32px;font-weight:800;color:#2045B8;line-height:1">${fmtCAD(est.total)}</div>
       <div style="font-size:11px;color:#9ca3af;margin-top:6px">inc. ${taxLabel} · Valid until ${est.valid_until || '30 days'}</div>
-    </div>
+    </div>` : ''}
 
     <div style="text-align:center;margin-bottom:24px">
       <a href="${clientLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:14px 32px;font-size:14px;font-weight:700;display:inline-block">
-        View &amp; Sign Estimate →
+        ${btnText}
       </a>
     </div>
 
-    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
+    ${!isContractOnly ? `<p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
       You can choose from Good, Better, or Best packages. Estimate expires ${est.valid_until || '30 days from now'}.
-    </p>
+    </p>` : ''}
   </div>
 
   <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">

@@ -20,7 +20,7 @@ const TIERS = [
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
   shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
-  install: 'insert', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
+  install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
 }
 
 function NewEstimateForm() {
@@ -259,10 +259,11 @@ function NewEstimateForm() {
         </div>
 
         <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Install type</label>
+          <div className="f"><label>Installation Type</label>
             <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
-              <option value="insert">Insert / retrofit</option>
-              <option value="fullframe">Full frame (+$200)</option>
+              <option value="retrofit">Retrofit</option>
+              <option value="fullframe">Full Frame (+$200)</option>
+              <option value="stud_to_stud">Stud to Stud (+$350)</option>
             </select></div>
           <div className="f"><label>Floor</label>
             <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>

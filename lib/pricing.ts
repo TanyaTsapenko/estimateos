@@ -68,7 +68,7 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices): number
   const sz = bucket === 'sm' ? sizes.sm : bucket === 'lg' ? sizes.lg : bucket === 'xl' ? sizes.xl : sizes.md
   const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
   const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
-  const ia = op.install === 'fullframe' ? 200 : 0
+  const ia = op.install === 'fullframe' ? 200 : op.install === 'stud_to_stud' ? 350 : 0
   const fc = op.frame === 'repair' ? 120 : op.frame === 'rotted' ? 280 : 0
   const col = op.colour === 'black' || op.colour === 'grey' ? 80 : op.colour === 'custom' ? 150 : 0
   const gl = op.glass === 'lowe' ? 60 : op.glass === 'frosted' ? 90 : op.glass === 'tinted' ? 70 : op.glass === 'tempered' ? 110 : 0

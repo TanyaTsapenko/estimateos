@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
@@ -10,7 +10,7 @@ interface Profile {
   company_name: string | null; phone: string | null; website: string | null
   city: string | null; province: string | null; licence: string | null
   insurance: string | null; contract_terms: string | null; plan: string | null
-  deposit_pct: number | null
+  deposit_pct: number | null; contract_pdf_url: string | null; contract_pdf_name: string | null
 }
 
 interface TeamMember {
@@ -44,6 +44,8 @@ export default function SettingsPage() {
   const [pwSaved, setPwSaved] = useState(false)
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [roleUpdating, setRoleUpdating] = useState<string | null>(null)
+  const contractFileRef = useRef<HTMLInputElement>(null)
+  const [uploadingContract, setUploadingContract] = useState(false)
 
   useEffect(() => {
     if (!roleLoading && role !== 'owner') router.replace('/dashboard')
@@ -105,6 +107,23 @@ export default function SettingsPage() {
     await supabase.from('profiles').update({ role: newRole, member_role: newRole }).eq('id', memberId)
     setTeamMembers(p => p.map(m => m.id === memberId ? { ...m, role: newRole, member_role: newRole } : m))
     setRoleUpdating(null)
+  }
+
+  async function handleContractUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.type !== 'application/pdf') { setError('Please upload a PDF file'); return }
+    setUploadingContract(true); setError('')
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setUploadingContract(false); return }
+    const path = `${user.id}/contract-${Date.now()}.pdf`
+    const { error: upErr } = await supabase.storage.from('contracts').upload(path, file, { contentType: 'application/pdf', upsert: true })
+    if (upErr) { setError(upErr.message); setUploadingContract(false); return }
+    const url = supabase.storage.from('contracts').getPublicUrl(path).data.publicUrl
+    const { error: dbErr } = await supabase.from('profiles').update({ contract_pdf_url: url, contract_pdf_name: file.name, updated_at: new Date().toISOString() }).eq('id', user.id)
+    if (dbErr) { setError(dbErr.message); setUploadingContract(false); return }
+    setForm(p => ({ ...p, contract_pdf_url: url, contract_pdf_name: file.name }))
+    setUploadingContract(false)
   }
 
   // ── SECTION CONTENT ─────────────────────────
@@ -174,6 +193,31 @@ export default function SettingsPage() {
             <button className="gen-btn" onClick={save} disabled={saving}>
               {saving ? '⏳ Saving...' : '💾 Save Changes'}
             </button>
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-light)' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 4 }}>Contract PDF</div>
+              <div style={{ fontSize: 11, color: 'var(--ash)', marginBottom: 12, lineHeight: 1.5 }}>
+                Upload a PDF contract to send alongside estimates. Clients will be asked to review and acknowledge it before signing.
+              </div>
+              {form.contract_pdf_url && (
+                <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <span style={{ fontSize: 18 }}>📄</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{form.contract_pdf_name || 'contract.pdf'}</span>
+                  </div>
+                  <a href={form.contract_pdf_url} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: 11, fontWeight: 700, color: '#2045B8', whiteSpace: 'nowrap', textDecoration: 'none', flexShrink: 0 }}>
+                    View →
+                  </a>
+                </div>
+              )}
+              <input ref={contractFileRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleContractUpload} />
+              <button
+                onClick={() => contractFileRef.current?.click()}
+                disabled={uploadingContract}
+                style={{ background: 'var(--surface)', border: '1.5px dashed var(--border)', borderRadius: 10, padding: '10px 16px', fontSize: 12, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}>
+                {uploadingContract ? '⏳ Uploading...' : form.contract_pdf_url ? '🔄 Replace PDF' : '📤 Upload Contract PDF'}
+              </button>
+            </div>
           </>
         )}
 
