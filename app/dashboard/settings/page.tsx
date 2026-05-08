@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { useRole } from '@/lib/useRole'
+import { SIcon } from '@/components/SIcon'
+import type { IconName } from '@/components/SIcon'
 
 interface Profile {
   first_name: string | null; last_name: string | null; email: string | null
@@ -20,12 +22,12 @@ interface TeamMember {
 
 const PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT']
 
-const SECTIONS = [
-  { key: 'company',  label: 'Company',  icon: '🏢' },
-  { key: 'contract', label: 'Contract', icon: '📝' },
-  { key: 'password', label: 'Password', icon: '🔒' },
-  { key: 'billing',  label: 'Billing',  icon: '💳' },
-  { key: 'team',     label: 'Team',     icon: '👥' },
+const SECTIONS: { key: string; label: string; icon: IconName }[] = [
+  { key: 'company',  label: 'Company',  icon: 'company'  },
+  { key: 'contract', label: 'Contract', icon: 'contract' },
+  { key: 'password', label: 'Password', icon: 'lock'     },
+  { key: 'billing',  label: 'Billing',  icon: 'card'     },
+  { key: 'team',     label: 'Team',     icon: 'team'     },
 ]
 
 export default function SettingsPage() {
@@ -348,20 +350,20 @@ export default function SettingsPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
                 <button onClick={() => router.push('/dashboard/company')}
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit' }}>
-                  🏢 Company Profile
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <SIcon name="company" size={14} color="var(--blue)" /> Company
                 </button>
                 <button onClick={() => router.push('/dashboard/team')}
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit' }}>
-                  👥 Manage Team
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <SIcon name="team" size={14} color="var(--blue)" /> Team
                 </button>
                 <button onClick={() => router.push('/dashboard/invoices')}
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit' }}>
-                  🧾 Invoices
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <SIcon name="invoice" size={14} color="var(--blue)" /> Invoices
                 </button>
                 <button onClick={() => router.push('/dashboard/price-list')}
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit' }}>
-                  💰 Price List
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 9, padding: '8px 6px', cursor: 'pointer', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--jet)', fontFamily: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <SIcon name="price" size={14} color="var(--blue)" /> Prices
                 </button>
               </div>
             </div>
@@ -371,7 +373,7 @@ export default function SettingsPage() {
                 <div key={s.key}
                   className={`stnav-item${activeSection === s.key ? ' active' : ''}`}
                   onClick={() => setActiveSection(s.key)}>
-                  <span className="stnav-icon">{s.icon}</span>
+                  <span className="stnav-icon"><SIcon name={s.icon} size={14} /></span>
                   {s.label}
                 </div>
               ))}
@@ -380,8 +382,8 @@ export default function SettingsPage() {
 
           {/* Right: section content */}
           <div className="settings-content">
-            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)', marginBottom: 16 }}>
-              {SECTIONS.find(s => s.key === activeSection)?.icon}{' '}
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--jet)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SIcon name={SECTIONS.find(s => s.key === activeSection)?.icon ?? 'settings'} size={15} color="var(--blue)" />
               {SECTIONS.find(s => s.key === activeSection)?.label}
             </div>
             <SectionContent />
@@ -408,26 +410,26 @@ export default function SettingsPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
             <button onClick={() => router.push('/dashboard/company')}
-              style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ fontSize: 18, marginBottom: 3 }}>🏢</div>
+              style={{ background: '#fff', border: '1px solid var(--border-light)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 5, color: 'var(--blue)' }}><SIcon name="company" size={18} /></div>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Company Profile</div>
               <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Logo · Signature</div>
             </button>
             <button onClick={() => router.push('/dashboard/team')}
-              style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ fontSize: 18, marginBottom: 3 }}>👥</div>
+              style={{ background: '#fff', border: '1px solid var(--border-light)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 5, color: 'var(--blue)' }}><SIcon name="team" size={18} /></div>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Team</div>
               <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Members · Invites</div>
             </button>
             <button onClick={() => router.push('/dashboard/invoices')}
-              style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ fontSize: 18, marginBottom: 3 }}>🧾</div>
+              style={{ background: '#fff', border: '1px solid var(--border-light)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 5, color: 'var(--blue)' }}><SIcon name="invoice" size={18} /></div>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Invoices</div>
               <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Billing history</div>
             </button>
             <button onClick={() => router.push('/dashboard/price-list')}
-              style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
-              <div style={{ fontSize: 18, marginBottom: 3 }}>💰</div>
+              style={{ background: '#fff', border: '1px solid var(--border-light)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 5, color: 'var(--blue)' }}><SIcon name="price" size={18} /></div>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--jet)' }}>Price List</div>
               <div style={{ fontSize: 9, color: 'var(--ash)', marginTop: 1 }}>Opening types</div>
             </button>
@@ -444,7 +446,7 @@ export default function SettingsPage() {
                   borderRadius: 10, padding: '8px 6px', textAlign: 'center', cursor: 'pointer',
                   fontSize: 10, fontWeight: 700, color: activeSection === s.key ? '#2045B8' : 'var(--ash)',
                 }}>
-                <div style={{ fontSize: 16, marginBottom: 2 }}>{s.icon}</div>
+                <div style={{ marginBottom: 3, display: 'flex', justifyContent: 'center' }}><SIcon name={s.icon} size={15} /></div>
                 {s.label}
               </div>
             ))}

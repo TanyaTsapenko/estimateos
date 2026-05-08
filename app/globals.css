@@ -1,27 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 :root {
-  --blue: #3B6CFF;
-  --blue-dark: #2045B8;
-  --blue-dim: rgba(59,108,255,.08);
-  /* keep --amber mapped to blue so inline var(--amber) refs update automatically */
-  --amber: #3B6CFF;
-  --amber-dim: rgba(59,108,255,.08);
-  --jet: #1A1A1A;
-  --onyx: #222526;
-  --graphite: #353A3E;
-  --platinum: #E0E0E0;
-  --ash: #9CA3AF;
-  --surface: #F4F4F2;
-  --border: #D0D0D0;
-  --border-light: #EBEBEB;
+  /* Primary */
+  --blue: #2563EB;
+  --blue-dark: #1d4ed8;
+  --blue-dim: rgba(37,99,235,0.08);
+  /* Aliases kept so existing var() refs work */
+  --amber: #2563EB;
+  --amber-dim: rgba(37,99,235,0.08);
+  /* Text */
+  --jet: #0A1628;
+  --onyx: #0A1628;
+  --graphite: #475569;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-faint: #94A3B8;
+  --platinum: #E2E8F0;
+  --ash: #94A3B8;
+  /* Surfaces */
+  --surface: #FFFFFF;
+  --surface-page: #F5F6F8;
+  /* Borders */
+  --border: rgba(10,22,40,0.06);
+  --border-light: #EEF0F4;
+  /* Semantic */
+  --success: #0F8A6B;
+  --warning: #B45309;
+  --danger: #DC2626;
+  --purple: #7C3AED;
+  /* Sidebar */
+  --sidebar: #0A1628;
 }
 
-html { background: #E8E9EC; }
-body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-height: 100vh; font-size: 14px; }
+html { background: #F5F6F8; }
+body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh; font-size: 14px; font-weight: 500; color: var(--jet); }
 
 .app { max-width: 390px; margin: 0 auto; min-height: 100vh; position: relative; }
 
@@ -31,7 +46,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
 /* ── HEADER ── */
 .gh {
-  background: linear-gradient(150deg, #0A0E1A 0%, #0D1630 40%, #1A2744 100%);
+  background: linear-gradient(150deg, #0A1628 0%, #0d1f3c 40%, #172444 100%);
   padding: 20px 20px 48px;
   position: relative;
   overflow: hidden;
@@ -67,7 +82,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
 /* ── CONTENT AREAS ── */
 .card { background: #fff; border-radius: 24px 24px 0 0; margin-top: -24px; flex: 1; padding: 22px 18px 100px; position: relative; z-index: 3; overflow-y: auto; }
-.dash-bg { background: #F4F4F2; border-radius: 24px 24px 0 0; margin-top: -24px; flex: 1; padding: 22px 14px 100px; overflow-y: auto; position: relative; z-index: 3; }
+.dash-bg { background: #F5F6F8; border-radius: 24px 24px 0 0; margin-top: -24px; flex: 1; padding: 22px 14px 100px; overflow-y: auto; position: relative; z-index: 3; }
 
 /* ── SECTION LABELS ── */
 .sl { font-size: 9px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--ash); padding: 12px 0 8px; border-bottom: 1px solid var(--border-light); margin-bottom: 14px; }
@@ -87,7 +102,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   border: 1.5px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: var(--jet);
   outline: none;
@@ -125,7 +140,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 18px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -137,7 +152,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   border: none;
   border-radius: 12px;
   padding: 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -160,7 +175,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 .divider { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border-light); }
 .divider span { font-size: 11px; color: var(--ash); }
-.social-btn { width: 100%; background: #F4F4F2; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--jet); cursor: pointer; margin-bottom: 8px; }
+.social-btn { width: 100%; background: #F4F4F2; border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--jet); cursor: pointer; margin-bottom: 8px; }
 .login-link { text-align: center; font-size: 12px; color: var(--ash); margin-top: 12px; }
 .login-link span { color: var(--blue-dark); font-weight: 600; cursor: pointer; }
 
@@ -174,23 +189,23 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 /* ── STATS GRID ── */
 .avatar { width: 34px; height: 34px; background: rgba(255,255,255,.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--ash); }
 .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-.stat { background: #fff; border-radius: 14px; padding: 14px; border: 1px solid var(--border-light); }
+.stat { background: #fff; border-radius: 14px; padding: 14px; box-shadow: 0 0 0 1px rgba(10,22,40,0.05); }
 .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.stat-ic { width: 30px; height: 30px; border-radius: 8px; background: rgba(59,108,255,.07); display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.stat-ic { width: 30px; height: 30px; border-radius: 8px; background: rgba(37,99,235,.08); display: flex; align-items: center; justify-content: center; color: var(--blue); }
 .stat-tr { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(59,108,255,.08); color: var(--blue-dark); }
 .stat-val { font-size: 20px; font-weight: 800; color: var(--jet); }
 .stat-lbl { font-size: 9px; color: var(--ash); margin-top: 2px; font-weight: 500; }
 .stat-wide { background: #fff; border-radius: 14px; padding: 12px 14px; border: 1px solid var(--border-light); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
 
 /* ── DASHBOARD NEW BUTTON ── */
-.new-btn { background: #3B6CFF; border: none; border-radius: 14px; padding: 15px; width: 100%; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.new-btn { background: #3B6CFF; border: none; border-radius: 14px; padding: 15px; width: 100%; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; font-family: 'Inter', sans-serif; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
 
 /* ── QUICK ACTION GRID ── */
 .qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
 .qa { background: #fff; border-radius: 14px; padding: 14px; border: 1px solid var(--border-light); text-align: center; cursor: pointer; }
 
 /* ── ESTIMATE CARD ── */
-.ec { background: #fff; border-radius: 14px; padding: 11px 13px; margin-bottom: 6px; border: 1px solid var(--border-light); cursor: pointer; }
+.ec { background: #fff; border-radius: 14px; padding: 11px 13px; margin-bottom: 6px; box-shadow: 0 0 0 1px rgba(10,22,40,0.05); cursor: pointer; }
 .ec-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
 .ec-name { font-size: 13px; font-weight: 700; color: var(--jet); }
 .ec-date { font-size: 9px; color: var(--ash); margin-top: 1px; }
@@ -236,7 +251,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 .op-name { font-size: 12px; font-weight: 600; color: var(--jet); margin-left: 8px; }
 .op-price { font-size: 13px; font-weight: 700; color: var(--blue); }
 .del-btn { width: 26px; height: 26px; background: rgba(239,68,68,.08); border-radius: 6px; color: #ef4444; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: none; }
-.add-btn { width: 100%; background: transparent; border: 1.5px dashed #c8c8c8; border-radius: 12px; padding: 14px; color: var(--blue); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.add-btn { width: 100%; background: transparent; border: 1.5px dashed #c8c8c8; border-radius: 12px; padding: 14px; color: var(--blue); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* ── LIVE PRICE BOX ── */
 .live-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
@@ -290,7 +305,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   padding: 13px 16px;
   width: 100%;
   color: var(--jet);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -309,17 +324,17 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   font-weight: 700;
   color: #fff;
   cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 .gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── LOGO ── */
-.logo-text { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.02em; font-family: 'Plus Jakarta Sans', sans-serif; }
+.logo-text { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.02em; font-family: 'Inter', sans-serif; }
 
 /* ── SEARCH & FILTER ── */
 .screen-enter { animation: fu .3s ease; }
 .search-bar { background: #fff; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 12px; }
-.search-bar input { border: none; background: transparent; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: var(--jet); outline: none; flex: 1; }
+.search-bar input { border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--jet); outline: none; flex: 1; }
 .filter-tabs { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
 .filter-tabs::-webkit-scrollbar { display: none; }
 .filter-tab { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--ash); transition: all .15s; }
@@ -336,7 +351,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   border: none;
   border-radius: 14px;
   padding: 14px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
   font-weight: 700;
   color: #fff;
@@ -431,7 +446,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
 /* ── ESTIMATE DETAIL STICKY ACTION BAR ── */
 .action-bar { background: #fff; border-bottom: 1px solid var(--border-light); padding: 10px 28px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.action-bar-btn { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1.5px solid var(--border-light); border-radius: 8px; padding: 7px 13px; font-size: 12px; font-weight: 600; color: var(--jet); cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap; transition: background .12s, border-color .12s; }
+.action-bar-btn { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1.5px solid var(--border-light); border-radius: 8px; padding: 7px 13px; font-size: 12px; font-weight: 600; color: var(--jet); cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap; transition: background .12s, border-color .12s; }
 .action-bar-btn:hover { background: #EBEBEB; }
 .action-bar-btn:disabled { opacity: .5; cursor: not-allowed; }
 .action-bar-btn.filled { background: #2045B8; border-color: #2045B8; color: #fff; }
@@ -443,14 +458,14 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
 /* ── ESTIMATE DETAIL MOBILE ACTIONS ── */
 .est-actions { margin-bottom: 8px; }
-.est-act-primary { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 16px; background: #2045B8; border: none; border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 8px; transition: background .12s; }
+.est-act-primary { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px 16px; background: #2045B8; border: none; border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; margin-bottom: 8px; transition: background .12s; }
 .est-act-primary:active { background: #1a38a0; }
 .est-act-primary:disabled { opacity: .6; cursor: not-allowed; }
 .est-act-row { display: flex; gap: 8px; margin-bottom: 8px; }
-.est-act-secondary { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; min-width: 0; padding: 12px 8px; background: #fff; border: 1.5px solid var(--border); border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--jet); cursor: pointer; transition: background .12s; white-space: nowrap; }
+.est-act-secondary { display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; min-width: 0; padding: 12px 8px; background: #fff; border: 1.5px solid var(--border); border-radius: 12px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; color: var(--jet); cursor: pointer; transition: background .12s; white-space: nowrap; }
 .est-act-secondary:active { background: #F4F4F2; }
 .est-act-divider { height: 1px; background: var(--border-light); margin: 8px 0; }
-.est-act-delete { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 0; background: transparent; border: none; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 600; color: #dc2626; cursor: pointer; }
+.est-act-delete { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 10px 0; background: transparent; border: none; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #dc2626; cursor: pointer; }
 
 /* ── SETTINGS DESKTOP NAV ── */
 .settings-2col { display: grid; gap: 24px; align-items: start; }
@@ -468,12 +483,12 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   flex-direction: column;
   position: fixed;
   left: 0; top: 0;
-  width: 240px;
+  width: 232px;
   height: 100vh;
-  background: linear-gradient(180deg, #0A0E1A 0%, #0D1630 60%, #111827 100%);
+  background: #0A1628;
   z-index: 100;
-  padding: 28px 16px 24px;
-  border-right: 1px solid rgba(255,255,255,.06);
+  padding: 24px 12px 20px;
+  border-right: 1px solid rgba(255,255,255,.05);
 }
 
 .sb-logo {
@@ -495,19 +510,21 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 .sb-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background .15s;
+  transition: background .12s, color .12s;
   color: rgba(255,255,255,.55);
+  font-size: 13px;
+  font-weight: 500;
 }
 .sb-item:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.85); }
-.sb-item.active { background: rgba(59,108,255,.18); color: #fff; }
-.sb-item.active .sb-lb { font-weight: 700; }
+.sb-item.active { background: rgba(59,130,246,.18); color: #fff; }
+.sb-item.active .sb-lb { font-weight: 600; }
 
-.sb-ic { font-size: 16px; flex-shrink: 0; }
-.sb-lb { font-size: 13px; font-weight: 500; }
+.sb-ic { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 18px; }
+.sb-lb { font-size: 13px; }
 
 .sb-footer {
   border-top: 1px solid rgba(255,255,255,.08);
@@ -555,7 +572,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   font-weight: 600;
   color: rgba(255,255,255,.45);
   cursor: pointer;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   text-align: left;
   transition: background .15s, color .15s;
 }
@@ -564,13 +581,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 /* ── DESKTOP OVERRIDES ── */
 @media (min-width: 1024px) {
   .sidebar { display: flex; }
-  .main-content { margin-left: 240px; }
+  .main-content { margin-left: 232px; }
 
   .bot-nav { display: none !important; }
 
   /* FAB: pin inside content area */
   .fab {
-    left: calc(240px + 20px);
+    left: calc(232px + 20px);
     right: 20px;
     max-width: none;
     width: auto;
@@ -583,7 +600,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 
   /* Toast: center in content area */
   .toast {
-    left: calc(240px + 50%);
+    left: calc(232px + 50%);
     bottom: 24px;
   }
 
@@ -634,6 +651,13 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 }
 @keyframes popIn { from { transform: scale(0) } to { transform: scale(1) } }
 
+/* ── TYPOGRAPHY UTILITIES ── */
+.mono { font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace; }
+.label-caps { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ash); }
+
+/* ── UI CARD ── */
+.ui-card { background: #fff; border-radius: 14px; box-shadow: 0 0 0 1px rgba(10,22,40,0.05); padding: 22px; }
+
 /* ── DASHBOARD REDESIGN ── */
 .db-topbar { display: none; }
 .db-main   { display: none; }
@@ -641,7 +665,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
 @media (min-width: 1024px) {
   .db-topbar {
     display: flex;
-    background: linear-gradient(135deg, #0A0E1A 0%, #0D1630 50%, #1A2744 100%);
+    background: #0A1628;
     border-bottom: 1px solid rgba(255,255,255,.06);
     padding: 0 28px;
     height: 64px;
@@ -654,7 +678,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F4F4F2; min-he
   }
   .db-main {
     display: block;
-    background: #F4F4F2;
+    background: #F5F6F8;
     padding: 24px 28px 60px;
     flex: 1;
   }

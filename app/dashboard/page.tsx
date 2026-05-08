@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { fmtCAD } from '@/lib/pricing'
 import { Bell, Plus, Calendar, MapPin, Clock, AlertCircle } from 'lucide-react'
+import { SIcon } from '@/components/SIcon'
 
 interface Profile { first_name: string | null; company_name: string | null }
 interface Estimate {
@@ -182,22 +183,22 @@ export default function DashboardPage() {
       <div className="dash-bg screen-enter mobile-only">
         <div className="stats">
           <div className="stat">
-            <div className="stat-top"><div className="stat-ic">💰</div><div className="stat-tr">Month</div></div>
+            <div className="stat-top"><div className="stat-ic"><SIcon name="price" size={14} /></div><div className="stat-tr">Month</div></div>
             <div className="stat-val">{loading ? '…' : fmtCAD(revenue)}</div>
             <div className="stat-lbl">Revenue</div>
           </div>
           <div className="stat">
-            <div className="stat-top"><div className="stat-ic">📋</div><div className="stat-tr">Open</div></div>
+            <div className="stat-top"><div className="stat-ic"><SIcon name="pdf" size={14} /></div><div className="stat-tr">Open</div></div>
             <div className="stat-val">{loading ? '…' : pipeline.length}</div>
             <div className="stat-lbl">In pipeline</div>
           </div>
           <div className="stat">
-            <div className="stat-top"><div className="stat-ic">✍️</div><div className="stat-tr">Signed</div></div>
+            <div className="stat-top"><div className="stat-ic"><SIcon name="pen" size={14} /></div><div className="stat-tr">Signed</div></div>
             <div className="stat-val">{loading ? '…' : dueToInvoice.length}</div>
             <div className="stat-lbl">Due to invoice</div>
           </div>
           <div className="stat">
-            <div className="stat-top"><div className="stat-ic">📅</div><div className="stat-tr">Today</div></div>
+            <div className="stat-top"><div className="stat-ic"><SIcon name="bell" size={14} /></div><div className="stat-tr">Today</div></div>
             <div className="stat-val">{loading ? '…' : todayAppts.length}</div>
             <div className="stat-lbl">Appointments</div>
           </div>
