@@ -141,6 +141,7 @@ function NewEstimateForm() {
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
       valid_until: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+      appointment_id: apptId || null,
     }).select().single()
 
     if (estErr || !est) { setError(estErr?.message || 'Failed to save'); setSaving(false); return }
