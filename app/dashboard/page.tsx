@@ -136,7 +136,7 @@ export default function DashboardPage() {
           )}
         </button>
 
-        <button onClick={() => router.push('/dashboard/estimates/new')} style={{
+        <button onClick={() => router.push('/dashboard/appointments')} style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
           fontSize: 13, fontWeight: 600, cursor: 'pointer',
