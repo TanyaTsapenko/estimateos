@@ -281,7 +281,7 @@ export default function DashboardPage() {
             accent="#2563EB" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics} />
           <KpiCard label="In pipeline" period="All open"
             value={metrics?.pipelineTotal ?? ''} delta={metrics?.pipelineCount ?? ''} deltaUp={null}
-            accent="#7C3AED" Icon={Send} sparkData={metrics?.sparklines.pipeline ?? []} empty={!metrics} />
+            accent="#7C3AED" Icon={SendIcon} sparkData={metrics?.sparklines.pipeline ?? []} empty={!metrics} />
           <KpiCard label="Due to invoice" period="Signed"
             value={metrics?.dueInvoiceTotal ?? ''} delta={metrics?.dueInvoiceCount ?? ''} deltaUp={null}
             accent="#0F8A6B" Icon={CreditCard} sparkData={metrics?.sparklines.due ?? []} empty={!metrics} />
