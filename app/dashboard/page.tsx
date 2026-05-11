@@ -397,7 +397,7 @@ function KpiCard({ label, sub, value, delta, deltaUp, info, sparkData, sparkColo
   label: string; sub: string; value: string
   delta?: string; deltaUp?: boolean; info?: string
   sparkData: number[]; sparkColor: string; accent: string
-  iconName: string; onClick: () => void; wide?: boolean
+  iconName: React.ComponentProps<typeof SIcon>["name"]; onClick: () => void; wide?: boolean
 }) {
   const { line, area } = buildSparkline(sparkData.length >= 2 ? sparkData : [0,1,0.5,2,1.5,3], 64, 22)
   return (
