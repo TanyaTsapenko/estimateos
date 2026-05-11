@@ -117,7 +117,7 @@ export default function DashboardPage() {
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at').eq('user_id', user.id),
+        supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
         supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).eq('status', 'signed'),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
