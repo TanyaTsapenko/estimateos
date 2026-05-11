@@ -581,7 +581,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 /* ── DESKTOP OVERRIDES ── */
 @media (min-width: 1024px) {
   .sidebar { display: flex; }
-  .main-content { margin-left: 232px; }
+  .main-content { margin-left: 0; }
 
   .bot-nav { display: none !important; }
 
