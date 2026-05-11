@@ -784,41 +784,6 @@ export default function SettingsPage() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, sans-serif', overflow: 'hidden' }}>
 
-      {/* Left sidebar */}
-      <div style={{ width: 232, background: '#0A1628', color: '#fff', display: 'flex', flexDirection: 'column', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ padding: '22px 22px 26px', fontSize: 18, fontWeight: 700, letterSpacing: -0.3 }}>
-          Estimate<span style={{ color: '#3B82F6' }}>OS</span>
-        </div>
-        <div style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {[
-            { path: '/dashboard', label: 'Dashboard', icon: 'zap' as IconName },
-            { path: '/dashboard/estimates', label: 'Estimates', icon: 'pdf' as IconName },
-            { path: '/dashboard/appointments', label: 'Appointments', icon: 'bell' as IconName },
-            { path: '/dashboard/clients', label: 'Clients', icon: 'user' as IconName },
-            { path: '/dashboard/reports', label: 'Reports', icon: 'external' as IconName },
-            { path: '/dashboard/invoices', label: 'Invoices', icon: 'invoice' as IconName },
-            { path: '/dashboard/settings', label: 'Settings', icon: 'settings' as IconName },
-          ].map(item => (
-            <div key={item.path} onClick={() => router.push(item.path)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10,
-                color: item.path === '/dashboard/settings' ? '#fff' : 'rgba(255,255,255,0.55)',
-                background: item.path === '/dashboard/settings' ? 'rgba(59,130,246,0.18)' : 'transparent',
-                fontSize: 14, fontWeight: item.path === '/dashboard/settings' ? 600 : 500, cursor: 'pointer',
-              }}>
-              <SIcon name={item.icon} size={17} /> {item.label}
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: '#2563EB', color: '#fff', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>T</div>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Tanya Slavina</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Owner · Pro</div>
-          </div>
-        </div>
-      </div>
-
       {/* Right side */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
