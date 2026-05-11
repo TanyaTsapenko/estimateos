@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, CreditCard, Send, Bell, Plus } from 'lucide-react'
 
@@ -87,6 +88,7 @@ export default function DashboardPage() {
   const [attention] = useState<AttentionItem[]>([])
   const [activity] = useState<ActivityItem[]>([])
   const [unread] = useState(0)
+  const router = useRouter()
   const todayStr = getTodayStr()
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <button style={{
+        <button onClick={() => router.push('/dashboard/appointments')} style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#fff',
           border: '1px solid #E2E5EA', borderRadius: 9, padding: '7px 11px',
           fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer',
@@ -134,7 +136,7 @@ export default function DashboardPage() {
           )}
         </button>
 
-        <button style={{
+        <button onClick={() => router.push('/dashboard/estimates/new')} style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
           fontSize: 13, fontWeight: 600, cursor: 'pointer',
