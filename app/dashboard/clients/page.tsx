@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import BottomNav from '@/components/BottomNav'
 import { fmtCAD } from '@/lib/pricing'
+import { Search, ChevronRight } from 'lucide-react'
 
 interface RawEstimate {
   id: string
@@ -57,19 +57,37 @@ function buildClients(estimates: RawEstimate[]): ClientRow[] {
       row.lastDate = e.created_at
       row.lastEstimateId = e.id
     }
-    if (!row.phone && e.client_phone) row.phone = e.client_phone
+    if (!row.phone   && e.client_phone)   row.phone   = e.client_phone
     if (!row.address && e.client_address) row.address = e.client_address
-    if (!row.city && e.client_city) row.city = e.client_city
+    if (!row.city    && e.client_city)    row.city    = e.client_city
   }
   return Array.from(map.values()).sort((a, b) => b.lastDate.localeCompare(a.lastDate))
 }
 
+function StatBox({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div style={{
+      background: 'rgba(255,255,255,.07)',
+      border: '1px solid rgba(255,255,255,.1)',
+      borderRadius: 10,
+      padding: '12px 14px',
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.38)', marginBottom: 5 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
+        {value}
+      </div>
+    </div>
+  )
+}
+
 export default function ClientsPage() {
-  const router = useRouter()
+  const router  = useRouter()
   const supabase = createClient()
   const [clients, setClients] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [search,  setSearch]  = useState('')
 
   useEffect(() => {
     async function load() {
@@ -93,115 +111,186 @@ export default function ClientsPage() {
     (c.city || '').toLowerCase().includes(search.toLowerCase())
   )
 
+  const totalValue  = clients.reduce((s, c) => s + c.totalValue, 0)
+  const totalSigned = clients.reduce((s, c) => s + c.signedCount, 0)
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+
+      {/* ── HEADER ── */}
+      <div style={{
+        background: 'linear-gradient(160deg, #0A0E1A 0%, #0F1923 45%, #1A2744 100%)',
+        padding: '28px 24px 28px',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.32)', marginBottom: 8 }}>
+          CONTACTS
         </div>
-        <div className="h-title">
-          <div className="h-eye">CRM</div>
-          <div className="h-big">Clients</div>
-          <div className="h-sub">{clients.length} unique client{clients.length !== 1 ? 's' : ''}</div>
+        <div style={{ marginBottom: 22 }}>
+          <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 3 }}>
+            Clients
+          </div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.42)' }}>
+            {clients.length} unique client{clients.length !== 1 ? 's' : ''}
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <StatBox label="Total clients" value={clients.length}       />
+          <StatBox label="Signed jobs"   value={totalSigned}          />
+          <StatBox label="Total value"   value={fmtCAD(totalValue)}   />
         </div>
       </div>
 
-      <div className="dash-bg screen-enter">
-        <div className="search-bar">
-          <span style={{ fontSize: 14, color: 'var(--ash)' }}>🔍</span>
+      {/* ── BODY ── */}
+      <div style={{ padding: '20px 16px 60px' }}>
+
+        {/* Search */}
+        <div style={{
+          background: '#fff', borderRadius: 12,
+          boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
+          padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
+        }}>
+          <Search size={15} strokeWidth={2} color="#94A3B8" />
           <input
             placeholder="Search by name, phone or city"
             value={search}
             onChange={e => setSearch(e.target.value)}
+            style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#0A1628', background: 'transparent', fontFamily: 'inherit' }}
           />
         </div>
 
+        {/* Loading */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ash)', fontSize: 13 }}>Loading...</div>
-        )}
-
-        {!loading && visible.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>👤</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>
-              {search ? 'No clients found' : 'No clients yet'}
-            </div>
-            <div style={{ fontSize: 12, color: '#6b7280' }}>Clients appear here once you create estimates.</div>
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8', fontSize: 13 }}>
+            Loading…
           </div>
         )}
 
-        {/* ── DESKTOP TABLE ── */}
+        {/* Empty */}
+        {!loading && visible.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>
+              {search ? 'No clients found' : 'No clients yet'}
+            </div>
+            <div style={{ fontSize: 12, color: '#94A3B8' }}>
+              Clients appear here once you create estimates.
+            </div>
+          </div>
+        )}
+
         {!loading && visible.length > 0 && (
-          <div className="desktop-only">
-            <div className="dt">
-              <div className="dt-head" style={{ display: 'grid', gridTemplateColumns: '1fr 130px 160px 80px 110px 100px 100px', padding: '9px 16px' }}>
-                <span>Name</span>
-                <span>Phone</span>
-                <span>Address</span>
-                <span>Estimates</span>
-                <span>Signed value</span>
-                <span>Last estimate</span>
-                <span />
+          <>
+            {/* ── DESKTOP TABLE ── */}
+            <div className="desktop-only" style={{
+              background: '#fff', borderRadius: 12,
+              boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
+              overflow: 'hidden',
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 140px 90px 130px 20px',
+                padding: '10px 18px',
+                borderBottom: '1px solid rgba(10,22,40,0.05)',
+              }}>
+                {['Name', 'Phone', 'Estimates', 'Value', ''].map((h, i) => (
+                  <span key={i} style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+                    textTransform: 'uppercase', color: '#94A3B8',
+                    textAlign: (i === 3 ? 'right' : 'left') as React.CSSProperties['textAlign'],
+                  }}>
+                    {h}
+                  </span>
+                ))}
               </div>
-              {visible.map(c => (
-                <div key={c.key} className="dt-row" style={{ display: 'grid', gridTemplateColumns: '1fr 130px 160px 80px 110px 100px 100px', padding: '11px 16px', alignItems: 'center' }}>
-                  <div>
-                    <div className="dt-name">{c.name}</div>
-                    {c.city && <div style={{ fontSize: 11, color: 'var(--ash)' }}>{c.city}</div>}
+              {visible.map((c, idx) => (
+                <div
+                  key={c.key}
+                  onClick={() => router.push(`/dashboard/estimates/${c.lastEstimateId}`)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 140px 90px 130px 20px',
+                    padding: '13px 18px',
+                    borderBottom: idx < visible.length - 1 ? '1px solid rgba(10,22,40,0.04)' : 'none',
+                    cursor: 'pointer', alignItems: 'center',
+                  }}
+                  onMouseEnter={ev => (ev.currentTarget.style.background = '#F8FAFE')}
+                  onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: 8,
+                      background: 'rgba(37,99,235,.1)', color: '#2563EB',
+                      fontSize: 13, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      {c.name[0]?.toUpperCase() || '?'}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{c.name}</div>
+                      {c.city && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{c.city}</div>}
+                    </div>
                   </div>
-                  <span className="dt-city">{c.phone || '—'}</span>
-                  <span className="dt-city" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.address || '—'}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)' }}>{c.count}</span>
-                  <span className="dt-amt">{c.signedCount > 0 ? fmtCAD(c.totalValue) : '—'}</span>
-                  <span className="dt-date">
-                    {new Date(c.lastDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-                  </span>
-                  <span style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      onClick={() => router.push(`/dashboard/estimates/${c.lastEstimateId}`)}
-                      style={{ background: 'rgba(59,108,255,.08)', border: 'none', borderRadius: 7, padding: '4px 10px', fontSize: 11, fontWeight: 700, color: 'var(--blue-dark)', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                      Open →
-                    </button>
-                  </span>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>{c.phone || '—'}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628' }}>{c.count}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: c.totalValue > 0 ? '#059669' : '#94A3B8' }}>
+                      {c.totalValue > 0 ? fmtCAD(c.totalValue) : '—'}
+                    </div>
+                    {c.signedCount > 0 && (
+                      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>
+                        {c.signedCount} signed
+                      </div>
+                    )}
+                  </div>
+                  <ChevronRight size={14} color="#CBD5E1" />
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* ── MOBILE CARDS ── */}
-        <div className="mobile-only">
-          {visible.map(c => (
-            <div key={c.key} className="ec" onClick={() => router.push(`/dashboard/estimates/${c.lastEstimateId}`)}>
-              <div className="ec-top">
-                <div>
-                  <div className="ec-name">{c.name}</div>
-                  <div className="ec-date">
-                    {c.phone && `${c.phone} · `}
-                    {c.city && `${c.city} · `}
-                    {c.count} estimate{c.count !== 1 ? 's' : ''}
+            {/* ── MOBILE CARDS ── */}
+            <div className="mobile-only">
+              {visible.map(c => (
+                <div
+                  key={c.key}
+                  onClick={() => router.push(`/dashboard/estimates/${c.lastEstimateId}`)}
+                  style={{
+                    background: '#fff', borderRadius: 12,
+                    boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
+                    padding: '14px 16px', marginBottom: 8,
+                    display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+                  }}
+                >
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                    background: 'rgba(37,99,235,.1)', color: '#2563EB',
+                    fontSize: 15, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {c.name[0]?.toUpperCase() || '?'}
                   </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>{c.name}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>
+                      {[c.phone, c.city, `${c.count} estimate${c.count !== 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    {c.totalValue > 0 ? (
+                      <>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#059669' }}>{fmtCAD(c.totalValue)}</div>
+                        <div style={{ fontSize: 10, color: '#94A3B8' }}>{c.signedCount} signed</div>
+                      </>
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#94A3B8' }}>—</div>
+                    )}
+                  </div>
+                  <ChevronRight size={14} color="#CBD5E1" />
                 </div>
-                {c.signedCount > 0 && (
-                  <span className="badge" style={{ background: 'rgba(22,163,74,.1)', color: '#16a34a' }}>
-                    {c.signedCount} SIGNED
-                  </span>
-                )}
-              </div>
-              <div className="ec-bot">
-                <div style={{ fontSize: 11, color: 'var(--ash)' }}>
-                  Last: {new Date(c.lastDate).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
-                </div>
-                {c.signedCount > 0 && <div className="ec-amt">{fmtCAD(c.totalValue)}</div>}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div style={{ height: 90 }} />
+          </>
+        )}
       </div>
-
-      <BottomNav />
     </div>
   )
 }

@@ -651,6 +651,10 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 }
 @keyframes popIn { from { transform: scale(0) } to { transform: scale(1) } }
 
+/* ── KPI GRID (reports page) ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+@media (min-width: 1024px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+
 /* ── TYPOGRAPHY UTILITIES ── */
 .mono { font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace; }
 .label-caps { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--ash); }
