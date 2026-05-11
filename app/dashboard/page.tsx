@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, CreditCard, Send, Bell, Plus } from 'lucide-react'
+import { Calendar, CreditCard, Send as SendIcon, Bell, Plus, Check as CheckIcon } from 'lucide-react'
 
 interface Appointment {
   id: string; time: string; client: string; address: string; type: string
@@ -84,40 +84,72 @@ function getTodayStr() {
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [metrics] = useState<Metrics | null>(null)
-  const [attention] = useState<AttentionItem[]>([])
-  const [activity] = useState<ActivityItem[]>([])
+  const [metrics, setMetrics] = useState<Metrics | null>(null)
+  const [attention, setAttention] = useState<AttentionItem[]>([])
+  const [activity, setActivity] = useState<ActivityItem[]>([])
   const [unread] = useState(0)
   const router = useRouter()
   const todayStr = getTodayStr()
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data }) => {
-      const meta = data.user?.user_metadata
+    async function loadAll() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const meta = user.user_metadata
       if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
       else if (meta?.name) setUserName(meta.name.split(' ')[0])
-      else if (data.user?.email) setUserName(data.user.email.split('@')[0])
-
-      if (data.user) {
-        const today = new Date().toISOString().slice(0, 10)
-        const { data: appts } = await supabase
-          .from('appointments')
-          .select('id, client_name, client_address, appointment_time, status, estimate_id')
-          .eq('user_id', data.user.id)
-          .eq('appointment_date', today)
-          .order('appointment_time', { ascending: true })
-        if (appts) {
-          setAppointments(appts.map(a => ({
-            id: a.id,
-            time: a.appointment_time ? a.appointment_time.slice(0, 5) : '--:--',
-            client: a.client_name || 'Client',
-            address: a.client_address || '',
-            type: a.status || 'scheduled',
-          })))
-        }
+      else if (user.email) setUserName(user.email.split('@')[0])
+      const today = new Date().toISOString().slice(0, 10)
+      const { data: appts } = await supabase
+        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id')
+        .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
+      if (appts) {
+        setAppointments(appts.map((a: any) => {
+          const t = a.appointment_time || ''
+          const [h, m] = t.split(':').map(Number)
+          const ampm = h >= 12 ? 'PM' : 'AM'
+          const h12 = h % 12 || 12
+          return { id: a.id, time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--', client: a.client_name || 'Client', address: a.client_address || '', type: a.status === 'completed' ? 'DONE' : 'SCHEDULED' }
+        }))
       }
-    })
+      const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+      const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
+      const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
+        supabase.from('estimates').select('id,total,status,updated_at').eq('user_id', user.id),
+        supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).eq('status', 'signed'),
+        supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
+        supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
+      ])
+      const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
+      const openEstimates = (estAll||[]).filter((e:any)=>['draft','sent'].includes(e.status))
+      const pipelineTotal = openEstimates.reduce((s:number,e:any)=>s+(e.total||0),0)
+      const dueTotal = (estSigned||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const fmt = (n:number) => n===0?'CA$0':n>=1000?`CA$${(n/1000).toFixed(1)}k`:`CA$${n.toFixed(0)}`
+      setMetrics({
+        revenueThisMonth: fmt(revenueThis), revenueDelta: revenueDelta?`${revenueDelta}%`:'—', revenueUp: revenueLast>0?revenueThis>=revenueLast:null,
+        pipelineTotal: fmt(pipelineTotal), pipelineCount: `${openEstimates.length} estimate${openEstimates.length!==1?'s':''}`,
+        dueInvoiceTotal: fmt(dueTotal), dueInvoiceCount: `${(estSigned||[]).length} estimate${(estSigned||[]).length!==1?'s':''}`,
+        sparklines: { revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8), pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6), due: (estSigned||[]).map((e:any)=>e.total||0).slice(-6) }
+      })
+      const attItems: any[] = []
+      if (estSigned?.length) attItems.push({ icon: CheckIcon, color: '#0F8A6B', title: `${estSigned[0].estimate_number} ready to invoice`, desc: `Signed · ${estSigned[0].client_name}`, cta: 'Send invoice' })
+      const threeDaysAgo = new Date(Date.now()-3*86400000).toISOString()
+      const stale = (estAll||[]).filter((e:any)=>e.status==='sent'&&e.updated_at<=threeDaysAgo)
+      if (stale.length) attItems.push({ icon: SendIcon, color: '#2563EB', title: `Not opened 3+ days`, desc: stale[0].estimate_number, cta: 'Send reminder' })
+      setAttention(attItems)
+      if (estAll) {
+        const now = Date.now()
+        const timeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
+        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED'}
+        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced'}
+        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: timeAgo(e.updated_at) })))
+      }
+    }
+    loadAll()
   }, [])
 
   return (
