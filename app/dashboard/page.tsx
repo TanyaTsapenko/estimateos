@@ -173,17 +173,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <button onClick={() => router.push('/dashboard/appointments')} style={{
-          display: 'flex', alignItems: 'center', gap: 6, background: '#fff',
-          border: '1px solid #E2E5EA', borderRadius: 9, padding: '7px 11px',
-          fontSize: 12, fontWeight: 600, color: '#475569', cursor: 'pointer',
+        <button style={{
+          position: 'relative', background: '#fff', border: '1px solid #E2E5EA',
+          borderRadius: 9, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
         }}>
-          <Bell size={13} strokeWidth={1.7} />
-          Inbox
+          <Bell size={15} strokeWidth={1.7} color="#475569" />
           {unread > 0 && (
-            <span style={{ background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999 }}>
-              {unread}
-            </span>
+            <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
           )}
         </button>
 
