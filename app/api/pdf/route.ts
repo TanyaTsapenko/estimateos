@@ -40,15 +40,31 @@ export async function GET(request: NextRequest) {
     prof?.insurance ? `Insurance: ${prof.insurance}` : null,
   ].filter(Boolean).join('<br>')
 
+  // ── Pre-computed display strings ────────────────────────────────────────────
+  const createdDate = new Date(est.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+  const validUntil  = est.valid_until
+    ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '30 days from issue'
+  const tierLabel   = ((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)) + ' Package'
+  const clientHdr   = [
+    [est.client_address, est.client_city, est.client_province].filter(Boolean).join(', '),
+    est.client_email,
+  ].filter(Boolean).join('<br>')
+  const signedDate  = est.signed_at
+    ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+    : ''
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${est.estimate_number} — ${est.client_name || 'Estimate'}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#ECEEF2;color:#1A1A1A;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#ECEEF2;color:#0A1628;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
   /* ── Toolbar ── */
   .toolbar{background:#fff;border-bottom:1px solid #E0E2E7;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:12px}
