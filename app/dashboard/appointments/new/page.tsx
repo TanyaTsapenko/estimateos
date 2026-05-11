@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
   { key: 'scheduled', label: 'Scheduled' },
-  { key: 'new_lead',  label: 'New Lead' },
   { key: 'completed', label: 'Completed' },
   { key: 'cancelled', label: 'Cancelled' },
 ]
@@ -154,28 +153,6 @@ export default function NewAppointmentPage() {
             style={{ background: '#fff', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 14, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical' }}
             onChange={e => set('notes', e.target.value)} />
         </div></div>
-
-        {/* Status chips */}
-        <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>
-            Status
-          </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {STATUSES.map(s => (
-              <button key={s.key} onClick={() => set('status', s.key)}
-                style={{
-                  padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                  border: '1.5px solid', cursor: 'pointer', fontFamily: 'inherit',
-                  borderColor: form.status === s.key ? 'var(--blue-dark)' : 'var(--border)',
-                  background: form.status === s.key ? 'rgba(32,69,184,.1)' : 'var(--surface)',
-                  color: form.status === s.key ? 'var(--blue-dark)' : 'var(--ash)',
-                }}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Assigned to — shown only if team members exist */}
         {teamMembers.length > 0 && (
           <div className="r1"><div className="f">
