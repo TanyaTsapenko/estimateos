@@ -83,7 +83,7 @@ function getTodayStr() {
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
-  const [appointments] = useState<Appointment[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [metrics] = useState<Metrics | null>(null)
   const [attention] = useState<AttentionItem[]>([])
   const [activity] = useState<ActivityItem[]>([])
@@ -93,11 +93,30 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const meta = data.user?.user_metadata
       if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
       else if (meta?.name) setUserName(meta.name.split(' ')[0])
       else if (data.user?.email) setUserName(data.user.email.split('@')[0])
+
+      if (data.user) {
+        const today = new Date().toISOString().slice(0, 10)
+        const { data: appts } = await supabase
+          .from('appointments')
+          .select('id, client_name, client_address, appointment_time, status, estimate_id')
+          .eq('user_id', data.user.id)
+          .eq('appointment_date', today)
+          .order('appointment_time', { ascending: true })
+        if (appts) {
+          setAppointments(appts.map(a => ({
+            id: a.id,
+            time: a.appointment_time ? a.appointment_time.slice(0, 5) : '--:--',
+            client: a.client_name || 'Client',
+            address: a.client_address || '',
+            type: a.status || 'scheduled',
+          })))
+        }
+      }
     })
   }, [])
 
