@@ -185,7 +185,7 @@ export default function DashboardPage() {
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
               background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
               borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
-            }}>
+            }} onClick={() => router.push('/dashboard/appointments')}>
               <Calendar size={13} strokeWidth={1.7} />
               Open calendar
             </button>
@@ -215,7 +215,7 @@ export default function DashboardPage() {
               background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
               borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
               justifyContent: 'center', cursor: 'pointer', minHeight: 90,
-            }}>
+            }} onClick={() => router.push('/dashboard/appointments/new')}>
               <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
                 + add appointment
               </span>
