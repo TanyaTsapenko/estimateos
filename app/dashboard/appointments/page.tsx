@@ -268,9 +268,25 @@ export default function AppointmentsPage() {
                               {appt.client_address ? ` · ${appt.client_address.split(',')[0]}` : ''}
                             </div>
                           </div>
-                          <span style={{ background: sm.bg, color: sm.color, fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 6, letterSpacing: '.04em', flexShrink: 0 }}>
-                            {sm.label.toUpperCase()}
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            {!appt.estimate_id && appt.status !== 'cancelled' && (
+                              <button
+                                onClick={e => { e.stopPropagation(); createEstimate(appt) }}
+                                style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 9px', fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                + Estimate
+                              </button>
+                            )}
+                            {appt.estimate_id && (
+                              <button
+                                onClick={e => { e.stopPropagation(); router.push(`/dashboard/estimates/${appt.estimate_id}`) }}
+                                style={{ background: 'rgba(147,51,234,.1)', color: '#9333ea', border: 'none', borderRadius: 6, padding: '4px 9px', fontSize: 10, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                View EST
+                              </button>
+                            )}
+                            <span style={{ background: sm.bg, color: sm.color, fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 6, letterSpacing: '.04em' }}>
+                              {sm.label.toUpperCase()}
+                            </span>
+                          </div>
                         </div>
                       )
                     })}
