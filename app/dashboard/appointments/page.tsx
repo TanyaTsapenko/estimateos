@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
+import { Phone, MapPin, FileText, Trash2, Clock, Calendar } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -23,10 +24,6 @@ const STATUS_META: Record<string, { label: string; color: string; bg: string }> 
   scheduled: { label: 'Scheduled', color: '#3B6CFF', bg: 'rgba(59,108,255,.1)' },
   completed: { label: 'Completed', color: '#16a34a', bg: 'rgba(22,163,74,.1)' },
   cancelled: { label: 'Cancelled', color: '#dc2626', bg: 'rgba(220,38,38,.1)' },
-}
-
-const LEAD_ICONS: Record<string, string> = {
-  'Phone call': '📞', Website: '🌐', Referral: '🤝', Google: '🔍', Kijiji: '📰', Other: '📌',
 }
 
 function fmt12h(time: string | null): string {
@@ -54,7 +51,6 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('Upcoming')
-  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -87,7 +83,6 @@ export default function AppointmentsPage() {
     if (!confirm('Delete this appointment?')) return
     await supabase.from('appointments').delete().eq('id', id)
     setAppointments(p => p.filter(a => a.id !== id))
-    if (selectedId === id) setSelectedId(null)
   }
 
   const todayStr = new Date().toISOString().slice(0, 10)
@@ -107,79 +102,65 @@ export default function AppointmentsPage() {
     seen.get(lbl)!.push(appt)
   })
 
-  const selectedAppt = appointments.find(a => a.id === selectedId) || null
-
   const todayCount = appointments.filter(a => a.appointment_date === todayStr).length
   const newLeads = appointments.filter(a => a.status === 'new_lead').length
 
   function ApptDetail({ appt }: { appt: Appointment }) {
-    const sm = STATUS_META[appt.status] || { label: appt.status, color: '#6b7280', bg: 'rgba(107,114,128,.1)' }
+    const sm = STATUS_META[appt.status] || { label: appt.status, color: '#64748B', bg: 'rgba(100,116,139,.1)' }
     return (
-      <div style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid var(--border-light)', borderLeft: `3px solid ${sm.color}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--jet)', marginBottom: 2 }}>{appt.client_name}</div>
-            {appt.client_phone && <div style={{ fontSize: 12, color: 'var(--ash)' }}>{appt.client_phone}</div>}
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #EEF0F4', borderLeft: `3px solid ${sm.color}`, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 2 }}>{appt.client_name}</div>
+            {appt.client_phone && <div style={{ fontSize: 12, color: '#64748B' }}>{appt.client_phone}</div>}
+            {appt.client_address && <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{appt.client_address}</div>}
           </div>
-          <span style={{ background: sm.bg, color: sm.color, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 8, letterSpacing: '.06em' }}>
+          <span style={{ background: sm.bg, color: sm.color, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 6, letterSpacing: '.6px', flexShrink: 0, marginLeft: 10 }}>
             {sm.label.toUpperCase()}
           </span>
         </div>
 
-        {appt.client_address && (
-          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-            <span>📍</span><span>{appt.client_address}</span>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: appt.notes ? 10 : 12 }}>
+        <div style={{ padding: '0 16px 12px', display: 'flex', gap: 14, alignItems: 'center' }}>
           {appt.appointment_time && (
-            <span style={{ fontSize: 13, color: 'var(--jet)', fontWeight: 600 }}>🕐 {fmt12h(appt.appointment_time)}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#0A1628', fontWeight: 600 }}>
+              <Clock size={13} strokeWidth={1.7} color="#64748B" />
+              {fmt12h(appt.appointment_time)}
+            </span>
           )}
-          <span style={{ fontSize: 12, color: 'var(--ash)', fontWeight: 600 }}>{dateLabel(appt.appointment_date)}</span>
-          {appt.lead_source && (
-            <span style={{ fontSize: 12, color: 'var(--ash)' }}>{LEAD_ICONS[appt.lead_source] || '📌'} {appt.lead_source}</span>
-          )}
-          {appt.assigned_to && (
-            <span style={{ fontSize: 12, color: 'var(--ash)' }}>👤 {appt.assigned_to}</span>
-          )}
+          <span style={{ fontSize: 12, color: '#94A3B8' }}>{dateLabel(appt.appointment_date)}</span>
+          {appt.lead_source && <span style={{ fontSize: 12, color: '#94A3B8' }}>{appt.lead_source}</span>}
+          {appt.assigned_to && <span style={{ fontSize: 12, color: '#94A3B8' }}>{appt.assigned_to}</span>}
         </div>
 
         {appt.notes && (
-          <div style={{ fontSize: 12, color: '#6b7280', background: '#F4F5F7', borderRadius: 8, padding: '8px 10px', marginBottom: 12, lineHeight: 1.5 }}>
+          <div style={{ margin: '0 16px 12px', fontSize: 12, color: '#64748B', background: '#F8FAFC', borderRadius: 8, padding: '8px 10px', lineHeight: 1.5 }}>
             {appt.notes}
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid #EEF0F4' }}>
           {appt.client_phone && (
-            <a href={`tel:${appt.client_phone}`}
-              style={{ flex: 1, background: 'rgba(37,99,235,.08)', borderRadius: 8, padding: '8px 0', fontSize: 11, fontWeight: 700, color: '#2563eb', textAlign: 'center', textDecoration: 'none', display: 'block' }}>
-              📞 Call
+            <a href={`tel:${appt.client_phone}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#EFF6FF', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#2563EB', textDecoration: 'none' }}>
+              <Phone size={14} strokeWidth={1.7} /> Call
             </a>
           )}
           {appt.client_address && (
-            <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`}
-              target="_blank" rel="noreferrer"
-              style={{ flex: 1, background: 'rgba(22,163,74,.08)', borderRadius: 8, padding: '8px 0', fontSize: 11, fontWeight: 700, color: '#16a34a', textAlign: 'center', textDecoration: 'none', display: 'block' }}>
-              🗺 Map
+            <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#F0FDF4', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#0F8A6B', textDecoration: 'none' }}>
+              <MapPin size={14} strokeWidth={1.7} /> Map
             </a>
           )}
           {!appt.estimate_id && appt.status !== 'cancelled' && (
-            <button onClick={() => createEstimate(appt)}
-              style={{ flex: 2, background: 'rgba(59,108,255,.1)', border: 'none', borderRadius: 8, padding: '8px 0', fontSize: 11, fontWeight: 700, color: 'var(--blue-dark)', cursor: 'pointer', fontFamily: 'inherit' }}>
-              📋 Create Estimate
+            <button onClick={() => createEstimate(appt)} style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#EFF6FF', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#2563EB', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <FileText size={14} strokeWidth={1.7} /> Start Estimate
             </button>
           )}
           {appt.estimate_id && (
-            <button onClick={() => router.push(`/dashboard/estimates/${appt.estimate_id}`)}
-              style={{ flex: 2, background: 'rgba(147,51,234,.1)', border: 'none', borderRadius: 8, padding: '8px 0', fontSize: 11, fontWeight: 700, color: '#9333ea', cursor: 'pointer', fontFamily: 'inherit' }}>
-              📋 View Estimate
+            <button onClick={() => router.push(`/dashboard/estimates/${appt.estimate_id}`)} style={{ flex: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#EFF6FF', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#2563EB', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <FileText size={14} strokeWidth={1.7} /> View Estimate
             </button>
           )}
-          <button onClick={() => deleteAppt(appt.id)}
-            style={{ width: 34, background: 'rgba(220,38,38,.06)', border: 'none', borderRadius: 8, fontSize: 13, color: '#dc2626', cursor: 'pointer' }}>
-            ✕
+          <button onClick={() => deleteAppt(appt.id)} style={{ width: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FEF2F2', borderRadius: 9, border: 'none', color: '#DC2626', cursor: 'pointer' }}>
+            <Trash2 size={14} strokeWidth={1.7} />
           </button>
         </div>
       </div>
@@ -207,9 +188,9 @@ export default function AppointmentsPage() {
 
   const emptyState = (
     <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-      <div style={{ fontSize: 36, marginBottom: 10 }}>📅</div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--jet)', marginBottom: 4 }}>No appointments</div>
-      <div style={{ fontSize: 12, color: '#6b7280' }}>Tap + New to book your first appointment.</div>
+      <Calendar size={32} color="#CBD5E1" strokeWidth={1.5} style={{ marginBottom: 10 }} />
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No appointments</div>
+      <div style={{ fontSize: 12, color: '#94A3B8' }}>Tap + New to book your first appointment.</div>
     </div>
   )
 
@@ -237,77 +218,22 @@ export default function AppointmentsPage() {
 
         {!loading && (
           <>
-            {/* ── DESKTOP TWO-COL ── */}
-            <div className="desktop-only appts-2col">
-              {/* Left: filter + compact list */}
-              <div>
-                {filterBar}
-                {filtered.length === 0 && emptyState}
-                {groups.map(({ label, items }) => (
-                  <div key={label}>
-                    <div style={{
-                      fontSize: 10, fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase',
-                      color: label === 'Today' ? 'var(--blue-dark)' : label === 'Yesterday' ? '#dc2626' : 'var(--ash)',
-                      padding: '10px 0 6px', borderBottom: '1px solid var(--border-light)', marginBottom: 8,
-                    }}>
-                      {label}
-                    </div>
-                    {items.map(appt => {
-                      const sm = STATUS_META[appt.status] || { label: appt.status, color: '#6b7280', bg: 'rgba(107,114,128,.1)' }
-                      return (
-                        <div key={appt.id}
-                          className={`appt-compact-row${selectedId === appt.id ? ' sel' : ''}`}
-                          onClick={() => setSelectedId(appt.id)}>
-                          <div style={{ width: 4, height: 36, borderRadius: 2, background: sm.color, flexShrink: 0 }} />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {appt.client_name}
-                            </div>
-                            <div style={{ fontSize: 11, color: 'var(--ash)' }}>
-                              {appt.appointment_time ? fmt12h(appt.appointment_time) : '—'}
-                              {appt.client_address ? ` · ${appt.client_address.split(',')[0]}` : ''}
-                            </div>
-                          </div>
-                          <span style={{ background: sm.bg, color: sm.color, fontSize: 8, fontWeight: 700, padding: '2px 7px', borderRadius: 6, letterSpacing: '.04em', flexShrink: 0 }}>
-                            {sm.label.toUpperCase()}
-                          </span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-
-              {/* Right: detail panel */}
-              <div className="appts-right-panel">
-                {selectedAppt ? (
-                  <ApptDetail appt={selectedAppt} />
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-                    <div style={{ fontSize: 32, marginBottom: 8 }}>👆</div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ash)' }}>Select an appointment</div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* ── MOBILE CARDS ── */}
-            <div className="mobile-only">
-              {filterBar}
-              {filtered.length === 0 && emptyState}
-              {groups.map(({ label, items }) => (
-                <div key={label}>
-                  <div style={{
-                    fontSize: 10, fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase',
-                    color: label === 'Today' ? 'var(--blue-dark)' : label === 'Yesterday' ? '#dc2626' : 'var(--ash)',
-                    padding: '10px 0 8px', borderBottom: '1px solid var(--border-light)', marginBottom: 10,
-                  }}>
-                    {label}
-                  </div>
+            {filterBar}
+            {filtered.length === 0 && emptyState}
+            {groups.map(({ label, items }) => (
+              <div key={label} style={{ marginBottom: 8 }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 700, letterSpacing: '.15em', textTransform: 'uppercase',
+                  color: label === 'Today' ? 'var(--blue-dark)' : label === 'Yesterday' ? '#dc2626' : 'var(--ash)',
+                  padding: '10px 0 8px', borderBottom: '1px solid var(--border-light)', marginBottom: 10,
+                }}>
+                  {label}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {items.map(appt => <ApptDetail key={appt.id} appt={appt} />)}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </>
         )}
 
