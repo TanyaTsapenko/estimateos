@@ -3,78 +3,20 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, CreditCard, Send as SendIcon, Bell, Plus, Check as CheckIcon } from 'lucide-react'
+import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight } from 'lucide-react'
 
 interface Appointment {
-  id: string; time: string; client: string; address: string; type: string
+  id: string; time: string; client: string; address: string; type: string; estimateId: string | null
 }
 interface Metrics {
-  revenueThisMonth: string; revenueDelta: string; revenueUp: boolean | null
-  pipelineTotal: string; pipelineCount: string
-  dueInvoiceTotal: string; dueInvoiceCount: string
-  sparklines: { revenue: number[]; pipeline: number[]; due: number[] }
+  revenueThisMonth: string; openCount: number; signedTodayCount: number
 }
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
+  id: string; actionType: 'reminder' | 'invoice' | 'directions'; address?: string
 }
 interface ActivityItem {
-  dot: string; actor: string; verb: string; item: string; time: string
-}
-
-function Sparkline({ data, color }: { data: number[]; color: string }) {
-  if (!data || data.length < 2) return (
-    <svg width={64} height={22} viewBox="0 0 64 22" fill="none">
-      <line x1="0" y1="11" x2="64" y2="11" stroke={color} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.25} />
-    </svg>
-  )
-  const w = 64, h = 22
-  const min = Math.min(...data), max = Math.max(...data)
-  const pts = data.map((v, i) => {
-    const x = (i / (data.length - 1)) * w
-    const y = h - ((v - min) / (max - min || 1)) * (h - 4) - 2
-    return `${x},${y}`
-  }).join(' ')
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
-      <polyline points={pts} stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} />
-    </svg>
-  )
-}
-
-function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData, empty }: {
-  label: string; period: string; value: string; delta: string
-  deltaUp?: boolean | null; accent: string; Icon: React.ElementType
-  sparkData: number[]; empty?: boolean
-}) {
-  const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
-  const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
-  return (
-    <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-          background: `${accent}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Icon size={15} color={accent} strokeWidth={1.7} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
-          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{period}</div>
-        </div>
-        <Sparkline data={sparkData} color={accent} />
-      </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 10 }}>
-        {empty ? (
-          <span style={{ fontSize: 15, fontWeight: 500, color: '#CBD5E1' }}>No data yet</span>
-        ) : (
-          <>
-            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{deltaPrefix}{delta}</span>
-          </>
-        )}
-      </div>
-    </div>
-  )
+  dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
 }
 
 function getTodayStr() {
@@ -110,43 +52,69 @@ export default function DashboardPage() {
           const [h, m] = t.split(':').map(Number)
           const ampm = h >= 12 ? 'PM' : 'AM'
           const h12 = h % 12 || 12
-          return { id: a.id, time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--', client: a.client_name || 'Client', address: a.client_address || '', type: a.status === 'completed' ? 'DONE' : 'SCHEDULED' }
+          return { id: a.id, time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--', client: a.client_name || 'Client', address: a.client_address || '', type: a.status === 'completed' ? 'DONE' : 'SCHEDULED', estimateId: a.estimate_id || null }
         }))
       }
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
         supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).eq('status', 'signed'),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
       ])
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
-      const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
-      const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
       const openEstimates = (estAll||[]).filter((e:any)=>['draft','sent'].includes(e.status))
-      const pipelineTotal = openEstimates.reduce((s:number,e:any)=>s+(e.total||0),0)
-      const dueTotal = (estSigned||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const signedTodayCount = (estAll||[]).filter((e:any)=>e.status==='signed'&&e.updated_at>=today+'T00:00:00').length
       const fmt = (n:number) => n===0?'CA$0':n>=1000?`CA$${(n/1000).toFixed(1)}k`:`CA$${n.toFixed(0)}`
-      setMetrics({
-        revenueThisMonth: fmt(revenueThis), revenueDelta: revenueDelta?`${revenueDelta}%`:'—', revenueUp: revenueLast>0?revenueThis>=revenueLast:null,
-        pipelineTotal: fmt(pipelineTotal), pipelineCount: `${openEstimates.length} estimate${openEstimates.length!==1?'s':''}`,
-        dueInvoiceTotal: fmt(dueTotal), dueInvoiceCount: `${(estSigned||[]).length} estimate${(estSigned||[]).length!==1?'s':''}`,
-        sparklines: { revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8), pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6), due: (estSigned||[]).map((e:any)=>e.total||0).slice(-6) }
-      })
-      const attItems: any[] = []
-      if (estSigned?.length) attItems.push({ icon: CheckIcon, color: '#0F8A6B', title: `${estSigned[0].estimate_number} ready to invoice`, desc: `Signed · ${estSigned[0].client_name}`, cta: 'Send invoice' })
+      setMetrics({ revenueThisMonth: fmt(revenueThis), openCount: openEstimates.length, signedTodayCount })
+
+      const attItems: AttentionItem[] = []
+      if (estSigned?.length) {
+        attItems.push({
+          icon: CheckIcon, color: '#059669',
+          title: `${estSigned[0].estimate_number} ready to invoice`,
+          desc: `Signed · ${estSigned[0].client_name}`,
+          cta: 'Create invoice', id: estSigned[0].id, actionType: 'invoice',
+        })
+      }
       const threeDaysAgo = new Date(Date.now()-3*86400000).toISOString()
       const stale = (estAll||[]).filter((e:any)=>e.status==='sent'&&e.updated_at<=threeDaysAgo)
-      if (stale.length) attItems.push({ icon: SendIcon, color: '#2563EB', title: `Not opened 3+ days`, desc: stale[0].estimate_number, cta: 'Send reminder' })
+      if (stale.length) {
+        attItems.push({
+          icon: SendIcon, color: '#F59E0B',
+          title: `${stale[0].estimate_number} not signed 3+ days`,
+          desc: `Sent · ${stale[0].client_name}`,
+          cta: 'Send reminder', id: stale[0].id, actionType: 'reminder',
+        })
+      }
+      if (appts) {
+        const now = new Date()
+        const oneHourLater = new Date(now.getTime() + 3600000)
+        const soonAppt = (appts as any[]).find((a: any) => {
+          if (!a.appointment_time) return false
+          const [h, m] = a.appointment_time.split(':').map(Number)
+          const apptTime = new Date(); apptTime.setHours(h, m, 0, 0)
+          return apptTime >= now && apptTime <= oneHourLater
+        })
+        if (soonAppt) {
+          attItems.push({
+            icon: Calendar, color: '#2563EB',
+            title: 'Appointment in ~1 hour',
+            desc: `${soonAppt.client_name} · ${soonAppt.client_address || ''}`,
+            cta: 'Get directions', id: soonAppt.id, actionType: 'directions', address: soonAppt.client_address || '',
+          })
+        }
+      }
       setAttention(attItems)
+
       if (estAll) {
         const now = Date.now()
         const timeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
         const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED'}
         const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced'}
-        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: timeAgo(e.updated_at) })))
+        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: timeAgo(e.updated_at), estimateId: e.id })))
       }
     }
     loadAll()
@@ -172,7 +140,6 @@ export default function DashboardPage() {
             <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
           </div>
         </div>
-
         <button style={{
           position: 'relative', background: '#fff', border: '1px solid #E2E5EA',
           borderRadius: 9, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
@@ -182,7 +149,6 @@ export default function DashboardPage() {
             <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
           )}
         </button>
-
         <button onClick={() => router.push('/dashboard/appointments')} style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
@@ -243,7 +209,7 @@ export default function DashboardPage() {
             {appointments.map(appt => (
               <div key={appt.id} style={{
                 background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
-                borderRadius: 10, padding: 12, cursor: 'pointer',
+                borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column',
               }}>
                 <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
                 <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>{appt.client}</div>
@@ -252,12 +218,25 @@ export default function DashboardPage() {
                 </div>
                 <div style={{
                   display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700,
-                  letterSpacing: '0.4px', padding: '2px 7px',
+                  letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start',
                   background: 'rgba(255,255,255,0.18)', borderRadius: 999, textTransform: 'uppercase',
                 }}>{appt.type}</div>
+                <button
+                  onClick={() => appt.estimateId
+                    ? router.push(`/dashboard/estimates/${appt.estimateId}`)
+                    : router.push(`/dashboard/estimates/new?apptId=${appt.id}`)
+                  }
+                  style={{
+                    marginTop: 10, padding: '6px 0', width: '100%',
+                    background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
+                    border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
+                    borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer',
+                  }}
+                >
+                  {appt.estimateId ? 'View EST →' : 'Start estimate'}
+                </button>
               </div>
             ))}
-            {/* Add appointment cell */}
             <div style={{
               background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
               borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
@@ -270,17 +249,28 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* KPI Row */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
-          <KpiCard label="Revenue" period="This month"
-            value={metrics?.revenueThisMonth ?? ''} delta={metrics?.revenueDelta ?? ''} deltaUp={metrics?.revenueUp ?? null}
-            accent="#2563EB" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics} />
-          <KpiCard label="In pipeline" period="All open"
-            value={metrics?.pipelineTotal ?? ''} delta={metrics?.pipelineCount ?? ''} deltaUp={null}
-            accent="#7C3AED" Icon={SendIcon} sparkData={metrics?.sparklines.pipeline ?? []} empty={!metrics} />
-          <KpiCard label="Due to invoice" period="Signed"
-            value={metrics?.dueInvoiceTotal ?? ''} delta={metrics?.dueInvoiceCount ?? ''} deltaUp={null}
-            accent="#0F8A6B" Icon={CreditCard} sparkData={metrics?.sparklines.due ?? []} empty={!metrics} />
+        {/* Slim stats bar */}
+        <div style={{
+          background: '#fff', borderRadius: 10,
+          boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
+          padding: '12px 20px', marginBottom: 18,
+          display: 'flex',
+        }}>
+          {[
+            { label: 'Total this month', value: metrics?.revenueThisMonth ?? '—' },
+            { label: 'Open estimates',   value: metrics != null ? String(metrics.openCount) : '—' },
+            { label: 'Signed today',     value: metrics != null ? String(metrics.signedTodayCount) : '—' },
+          ].map((s, i, arr) => (
+            <div key={s.label} style={{
+              flex: 1,
+              paddingLeft: i > 0 ? 20 : 0,
+              paddingRight: i < arr.length - 1 ? 20 : 0,
+              borderLeft: i > 0 ? '1px solid rgba(10,22,40,0.06)' : 'none',
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8' }}>{s.label}</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.5px', marginTop: 3 }}>{s.value}</div>
+            </div>
+          ))}
         </div>
 
         {/* Two-column lower row */}
@@ -291,17 +281,19 @@ export default function DashboardPage() {
             <div style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Needs attention</div>
               <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
-                {attention.length > 0 ? `${attention.length} items waiting on you` : 'Nothing pending'}
+                {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
               </div>
             </div>
             {attention.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                You're all caught up.
+              <div style={{ padding: '36px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 22, marginBottom: 8 }}>🎉</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
               </div>
             ) : attention.map((item, i) => (
               <div key={i} style={{
                 padding: '12px 16px', display: 'flex', gap: 11, alignItems: 'center',
-                borderBottom: i < attention.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer',
+                borderBottom: i < attention.length - 1 ? '1px solid #EEF0F4' : undefined,
               }}
                 onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
@@ -316,11 +308,18 @@ export default function DashboardPage() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{item.title}</div>
                   <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                 </div>
-                <button style={{
-                  padding: '5px 9px', fontSize: 11, fontWeight: 600, color: item.color,
-                  background: `${item.color}14`, border: 'none', borderRadius: 7, cursor: 'pointer',
-                  whiteSpace: 'nowrap', flexShrink: 0,
-                }}>{item.cta}</button>
+                <button
+                  onClick={() => {
+                    if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
+                    else if (item.actionType === 'reminder') router.push(`/dashboard/estimates/${item.id}`)
+                    else window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address || '')}`, '_blank')
+                  }}
+                  style={{
+                    padding: '5px 10px', fontSize: 11, fontWeight: 600, color: item.color,
+                    background: `${item.color}14`, border: 'none', borderRadius: 7, cursor: 'pointer',
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                  }}
+                >{item.cta}</button>
               </div>
             ))}
           </div>
@@ -340,6 +339,7 @@ export default function DashboardPage() {
                 padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center',
                 borderBottom: i < activity.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer',
               }}
+                onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}
                 onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
               >
@@ -350,6 +350,7 @@ export default function DashboardPage() {
                   <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2563EB' }}>{item.item}</span>
                 </div>
                 <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
               </div>
             ))}
           </div>
