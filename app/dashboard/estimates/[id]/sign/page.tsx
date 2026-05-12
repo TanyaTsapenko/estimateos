@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Estimate {
@@ -157,32 +157,63 @@ export default function SignPage() {
 
   // ── SUCCESS ──
   if (step === 'success') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
-            <ArrowLeft size={15} strokeWidth={2} /> Back
-          </button>
-          <div style={{ width: 1, height: 18, background: '#EEF0F4' }} />
-          <span style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>Signed!</span>
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Topbar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>
+          Estimate<span style={{ color: '#2563EB' }}>OS</span>
         </div>
       </div>
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <div style={{ fontSize: 64, marginBottom: 16, animation: 'popIn .4s ease' }}>✅</div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>Estimate signed!</div>
-        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 28, maxWidth: 280 }}>
-          {estimate.client_name} has signed {estimate.estimate_number} for <strong>{fmtCAD(estimate.total)}</strong>.
-          {estimate.client_email ? ' A confirmation has been sent to their email.' : ''}
+
+      {/* Centered content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+
+        {/* Green check circle */}
+        <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#0F8A6B', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+          <Check size={32} color="#fff" strokeWidth={2.5} />
         </div>
-        <button className="btn-next" style={{ width: 280, flex: 'none', marginBottom: 12 }}
-          onClick={() => router.push(`/dashboard/estimates/${id}`)}>
-          View Estimate →
-        </button>
-        <button className="btn-back" style={{ width: 280, flex: 'none' }}
-          onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}>
-          Create Invoice →
-        </button>
+
+        <div style={{ fontSize: 24, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px', marginBottom: 10, textAlign: 'center' }}>
+          Estimate signed!
+        </div>
+        <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 320, lineHeight: 1.6, marginBottom: 4 }}>
+          {estimate.client_name} has signed {estimate.estimate_number} for <strong>{fmtCAD(estimate.total)}</strong>.
+        </div>
+        {estimate.client_email && (
+          <div style={{ fontSize: 13, color: '#94A3B8', textAlign: 'center', marginBottom: 24 }}>
+            A confirmation has been sent to their email.
+          </div>
+        )}
+
+        {/* Summary card */}
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: 16, width: '100%', maxWidth: 360, marginBottom: 24 }}>
+          {[
+            { label: 'Estimate', value: estimate.estimate_number, color: '#2563EB', mono: true },
+            { label: 'Amount',   value: fmtCAD(estimate.total),   color: '#0A1628', bold: true },
+            { label: 'Signed',   value: new Date().toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }), color: '#0F8A6B' },
+          ].map((row, i, arr) => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+              <span style={{ fontSize: 13, color: '#94A3B8' }}>{row.label}</span>
+              <span style={{ fontSize: 13, fontWeight: row.bold ? 700 : 600, color: row.color, fontFamily: row.mono ? 'ui-monospace, monospace' : 'inherit' }}>
+                {row.value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 360 }}>
+          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ width: '100%', padding: '13px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            View Estimate
+          </button>
+          <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+            style={{ width: '100%', padding: '13px 0', background: '#fff', color: '#0A1628', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Create Invoice
+          </button>
+        </div>
+
       </div>
     </div>
   )
