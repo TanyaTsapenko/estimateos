@@ -4,16 +4,17 @@ import { createClient } from '@/lib/supabase/client'
 import { useRole } from '@/lib/useRole'
 import { useEffect, useState } from 'react'
 import { SIcon } from './SIcon'
+import { ChevronDown } from 'lucide-react'
 import type { IconName } from './SIcon'
 
 const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; ownerOnly: boolean }[] = [
-  { path: '/dashboard',              label: 'Dashboard',    icon: 'zap',      exact: true,  ownerOnly: false },
-  { path: '/dashboard/estimates',    label: 'Estimates',    icon: 'pdf',      exact: false, ownerOnly: false },
-  { path: '/dashboard/appointments', label: 'Appointments', icon: 'bell',     exact: false, ownerOnly: false },
-  { path: '/dashboard/clients',      label: 'Clients',      icon: 'user',     exact: false, ownerOnly: false },
-  { path: '/dashboard/reports',      label: 'Reports',      icon: 'external', exact: false, ownerOnly: true  },
-  { path: '/dashboard/invoices',     label: 'Invoices',     icon: 'invoice',  exact: false, ownerOnly: true  },
-  { path: '/dashboard/settings',     label: 'Settings',     icon: 'settings', exact: false, ownerOnly: true  },
+  { path: '/dashboard',              label: 'Dashboard',    icon: 'home',      exact: true,  ownerOnly: false },
+  { path: '/dashboard/estimates',    label: 'Estimates',    icon: 'contract',  exact: false, ownerOnly: false },
+  { path: '/dashboard/appointments', label: 'Appointments', icon: 'calendar',  exact: false, ownerOnly: false },
+  { path: '/dashboard/clients',      label: 'Clients',      icon: 'team',      exact: false, ownerOnly: false },
+  { path: '/dashboard/reports',      label: 'Reports',      icon: 'bar-chart', exact: false, ownerOnly: true  },
+  { path: '/dashboard/invoices',     label: 'Invoices',     icon: 'invoice',   exact: false, ownerOnly: true  },
+  { path: '/dashboard/settings',     label: 'Settings',     icon: 'settings2', exact: false, ownerOnly: true  },
 ]
 
 export default function Sidebar() {
@@ -46,7 +47,11 @@ export default function Sidebar() {
     ? ALL_ITEMS.filter(i => !i.ownerOnly)
     : ALL_ITEMS
 
-  const initial = displayName[0]?.toUpperCase() || '?'
+  const parts = displayName.trim().split(/\s+/)
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : (parts[0]?.[0] || '?').toUpperCase()
+
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === 'undefined') return false
     return localStorage.getItem('sidebar_collapsed') === 'true'
@@ -73,11 +78,19 @@ export default function Sidebar() {
       top: 0,
       fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
     }}>
-      <div style={{ padding: collapsed ? '22px 0 26px' : '22px 22px 26px', fontSize: 18, fontWeight: 700, letterSpacing: -0.3, display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between' }}>
+
+      {/* Wordmark */}
+      <div style={{
+        padding: collapsed ? '24px 0 20px' : '24px 20px 20px',
+        fontSize: 18, fontWeight: 700, letterSpacing: -0.3,
+        display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
+      }}>
         {!collapsed && <span>Estimate<span style={{ color: '#3B82F6' }}>OS</span></span>}
         {collapsed && <span style={{ color: '#3B82F6', fontSize: 16 }}>E</span>}
       </div>
-      <nav style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+
+      {/* Nav */}
+      <nav style={{ flex: 1, padding: '0 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {items.map(item => {
           const active = item.exact ? path === item.path : path.startsWith(item.path)
           return (
@@ -86,42 +99,84 @@ export default function Sidebar() {
               onClick={() => router.push(item.path)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 12px', borderRadius: 10,
-                color: active ? '#fff' : 'rgba(255,255,255,0.55)',
-                background: active ? 'rgba(59,130,246,0.18)' : 'transparent',
+                padding: '10px 14px', borderRadius: 10,
+                color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+                background: active ? '#2563EB' : 'transparent',
                 fontSize: 14, fontWeight: active ? 600 : 500, cursor: 'pointer',
+                transition: 'background 0.15s, color 0.15s',
+                whiteSpace: 'nowrap',
               }}
+              onMouseEnter={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.06)' }}
+              onMouseLeave={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
             >
-              <SIcon name={item.icon} size={17} strokeWidth={active ? 2.2 : 1.7} />
+              <SIcon name={item.icon} size={20} strokeWidth={active ? 2.2 : 1.7} />
               {!collapsed && item.label}
             </div>
           )
         })}
       </nav>
+
+      {/* Collapse toggle */}
       <div style={{ padding: '8px 12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div onClick={toggleCollapse} style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-end', padding: '6px 4px', cursor: 'pointer', color: 'rgba(255,255,255,0.35)' }}
+        <div
+          onClick={toggleCollapse}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-end', padding: '6px 4px', cursor: 'pointer', color: 'rgba(255,255,255,0.35)' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}>
+          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+        >
           <SIcon name='chevron-r' size={15} style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }} />
         </div>
       </div>
-      <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        {!collapsed && <>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            {initial}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayName || '…'}</div>
-            {roleLabel && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>{roleLabel} · Pro</div>}
-          </div>
-        </>}
-        <button onClick={logout} title="Sign out"
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
-          onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}>
-          <SIcon name="logout" size={15} />
-        </button>
+
+      {/* User block */}
+      <div style={{
+        padding: collapsed ? '14px 0' : '14px 16px',
+        borderTop: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex', alignItems: 'center', gap: 10,
+        justifyContent: collapsed ? 'center' : 'flex-start',
+      }}>
+        {!collapsed ? (
+          <>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, background: '#2563EB',
+              color: '#fff', fontSize: 13, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              {initials}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {displayName || '…'}
+              </div>
+              {roleLabel && (
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>
+                  {roleLabel} · Pro Plan
+                </div>
+              )}
+            </div>
+            <button
+              onClick={logout}
+              title="Sign out"
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+            >
+              <ChevronDown size={14} strokeWidth={2} />
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={logout}
+            title="Sign out"
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.35)', padding: 4, display: 'flex', alignItems: 'center' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
+          >
+            <SIcon name="logout" size={15} />
+          </button>
+        )}
       </div>
+
     </div>
   )
 }

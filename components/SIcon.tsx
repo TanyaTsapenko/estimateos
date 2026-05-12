@@ -1,9 +1,10 @@
 import {
   ArrowLeft, ChevronRight, ChevronDown,
   Building2, Users, Receipt, Tag, FileText, Lock, CreditCard, User, LogOut,
-  Save, Check, Settings, Bell, Globe, Menu, X, Plus, Trash2, Download,
+  Save, Check, Settings, Settings2, Bell, Globe, Menu, X, Plus, Trash2, Download,
   AlertTriangle, Eye, EyeOff, ExternalLink, MoreHorizontal, Zap, Moon,
   Mail, Link2, PenLine, FileDown, Send, Copy, Share2,
+  Home, Calendar, BarChart2,
 } from 'lucide-react'
 import type { LucideProps } from 'lucide-react'
 
@@ -44,6 +45,10 @@ const MAP = {
   'send':       Send,
   'copy':       Copy,
   'share':      Share2,
+  'home':       Home,
+  'calendar':   Calendar,
+  'bar-chart':  BarChart2,
+  'settings2':  Settings2,
 } as const
 
 export type IconName = keyof typeof MAP
