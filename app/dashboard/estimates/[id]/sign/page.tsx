@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { ArrowLeft } from 'lucide-react'
 
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Estimate {
@@ -138,10 +139,15 @@ export default function SignPage() {
   }
 
   if (!estimate) return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div></div>
-      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--ash)', fontSize: 13 }}>Loading...</div>
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <button onClick={() => router.push('/dashboard/estimates')}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
+          <ArrowLeft size={15} strokeWidth={2} /> Estimates
+        </button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#94A3B8', fontSize: 13 }}>
+        Loading…
       </div>
     </div>
   )
@@ -151,12 +157,15 @@ export default function SignPage() {
 
   // ── SUCCESS ──
   if (step === 'success') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
-        <div className="h-title">
-          <div className="h-eye">All done</div>
-          <div className="h-big">Signed!</div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
+            <ArrowLeft size={15} strokeWidth={2} /> Back
+          </button>
+          <div style={{ width: 1, height: 18, background: '#EEF0F4' }} />
+          <span style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>Signed!</span>
         </div>
       </div>
       <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
@@ -180,25 +189,24 @@ export default function SignPage() {
 
   // ── REVIEW ──
   if (step === 'review') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
-              style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              ←
-            </button>
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          </div>
-          <div style={{ background: 'rgba(59,108,255,.15)', border: '1px solid rgba(59,108,255,.3)', color: '#3B6CFF', borderRadius: 8, padding: '4px 10px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em' }}>
-            CONTRACTOR VIEW
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
+          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
+            <ArrowLeft size={15} strokeWidth={2} /> Back
+          </button>
+          <div style={{ width: 1, height: 18, background: '#EEF0F4', flexShrink: 0 }} />
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', flexShrink: 0 }}>
+            {estimate.estimate_number}
+          </span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {estimate.client_name || 'Client'}
+          </span>
         </div>
-        <div className="h-title">
-          <div className="h-eye">Estimate {estimate.estimate_number}</div>
-          <div className="h-big">Review &amp; Sign</div>
-          <div className="h-sub">Review, then hand phone to client</div>
-        </div>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2563EB', background: 'rgba(37,99,235,.08)', border: '1px solid rgba(37,99,235,.2)', borderRadius: 6, padding: '4px 10px', flexShrink: 0, marginLeft: 16 }}>
+          CONTRACTOR VIEW
+        </span>
       </div>
 
       <div className="card">
@@ -232,8 +240,9 @@ export default function SignPage() {
           <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
             Hand the phone to <strong>{estimate.client_name || 'your client'}</strong> to review and sign.
           </div>
-          <button className="gen-btn" onClick={() => setStep('sign')}>
-            👉 Hand to Client →
+          <button onClick={() => setStep('sign')}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '14px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Hand to Client →
           </button>
         </div>
       </div>
@@ -300,7 +309,7 @@ export default function SignPage() {
         </div>
 
         <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}>
-          {saving ? '⏳ Saving...' : `✅ I Agree — Sign ${estimate.estimate_number}`}
+          {saving ? 'Saving...' : `I Agree — Sign ${estimate.estimate_number}`}
         </button>
 
         <div style={{ fontSize: 11, color: 'var(--ash)', textAlign: 'center', marginTop: 12, lineHeight: 1.6 }}>
