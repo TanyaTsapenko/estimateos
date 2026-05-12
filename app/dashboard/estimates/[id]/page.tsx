@@ -205,39 +205,6 @@ export default function EstimateDetailPage() {
         </span>
       </div>
 
-      {/* ── ACTION BAR ── */}
-      <div style={{
-        background: '#fff', borderBottom: '1px solid #EEF0F4',
-        padding: '10px 28px', display: 'flex', alignItems: 'center', gap: 8,
-        overflowX: 'auto', scrollbarWidth: 'none',
-      }}>
-        {(isSigned || isInvoiced) ? (
-          <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-            <Receipt size={13} /> {depositInvoice ? 'Final invoice' : 'Create invoice'}
-          </button>
-        ) : canEmail ? (
-          <button onClick={() => setShowEmailModal(true)} disabled={sending}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, opacity: sending ? 0.6 : 1 }}>
-            {sending ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={13} />}
-            {sending ? 'Sending…' : 'Email client'}
-          </button>
-        ) : null}
-        <button onClick={copyLink}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', color: '#0A1628', border: '1px solid #EEF0F4', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-          <Link2 size={13} /> Copy link
-        </button>
-        <button onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#F8FAFC', color: '#0A1628', border: '1px solid #EEF0F4', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-          <FileDown size={13} /> PDF
-        </button>
-        <div style={{ flex: 1 }} />
-        <button onClick={deleteEstimate}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', color: '#DC2626', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-          <Trash2 size={13} /> Delete
-        </button>
-      </div>
-
       {/* ── BODY ── */}
       <div style={{ padding: '24px 28px 80px' }}>
         <div className="est-3col">
