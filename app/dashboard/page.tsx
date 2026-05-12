@@ -3,13 +3,18 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight } from 'lucide-react'
+import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard } from 'lucide-react'
 
 interface Appointment {
-  id: string; time: string; client: string; address: string; type: string; estimateId: string | null
+  id: string; time: string; client: string; address: string
+  pillStatus: string; estimateId: string | null; duration: string
 }
 interface Metrics {
-  revenueThisMonth: string; openCount: number; signedTodayCount: number
+  revenueThisMonth: string; revenueDelta: string; revenueUp: boolean | null
+  pipelineTotal: string; pipelineCount: string
+  signedTodayTotal: string; signedTodayCount: number
+  signaturesNeeded: number
+  sparklines: { revenue: number[]; pipeline: number[]; signed: number[] }
 }
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
@@ -17,6 +22,72 @@ interface AttentionItem {
 }
 interface ActivityItem {
   dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
+}
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (!data || data.length < 2) return (
+    <svg width={64} height={22} viewBox="0 0 64 22" fill="none">
+      <line x1="0" y1="11" x2="64" y2="11" stroke={color} strokeWidth={1.5} strokeDasharray="4 3" opacity={0.25} />
+    </svg>
+  )
+  const w = 64, h = 22
+  const min = Math.min(...data), max = Math.max(...data)
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w
+    const y = h - ((v - min) / (max - min || 1)) * (h - 4) - 2
+    return `${x},${y}`
+  }).join(' ')
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
+      <polyline points={pts} stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" opacity={0.85} />
+    </svg>
+  )
+}
+
+function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData, empty }: {
+  label: string; period: string; value: string; delta: string
+  deltaUp?: boolean | null; accent: string; Icon: React.ElementType
+  sparkData: number[]; empty?: boolean
+}) {
+  const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
+  const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+          background: `${accent}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={15} color={accent} strokeWidth={1.7} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
+          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{period}</div>
+        </div>
+        <Sparkline data={sparkData} color={accent} />
+      </div>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 10 }}>
+        {empty ? (
+          <span style={{ fontSize: 15, fontWeight: 500, color: '#CBD5E1' }}>No data yet</span>
+        ) : (
+          <>
+            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{deltaPrefix}{delta}</span>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function apptPillStyle(status: string): React.CSSProperties {
+  if (status === 'IN PROGRESS') return {
+    background: 'rgba(37,99,235,.28)', border: '1px solid rgba(255,255,255,.4)', color: '#fff',
+  }
+  if (status === 'AWAITING SIGN') return {
+    background: 'rgba(217,119,6,.3)', border: '1px solid rgba(217,119,6,.55)', color: '#FCD34D',
+  }
+  return { background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.8)' }
 }
 
 function getTodayStr() {
@@ -44,7 +115,7 @@ export default function DashboardPage() {
       else if (user.email) setUserName(user.email.split('@')[0])
       const today = new Date().toISOString().slice(0, 10)
       const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id')
+        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id,duration_minutes')
         .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
       if (appts) {
         setAppointments(appts.map((a: any) => {
@@ -52,60 +123,101 @@ export default function DashboardPage() {
           const [h, m] = t.split(':').map(Number)
           const ampm = h >= 12 ? 'PM' : 'AM'
           const h12 = h % 12 || 12
-          return { id: a.id, time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--', client: a.client_name || 'Client', address: a.client_address || '', type: a.status === 'completed' ? 'DONE' : 'SCHEDULED', estimateId: a.estimate_id || null }
+          let pillStatus = 'CONSULTATION'
+          if (a.status === 'completed') pillStatus = 'DONE'
+          else if (a.status === 'in_progress') pillStatus = 'IN PROGRESS'
+          else if (a.estimate_id) pillStatus = 'AWAITING SIGN'
+          return {
+            id: a.id,
+            time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--',
+            client: a.client_name || 'Client',
+            address: a.client_address || '',
+            pillStatus,
+            estimateId: a.estimate_id || null,
+            duration: a.duration_minutes ? `${a.duration_minutes}m` : '60m',
+          }
         }))
       }
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
         supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).eq('status', 'signed'),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
       ])
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
       const openEstimates = (estAll||[]).filter((e:any)=>['draft','sent'].includes(e.status))
-      const signedTodayCount = (estAll||[]).filter((e:any)=>e.status==='signed'&&e.updated_at>=today+'T00:00:00').length
+      const pipelineTotal = openEstimates.reduce((s:number,e:any)=>s+(e.total||0),0)
+      const signedToday = (estAll||[]).filter((e:any)=>e.status==='signed'&&e.updated_at>=today+'T00:00:00')
+      const signedTodayCount = signedToday.length
+      const signedTodayTotal = signedToday.reduce((s:number,e:any)=>s+(e.total||0),0)
       const fmt = (n:number) => n===0?'CA$0':n>=1000?`CA$${(n/1000).toFixed(1)}k`:`CA$${n.toFixed(0)}`
-      setMetrics({ revenueThisMonth: fmt(revenueThis), openCount: openEstimates.length, signedTodayCount })
+      setMetrics({
+        revenueThisMonth: fmt(revenueThis),
+        revenueDelta: revenueDelta ? `${revenueDelta}%` : '—',
+        revenueUp: revenueLast > 0 ? revenueThis >= revenueLast : null,
+        pipelineTotal: fmt(pipelineTotal),
+        pipelineCount: `${openEstimates.length} estimate${openEstimates.length !== 1 ? 's' : ''}`,
+        signedTodayTotal: fmt(signedTodayTotal),
+        signedTodayCount,
+        signaturesNeeded: estSigned?.length || 0,
+        sparklines: {
+          revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8),
+          pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6),
+          signed: (estAll||[]).filter((e:any)=>e.status==='signed').map((e:any)=>e.total||0).slice(-6),
+        },
+      })
 
       const attItems: AttentionItem[] = []
-      if (estSigned?.length) {
-        attItems.push({
-          icon: CheckIcon, color: '#059669',
-          title: `${estSigned[0].estimate_number} ready to invoice`,
-          desc: `Signed · ${estSigned[0].client_name}`,
-          cta: 'Create invoice', id: estSigned[0].id, actionType: 'invoice',
-        })
-      }
-      const threeDaysAgo = new Date(Date.now()-3*86400000).toISOString()
-      const stale = (estAll||[]).filter((e:any)=>e.status==='sent'&&e.updated_at<=threeDaysAgo)
-      if (stale.length) {
-        attItems.push({
-          icon: SendIcon, color: '#F59E0B',
-          title: `${stale[0].estimate_number} not signed 3+ days`,
-          desc: `Sent · ${stale[0].client_name}`,
-          cta: 'Send reminder', id: stale[0].id, actionType: 'reminder',
-        })
-      }
+      // Upcoming visit → amber, directions
       if (appts) {
         const now = new Date()
-        const oneHourLater = new Date(now.getTime() + 3600000)
+        const ninetyMinsLater = new Date(now.getTime() + 5400000)
         const soonAppt = (appts as any[]).find((a: any) => {
           if (!a.appointment_time) return false
           const [h, m] = a.appointment_time.split(':').map(Number)
-          const apptTime = new Date(); apptTime.setHours(h, m, 0, 0)
-          return apptTime >= now && apptTime <= oneHourLater
+          const t = new Date(); t.setHours(h, m, 0, 0)
+          return t >= now && t <= ninetyMinsLater
         })
         if (soonAppt) {
+          const [apptH, apptM] = soonAppt.appointment_time.split(':').map(Number)
+          const apptTime = new Date(); apptTime.setHours(apptH, apptM, 0, 0)
+          const minsUntil = Math.round((apptTime.getTime() - now.getTime()) / 60000)
+          const leaveTime = new Date(apptTime.getTime() - 30 * 60000)
+          const lh = leaveTime.getHours(), lm = leaveTime.getMinutes()
+          const leaveStr = `${lh % 12 || 12}:${String(lm).padStart(2,'0')} ${lh >= 12 ? 'PM' : 'AM'}`
           attItems.push({
-            icon: Calendar, color: '#2563EB',
-            title: 'Appointment in ~1 hour',
-            desc: `${soonAppt.client_name} · ${soonAppt.client_address || ''}`,
-            cta: 'Get directions', id: soonAppt.id, actionType: 'directions', address: soonAppt.client_address || '',
+            icon: Calendar, color: '#F59E0B',
+            title: `Visit in ${minsUntil} min — ${soonAppt.client_name}`,
+            desc: `Leave by ${leaveStr}`,
+            cta: 'Directions', id: soonAppt.id, actionType: 'directions', address: soonAppt.client_address || '',
           })
         }
+      }
+      // Signed estimate → green, invoice
+      if (estSigned?.length) {
+        attItems.push({
+          icon: CheckIcon, color: '#059669',
+          title: `${estSigned[0].client_name} estimate signed`,
+          desc: `${estSigned[0].estimate_number} · Ready to invoice`,
+          cta: 'Send invoice', id: estSigned[0].id, actionType: 'invoice',
+        })
+      }
+      // Stale sent estimate → blue, reminder
+      const threeDaysAgo = new Date(Date.now()-3*86400000).toISOString()
+      const stale = (estAll||[]).filter((e:any)=>e.status==='sent'&&e.updated_at<=threeDaysAgo)
+      if (stale.length) {
+        const daysSince = Math.floor((Date.now() - new Date(stale[0].updated_at).getTime()) / 86400000)
+        attItems.push({
+          icon: SendIcon, color: '#2563EB',
+          title: `${stale[0].client_name} hasn't opened ${stale[0].estimate_number}`,
+          desc: `Sent ${daysSince} day${daysSince !== 1 ? 's' : ''} ago`,
+          cta: 'Send reminder', id: stale[0].id, actionType: 'reminder',
+        })
       }
       setAttention(attItems)
 
@@ -119,6 +231,8 @@ export default function DashboardPage() {
     }
     loadAll()
   }, [])
+
+  const signaturesNeeded = metrics?.signaturesNeeded ?? 0
 
   return (
     <div style={{
@@ -177,19 +291,23 @@ export default function DashboardPage() {
               {appointments.length === 0 ? (
                 <>
                   <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
-                    No appointments today
+                    No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
                   </div>
                   <div style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
-                    Add your first appointment to get started.
+                    {signaturesNeeded > 0
+                      ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.`
+                      : 'Add your first appointment to get started.'}
                   </div>
                 </>
               ) : (
                 <>
                   <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6 }}>
-                    {appointments.length} appointment{appointments.length !== 1 ? 's' : ''} today
+                    {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
+                    {signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
                   </div>
                   <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                    {appointments.length} stops · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.
+                    {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.
+                    {signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
                   </div>
                 </>
               )}
@@ -200,7 +318,7 @@ export default function DashboardPage() {
               borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
             }} onClick={() => router.push('/dashboard/appointments')}>
               <Calendar size={13} strokeWidth={1.7} />
-              Open calendar
+              Open schedule
             </button>
           </div>
 
@@ -211,16 +329,20 @@ export default function DashboardPage() {
                 background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
                 borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column',
               }}>
-                <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, marginTop: 2 }}>{appt.client}</div>
-                <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
+                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                   {appt.address}
                 </div>
                 <div style={{
                   display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700,
                   letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start',
-                  background: 'rgba(255,255,255,0.18)', borderRadius: 999, textTransform: 'uppercase',
-                }}>{appt.type}</div>
+                  borderRadius: 999, textTransform: 'uppercase',
+                  ...apptPillStyle(appt.pillStatus),
+                }}>{appt.pillStatus}</div>
                 <button
                   onClick={() => appt.estimateId
                     ? router.push(`/dashboard/estimates/${appt.estimateId}`)
@@ -249,28 +371,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Slim stats bar */}
-        <div style={{
-          background: '#fff', borderRadius: 10,
-          boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-          padding: '12px 20px', marginBottom: 18,
-          display: 'flex',
-        }}>
-          {[
-            { label: 'Total this month', value: metrics?.revenueThisMonth ?? '—' },
-            { label: 'Open estimates',   value: metrics != null ? String(metrics.openCount) : '—' },
-            { label: 'Signed today',     value: metrics != null ? String(metrics.signedTodayCount) : '—' },
-          ].map((s, i, arr) => (
-            <div key={s.label} style={{
-              flex: 1,
-              paddingLeft: i > 0 ? 20 : 0,
-              paddingRight: i < arr.length - 1 ? 20 : 0,
-              borderLeft: i > 0 ? '1px solid rgba(10,22,40,0.06)' : 'none',
-            }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: '#94A3B8' }}>{s.label}</div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.5px', marginTop: 3 }}>{s.value}</div>
-            </div>
-          ))}
+        {/* KPI row */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+          <KpiCard
+            label="REVENUE" period="This month"
+            value={metrics?.revenueThisMonth ?? ''} delta={metrics?.revenueDelta ?? ''} deltaUp={metrics?.revenueUp ?? null}
+            accent="#2563EB" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics}
+          />
+          <KpiCard
+            label="IN PIPELINE" period="Open visits"
+            value={metrics?.pipelineTotal ?? ''} delta={metrics?.pipelineCount ?? ''} deltaUp={null}
+            accent="#7C3AED" Icon={SendIcon} sparkData={metrics?.sparklines.pipeline ?? []} empty={!metrics}
+          />
+          <KpiCard
+            label="SIGNED TODAY" period="From visits"
+            value={metrics?.signedTodayTotal ?? ''} delta={`${metrics?.signedTodayCount ?? 0} today`} deltaUp={metrics ? (metrics.signedTodayCount > 0 ? true : null) : null}
+            accent="#0F8A6B" Icon={CheckIcon} sparkData={metrics?.sparklines.signed ?? []} empty={!metrics}
+          />
         </div>
 
         {/* Two-column lower row */}
@@ -305,7 +422,7 @@ export default function DashboardPage() {
                   <item.icon size={14} color={item.color} strokeWidth={1.7} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{item.title}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
                   <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                 </div>
                 <button
