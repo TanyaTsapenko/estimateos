@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check } from 'lucide-react'
+import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 
 interface Opening {
   id: string; type: string; qty: number; width: string
@@ -34,61 +34,27 @@ const STATUS_BG: Record<string, string> = {
   declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
 }
 
-// ── CARD SHELL ──────────────────────────────────────
-function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div style={{
-      background: '#fff', borderRadius: 12,
-      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-      ...style,
-    }}>
-      {children}
-    </div>
-  )
+const SL: React.CSSProperties = {
+  fontSize: 10, fontWeight: 700, letterSpacing: '.12em',
+  textTransform: 'uppercase', color: '#94A3B8', marginBottom: 10,
 }
-
-function CardLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 10 }}>
-      {children}
-    </div>
-  )
-}
-
-// ── ACTION BUTTON STYLES ─────────────────────────────
-const btnPrimary: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-  width: '100%', padding: '11px 0',
-  background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10,
-  fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-}
-const btnOutline: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-  flex: 1, padding: '9px 0',
-  background: 'transparent', color: '#0A1628',
-  border: '1.5px solid #E2E5EA', borderRadius: 10,
-  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-}
-const btnGhost: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 8,
-  width: '100%', padding: '9px 12px',
-  background: 'transparent', border: 'none', borderRadius: 8,
-  fontSize: 13, fontWeight: 500, color: '#0A1628', cursor: 'pointer', fontFamily: 'inherit',
-  textAlign: 'left',
+const CARD: React.CSSProperties = {
+  background: '#fff', borderRadius: 12,
+  boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
 }
 
 export default function EstimateDetailPage() {
-  const router = useRouter()
-  const { id } = useParams<{ id: string }>()
+  const router   = useRouter()
+  const { id }   = useParams<{ id: string }>()
   const supabase = createClient()
-  const [estimate, setEstimate] = useState<Estimate | null>(null)
-  const [openings, setOpenings] = useState<Opening[]>([])
+  const [estimate,       setEstimate]       = useState<Estimate | null>(null)
+  const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
+  const [loading,        setLoading]        = useState(true)
+  const [sending,        setSending]        = useState(false)
   const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
   const [showEmailModal, setShowEmailModal] = useState(false)
-  const [toast, setToast] = useState('')
+  const [toast,          setToast]          = useState('')
 
   useEffect(() => {
     async function load() {
@@ -154,7 +120,7 @@ export default function EstimateDetailPage() {
     showToast('📋 Client link copied!')
   }
 
-  // ── LOADING ─────────────────────────────────────────
+  // ── LOADING ──────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, zIndex: 10 }}>
@@ -188,175 +154,24 @@ export default function EstimateDetailPage() {
     </div>
   )
 
-  const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const isSigned   = estimate.status === 'signed' || estimate.status === 'invoiced'
-  const isDeclined = estimate.status === 'declined'
-  const canEmail   = !!estimate.client_email && !isSigned && !isDeclined
-  const signedDate = estimate.signed_at
-    ? new Date(estimate.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+  const [, taxLabel]  = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
+  const isSigned      = estimate.status === 'signed'
+  const isInvoiced    = estimate.status === 'invoiced'
+  const isDeclined    = estimate.status === 'declined'
+  const canEmail      = !!estimate.client_email && !isSigned && !isInvoiced && !isDeclined
+  const tierLabel     = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'
+  const signedDate    = estimate.signed_at
+    ? new Date(estimate.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
-  // ── SUB-COMPONENTS ──────────────────────────────────
+  const clientRows = [
+    estimate.client_email   && { label: 'Email',   value: estimate.client_email },
+    estimate.client_phone   && { label: 'Phone',   value: estimate.client_phone },
+    estimate.client_address && { label: 'Address', value: `${estimate.client_address}${estimate.client_city ? `, ${estimate.client_city}` : ''}` },
+    estimate.payment_method && { label: 'Payment', value: estimate.payment_method },
+  ].filter(Boolean) as { label: string; value: string }[]
 
-  const TierCard = () => (
-    <Card style={{ padding: 20, marginBottom: 12 }}>
-      <CardLabel>{estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Tier</CardLabel>
-      <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
-        {fmtCAD(estimate.total)}
-      </div>
-      <div style={{ fontSize: 11, color: '#94A3B8' }}>
-        inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}
-      </div>
-    </Card>
-  )
-
-  const ClientCard = () => (
-    <Card style={{ padding: '16px 20px', marginBottom: 12 }}>
-      <CardLabel>Client Details</CardLabel>
-      {[
-        estimate.client_email   && { label: 'Email',   value: estimate.client_email },
-        estimate.client_phone   && { label: 'Phone',   value: estimate.client_phone },
-        estimate.client_address && { label: 'Address', value: `${estimate.client_address}${estimate.client_city ? `, ${estimate.client_city}` : ''}` },
-        estimate.payment_method && { label: 'Payment', value: estimate.payment_method },
-      ].filter(Boolean).map((row: any, i, arr) => (
-        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, fontSize: 12, padding: '6px 0', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-          <span style={{ color: '#64748B', flexShrink: 0 }}>{row.label}</span>
-          <span style={{ fontWeight: 600, color: '#0A1628', textAlign: 'right' }}>{row.value}</span>
-        </div>
-      ))}
-    </Card>
-  )
-
-  const OpeningsCard = () => (
-    <Card style={{ padding: '16px 20px', marginBottom: 12 }}>
-      <CardLabel>Openings ({openings.length})</CardLabel>
-      {openings.map((op, i) => (
-        <div key={op.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderBottom: i < openings.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>
-              {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
-            </div>
-            {(op.width_in || op.height_in) && (
-              <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>{op.width_in}" × {op.height_in}"</div>
-            )}
-            {op.install && (
-              <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>{INSTALL_LABELS[op.install] || op.install}</div>
-            )}
-            {op.room && <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>{op.room}</div>}
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
-        </div>
-      ))}
-    </Card>
-  )
-
-  const PriceBreakdownCard = () => (
-    <Card style={{ padding: '16px 20px', marginBottom: 12 }}>
-      <CardLabel>Price Breakdown</CardLabel>
-      {[
-        { label: 'Subtotal', value: fmtCAD(estimate.subtotal), color: '#0A1628' },
-        estimate.discount_amount > 0 && {
-          label: `Discount${estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}`,
-          value: `−${fmtCAD(estimate.discount_amount)}`, color: '#16a34a',
-        },
-        { label: taxLabel, value: fmtCAD(estimate.tax_amount), color: '#0A1628' },
-      ].filter(Boolean).map((row: any) => (
-        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: '1px solid #EEF0F4', color: row.color }}>
-          <span>{row.label}</span>
-          <span style={{ fontWeight: 600 }}>{row.value}</span>
-        </div>
-      ))}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 10, marginTop: 4 }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Total</span>
-        <span style={{ fontSize: 22, fontWeight: 800, color: '#2563EB' }}>{fmtCAD(estimate.total)}</span>
-      </div>
-    </Card>
-  )
-
-  const DepositCard = () => depositInvoice ? (
-    <Card style={{ padding: '16px 20px', marginBottom: 12, background: 'rgba(37,99,235,.03)', boxShadow: '0 0 0 1.5px rgba(37,99,235,.15)' }}>
-      <CardLabel>Deposit Invoice</CardLabel>
-      {[
-        { label: 'Deposit amount',    value: fmtCAD(depositInvoice.amount),                             color: '#F59E0B' },
-        { label: 'Remaining balance', value: fmtCAD(estimate.total - depositInvoice.amount),             color: '#0A1628' },
-        { label: 'Deposit status',    value: depositInvoice.status,                                      color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563EB' },
-      ].map((row, i, arr) => (
-        <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 0', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-          <span style={{ color: '#64748B' }}>{row.label}</span>
-          <span style={{ fontWeight: 700, color: row.color, textTransform: 'capitalize' }}>{row.value}</span>
-        </div>
-      ))}
-    </Card>
-  ) : null
-
-  // ── STATUS ACTION CARD (right column) ───────────────
-
-  const StatusActionCard = () => isSigned ? (
-    <Card style={{ padding: 20, marginBottom: 12, background: 'rgba(22,163,74,.04)', boxShadow: '0 0 0 1.5px rgba(22,163,74,.2)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <Check size={11} color="#fff" strokeWidth={3} />
-        </div>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#16a34a' }}>
-          SIGNED
-        </div>
-      </div>
-      {signedDate && (
-        <div style={{ fontSize: 12, color: '#64748B', marginBottom: 16 }}>Signed on {signedDate}</div>
-      )}
-      <button
-        onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
-        style={{ ...btnPrimary, background: '#16a34a' }}>
-        <Receipt size={14} />
-        {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
-      </button>
-    </Card>
-  ) : (
-    <Card style={{ padding: 20, marginBottom: 12, background: 'rgba(37,99,235,.04)', boxShadow: '0 0 0 1.5px rgba(37,99,235,.15)' }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#2563EB', marginBottom: 4 }}>
-        READY TO SEND
-      </div>
-      <div style={{ fontSize: 12, color: '#64748B', marginBottom: 16 }}>
-        Send to client for review and signature
-      </div>
-      {canEmail && (
-        <button onClick={() => setShowEmailModal(true)} disabled={sending} style={{ ...btnPrimary, marginBottom: 8 }}>
-          {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
-          {sending ? 'Sending…' : 'Email client'}
-        </button>
-      )}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={copyLink} style={btnOutline}>
-          <Link2 size={13} /> Copy link
-        </button>
-        <button onClick={() => router.push(`/dashboard/estimates/${id}/sign`)} style={btnOutline}>
-          <PenLine size={13} /> Sign now
-        </button>
-      </div>
-    </Card>
-  )
-
-  const MoreActionsCard = () => (
-    <Card style={{ padding: '12px 8px' }}>
-      <div style={{ padding: '0 12px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8' }}>
-        MORE ACTIONS
-      </div>
-      <button onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')} style={btnGhost}>
-        <FileDown size={15} color="#64748B" /> Download PDF
-      </button>
-      {!isSigned && (
-        <button onClick={() => router.push(`/dashboard/estimates/${id}/sign`)} style={btnGhost}>
-          <PenLine size={15} color="#64748B" /> Sign in-person
-        </button>
-      )}
-      <div style={{ height: 1, background: '#EEF0F4', margin: '6px 12px' }} />
-      <button onClick={deleteEstimate} style={{ ...btnGhost, color: '#DC2626' }}>
-        <Trash2 size={15} color="#DC2626" /> Delete estimate
-      </button>
-    </Card>
-  )
-
-  // ── MAIN RENDER ─────────────────────────────────────
+  // ── MAIN RENDER ──────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
@@ -396,7 +211,7 @@ export default function EstimateDetailPage() {
         padding: '10px 28px', display: 'flex', alignItems: 'center', gap: 8,
         overflowX: 'auto', scrollbarWidth: 'none',
       }}>
-        {isSigned ? (
+        {(isSigned || isInvoiced) ? (
           <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
             <Receipt size={13} /> {depositInvoice ? 'Final invoice' : 'Create invoice'}
@@ -427,36 +242,175 @@ export default function EstimateDetailPage() {
       <div style={{ padding: '24px 28px 80px' }}>
         <div className="est-3col">
 
-          {/* ── LEFT COLUMN ── */}
-          <div>
-            <TierCard />
-            <ClientCard />
-            {isSigned && signedDate && (
-              <div style={{ background: 'rgba(22,163,74,.06)', border: '1px solid rgba(22,163,74,.18)', borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                <Check size={14} strokeWidth={2.5} /> Signed on {signedDate}
-              </div>
+          {/* ── LEFT COLUMN: tier + client in one card ── */}
+          <div style={{ ...CARD, padding: 20 }}>
+            {/* Tier */}
+            <div style={SL}>{tierLabel} Tier</div>
+            <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
+              {fmtCAD(estimate.total)}
+            </div>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
+              inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, background: '#EEF0F4', marginBottom: 16 }} />
+
+            {/* Client details */}
+            {clientRows.length > 0 && (
+              <>
+                <div style={SL}>Client Details</div>
+                {clientRows.map((row, i) => (
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, fontSize: 13, padding: '7px 0', borderBottom: i < clientRows.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+                    <span style={{ color: '#94A3B8', flexShrink: 0 }}>{row.label}</span>
+                    <span style={{ fontWeight: 600, color: '#0A1628', textAlign: 'right' }}>{row.value}</span>
+                  </div>
+                ))}
+              </>
             )}
-            <DepositCard />
+
+            {/* Deposit (if any) */}
+            {depositInvoice && (
+              <>
+                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
+                <div style={SL}>Deposit Invoice</div>
+                {[
+                  { label: 'Deposit amount',    value: fmtCAD(depositInvoice.amount),                   color: '#F59E0B' },
+                  { label: 'Remaining balance', value: fmtCAD(estimate.total - depositInvoice.amount),   color: '#0A1628' },
+                  { label: 'Status',            value: depositInvoice.status,                            color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563EB' },
+                ].map((row, i, arr) => (
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '7px 0', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+                    <span style={{ color: '#94A3B8' }}>{row.label}</span>
+                    <span style={{ fontWeight: 700, color: row.color, textTransform: 'capitalize' }}>{row.value}</span>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
 
-          {/* ── MIDDLE COLUMN ── */}
-          <div>
-            <OpeningsCard />
+          {/* ── MIDDLE COLUMN: openings + price in one card ── */}
+          <div style={{ ...CARD, padding: 20 }}>
+            {/* Openings */}
+            <div style={SL}>Openings ({openings.length})</div>
+            {openings.map((op, i) => (
+              <div key={op.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>
+                    {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3, display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
+                    {(op.width_in && op.height_in) && <span>{op.width_in}" × {op.height_in}"</span>}
+                    {op.install && <span>{INSTALL_LABELS[op.install] || op.install}</span>}
+                    {op.room && <span>{op.room}</span>}
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
+              </div>
+            ))}
+
+            {/* Scope notes */}
             {estimate.scope_notes && (
-              <Card style={{ padding: '16px 20px', marginBottom: 12 }}>
-                <CardLabel>Scope of Work</CardLabel>
+              <>
+                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
+                <div style={SL}>Scope of Work</div>
                 <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
-              </Card>
+              </>
             )}
-            <PriceBreakdownCard />
+
+            {/* Divider before price */}
+            <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
+
+            {/* Price breakdown */}
+            {[
+              { label: 'Subtotal', value: fmtCAD(estimate.subtotal), color: '#64748B', bold: false },
+              ...(estimate.discount_amount > 0 ? [{
+                label: `Discount${estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}`,
+                value: `−${fmtCAD(estimate.discount_amount)}`, color: '#16a34a', bold: false,
+              }] : []),
+              { label: taxLabel, value: fmtCAD(estimate.tax_amount), color: '#64748B', bold: false },
+            ].map(row => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', color: row.color }}>
+                <span>{row.label}</span>
+                <span style={{ fontWeight: 600 }}>{row.value}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '2px solid #0A1628', marginTop: 10, paddingTop: 12 }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Total</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
+            </div>
           </div>
 
           {/* ── RIGHT COLUMN ── */}
           <div>
-            <StatusActionCard />
-            <MoreActionsCard />
-          </div>
 
+            {/* Status action card */}
+            {(isSigned || isInvoiced) ? (
+              <div style={{ background: '#0F8A6B', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
+                  {isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+                  {estimate.client_name || 'Client'} signed this estimate
+                </div>
+                <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Receipt size={14} />
+                  {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ background: '#2563EB', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 6 }}>
+                  READY TO SEND
+                </div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+                  Send estimate to {estimate.client_name || 'client'}
+                </div>
+                {canEmail && (
+                  <button onClick={() => setShowEmailModal(true)} disabled={sending}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#2563EB', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, opacity: sending ? 0.7 : 1 }}>
+                    {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+                    {sending ? 'Sending…' : 'Email client'}
+                  </button>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={copyLink}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Link2 size={13} /> Copy link
+                  </button>
+                  <button onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <PenLine size={13} /> Sign now
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* More actions card */}
+            <div style={{ ...CARD, overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8' }}>
+                MORE ACTIONS
+              </div>
+              {[
+                { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF', onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
+                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => showToast('Coming soon'), danger: false },
+                { icon: <Receipt size={15} color="#64748B" />, label: 'Convert to invoice', onClick: () => router.push(`/dashboard/estimates/${id}/invoice`), danger: false },
+                { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: deleteEstimate, danger: true },
+              ].map((item, i, arr) => (
+                <button
+                  key={item.label}
+                  onClick={item.onClick}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontWeight: 500, color: item.danger ? '#DC2626' : '#0A1628', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {item.icon}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+          </div>
         </div>
       </div>
 
@@ -466,12 +420,14 @@ export default function EstimateDetailPage() {
         background: '#fff', borderTop: '1px solid #EEF0F4',
         padding: '12px 16px 28px', zIndex: 20,
       }}>
-        {isSigned ? (
-          <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)} style={btnPrimary}>
+        {(isSigned || isInvoiced) ? (
+          <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '13px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             <Receipt size={15} /> {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
           </button>
         ) : (
-          <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} style={{ ...btnPrimary, opacity: sending ? 0.6 : 1 }} disabled={sending}>
+          <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} disabled={sending}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '13px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
             {sending ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : canEmail ? <Mail size={15} /> : <Link2 size={15} />}
             {sending ? 'Sending…' : canEmail ? 'Email client' : 'Copy link'}
           </button>
