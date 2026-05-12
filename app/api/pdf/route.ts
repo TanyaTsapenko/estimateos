@@ -36,11 +36,10 @@ export async function GET(request: NextRequest) {
     [prof?.city, prof?.province].filter(Boolean).join(', '),
     prof?.phone,
     prof?.website,
-    prof?.licence  ? `Licence: ${prof.licence}`   : null,
-    prof?.insurance ? `Insurance: ${prof.insurance}` : null,
+    prof?.licence   ? `Lic. ${prof.licence}`      : null,
+    prof?.insurance ? `Ins. ${prof.insurance}`     : null,
   ].filter(Boolean).join('<br>')
 
-  // ── Pre-computed display strings ────────────────────────────────────────────
   const createdDate = new Date(est.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
   const validUntil  = est.valid_until
     ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -53,6 +52,7 @@ export async function GET(request: NextRequest) {
   const signedDate  = est.signed_at
     ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
     : ''
+  const gridSvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#94A3B8"/></svg>`
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -67,97 +67,102 @@ export async function GET(request: NextRequest) {
   body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#ECEEF2;color:#0A1628;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
   /* ── Toolbar ── */
-  .toolbar{background:#fff;border-bottom:1px solid #E0E2E7;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:12px}
-  .toolbar-left{display:flex;align-items:center;gap:10px}
-  .back-btn{background:#F4F5F7;border:1.5px solid #E0E2E7;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#1A1A1A;cursor:pointer;font-family:inherit;white-space:nowrap}
-  .back-btn:hover{background:#EBEBEB}
-  .toolbar-label{font-size:12px;color:#9ca3af;white-space:nowrap}
-  .print-btn{background:#2045B8;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap}
-  .print-btn:hover{background:#1a38a0}
+  .toolbar{background:#fff;border-bottom:1px solid #E2E8F0;padding:12px 48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .back-btn{background:transparent;border:1.5px solid #E2E8F0;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:inherit}
+  .back-btn:hover{background:#F8FAFC}
+  .save-btn{background:#2563EB;border:none;border-radius:8px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit}
+  .save-btn:hover{background:#1D4ED8}
 
   /* ── Document shell ── */
-  .doc{max-width:900px;margin:28px auto 48px;background:#fff;border-radius:10px;box-shadow:0 2px 20px rgba(0,0,0,.09);overflow:hidden}
+  .doc{max-width:860px;margin:28px auto 48px;background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(10,22,40,.07),0 4px 24px rgba(10,22,40,.06);overflow:hidden}
 
-  /* ── Header band ── */
-  .doc-header{padding:40px 52px 36px;border-bottom:2px solid #0A0E1A;display:grid;grid-template-columns:1fr auto;gap:40px;align-items:start}
-  .co-logo{max-height:60px;max-width:180px;object-fit:contain;margin-bottom:14px;display:block}
-  .co-name{font-size:19px;font-weight:800;color:#0A0E1A;margin-bottom:5px;letter-spacing:-.01em}
-  .co-detail{font-size:12px;color:#6b7280;line-height:1.75}
-  .est-label{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9ca3af;margin-bottom:7px}
-  .est-number{font-size:30px;font-weight:800;color:#2045B8;letter-spacing:-.02em;line-height:1}
-  .est-meta{font-size:12px;color:#6b7280;margin-top:9px;line-height:1.75;text-align:right}
-  .tier-tag{display:inline-block;background:#0A0E1A;color:#fff;font-size:9px;font-weight:700;padding:4px 11px;border-radius:5px;letter-spacing:.08em;margin-top:10px;text-transform:uppercase}
+  /* ── Header ── */
+  .doc-header{background:#0A1628;padding:28px 40px 32px}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .logo-mark{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.02em}
+  .logo-mark span{color:#3B82F6}
+  .est-num{font-family:ui-monospace,'Cascadia Code',monospace;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.04em}
+  .header-main{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start}
+  .hdr-kicker{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#3B82F6;margin-bottom:6px}
+  .hdr-client{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:6px;line-height:1.1}
+  .hdr-sub{font-size:12px;color:rgba(255,255,255,.42);line-height:1.6}
+  .hdr-right{text-align:right}
+  .tier-pill{display:inline-block;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.35);color:#93C5FD;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:3px 10px;margin-bottom:10px}
+  .hdr-total{font-size:36px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1;margin-bottom:6px}
+  .hdr-meta{font-size:11px;color:rgba(255,255,255,.38);line-height:1.6}
 
   /* ── Body ── */
-  .doc-body{padding:36px 52px 52px}
+  .doc-body{padding:32px 40px 40px;background:#fff}
 
-  /* ── Parties ── */
-  .parties{display:grid;grid-template-columns:1fr 1fr;gap:28px;padding-bottom:28px;border-bottom:1px solid #ECEEF2;margin-bottom:28px}
-  .party-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9ca3af;margin-bottom:9px}
-  .party-name{font-size:15px;font-weight:700;color:#0A0E1A;margin-bottom:5px;letter-spacing:-.01em}
-  .party-detail{font-size:12px;color:#6b7280;line-height:1.75}
+  /* ── Info cards ── */
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+  .info-card{background:#F8FAFC;border-radius:10px;padding:16px 18px}
+  .card-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
+  .card-title{font-size:14px;font-weight:700;color:#0A1628;margin-bottom:5px}
+  .card-detail{font-size:12px;color:#64748B;line-height:1.7}
 
-  /* ── Scope ── */
-  .scope-section{margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid #ECEEF2}
-  .section-title{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#9ca3af;margin-bottom:13px}
-  .scope-text{font-size:13px;color:#374151;line-height:1.75;background:#F8F9FB;border-radius:8px;padding:14px 16px}
-
-  /* ── Line items table ── */
-  .items-section{margin-bottom:0}
+  /* ── Services card ── */
+  .svc-card{background:#fff;border:1px solid rgba(10,22,40,.07);border-radius:10px;padding:20px 22px;margin-bottom:24px}
+  .svc-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+  .svc-head-title{font-size:13px;font-weight:700;color:#0A1628}
   table{width:100%;border-collapse:collapse}
-  thead tr{border-bottom:1.5px solid #0A0E1A}
-  th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;padding:0 12px 11px 0;text-align:left;white-space:nowrap}
-  th:last-child{text-align:right;padding-right:0}
+  thead tr{border-top:2px solid #0A1628}
+  th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;padding:10px 0;text-align:left;white-space:nowrap}
+  th:last-child{text-align:right}
   th.center{text-align:center}
-  tbody tr:last-child td{border-bottom:none}
-  td{padding:14px 12px 14px 0;border-bottom:1px solid #F0F1F3;vertical-align:top;font-size:13px}
-  td:last-child{text-align:right;padding-right:0;font-weight:700;color:#0A0E1A}
+  tbody tr{border-bottom:.5px solid rgba(10,22,40,.06)}
+  tbody tr:last-child{border-bottom:none}
+  td{padding:13px 0;vertical-align:top;font-size:13px;color:#0A1628}
+  td:last-child{text-align:right;font-weight:700}
   td.center{text-align:center}
-  td.muted{color:#6b7280}
-  .item-name{font-size:13px;font-weight:600;color:#0A0E1A;margin-bottom:3px}
-  .item-sub{font-size:11px;color:#9ca3af}
+  td.muted{color:#64748B;font-weight:400}
+  .item-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:2px}
+  .item-sub{font-size:11px;color:#94A3B8}
 
-  /* ── Summary ── */
-  .summary-wrap{display:flex;justify-content:flex-end;margin-top:28px;padding-top:24px;border-top:1px solid #ECEEF2}
-  .summary{width:310px}
-  .sum-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px;border-bottom:1px solid #F0F1F3}
-  .sum-row:first-child{border-top:none}
-  .sum-lbl{color:#6b7280}
-  .sum-val{font-weight:600;color:#1A1A1A}
-  .sum-green .sum-lbl,.sum-green .sum-val{color:#16a34a}
-  .sum-divider{height:1.5px;background:#0A0E1A;margin:12px 0 0}
-  .sum-total{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0 0}
-  .sum-total-lbl{font-size:15px;font-weight:700;color:#0A0E1A}
-  .sum-total-val{font-size:28px;font-weight:800;color:#2045B8;letter-spacing:-.02em}
-  .sum-deposit{background:#F4F5F7;border-radius:9px;padding:13px 16px;margin-top:14px;border:1px solid #E8E9EC}
-  .sum-dep-title{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:9px}
-  .sum-dep-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:7px}
-  .sum-dep-row:last-child{margin-bottom:0}
-  .dep-lbl{color:#6b7280}
-  .dep-val{font-weight:700;color:#0A0E1A}
-  .dep-blue{color:#2045B8}
+  /* ── Price breakdown ── */
+  .pricing-wrap{display:flex;justify-content:flex-end;margin-bottom:24px}
+  .pricing{width:260px}
+  .price-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px;border-bottom:.5px solid rgba(10,22,40,.06)}
+  .price-lbl{color:#64748B}
+  .price-val{font-weight:600;color:#0A1628}
+  .price-green .price-lbl,.price-green .price-val{color:#059669}
+  .price-divider{height:1.5px;background:#0A1628;margin:8px 0}
+  .price-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0}
+  .price-total-lbl{font-size:14px;font-weight:700;color:#0A1628}
+  .price-total-val{font-size:28px;font-weight:800;color:#2563EB;letter-spacing:-.02em}
 
-  /* ── Signature ── */
-  .sig-section{margin-top:44px;padding-top:32px;border-top:1px solid #ECEEF2}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:16px}
-  .sig-box{padding-top:10px;border-top:1.5px solid #0A0E1A}
-  .sig-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af;margin-bottom:7px}
-  .sig-name{font-size:13px;font-weight:600;color:#0A0E1A}
-  .sig-date{font-size:11px;color:#9ca3af;margin-top:3px}
-  .sig-img{max-height:52px;margin-top:10px;display:block}
+  /* ── Payment schedule ── */
+  .payment-card{background:#F0F7FF;border:1px solid rgba(37,99,235,.15);border-radius:10px;padding:14px 18px;margin-bottom:24px}
+  .payment-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2563EB;margin-bottom:10px}
+  .pay-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px}
+  .pay-row:last-child{margin-bottom:0}
+  .pay-key{color:#64748B}
+  .pay-val{font-weight:700;color:#0A1628}
+  .pay-blue{color:#2563EB}
+
+  /* ── Scope notes ── */
+  .scope-card{background:#F8FAFC;border-radius:10px;padding:16px 18px;margin-bottom:24px}
+  .scope-text{font-size:13px;color:#475569;line-height:1.7;margin-top:8px}
+
+  /* ── Signature banner ── */
+  .sig-banner{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);border-radius:10px;padding:18px 22px}
+  .sig-banner-title{font-size:11px;font-weight:700;color:#059669;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .sig-col-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:5px}
+  .sig-col-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:3px}
+  .sig-col-date{font-size:11px;color:#94A3B8}
+  .sig-col-img{max-height:48px;margin-top:8px;display:block}
 
   /* ── Footer ── */
-  .doc-footer{padding:16px 52px;border-top:1px solid #ECEEF2;background:#F8F9FB;display:flex;justify-content:space-between;align-items:center}
-  .footer-detail{font-size:11px;color:#9ca3af}
-  .footer-brand{font-size:12px;font-weight:700;color:#0A0E1A;letter-spacing:-.01em}
-  .footer-brand span{color:#2045B8}
+  .doc-footer{padding:14px 40px;border-top:1px solid rgba(10,22,40,.06);display:flex;justify-content:space-between;align-items:center}
+  .footer-left{font-size:11px;font-weight:600;color:#94A3B8}
+  .footer-right{font-size:11px;color:#94A3B8}
 
   /* ── Print ── */
   @media print{
     .toolbar{display:none}
     body{background:#fff}
     .doc{margin:0;border-radius:0;box-shadow:none}
-    .doc-header{padding:28px 40px 24px}
     .doc-body{padding:24px 40px 40px}
     .doc-footer{padding:12px 40px}
   }
@@ -166,82 +171,66 @@ export async function GET(request: NextRequest) {
 <body>
 
 <div class="toolbar">
-  <div class="toolbar-left">
-    <button class="back-btn" onclick="window.location.href='/dashboard/estimates/${id}'">← Back</button>
-    <span class="toolbar-label">${est.estimate_number} · ${est.client_name || 'Estimate'}</span>
-  </div>
-  <button class="print-btn" onclick="window.print()">Save as PDF</button>
+  <button class="back-btn" onclick="window.location.href='/dashboard/estimates/${id}'">← Back</button>
+  <button class="save-btn" onclick="window.print()">Save as PDF</button>
 </div>
 
 <div class="doc">
 
   <div class="doc-header">
-    <div>
-      ${prof?.logo_url ? `<img src="${prof.logo_url}" class="co-logo" alt="${prof?.company_name || ''}" />` : ''}
-      <div class="co-name">${prof?.company_name || 'Contractor'}</div>
-      ${coMeta ? `<div class="co-detail">${coMeta}</div>` : ''}
+    <div class="header-top">
+      <div class="logo-mark">Estimate<span>OS</span></div>
+      <div class="est-num">${est.estimate_number}</div>
     </div>
-    <div style="text-align:right">
-      <div class="est-label">Estimate</div>
-      <div class="est-number">${est.estimate_number}</div>
-      <div class="est-meta">
-        Date: ${new Date(est.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}<br>
-        Valid until: ${est.valid_until
-          ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-          : '30 days from issue'}
+    <div class="header-main">
+      <div>
+        <div class="hdr-kicker">Prepared for</div>
+        <div class="hdr-client">${est.client_name || 'Client'}</div>
+        ${clientHdr ? `<div class="hdr-sub">${clientHdr}</div>` : ''}
       </div>
-      <div><span class="tier-tag">${((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1))} Package</span></div>
+      <div class="hdr-right">
+        <div><span class="tier-pill">${tierLabel}</span></div>
+        <div class="hdr-total">${fmtCAD(est.total)}</div>
+        <div class="hdr-meta">inc. ${taxLabel} · Valid until ${validUntil}</div>
+      </div>
     </div>
   </div>
 
   <div class="doc-body">
 
-    <div class="parties">
-      <div>
-        <div class="party-lbl">Prepared by</div>
-        <div class="party-name">${prof?.company_name || 'Contractor'}</div>
-        <div class="party-detail">
-          ${[prof?.phone, prof?.website, prof?.licence ? 'Lic. ' + prof.licence : null].filter(Boolean).join('<br>')}
-        </div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="card-lbl">Prepared by</div>
+        <div class="card-title">${prof?.company_name || 'Contractor'}</div>
+        <div class="card-detail">${coMeta}</div>
       </div>
-      <div>
-        <div class="party-lbl">Prepared for</div>
-        <div class="party-name">${est.client_name || 'Client'}</div>
-        <div class="party-detail">
-          ${[
-            est.client_email,
-            est.client_phone,
-            est.client_address
-              ? est.client_address + (est.client_city ? ', ' + est.client_city : '') + (est.client_province ? ', ' + est.client_province : '')
-              : null,
-          ].filter(Boolean).join('<br>')}
+      <div class="info-card">
+        <div class="card-lbl">Details</div>
+        <div class="card-detail">
+          <strong style="color:#0A1628;font-size:12px">Date:</strong> ${createdDate}<br>
+          <strong style="color:#0A1628;font-size:12px">Valid until:</strong> ${validUntil}${est.payment_method ? `<br><strong style="color:#0A1628;font-size:12px">Payment:</strong> ${est.payment_method}` : ''}
         </div>
       </div>
     </div>
 
-    ${est.scope_notes ? `
-    <div class="scope-section">
-      <div class="section-title">Scope of work</div>
-      <div class="scope-text">${est.scope_notes}</div>
-    </div>` : ''}
-
-    <div class="items-section">
-      <div class="section-title">Line items</div>
+    <div class="svc-card">
+      <div class="svc-head">
+        ${gridSvg}
+        <div class="svc-head-title">Services</div>
+      </div>
       <table>
         <thead>
           <tr>
-            <th style="width:38%">Description</th>
-            <th style="width:16%">Dimensions</th>
+            <th style="width:40%">Description</th>
+            <th style="width:20%">Size</th>
             <th class="center" style="width:8%">Qty</th>
-            <th style="width:18%;text-align:right">Unit price</th>
-            <th style="width:20%">Total</th>
+            <th style="width:32%;text-align:right">Amount</th>
           </tr>
         </thead>
         <tbody>
           ${(ops || []).map(op => {
             const installLabel = op.install ? INSTALL_LABELS[op.install] || op.install : null
             const subParts = [installLabel, op.room].filter(Boolean)
-            const unitCost: number = op.unit_cost ?? (op.qty > 0 ? op.total_cost / op.qty : op.total_cost)
             return `
           <tr>
             <td>
@@ -250,7 +239,6 @@ export async function GET(request: NextRequest) {
             </td>
             <td class="muted">${(op.width_in && op.height_in) ? `${op.width_in}" × ${op.height_in}"` : '—'}</td>
             <td class="center muted">${op.qty}</td>
-            <td style="text-align:right" class="muted">${fmtCAD(unitCost)}</td>
             <td>${fmtCAD(op.total_cost)}</td>
           </tr>`
           }).join('')}
@@ -258,59 +246,61 @@ export async function GET(request: NextRequest) {
       </table>
     </div>
 
-    <div class="summary-wrap">
-      <div class="summary">
-        <div class="sum-row">
-          <span class="sum-lbl">Subtotal</span>
-          <span class="sum-val">${fmtCAD(est.subtotal)}</span>
+    <div class="pricing-wrap">
+      <div class="pricing">
+        <div class="price-row">
+          <span class="price-lbl">Subtotal</span>
+          <span class="price-val">${fmtCAD(est.subtotal)}</span>
         </div>
         ${est.discount_amount > 0 ? `
-        <div class="sum-row sum-green">
-          <span class="sum-lbl">Discount${est.discount_type === 'percent' ? ` (${est.discount_value}%)` : ''}</span>
-          <span class="sum-val">−${fmtCAD(est.discount_amount)}</span>
+        <div class="price-row price-green">
+          <span class="price-lbl">Discount${est.discount_type === 'percent' ? ` (${est.discount_value}%)` : ''}</span>
+          <span class="price-val">−${fmtCAD(est.discount_amount)}</span>
         </div>` : ''}
-        <div class="sum-row">
-          <span class="sum-lbl">${taxLabel}</span>
-          <span class="sum-val">${fmtCAD(est.tax_amount)}</span>
+        <div class="price-row">
+          <span class="price-lbl">${taxLabel}</span>
+          <span class="price-val">${fmtCAD(est.tax_amount)}</span>
         </div>
-        ${est.payment_method ? `
-        <div class="sum-row">
-          <span class="sum-lbl">Payment method</span>
-          <span class="sum-val">${est.payment_method}</span>
-        </div>` : ''}
-        <div class="sum-divider"></div>
-        <div class="sum-total">
-          <span class="sum-total-lbl">Total</span>
-          <span class="sum-total-val">${fmtCAD(est.total)}</span>
-        </div>
-        <div class="sum-deposit">
-          <div class="sum-dep-title">Payment schedule</div>
-          <div class="sum-dep-row">
-            <span class="dep-lbl">Deposit on signing (${depositPct}%)</span>
-            <span class="dep-val">${fmtCAD(depositOnSigning)}</span>
-          </div>
-          <div class="sum-dep-row">
-            <span class="dep-lbl">Balance on completion</span>
-            <span class="dep-val dep-blue">${fmtCAD(depositOnDelivery)}</span>
-          </div>
+        <div class="price-divider"></div>
+        <div class="price-total">
+          <span class="price-total-lbl">Total</span>
+          <span class="price-total-val">${fmtCAD(est.total)}</span>
         </div>
       </div>
     </div>
 
+    <div class="payment-card">
+      <div class="payment-lbl">Payment schedule</div>
+      <div class="pay-row">
+        <span class="pay-key">Deposit on signing (${depositPct}%)</span>
+        <span class="pay-val">${fmtCAD(depositOnSigning)}</span>
+      </div>
+      <div class="pay-row">
+        <span class="pay-key">Balance on completion</span>
+        <span class="pay-val pay-blue">${fmtCAD(depositOnDelivery)}</span>
+      </div>
+    </div>
+
+    ${est.scope_notes ? `
+    <div class="scope-card">
+      <div class="card-lbl">Scope of work</div>
+      <div class="scope-text">${est.scope_notes}</div>
+    </div>` : ''}
+
     ${est.status === 'signed' ? `
-    <div class="sig-section">
-      <div class="section-title">Agreement &amp; signatures</div>
+    <div class="sig-banner">
+      <div class="sig-banner-title">Signed &amp; agreed</div>
       <div class="sig-grid">
-        <div class="sig-box">
-          <div class="sig-lbl">Client</div>
-          <div class="sig-name">${est.client_name || ''}</div>
-          <div class="sig-date">${est.signed_at ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</div>
-          ${est.client_signature_url && !est.client_signature_url.startsWith('data:') ? `<img src="${est.client_signature_url}" class="sig-img" alt="Signature" />` : ''}
+        <div>
+          <div class="sig-col-lbl">Client</div>
+          <div class="sig-col-name">${est.client_name || ''}</div>
+          <div class="sig-col-date">${signedDate}</div>
+          ${est.client_signature_url && !est.client_signature_url.startsWith('data:') ? `<img src="${est.client_signature_url}" class="sig-col-img" alt="Signature" />` : ''}
         </div>
-        <div class="sig-box">
-          <div class="sig-lbl">Contractor</div>
-          <div class="sig-name">${prof?.company_name || ''}</div>
-          <div class="sig-date">${est.signed_at ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</div>
+        <div>
+          <div class="sig-col-lbl">Contractor</div>
+          <div class="sig-col-name">${prof?.company_name || ''}</div>
+          <div class="sig-col-date">${signedDate}</div>
         </div>
       </div>
     </div>` : ''}
@@ -318,10 +308,8 @@ export async function GET(request: NextRequest) {
   </div>
 
   <div class="doc-footer">
-    <div class="footer-detail">
-      ${[prof?.licence ? 'Lic. ' + prof.licence : null, prof?.insurance ? 'Ins. ' + prof.insurance : null].filter(Boolean).join(' · ')}
-    </div>
-    <div class="footer-brand">Estimate<span>OS</span></div>
+    <div class="footer-left">${prof?.company_name || 'EstimateOS'}</div>
+    <div class="footer-right">Generated by EstimateOS</div>
   </div>
 
 </div>
