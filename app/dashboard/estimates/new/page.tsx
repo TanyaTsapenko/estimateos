@@ -287,22 +287,32 @@ function NewEstimateForm() {
   if (isDesktop) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <div className="gh">
-          <div className="h-top">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button onClick={() => router.push('/dashboard/estimates')}
-                style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                ←
-              </button>
-              <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+        <div style={{
+          background: '#fff',
+          borderBottom: '1px solid #EEF0F4',
+          padding: '16px 28px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => router.back()} style={{
+              background: '#F5F6F8', border: 'none', borderRadius: 8,
+              width: 32, height: 32, cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', color: '#64748B',
+            }}>←</button>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>NEW ESTIMATE</div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
+                {client.client_name || 'New Estimate'}
+              </div>
             </div>
           </div>
-          <div className="h-title">
-            <div className="h-eye">New Estimate</div>
-            <div className="h-big">{client.client_name || 'New Estimate'}</div>
-            <div className="h-sub">
-              {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)} total
-            </div>
+          <div style={{ fontSize: 13, color: '#94A3B8' }}>
+            {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
           </div>
         </div>
 
@@ -427,8 +437,12 @@ function NewEstimateForm() {
                 </div>
               </div>
 
-              <button className="gen-btn" onClick={saveEstimate} disabled={saving}>
-                {saving ? '⏳ Saving...' : '💾 Save Estimate →'}
+              <button onClick={saveEstimate} disabled={saving} style={{
+                width: '100%', padding: 14, borderRadius: 10, border: 'none',
+                background: saving ? '#CBD5E1' : '#2563EB', color: '#fff',
+                fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              }}>
+                {saving ? 'Saving...' : 'Save Estimate →'}
               </button>
             </div>
 
@@ -460,36 +474,32 @@ function NewEstimateForm() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {step === 1
-              ? <button onClick={() => router.push('/dashboard/estimates')}
-                  style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
-              : <button onClick={back}
-                  style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>←</button>
-            }
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          </div>
-          <div className="pills">
-            {pills.map(p => (
-              <div key={p} className={`pill${p === step ? ' active' : p < step ? ' done' : ''}`} />
-            ))}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button onClick={() => step === 1 ? router.back() : back()} style={{
+            background: '#F5F6F8', border: 'none', borderRadius: 8,
+            width: 32, height: 32, cursor: 'pointer', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', color: '#64748B',
+          }}>←</button>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>NEW ESTIMATE</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
+              {client.client_name || 'New Estimate'}
+            </div>
           </div>
         </div>
-        <div className="h-title">
-          <div className="h-eye">Step {step} of 4 · {stepLabels[step - 1]}</div>
-          <div className="h-big">{
-            step === 1 ? 'Client Info' :
-            step === 2 ? 'Openings' :
-            step === 3 ? 'Choose Tier' : 'Review & Save'
-          }</div>
-          <div className="h-sub">{
-            step === 1 ? 'Who is this estimate for?' :
-            step === 2 ? `${openings.length} opening${openings.length !== 1 ? 's' : ''} · ${fmtCAD(subtotal)} (pre-tier)` :
-            step === 3 ? 'Pick the package to present' :
-            `Total: ${fmtCAD(total)} inc. ${taxLabel}`
-          }</div>
+        <div style={{ fontSize: 13, color: '#94A3B8' }}>
+          {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
         </div>
       </div>
 
@@ -649,8 +659,12 @@ function NewEstimateForm() {
               Valid for 30 days. Client will receive a link to view all three tiers, choose, and sign electronically.
             </div>
 
-            <button className="gen-btn" onClick={saveEstimate} disabled={saving}>
-              {saving ? '⏳ Saving...' : '💾 Save Estimate →'}
+            <button onClick={saveEstimate} disabled={saving} style={{
+              width: '100%', padding: 14, borderRadius: 10, border: 'none',
+              background: saving ? '#CBD5E1' : '#2563EB', color: '#fff',
+              fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+            }}>
+              {saving ? 'Saving...' : 'Save Estimate →'}
             </button>
           </>
         )}

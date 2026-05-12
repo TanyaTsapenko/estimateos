@@ -80,20 +80,25 @@ export default function NewAppointmentPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => router.push('/dashboard/appointments')}
-              style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              ←
-            </button>
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          </div>
-        </div>
-        <div className="h-title">
-          <div className="h-eye">Schedule</div>
-          <div className="h-big">New Appointment</div>
-          <div className="h-sub">Add a client visit or lead</div>
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        <button onClick={() => router.back()} style={{
+          background: '#F5F6F8', border: 'none', borderRadius: 8,
+          width: 32, height: 32, cursor: 'pointer', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', color: '#64748B',
+        }}>←</button>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>SCHEDULE</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>New Appointment</div>
         </div>
       </div>
 
