@@ -14,43 +14,41 @@ interface Estimate {
 type Period = '30d' | '90d' | 'ytd' | 'all'
 
 const PERIODS: { key: Period; label: string }[] = [
-  { key: '30d', label: 'Last 30d'   },
-  { key: '90d', label: 'Last 90d'   },
-  { key: 'ytd', label: 'This year'  },
-  { key: 'all', label: 'All time'   },
+  { key: '30d', label: 'Last 30d'  },
+  { key: '90d', label: 'Last 90d'  },
+  { key: 'ytd', label: 'This year' },
+  { key: 'all', label: 'All time'  },
 ]
 
 const FUNNEL_COLORS = {
-  created:  '#64748B',
+  created:  '#94A3B8',
   sent:     '#2563EB',
-  signed:   '#059669',
+  signed:   '#0F8A6B',
   declined: '#DC2626',
 }
 
-function KpiCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
+function KpiCard({ icon, label, value, sub, accent = '#2563EB' }: {
+  icon: React.ReactNode; label: string; value: string; sub: string; accent?: string
+}) {
   return (
-    <div style={{
-      background: '#fff', borderRadius: 12,
-      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-      padding: '18px 16px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <div style={{
-          width: 34, height: 34, borderRadius: 9,
-          background: 'rgba(37,99,235,.08)',
+          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+          background: `${accent}14`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#2563EB',
+          color: accent,
         }}>
           {icon}
         </div>
-        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8' }}>
+        <div style={{ flex: 1, fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{label}</div>
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8' }}>
           {sub}
         </span>
       </div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', letterSpacing: '-.02em', marginBottom: 2 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', letterSpacing: '-.02em', lineHeight: 1 }}>
         {value}
       </div>
-      <div style={{ fontSize: 11, color: '#64748B' }}>{label}</div>
     </div>
   )
 }
@@ -102,17 +100,12 @@ export default function ReportsPage() {
 
   const tierCounts: Record<string, number> = { good: 0, better: 0, best: 0 }
   signed.forEach(e => { if (e.tier) tierCounts[e.tier] = (tierCounts[e.tier] || 0) + 1 })
-  const mostPopularTier = Object.entries(tierCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'
-
-  const provinceCounts: Record<string, number> = {}
-  filtered.forEach(e => { if (e.client_province) provinceCounts[e.client_province] = (provinceCounts[e.client_province] || 0) + 1 })
-  const topProvince = Object.entries(provinceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—'
 
   const funnel = [
-    { label: 'Created',  count: filtered.length,                       color: FUNNEL_COLORS.created  },
-    { label: 'Sent',     count: filtered.length - drafted.length,      color: FUNNEL_COLORS.sent     },
-    { label: 'Signed',   count: signed.length,                         color: FUNNEL_COLORS.signed   },
-    { label: 'Declined', count: declined.length,                       color: FUNNEL_COLORS.declined },
+    { label: 'Created',  count: filtered.length,                  color: FUNNEL_COLORS.created  },
+    { label: 'Sent',     count: filtered.length - drafted.length, color: FUNNEL_COLORS.sent     },
+    { label: 'Signed',   count: signed.length,                    color: FUNNEL_COLORS.signed   },
+    { label: 'Declined', count: declined.length,                  color: FUNNEL_COLORS.declined },
   ]
 
   return (
@@ -126,7 +119,7 @@ export default function ReportsPage() {
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.32)', marginBottom: 8 }}>
           PERFORMANCE
         </div>
-        <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 4 }}>
+        <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 4 }}>
           Reports
         </div>
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,.42)' }}>
@@ -169,12 +162,12 @@ export default function ReportsPage() {
           </div>
         ) : (
           <>
-            {/* ── 4 KPI CARDS ── */}
+            {/* ── KPI GRID ── */}
             <div className="kpi-grid" style={{ marginBottom: 12 }}>
-              <KpiCard icon={<DollarSign size={17} />} label="Revenue"    value={fmtCAD(revenue)}  sub="Signed"  />
-              <KpiCard icon={<Send       size={17} />} label="Pipeline"   value={fmtCAD(pipeline)} sub="Pending" />
-              <KpiCard icon={<Target     size={17} />} label="Close rate" value={`${winRate}%`}    sub="Win rate"/>
-              <KpiCard icon={<TrendingUp size={17} />} label="Avg per job" value={fmtCAD(avgDeal)} sub="Average" />
+              <KpiCard icon={<DollarSign size={15} />} label="Revenue"    value={fmtCAD(revenue)}  sub="Signed"   />
+              <KpiCard icon={<Send       size={15} />} label="Pipeline"   value={fmtCAD(pipeline)} sub="Pending"  />
+              <KpiCard icon={<Target     size={15} />} label="Close rate" value={`${winRate}%`}    sub="Win rate" />
+              <KpiCard icon={<TrendingUp size={15} />} label="Avg per job" value={fmtCAD(avgDeal)} sub="Average"  />
             </div>
 
             {/* ── SALES FUNNEL ── */}
@@ -187,17 +180,22 @@ export default function ReportsPage() {
                 Sales funnel
               </div>
               {funnel.map(f => (
-                <div key={f.label} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{f.label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: f.color }}>{f.count}</span>
+                <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: f.color, width: 36, flexShrink: 0, letterSpacing: '-.02em', lineHeight: 1 }}>
+                    {f.count}
                   </div>
-                  <div style={{ background: '#F1F5F9', borderRadius: 5, height: 7, overflow: 'hidden' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628', width: 60, flexShrink: 0 }}>
+                    {f.label}
+                  </div>
+                  <div style={{ flex: 1, background: '#F1F5F9', borderRadius: 4, height: 8, overflow: 'hidden' }}>
                     <div style={{
-                      height: '100%', borderRadius: 5, background: f.color,
+                      height: '100%', borderRadius: 4, background: f.color,
                       width: filtered.length > 0 ? `${f.count / filtered.length * 100}%` : '0%',
                       transition: 'width .5s ease',
                     }} />
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8', width: 38, textAlign: 'right', flexShrink: 0 }}>
+                    {filtered.length > 0 ? `${Math.round(f.count / filtered.length * 100)}%` : '0%'}
                   </div>
                 </div>
               ))}
@@ -208,10 +206,11 @@ export default function ReportsPage() {
               <div style={{
                 background: '#fff', borderRadius: 12,
                 boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-                padding: '20px', marginBottom: 12,
+                padding: '20px',
               }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', marginBottom: 16 }}>
-                  Tier breakdown <span style={{ fontSize: 11, fontWeight: 500, color: '#94A3B8' }}>signed only</span>
+                  Tier breakdown{' '}
+                  <span style={{ fontSize: 11, fontWeight: 500, color: '#94A3B8' }}>signed only</span>
                 </div>
                 {Object.entries(tierCounts).filter(([, c]) => c > 0).map(([tier, count]) => (
                   <div
@@ -234,35 +233,6 @@ export default function ReportsPage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {/* ── INSIGHTS ── */}
-            {filtered.length > 0 && (
-              <div style={{
-                background: '#fff', borderRadius: 12,
-                boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-                padding: '20px',
-                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0,
-              }}>
-                <div style={{ paddingRight: 20, borderRight: '1px solid rgba(10,22,40,0.05)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 }}>
-                    Top tier
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB', textTransform: 'capitalize' }}>
-                    {mostPopularTier}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Most chosen by clients</div>
-                </div>
-                <div style={{ paddingLeft: 20 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: 6 }}>
-                    Top market
-                  </div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB' }}>
-                    {topProvince}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Most active province</div>
-                </div>
               </div>
             )}
 
