@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
+import { ArrowLeft, Info } from 'lucide-react'
 
 interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string }
 interface DepositInvoice { id: string; amount: number; status: string }
@@ -82,92 +83,166 @@ export default function CreateInvoicePage() {
   }
 
   if (!estimate) return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div></div>
-      <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--ash)', fontSize: 13 }}>Loading...</div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628' }}>Create Invoice</div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#94A3B8', fontSize: 13 }}>Loading...</div>
       </div>
     </div>
   )
 
+  const inputStyle: React.CSSProperties = {
+    border: '1px solid #E2E5EA',
+    borderRadius: 8,
+    padding: '10px 14px',
+    fontFamily: 'inherit',
+    fontSize: 13,
+    color: '#0A1628',
+    outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box',
+    background: '#fff',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '.08em',
+    textTransform: 'uppercase' as const,
+    color: '#94A3B8',
+    marginBottom: 6,
+    display: 'block',
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
-              style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              ←
-            </button>
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
+
+      {/* TOPBAR */}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
+            <ArrowLeft size={16} strokeWidth={2} />
+          </button>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 1 }}>
+              FROM {estimate.estimate_number}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>
+              {isFinal ? 'Final Invoice' : 'Create Invoice'}
+            </div>
           </div>
-          {isFinal && (
-            <span style={{ background: 'rgba(22,163,74,.15)', border: '1px solid rgba(22,163,74,.3)', color: '#16a34a', borderRadius: 8, padding: '4px 10px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em' }}>
-              FINAL
-            </span>
-          )}
         </div>
-        <div className="h-title">
-          <div className="h-eye">From {estimate.estimate_number}</div>
-          <div className="h-big">{isFinal ? 'Final Invoice' : 'Create Invoice'}</div>
-          <div className="h-sub">{estimate.client_name} · {fmtCAD(estimate.total)} project total</div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtCAD(estimate.total)} project total</div>
         </div>
       </div>
 
-      <div className="card">
-        {error && <div className="error-msg">{error}</div>}
+      {/* BODY */}
+      <div style={{ flex: 1, padding: '20px 28px', paddingBottom: 100 }}>
+        {error && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
-        {/* Amount breakdown */}
-        <div style={{ background: '#F4F5F7', border: '1.5px solid #1A2744', borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        {/* Amount card */}
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 }}>
           {isFinal ? (
             <>
-              <div style={{ fontSize: 10, color: '#999', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 10 }}>Invoice breakdown</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: '#999' }}>
-                <span>Project total</span><span>{fmtCAD(estimate.total)}</span>
+              <div style={labelStyle}>Invoice Breakdown</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 6 }}>
+                <span>Project total</span>
+                <span>{fmtCAD(estimate.total)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 10, color: '#999' }}>
-                <span>Deposit paid ({depositInvoice!.status === 'paid' ? '✅' : '⏳'})</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
+                <span>Deposit paid ({depositInvoice!.status === 'paid' ? 'paid' : 'pending'})</span>
                 <span>− {fmtCAD(depositInvoice!.amount)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1.5px solid #1A2744', paddingTop: 10 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#999' }}>Remaining balance</span>
-                <span style={{ fontSize: 28, fontWeight: 800, color: '#2045B8' }}>{fmtCAD(invoiceAmount)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #EEF0F4', paddingTop: 12 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Remaining balance</span>
+                <span style={{ fontSize: 32, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</span>
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 10, color: '#999', fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>Invoice amount</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#2045B8' }}>{fmtCAD(invoiceAmount)}</div>
-              <div style={{ fontSize: 11, color: '#999', marginTop: 2 }}>from signed estimate {estimate.estimate_number}</div>
+              <div style={labelStyle}>Invoice Amount</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#2563EB', lineHeight: 1.1 }}>{fmtCAD(invoiceAmount)}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>from signed estimate {estimate.estimate_number}</div>
             </>
           )}
         </div>
 
-        <div className="r1"><div className="f">
-          <label>Due Date *</label>
-          <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} />
-        </div></div>
+        {/* Form card */}
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20 }}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Due Date *</label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
 
-        <div className="r1"><div className="f">
-          <label>Notes (optional)</label>
-          <textarea rows={3} value={notes}
-            placeholder="Payment instructions, bank details, etc."
-            style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 13, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical', lineHeight: 1.6 }}
-            onChange={e => setNotes(e.target.value)} />
-        </div></div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Notes (Optional)</label>
+            <textarea
+              rows={3}
+              value={notes}
+              placeholder="Payment instructions, bank details, etc."
+              onChange={e => setNotes(e.target.value)}
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
+            />
+          </div>
 
-        <div className="info-box">
-          {isFinal
-            ? '💡 This final invoice covers the remaining balance after the deposit. Estimate status updates to "Invoiced".'
-            : '💡 The estimate status will update to "Invoiced" automatically.'}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#F8FAFC', borderRadius: 8, padding: '10px 12px' }}>
+            <Info size={14} strokeWidth={1.8} color="#94A3B8" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5 }}>
+              {isFinal
+                ? 'This final invoice covers the remaining balance after the deposit. Estimate status updates to "Invoiced".'
+                : 'The estimate status will update to "Invoiced" automatically.'}
+            </span>
+          </div>
         </div>
-
-        <div style={{ height: 80 }} />
       </div>
 
-      <div className="nav">
-        <button className="btn-back" onClick={() => router.push(`/dashboard/estimates/${id}`)}>← Back</button>
-        <button className="btn-next" onClick={createInvoice} disabled={saving}>
+      {/* BOTTOM BAR */}
+      <div style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: '#fff',
+        borderTop: '1px solid #EEF0F4',
+        padding: '14px 28px',
+        display: 'flex',
+        gap: 10,
+        zIndex: 20,
+      }}>
+        <button
+          onClick={() => router.push(`/dashboard/estimates/${id}`)}
+          style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: '1.5px solid #E2E5EA', background: '#fff', color: '#64748B', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          ← Back
+        </button>
+        <button
+          onClick={createInvoice}
+          disabled={saving}
+          style={{ flex: 2, padding: '12px 0', borderRadius: 10, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
           {saving ? 'Creating...' : `Create ${isFinal ? 'Final ' : ''}Invoice →`}
         </button>
       </div>
