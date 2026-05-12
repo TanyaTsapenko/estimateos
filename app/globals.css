@@ -643,6 +643,9 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   .est-detail-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
   .est-detail-sticky { position: sticky; top: 62px; }
 
+  /* Estimate detail three-col */
+  .est-3col { display: grid; grid-template-columns: 280px 1fr 260px; gap: 24px; align-items: start; }
+
   /* Settings two-col */
   .settings-2col { grid-template-columns: 200px 1fr; }
   .settings-content { padding: 24px; }
