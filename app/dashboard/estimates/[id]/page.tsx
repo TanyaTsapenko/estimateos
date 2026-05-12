@@ -406,33 +406,45 @@ export default function EstimateDetailPage() {
 
       {/* ── EMAIL MODAL ── */}
       {showEmailModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setShowEmailModal(false)}>
-          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 20px 32px', width: '100%', maxWidth: 520 }}
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, margin: '0 20px' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#0A1628' }}>Send to client</div>
+
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>Send to client</div>
               <button onClick={() => setShowEmailModal(false)}
-                style={{ background: '#F8FAFC', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 14, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+                style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', fontSize: 14, flexShrink: 0 }}>✕</button>
             </div>
-            <div style={{ fontSize: 12, color: '#64748B', marginBottom: 14 }}>Choose what to send to {estimate.client_email}:</div>
-            <button style={{ width: '100%', background: 'rgba(37,99,235,.06)', border: '1.5px solid rgba(37,99,235,.2)', borderRadius: 12, padding: '13px 16px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Sending to {estimate.client_email}</div>
+
+            {/* Option 1: Estimate only — always available */}
+            <button
+              style={{ width: '100%', background: '#F8FAFF', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
               onClick={() => handleSendEmail('estimate')}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#2563EB', marginBottom: 3 }}>📋 Estimate only</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>Send the estimate with pricing and tier selection</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF', marginBottom: 3 }}>Estimate only</div>
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>Send the estimate with pricing and tier selection</div>
             </button>
-            <button style={{ width: '100%', background: contractPdfUrl ? 'rgba(37,99,235,.06)' : 'rgba(107,114,128,.04)', border: `1.5px solid ${contractPdfUrl ? 'rgba(37,99,235,.2)' : '#EEF0F4'}`, borderRadius: 12, padding: '13px 16px', marginBottom: 8, cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.55 }}
+
+            {/* Option 2: Estimate + Contract */}
+            <button
               disabled={!contractPdfUrl}
+              style={{ width: '100%', background: contractPdfUrl ? '#F8FAFF' : '#F5F6F8', border: `1px solid ${contractPdfUrl ? '#BFDBFE' : '#EEF0F4'}`, borderRadius: 10, padding: '12px 14px', marginBottom: 8, cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.5 }}
               onClick={() => contractPdfUrl && handleSendEmail('estimate_contract')}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: contractPdfUrl ? '#2563EB' : '#64748B', marginBottom: 3 }}>📋 Estimate + Contract</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>{contractPdfUrl ? 'Client reads contract first, then reviews and signs the estimate' : 'No contract uploaded — go to Settings → Contract to upload one'}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: contractPdfUrl ? '#1E40AF' : '#94A3B8', marginBottom: 3 }}>Estimate + Contract</div>
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>{contractPdfUrl ? 'Client reads contract first, then reviews and signs the estimate' : 'No contract uploaded — go to Settings → Contract'}</div>
             </button>
-            <button style={{ width: '100%', background: contractPdfUrl ? 'rgba(37,99,235,.06)' : 'rgba(107,114,128,.04)', border: `1.5px solid ${contractPdfUrl ? 'rgba(37,99,235,.2)' : '#EEF0F4'}`, borderRadius: 12, padding: '13px 16px', cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.55 }}
+
+            {/* Option 3: Contract only */}
+            <button
               disabled={!contractPdfUrl}
+              style={{ width: '100%', background: contractPdfUrl ? '#F8FAFF' : '#F5F6F8', border: `1px solid ${contractPdfUrl ? '#BFDBFE' : '#EEF0F4'}`, borderRadius: 10, padding: '12px 14px', cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.5 }}
               onClick={() => contractPdfUrl && handleSendEmail('contract')}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: contractPdfUrl ? '#2563EB' : '#64748B', marginBottom: 3 }}>📄 Contract only</div>
-              <div style={{ fontSize: 11, color: '#64748B' }}>{contractPdfUrl ? 'Send only the contract PDF for client signature' : 'No contract uploaded — go to Settings → Contract to upload one'}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: contractPdfUrl ? '#1E40AF' : '#94A3B8', marginBottom: 3 }}>Contract only</div>
+              <div style={{ fontSize: 11, color: '#94A3B8' }}>{contractPdfUrl ? 'Send only the contract PDF for client signature' : 'No contract uploaded — go to Settings → Contract'}</div>
             </button>
+
           </div>
         </div>
       )}
