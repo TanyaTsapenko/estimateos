@@ -251,47 +251,67 @@ export default function SignPage() {
 
   // ── CLIENT SIGN ──
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          <div style={{ background: 'rgba(22,163,74,.15)', border: '1px solid rgba(22,163,74,.3)', color: '#16a34a', borderRadius: 8, padding: '4px 10px', fontSize: 9, fontWeight: 700, letterSpacing: '.1em' }}>
-            CLIENT MODE
-          </div>
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Topbar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>
+          Estimate<span style={{ color: '#2563EB' }}>OS</span>
         </div>
-        <div className="h-title">
-          <div className="h-eye">Hi, {estimate.client_name || 'there'}!</div>
-          <div className="h-big">Sign Below</div>
-          <div className="h-sub">Your signature confirms {estimate.estimate_number}</div>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', background: 'rgba(37,99,235,.08)', border: '1px solid rgba(37,99,235,.2)', borderRadius: 6, padding: '4px 10px' }}>
+          {estimate.estimate_number}
+        </span>
+      </div>
+
+      {/* Hero */}
+      <div style={{ background: '#EFF6FF', padding: 24 }}>
+        <div style={{ fontSize: 14, color: '#64748B', marginBottom: 4 }}>
+          Hi, {estimate.client_name || 'there'}!
+        </div>
+        <div style={{ fontSize: 26, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px', marginBottom: 4 }}>
+          Sign Below
+        </div>
+        <div style={{ fontSize: 13, color: '#94A3B8' }}>
+          Your signature confirms {estimate.estimate_number}
         </div>
       </div>
 
-      <div className="card">
-        {error && <div className="error-msg">{error}</div>}
+      {/* Body */}
+      <div style={{ padding: '20px 16px 120px', flex: 1 }}>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--jet)' }}>{estimate.estimate_number}</div>
-            <div style={{ fontSize: 12, color: '#6b7280' }}>Total: <strong style={{ color: 'var(--amber)' }}>{fmtCAD(estimate.total)}</strong></div>
+        {/* Summary card */}
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: '16px 20px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>
+              {estimate.estimate_number}
+            </span>
+            <span style={{ fontSize: 12, color: '#94A3B8' }}>{today}</span>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--ash)', textAlign: 'right' }}>
-            {today}
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 10 }}>
+            Total: <span style={{ color: '#2563EB' }}>{fmtCAD(estimate.total)}</span>
+          </div>
+          <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>
+            By signing below, you agree to this estimate for {fmtCAD(estimate.total)} including all taxes. A 50% deposit is due upon signing.
           </div>
         </div>
 
-        <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.7, marginBottom: 14, padding: '10px 12px', background: 'var(--surface)', borderRadius: 10 }}>
-          By signing below, you agree to the estimate for <strong>{fmtCAD(estimate.total)}</strong> including all taxes. A 50% deposit is due upon signing.
-        </div>
+        {error && (
+          <div style={{ background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#DC2626', marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
 
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 6 }}>
-          Your signature
+        {/* Signature box */}
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>
+          Your Signature
         </div>
-        <div className="sig-wrap" style={{ marginBottom: 14 }}>
+        <div style={{ position: 'relative', border: '1.5px dashed #CBD5E1', borderRadius: 12, overflow: 'hidden', marginBottom: 16, background: '#fff' }}>
           <canvas
             ref={canvasRef}
             width={354}
             height={140}
             className="sig-canvas"
+            style={{ width: '100%', display: 'block' }}
             onMouseDown={startDraw}
             onMouseMove={draw}
             onMouseUp={endDraw}
@@ -301,21 +321,29 @@ export default function SignPage() {
             onTouchEnd={endDraw}
           />
           {!hasSignature && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 12, color: '#C8C8C8', pointerEvents: 'none', textAlign: 'center' }}>
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 12, color: '#CBD5E1', pointerEvents: 'none', textAlign: 'center' }}>
               Sign here with your finger
             </div>
           )}
-          <button className="sig-clear" onClick={clearCanvas}>Clear</button>
+          <button onClick={clearCanvas}
+            style={{ position: 'absolute', top: 10, right: 10, background: '#fff', border: '1px solid #E2E5EA', borderRadius: 6, padding: '4px 10px', fontSize: 11, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Clear
+          </button>
         </div>
 
-        <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}>
-          {saving ? 'Saving...' : `I Agree — Sign ${estimate.estimate_number}`}
-        </button>
-
-        <div style={{ fontSize: 11, color: 'var(--ash)', textAlign: 'center', marginTop: 12, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', lineHeight: 1.6 }}>
           This is a legally binding e-signature. You'll receive a copy by email.
         </div>
       </div>
+
+      {/* Sticky submit */}
+      <div style={{ position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid #EEF0F4', padding: '12px 16px 28px' }}>
+        <button onClick={submitSignature} disabled={saving || !hasSignature}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '16px 0', background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
+          {saving ? 'Saving…' : `I Agree — Sign ${estimate.estimate_number}`}
+        </button>
+      </div>
+
     </div>
   )
 }
