@@ -196,24 +196,40 @@ export default function AppointmentsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
-        <div className="h-top">
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          <button onClick={() => router.push('/dashboard/appointments/new')}
-            style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 700, color: '#111', cursor: 'pointer', fontFamily: 'inherit' }}>
+      {/* ── TOPBAR ── */}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        flexShrink: 0,
+      }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
+            SCHEDULE
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
+            Appointments
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, color: '#94A3B8' }}>
+            {todayCount} today{newLeads > 0 ? ` · ${newLeads} new lead${newLeads > 1 ? 's' : ''}` : ''}
+          </span>
+          <button
+            onClick={() => router.push('/dashboard/appointments/new')}
+            style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             + New
           </button>
         </div>
-        <div className="h-title">
-          <div className="h-eye">Schedule</div>
-          <div className="h-big">Appointments</div>
-          <div className="h-sub">
-            {todayCount} today{newLeads > 0 ? ` · ${newLeads} new lead${newLeads > 1 ? 's' : ''}` : ''}
-          </div>
-        </div>
       </div>
 
-      <div className="dash-bg screen-enter">
+      <div style={{ flex: 1, padding: '16px 14px 0', background: '#F5F6F8' }}>
         {loading && <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--ash)', fontSize: 13 }}>Loading...</div>}
 
         {!loading && (

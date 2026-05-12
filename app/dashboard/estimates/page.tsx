@@ -24,15 +24,15 @@ const SC: Record<string, { text: string; bg: string }> = {
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,.07)',
-      border: '1px solid rgba(255,255,255,.1)',
+      background: '#fff',
+      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
       borderRadius: 10,
       padding: '12px 14px',
     }}>
-      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.38)', marginBottom: 5 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 5 }}>
         {label}
       </div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#0A1628', letterSpacing: '-.02em', lineHeight: 1 }}>
         {value}
       </div>
     </div>
@@ -76,31 +76,45 @@ export default function EstimatesPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
-      {/* ── HEADER ── */}
+      {/* ── TOPBAR ── */}
       <div style={{
-        background: 'linear-gradient(160deg, #0A0E1A 0%, #0F1923 45%, #1A2744 100%)',
-        padding: '28px 24px 28px',
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
       }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.32)', marginBottom: 8 }}>
-          YOUR WORK
-        </div>
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 3 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
+            YOUR WORK
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
             Estimates
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.42)' }}>
-            {estimates.length} total · {signedCount} signed
-          </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          <StatBox label="Total value" value={fmtCAD(totalValue)} />
-          <StatBox label="Signed"      value={signedCount}        />
-          <StatBox label="Open"        value={openCount}          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} signed</span>
+          <button
+            onClick={() => router.push('/dashboard/estimates/new')}
+            style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={14} strokeWidth={2.5} /> New Estimate
+          </button>
         </div>
       </div>
 
       {/* ── BODY ── */}
       <div style={{ padding: '20px 16px 100px' }}>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          <StatBox label="Total value" value={fmtCAD(totalValue)} />
+          <StatBox label="Signed"      value={signedCount}        />
+          <StatBox label="Open"        value={openCount}          />
+        </div>
 
         {/* Search */}
         <div style={{

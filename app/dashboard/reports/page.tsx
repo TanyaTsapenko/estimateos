@@ -111,19 +111,28 @@ export default function ReportsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
-      {/* ── HEADER ── */}
+      {/* ── TOPBAR ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)',
-        padding: '28px 24px 32px',
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
       }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.32)', marginBottom: 8 }}>
-          PERFORMANCE
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
+            PERFORMANCE
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
+            Reports
+          </div>
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 4 }}>
-          Reports
-        </div>
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,.42)' }}>
-          {filtered.length} estimates · {fmtCAD(revenue)} revenue
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, color: '#94A3B8' }}>{filtered.length} estimates · {fmtCAD(revenue)} revenue</span>
         </div>
       </div>
 

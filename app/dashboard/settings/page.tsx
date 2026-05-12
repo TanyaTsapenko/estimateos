@@ -734,9 +734,21 @@ export default function SettingsPage() {
         {!mobileDetail ? (
           // Section list
           <div>
-            <div style={{ background: '#0A1628', padding: '20px 20px 24px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>WORKSPACE</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px' }}>Settings</div>
+            <div style={{
+              background: '#fff',
+              borderBottom: '1px solid #EEF0F4',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+            }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>WORKSPACE</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Settings</div>
+              </div>
             </div>
             <div style={{ padding: '16px 16px 100px' }}>
               {GROUPS.map(g => (

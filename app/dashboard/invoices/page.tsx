@@ -21,15 +21,15 @@ const SC: Record<string, { text: string; bg: string }> = {
 function StatBox({ label, value }: { label: string; value: string | number }) {
   return (
     <div style={{
-      background: 'rgba(255,255,255,.07)',
-      border: '1px solid rgba(255,255,255,.1)',
+      background: '#fff',
+      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
       borderRadius: 10,
       padding: '12px 14px',
     }}>
-      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.38)', marginBottom: 5 }}>
+      <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 5 }}>
         {label}
       </div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', lineHeight: 1 }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#0A1628', letterSpacing: '-.02em', lineHeight: 1 }}>
         {value}
       </div>
     </div>
@@ -71,31 +71,40 @@ export default function InvoicesPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
-      {/* ── HEADER ── */}
+      {/* ── TOPBAR ── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)',
-        padding: '28px 24px 28px',
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
       }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,.32)', marginBottom: 8 }}>
-          BILLING
-        </div>
-        <div style={{ marginBottom: 22 }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-.02em', marginBottom: 3 }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
+            BILLING
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
             Invoices
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,.42)' }}>
-            {fmtCAD(totalPending)} pending · {fmtCAD(totalPaid)} paid
-          </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          <StatBox label="Pending"  value={fmtCAD(totalPending)} />
-          <StatBox label="Paid"     value={fmtCAD(totalPaid)}    />
-          <StatBox label="Total"    value={invoices.length}      />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtCAD(totalPending)} pending · {fmtCAD(totalPaid)} paid</span>
         </div>
       </div>
 
       {/* ── BODY ── */}
       <div style={{ padding: '20px 16px 60px' }}>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          <StatBox label="Pending" value={fmtCAD(totalPending)} />
+          <StatBox label="Paid"    value={fmtCAD(totalPaid)}    />
+          <StatBox label="Total"   value={invoices.length}      />
+        </div>
 
         {/* Loading */}
         {loading && (
