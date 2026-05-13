@@ -39,27 +39,27 @@ export default function BottomTabBar() {
   return (
     <div className="bottom-tab-bar" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      background: 'rgba(255,255,255,0.95)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderTop: '1px solid #EEF0F4',
-      padding: '8px 0',
-      paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+      background: '#fff',
+      borderRadius: '20px 20px 0 0',
+      boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
+      paddingTop: 8,
+      paddingBottom: 'env(safe-area-inset-bottom, 8px)',
       display: 'flex',
       alignItems: 'flex-end',
       zIndex: 100,
+      overflow: 'visible',
     }}>
       {LEFT_TABS.map(renderTab)}
 
       {/* Center FAB */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-end', paddingBottom: 4 }}>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 8 }}>
         <button
           onClick={() => router.push('/dashboard/appointments/new')}
           style={{
             width: 52, height: 52, borderRadius: '50%',
             background: '#2563EB', color: '#fff', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', marginTop: -20,
+            cursor: 'pointer', marginTop: -24,
             boxShadow: '0 4px 14px rgba(37,99,235,0.5)',
             flexShrink: 0,
           }}

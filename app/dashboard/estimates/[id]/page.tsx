@@ -39,7 +39,7 @@ const SL: React.CSSProperties = {
   textTransform: 'uppercase', color: '#94A3B8', marginBottom: 10,
 }
 const CARD: React.CSSProperties = {
-  background: '#fff', borderRadius: 12,
+  background: '#fff', borderRadius: 16,
   boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
 }
 
@@ -206,7 +206,7 @@ export default function EstimateDetailPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div className="est-detail-body" style={{ padding: '24px 28px 80px' }}>
+      <div className="est-detail-body" style={{ padding: '24px 28px 100px' }}>
         <div className="est-3col">
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
@@ -312,7 +312,7 @@ export default function EstimateDetailPage() {
 
             {/* Status action card */}
             {(isSigned || isInvoiced) ? (
-              <div style={{ background: '#0F8A6B', borderRadius: 12, padding: 20, marginBottom: 12, marginTop: 12 }}>
+              <div style={{ background: '#0F8A6B', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
@@ -326,7 +326,7 @@ export default function EstimateDetailPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ background: '#2563EB', borderRadius: 12, padding: 20, marginBottom: 12, marginTop: 12 }}>
+              <div style={{ background: '#2563EB', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 6 }}>
                   READY TO SEND
                 </div>

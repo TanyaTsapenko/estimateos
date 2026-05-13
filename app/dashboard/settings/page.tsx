@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
+import { Camera } from 'lucide-react'
 
 // ── TYPES ────────────────────────────────────────
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
@@ -210,38 +211,144 @@ function Toast({ text }: { text: string }) {
 // ── SECTIONS ─────────────────────────────────────
 
 function ProfileSection({ flash }: { flash: (m: string) => void }) {
-  const [values, setValues] = useState({ firstName: 'Tanya', lastName: 'Slavina', email: 'tanya@estimare.ca', phone: '' })
-  const [initial] = useState({ ...values })
+  const supabase = createClient()
+  const [values, setValues] = useState({ firstName: '', lastName: '', email: '', phone: '' })
+  const [initial, setInitial] = useState({ firstName: '', lastName: '', email: '', phone: '' })
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = !!values.firstName && !!values.lastName && !!values.email
+  const [userId, setUserId] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      setValues(v => ({ ...v, email: user.email || '' }))
+      if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url)
+      const { data: prof } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', user.id).single()
+      if (prof) {
+        const loaded = {
+          firstName: prof.first_name || '',
+          lastName:  prof.last_name  || '',
+          email:     user.email      || '',
+          phone:     prof.phone      || '',
+        }
+        setValues(loaded)
+        setInitial(loaded)
+      }
+    })
+  }, [])
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    if (file.size > 5 * 1024 * 1024) { flash('Image must be under 5 MB'); return }
+    setAvatarUploading(true)
+    const path = `${userId}/avatar.jpg`
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) { flash('Upload failed'); setAvatarUploading(false); return }
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    await supabase.auth.updateUser({ data: { avatar_url: url } })
+    setAvatarUrl(url)
+    setAvatarUploading(false)
+    flash('Avatar updated')
+  }
+
+  async function saveProfile() {
+    if (!userId) return
+    await supabase.from('profiles').update({
+      first_name: values.firstName,
+      last_name:  values.lastName,
+      phone:      values.phone,
+    }).eq('id', userId)
+    setInitial({ ...values })
+    flash('Profile saved')
+  }
+
+  const initials = `${values.firstName?.[0] || ''}${values.lastName?.[0] || ''}`.toUpperCase() || '?'
 
   return (
     <div>
       <SectionHeader kicker="ACCOUNT" title="Profile" subtitle="Your personal information and avatar." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 14, background: '#2563EB',
-              color: '#fff', fontSize: 20, fontWeight: 700,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              {values.firstName?.[0]}{values.lastName?.[0]}
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{values.firstName} {values.lastName}</div>
-              <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>{values.email}</div>
+          {/* Avatar */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <div style={{ position: 'relative', width: 80, height: 80 }}>
+              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+              <div
+                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                style={{
+                  width: 80, height: 80, borderRadius: '50%', background: '#2563EB',
+                  overflow: 'hidden', cursor: avatarUploading ? 'wait' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                {avatarUrl
+                  ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px' }}>{initials}</span>
+                }
+              </div>
+              <div
+                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                style={{
+                  position: 'absolute', bottom: 0, right: 0,
+                  width: 26, height: 26, borderRadius: '50%',
+                  background: '#fff', border: '2px solid #EEF0F4',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                }}
+              >
+                <Camera size={13} strokeWidth={2} color="#475569" />
+              </div>
             </div>
           </div>
+
+          {/* Form fields */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <Field label="First name" value={values.firstName} onChange={v => setValues(s => ({ ...s, firstName: v }))} required />
-            <Field label="Last name" value={values.lastName} onChange={v => setValues(s => ({ ...s, lastName: v }))} required />
+            <Field label="Last name"  value={values.lastName}  onChange={v => setValues(s => ({ ...s, lastName: v }))}  required />
           </div>
           <Field label="Email" value={values.email} onChange={v => setValues(s => ({ ...s, email: v }))} type="email" required />
           <Field label="Phone" value={values.phone} onChange={v => setValues(s => ({ ...s, phone: v }))} placeholder="+1 (555) 000-0000" />
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={valid} onSave={() => flash('Profile saved')} onDiscard={() => setValues({ ...initial })} />
+
+      {/* Action buttons */}
+      <div style={{ marginTop: 24, background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={() => setValues({ ...initial })}
+            disabled={!dirty}
+            style={{
+              flex: 1, height: 48, borderRadius: 12, border: '1px solid #E2E8F0',
+              background: '#fff', color: dirty ? '#475569' : '#94A3B8',
+              fontSize: 14, fontWeight: 600, cursor: dirty ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+            }}
+          >
+            Discard
+          </button>
+          <button
+            onClick={saveProfile}
+            disabled={!dirty || !valid}
+            style={{
+              flex: 1, height: 48, borderRadius: 12, border: 'none',
+              background: '#2563EB', color: '#fff',
+              fontSize: 14, fontWeight: 600,
+              cursor: dirty && valid ? 'pointer' : 'not-allowed',
+              fontFamily: 'inherit',
+              opacity: dirty && valid ? 1 : 0.5,
+            }}
+          >
+            Save changes
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
