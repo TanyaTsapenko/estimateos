@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, Link2, PenLine, FileDown, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 
 interface Opening {
   id: string; type: string; qty: number; width: string
@@ -316,9 +316,14 @@ export default function EstimateDetailPage() {
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} signed this estimate
                 </div>
+                <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Receipt size={14} />
+                  {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+                </button>
               </div>
             ) : (
               <div style={{ background: '#2563EB', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
@@ -375,15 +380,20 @@ export default function EstimateDetailPage() {
         </div>
 
         {/* ── MOBILE ACTION BUTTON ── */}
-        {!isSigned && !isInvoiced && (
-          <div className="mobile-only" style={{ marginTop: 24, marginBottom: 32 }}>
+        <div className="mobile-only" style={{ marginTop: 24, marginBottom: 32 }}>
+          {(isSigned || isInvoiced) ? (
+            <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', height: 52, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Receipt size={16} /> {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+            </button>
+          ) : (
             <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} disabled={sending}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', height: 52, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
               {sending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : canEmail ? <Mail size={16} /> : <Link2 size={16} />}
               {sending ? 'Sending…' : canEmail ? 'Email client' : 'Copy link'}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* ── TOAST ── */}
