@@ -493,10 +493,12 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
+const CONTRACT_DEFAULTS = { intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner. Any alteration or deviation from scope involving extra costs will be executed only upon written orders, and will become an extra charge over and above the estimate.', requireSign: true, showLicence: false }
+
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [values, setValues] = useState({ intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner...', requireSign: true, showLicence: false })
-  const [initial] = useState({ ...values })
+  const [values, setValues] = useState(CONTRACT_DEFAULTS)
+  const [initial, setInitial] = useState(CONTRACT_DEFAULTS)
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const [userId, setUserId] = useState<string | null>(null)
   const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
@@ -508,15 +510,35 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      supabase.from('profiles').select('contract_pdf_url').eq('id', data.user.id).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('contract_pdf_url, contract_intro, contract_terms, contract_require_sign, contract_show_licence').eq('id', data.user.id).single().then(({ data: prof }) => {
         if (prof?.contract_pdf_url) {
           setContractPdfUrl(prof.contract_pdf_url)
           const parts = prof.contract_pdf_url.split('/')
           setContractFileName(decodeURIComponent(parts[parts.length - 1]))
         }
+        const loaded = {
+          intro: (prof as any)?.contract_intro ?? CONTRACT_DEFAULTS.intro,
+          terms: (prof as any)?.contract_terms ?? CONTRACT_DEFAULTS.terms,
+          requireSign: (prof as any)?.contract_require_sign ?? CONTRACT_DEFAULTS.requireSign,
+          showLicence: (prof as any)?.contract_show_licence ?? CONTRACT_DEFAULTS.showLicence,
+        }
+        setValues(loaded)
+        setInitial(loaded)
       })
     })
   }, [])
+
+  async function saveContract() {
+    if (!userId) return
+    await supabase.from('profiles').update({
+      contract_intro: values.intro,
+      contract_terms: values.terms,
+      contract_require_sign: values.requireSign,
+      contract_show_licence: values.showLicence,
+    }).eq('id', userId)
+    setInitial({ ...values })
+    flash('Contract saved')
+  }
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -599,7 +621,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           </div>
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={() => flash('Contract saved')} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => setValues({ ...initial })} />
     </div>
   )
 }
