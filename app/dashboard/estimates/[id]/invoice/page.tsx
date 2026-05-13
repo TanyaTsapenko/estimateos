@@ -101,9 +101,12 @@ export default function CreateInvoicePage() {
     fontSize: 13,
     color: '#0A1628',
     outline: 'none',
+    display: 'block',
     width: '100%',
+    maxWidth: '100%',
     boxSizing: 'border-box',
     background: '#fff',
+    minWidth: 0,
   }
 
   const labelStyle: React.CSSProperties = {
@@ -188,7 +191,7 @@ export default function CreateInvoicePage() {
         </div>
 
         {/* Form card */}
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, overflow: 'hidden' }}>
           <div style={{ marginBottom: 16 }}>
             <label style={labelStyle}>Due Date *</label>
             <input
