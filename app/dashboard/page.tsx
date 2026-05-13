@@ -53,48 +53,27 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
   const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
   const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
   return (
-    <div className="db-kpi-card" style={{
-      background: '#fff', borderRadius: 12, padding: 16,
-      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-      flex: 1, minWidth: 140, minHeight: 120,
-      position: 'relative', display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
-      {/* Sparkline — position absolute so it never shifts layout */}
-      <div style={{ position: 'absolute', top: 16, right: 16, pointerEvents: 'none' }}>
-        <Sparkline data={sparkData} color={accent} />
-      </div>
-
-      {/* Top row: icon + label — fixed height 40px */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, height: 40 }}>
+    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
-          width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
           background: `${accent}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <Icon size={16} color={accent} strokeWidth={1.7} />
+          <Icon size={15} color={accent} strokeWidth={1.7} />
         </div>
-        <div>
-          <div className="db-kpi-label" style={{
-            fontSize: 10, fontWeight: 600, letterSpacing: '0.5px',
-            color: '#9CA3AF', textTransform: 'uppercase', lineHeight: 1.2,
-          }}>{label}</div>
-          <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2, lineHeight: 1.2 }}>{period}</div>
+        <div style={{ flex: 1 }}>
+          <div className="db-kpi-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
+          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{period}</div>
         </div>
+        <Sparkline data={sparkData} color={accent} />
       </div>
-
-      {/* Bottom: number + badge — pushed to bottom */}
-      <div style={{ marginTop: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 10 }}>
         {empty ? (
           <span style={{ fontSize: 15, fontWeight: 500, color: '#CBD5E1' }}>No data yet</span>
         ) : (
           <>
-            <span className="db-kpi-value" style={{
-              display: 'block', fontSize: 22, fontWeight: 700,
-              letterSpacing: '-0.6px', color: '#111827',
-            }}>{value}</span>
-            <span style={{
-              display: 'block', fontSize: 11, fontWeight: 600,
-              color: deltaColor, marginTop: 4,
-            }}>{deltaPrefix}{delta}</span>
+            <span className="db-kpi-value" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{deltaPrefix}{delta}</span>
           </>
         )}
       </div>
