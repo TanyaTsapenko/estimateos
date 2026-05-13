@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
@@ -494,14 +494,83 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
+  const supabase = createClient()
   const [values, setValues] = useState({ intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner...', requireSign: true, showLicence: false })
   const [initial] = useState({ ...values })
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
+  const [contractFileName, setContractFileName] = useState<string>('')
+  const [uploading, setUploading] = useState(false)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return
+      setUserId(data.user.id)
+      supabase.from('profiles').select('contract_pdf_url').eq('id', data.user.id).single().then(({ data: prof }) => {
+        if (prof?.contract_pdf_url) {
+          setContractPdfUrl(prof.contract_pdf_url)
+          const parts = prof.contract_pdf_url.split('/')
+          setContractFileName(decodeURIComponent(parts[parts.length - 1]))
+        }
+      })
+    })
+  }, [])
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    if (file.size > 10 * 1024 * 1024) { flash('File must be under 10 MB'); return }
+    setUploading(true)
+    const path = `${userId}/contract.pdf`
+    const { error } = await supabase.storage.from('contracts').upload(path, file, { upsert: true, contentType: 'application/pdf' })
+    if (error) { flash('Upload failed'); setUploading(false); return }
+    const { data: urlData } = supabase.storage.from('contracts').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    await supabase.from('profiles').update({ contract_pdf_url: url }).eq('id', userId)
+    setContractPdfUrl(url)
+    setContractFileName(file.name)
+    setUploading(false)
+    flash('Contract PDF uploaded')
+  }
+
+  async function handlePdfRemove() {
+    if (!userId) return
+    await supabase.storage.from('contracts').remove([`${userId}/contract.pdf`])
+    await supabase.from('profiles').update({ contract_pdf_url: null }).eq('id', userId)
+    setContractPdfUrl(null)
+    setContractFileName('')
+    flash('Contract PDF removed')
+  }
 
   return (
     <div>
       <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Template shown on every estimate PDF." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <Card>
+          <SectionLabel>Contract PDF</SectionLabel>
+          <input ref={pdfInputRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handlePdfUpload} />
+          {contractPdfUrl ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: '#0F8A6B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ color: '#fff', fontSize: 18 }}>✓</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contractFileName || 'contract.pdf'}</div>
+                <div style={{ fontSize: 12, color: '#0F8A6B', marginTop: 1 }}>Uploaded</div>
+              </div>
+              <button onClick={handlePdfRemove} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Remove</button>
+            </div>
+          ) : (
+            <button onClick={() => pdfInputRef.current?.click()} disabled={uploading}
+              style={{ width: '100%', padding: '20px', border: '2px dashed #CBD5E1', borderRadius: 10, background: 'transparent', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <SIcon name="pdf" size={24} style={{ color: '#94A3B8' }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{uploading ? 'Uploading…' : 'Upload contract PDF'}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>PDF only · Max 10 MB</div>
+            </button>
+          )}
+        </Card>
         <Card>
           <SectionLabel>Intro paragraph</SectionLabel>
           <div style={{ marginBottom: 6, fontSize: 12, color: '#94A3B8' }}>Supports: {'{client_name}'}, {'{company_name}'}</div>
