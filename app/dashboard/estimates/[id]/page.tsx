@@ -206,7 +206,7 @@ export default function EstimateDetailPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div className="est-detail-body" style={{ padding: '24px 28px 180px' }}>
+      <div className="est-detail-body" style={{ padding: '24px 28px 100px' }}>
         <div className="est-3col">
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
@@ -378,28 +378,22 @@ export default function EstimateDetailPage() {
 
           </div>
         </div>
-      </div>
 
-      {/* ── MOBILE STICKY BOTTOM BAR ── */}
-      <div className="mobile-only" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#fff', borderTop: '1px solid #E2E8F0',
-        padding: 16,
-        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
-        zIndex: 40,
-      }}>
-        {(isSigned || isInvoiced) ? (
-          <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '13px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Receipt size={15} /> {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
-          </button>
-        ) : (
-          <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} disabled={sending}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '13px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
-            {sending ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : canEmail ? <Mail size={15} /> : <Link2 size={15} />}
-            {sending ? 'Sending…' : canEmail ? 'Email client' : 'Copy link'}
-          </button>
-        )}
+        {/* ── MOBILE ACTION BUTTON ── */}
+        <div className="mobile-only" style={{ marginTop: 24, marginBottom: 32 }}>
+          {(isSigned || isInvoiced) ? (
+            <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', height: 52, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Receipt size={16} /> {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+            </button>
+          ) : (
+            <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} disabled={sending}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', height: 52, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
+              {sending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : canEmail ? <Mail size={16} /> : <Link2 size={16} />}
+              {sending ? 'Sending…' : canEmail ? 'Email client' : 'Copy link'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── TOAST ── */}

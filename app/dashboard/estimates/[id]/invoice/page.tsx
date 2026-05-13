@@ -153,7 +153,7 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* BODY */}
-      <div style={{ flex: 1, padding: '20px 28px', paddingBottom: 180 }}>
+      <div style={{ flex: 1, padding: '20px 28px', paddingBottom: 100 }}>
         {error && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
             {error}
@@ -219,24 +219,11 @@ export default function CreateInvoicePage() {
             </span>
           </div>
         </div>
-      </div>
 
-      {/* BOTTOM BAR */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        background: '#fff',
-        borderTop: '1px solid #E2E8F0',
-        padding: 16,
-        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
-        zIndex: 40,
-      }}>
         <button
           onClick={createInvoice}
           disabled={saving}
-          style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+          style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 24, marginBottom: 32 }}>
           {saving ? 'Creating...' : `Create ${isFinal ? 'Final ' : ''}Invoice`}
         </button>
       </div>
