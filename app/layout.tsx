@@ -29,6 +29,25 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="app">
           {children}
         </div>
+        <script dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                reg.addEventListener('updatefound', function() {
+                  var newSW = reg.installing;
+                  if (newSW) {
+                    newSW.addEventListener('statechange', function() {
+                      if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                        newSW.postMessage({ type: 'SKIP_WAITING' });
+                        window.location.reload();
+                      }
+                    });
+                  }
+                });
+              });
+            });
+          }
+        `}} />
       </body>
     </html>
   )

@@ -2,6 +2,7 @@
   "name": "EstimateOS",
   "short_name": "EOS",
   "description": "Estimate software for W&D contractors in Canada",
+  "version": "1.0.2",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
