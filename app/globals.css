@@ -728,13 +728,26 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   /* Topbar: hide New estimate button */
   .db-header-btn { display: none !important; }
 
+  /* Topbar: smaller greeting */
+  .db-greeting-name { font-size: 18px !important; }
+  .db-greeting-sep  { display: none !important; }
+  .db-greeting-date { display: none !important; }
+
   /* Main body: full-bleed padding + bottom tab space */
   .db-main-body { padding: 16px 16px 90px !important; }
 
-  /* Hero appointment grid: 2-col on small, scrolls nicely */
-  .db-appt-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
+  /* Hero: tighter padding + smaller text */
+  .db-hero          { padding: 16px !important; }
+  .db-hero-kicker   { font-size: 10px !important; }
+  .db-hero-title    { font-size: 18px !important; letter-spacing: -0.3px !important; }
+  .db-hero-sub      { font-size: 12px !important; }
+  .db-hero-open-btn { padding: 6px 10px !important; font-size: 11px !important; }
+
+  /* Hero appointment grid: 1 column on mobile */
+  .db-appt-grid { grid-template-columns: 1fr !important; }
+
+  /* "+ add appointment" cell */
+  .db-appt-add { min-height: 60px !important; }
 
   /* KPI row: horizontal scroll */
   .db-kpi-row {
@@ -745,10 +758,16 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
     padding-bottom: 4px;
   }
   .db-kpi-row::-webkit-scrollbar { display: none; }
-  .db-kpi-row > * { min-width: 160px !important; flex-shrink: 0 !important; }
+  .db-kpi-card  { min-width: 140px !important; flex-shrink: 0 !important; padding: 12px !important; }
+  .db-kpi-value { font-size: 18px !important; }
+  .db-kpi-label { font-size: 9px !important; }
 
   /* Lower two-panel row: single column */
   .db-lower-row { grid-template-columns: 1fr !important; }
+
+  /* Panel headers */
+  .db-panel-header { padding: 12px 16px !important; }
+  .db-panel-title  { font-size: 13px !important; }
 
   /* ── ESTIMATES LIST ── */
 
@@ -771,6 +790,10 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 
   /* ── APPOINTMENTS ── */
   .appts-body { padding: 16px 14px 90px !important; }
+  .appt-edit-datetime { grid-template-columns: 1fr !important; }
+
+  /* ── ESTIMATES LIST ── */
+  .est-topbar-meta { display: none !important; }
 
   /* ── TOPBAR: reduce horizontal padding on mobile ── */
   .page-topbar { padding: 12px 16px !important; }

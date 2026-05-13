@@ -97,7 +97,7 @@ export default function EstimatesPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} signed</span>
+          <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} signed</span>
           <button
             onClick={() => router.push('/dashboard/estimates/new')}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -288,23 +288,6 @@ export default function EstimatesPage() {
         )}
       </div>
 
-      {/* ── FAB ── */}
-      <button
-        onClick={() => router.push('/dashboard/estimates/new')}
-        style={{
-          position: 'fixed', bottom: 24, right: 24, zIndex: 50,
-          background: '#2563EB', color: '#fff',
-          border: 'none', borderRadius: 14,
-          padding: '13px 20px',
-          fontSize: 13, fontWeight: 700,
-          cursor: 'pointer', fontFamily: 'inherit',
-          boxShadow: '0 4px 20px rgba(37,99,235,.35)',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}
-      >
-        <Plus size={16} strokeWidth={2.5} />
-        New Estimate
-      </button>
     </div>
   )
 }

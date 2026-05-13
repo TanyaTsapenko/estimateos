@@ -312,7 +312,7 @@ export default function EstimateDetailPage() {
 
             {/* Status action card */}
             {(isSigned || isInvoiced) ? (
-              <div style={{ background: '#0F8A6B', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+              <div style={{ background: '#0F8A6B', borderRadius: 12, padding: 20, marginBottom: 12, marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
@@ -326,7 +326,7 @@ export default function EstimateDetailPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ background: '#2563EB', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+              <div style={{ background: '#2563EB', borderRadius: 12, padding: 20, marginBottom: 12, marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 6 }}>
                   READY TO SEND
                 </div>

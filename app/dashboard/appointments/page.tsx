@@ -185,7 +185,7 @@ export default function AppointmentsPage() {
                 <input value={draft.client_address} onChange={e => setD('client_address')(e.target.value)} placeholder="123 Main St" style={inputStyle} />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+            <div className="appt-edit-datetime" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
               <div>
                 <label style={fieldLbl}>Date</label>
                 <input type="date" value={draft.appointment_date} onChange={e => setD('appointment_date')(e.target.value)} style={inputStyle} />

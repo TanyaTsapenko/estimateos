@@ -53,7 +53,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
   const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
   const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
   return (
-    <div style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
+    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
           width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -62,7 +62,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
           <Icon size={15} color={accent} strokeWidth={1.7} />
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
+          <div className="db-kpi-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
           <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{period}</div>
         </div>
         <Sparkline data={sparkData} color={accent} />
@@ -72,7 +72,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
           <span style={{ fontSize: 15, fontWeight: 500, color: '#CBD5E1' }}>No data yet</span>
         ) : (
           <>
-            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
+            <span className="db-kpi-value" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
             <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{deltaPrefix}{delta}</span>
           </>
         )}
@@ -250,9 +250,9 @@ export default function DashboardPage() {
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>WELCOME BACK</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
-            <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
-            <span style={{ color: '#CBD5E1' }}>·</span>
-            <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
+            <span className="db-greeting-name" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
+            <span className="db-greeting-sep" style={{ color: '#CBD5E1' }}>·</span>
+            <span className="db-greeting-date" style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
           </div>
         </div>
         <button style={{
@@ -279,22 +279,22 @@ export default function DashboardPage() {
       <main className="db-main-body" style={{ padding: '20px 28px 32px', flex: 1 }}>
 
         {/* Hero */}
-        <div style={{
+        <div className="db-hero" style={{
           borderRadius: 16, padding: 22, marginBottom: 18,
           background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)',
           color: '#fff',
         }}>
           <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', opacity: 0.7, textTransform: 'uppercase' }}>
+              <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', opacity: 0.7, textTransform: 'uppercase' }}>
                 YOUR DAY · {todayStr.toUpperCase()}
               </div>
               {appointments.length === 0 ? (
                 <>
-                  <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
+                  <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
                     No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
                   </div>
-                  <div style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
+                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
                     {signaturesNeeded > 0
                       ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.`
                       : 'Add your first appointment to get started.'}
@@ -302,18 +302,18 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6 }}>
+                  <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6 }}>
                     {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
                     {signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
                   </div>
-                  <div style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
                     {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.
                     {signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
                   </div>
                 </>
               )}
             </div>
-            <button style={{
+            <button className="db-hero-open-btn" style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
               background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
               borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
@@ -360,7 +360,7 @@ export default function DashboardPage() {
                 </button>
               </div>
             ))}
-            <div style={{
+            <div className="db-appt-add" style={{
               background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
               borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
               justifyContent: 'center', cursor: 'pointer', minHeight: 90,
@@ -396,8 +396,8 @@ export default function DashboardPage() {
 
           {/* Needs attention */}
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Needs attention</div>
+            <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
+              <div className="db-panel-title" style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Needs attention</div>
               <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
                 {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
               </div>
@@ -444,8 +444,8 @@ export default function DashboardPage() {
 
           {/* Recent activity */}
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Recent activity</div>
+            <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
+              <div className="db-panel-title" style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Recent activity</div>
               <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Live feed</div>
             </div>
             {activity.length === 0 ? (
