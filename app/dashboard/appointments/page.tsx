@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import BottomNav from '@/components/BottomNav'
 import { Phone, MapPin, FileText, Trash2, Clock, Calendar, Pencil } from 'lucide-react'
 
 interface Appointment {
@@ -372,7 +371,6 @@ export default function AppointmentsPage() {
         <div style={{ height: 100 }} />
       </div>
 
-      <BottomNav />
       {toast && (
         <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap' }}>
           {toast}

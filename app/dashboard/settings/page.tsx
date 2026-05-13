@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import BottomNav from '@/components/BottomNav'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
 
@@ -877,7 +876,6 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-        <BottomNav />
         {toast && <Toast text={toast} />}
       </div>
     )

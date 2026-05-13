@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard } from 'lucide-react'
+import BottomNav from '@/components/BottomNav'
 
 interface Appointment {
   id: string; time: string; client: string; address: string
@@ -263,7 +264,7 @@ export default function DashboardPage() {
             <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
           )}
         </button>
-        <button onClick={() => router.push('/dashboard/appointments')} style={{
+        <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
           fontSize: 13, fontWeight: 600, cursor: 'pointer',
@@ -275,7 +276,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Body */}
-      <main style={{ padding: '20px 28px 32px', flex: 1 }}>
+      <main className="db-main-body" style={{ padding: '20px 28px 32px', flex: 1 }}>
 
         {/* Hero */}
         <div style={{
@@ -323,7 +324,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Appointment cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
+          <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
             {appointments.map(appt => (
               <div key={appt.id} style={{
                 background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
@@ -372,7 +373,7 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI row */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+        <div className="db-kpi-row" style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
           <KpiCard
             label="REVENUE" period="This month"
             value={metrics?.revenueThisMonth ?? ''} delta={metrics?.revenueDelta ?? ''} deltaUp={metrics?.revenueUp ?? null}
@@ -391,7 +392,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Two-column lower row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
           {/* Needs attention */}
           <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>

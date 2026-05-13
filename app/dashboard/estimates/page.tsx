@@ -107,10 +107,10 @@ export default function EstimatesPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div style={{ padding: '20px 16px 100px' }}>
+      <div className="page-body" style={{ padding: '20px 16px 100px' }}>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+        <div className="est-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           <StatBox label="Total value" value={fmtCAD(totalValue)} />
           <StatBox label="Signed"      value={signedCount}        />
           <StatBox label="Open"        value={openCount}          />

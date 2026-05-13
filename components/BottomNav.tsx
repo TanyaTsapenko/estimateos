@@ -5,10 +5,9 @@ import { SIcon } from './SIcon'
 import type { IconName } from './SIcon'
 
 const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; ownerOnly: boolean }[] = [
-  { path: '/dashboard',              label: 'Home',     icon: 'zap',      exact: true,  ownerOnly: false },
-  { path: '/dashboard/estimates',    label: 'Jobs',     icon: 'pdf',      exact: false, ownerOnly: false },
-  { path: '/dashboard/appointments', label: 'Appts',    icon: 'bell',     exact: false, ownerOnly: false },
-  { path: '/dashboard/reports',      label: 'Reports',  icon: 'external', exact: false, ownerOnly: true  },
+  { path: '/dashboard',              label: 'Home',     icon: 'home',     exact: true,  ownerOnly: false },
+  { path: '/dashboard/appointments', label: 'Schedule', icon: 'calendar', exact: false, ownerOnly: false },
+  { path: '/dashboard/estimates',    label: 'Estimates',icon: 'contract', exact: false, ownerOnly: false },
   { path: '/dashboard/settings',     label: 'Settings', icon: 'settings', exact: false, ownerOnly: true  },
 ]
 

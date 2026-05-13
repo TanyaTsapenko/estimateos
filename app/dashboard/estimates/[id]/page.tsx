@@ -206,7 +206,7 @@ export default function EstimateDetailPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div style={{ padding: '24px 28px 80px' }}>
+      <div className="est-detail-body" style={{ padding: '24px 28px 80px' }}>
         <div className="est-3col">
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
