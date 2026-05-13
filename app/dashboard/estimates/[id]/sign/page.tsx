@@ -294,21 +294,21 @@ export default function SignPage() {
         </span>
       </div>
 
-      {/* Hero */}
-      <div style={{ background: '#EFF6FF', padding: 24 }}>
-        <div style={{ fontSize: 14, color: '#64748B', marginBottom: 4 }}>
-          Hi, {estimate.client_name || 'there'}!
+      {/* Page header */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>
+          SIGNATURE
         </div>
-        <div style={{ fontSize: 26, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px', marginBottom: 4 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px', marginBottom: 2 }}>
           Sign Below
         </div>
         <div style={{ fontSize: 13, color: '#94A3B8' }}>
-          Your signature confirms {estimate.estimate_number}
+          Hi {estimate.client_name || 'there'} — your signature confirms {estimate.estimate_number}
         </div>
       </div>
 
       {/* Body */}
-      <div style={{ padding: '20px 16px 120px', flex: 1 }}>
+      <div style={{ padding: '20px 16px 160px', flex: 1 }}>
 
         {/* Summary card */}
         <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: '16px 20px', marginBottom: 16 }}>
@@ -367,10 +367,18 @@ export default function SignPage() {
         </div>
       </div>
 
-      {/* Sticky submit */}
-      <div style={{ position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid #EEF0F4', padding: '12px 16px 28px' }}>
+      {/* Fixed submit bar — sits above the 64px bottom tab bar */}
+      <div style={{
+        position: 'fixed',
+        bottom: 'calc(64px + env(safe-area-inset-bottom))',
+        left: 0, right: 0,
+        background: '#fff',
+        borderTop: '1px solid #E2E8F0',
+        padding: '16px',
+        zIndex: 45,
+      }}>
         <button onClick={submitSignature} disabled={saving || !hasSignature}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '16px 0', background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52, background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
           {saving ? 'Saving…' : `I Agree — Sign ${estimate.estimate_number}`}
         </button>
       </div>

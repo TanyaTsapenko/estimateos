@@ -17,19 +17,19 @@ export default function BottomTabBar() {
 
   const renderTab = ({ path, label, Icon, exact }: typeof LEFT_TABS[0]) => {
     const active = exact ? pathname === path : pathname.startsWith(path)
-    const color  = active ? '#2563EB' : '#94A3B8'
+    const color  = active ? '#2563EB' : '#9CA3AF'
     return (
       <button
         key={path}
         onClick={() => router.push(path)}
         style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 3, padding: '4px 0', background: 'transparent', border: 'none',
-          cursor: 'pointer', color, fontFamily: 'inherit',
+          justifyContent: 'center', gap: 4, background: 'transparent', border: 'none',
+          cursor: 'pointer', color, fontFamily: 'inherit', height: '100%',
         }}
       >
         <Icon size={22} strokeWidth={active ? 2.2 : 1.7} color={color} />
-        <span style={{ fontSize: 10, fontWeight: active ? 700 : 500, color, lineHeight: 1 }}>
+        <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color, lineHeight: 1 }}>
           {label}
         </span>
       </button>
@@ -39,29 +39,24 @@ export default function BottomTabBar() {
   return (
     <div className="bottom-tab-bar" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      background: '#fff',
-      borderRadius: '20px 20px 0 0',
-      boxShadow: '0 -2px 12px rgba(0,0,0,0.08)',
-      paddingTop: 8,
-      paddingBottom: 'env(safe-area-inset-bottom, 8px)',
-      display: 'flex',
-      alignItems: 'flex-end',
-      zIndex: 100,
-      overflow: 'visible',
+      height: 64, background: '#fff',
+      borderTop: '1px solid #E2E8F0',
+      display: 'flex', alignItems: 'center',
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      zIndex: 50,
     }}>
       {LEFT_TABS.map(renderTab)}
 
       {/* Center FAB */}
-      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', paddingBottom: 8 }}>
+      <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <button
           onClick={() => router.push('/dashboard/appointments/new')}
           style={{
-            width: 52, height: 52, borderRadius: '50%',
+            position: 'relative', top: -20,
+            width: 56, height: 56, borderRadius: '50%',
             background: '#2563EB', color: '#fff', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', marginTop: -24,
-            boxShadow: '0 4px 14px rgba(37,99,235,0.5)',
-            flexShrink: 0,
+            cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.4)', flexShrink: 0,
           }}
         >
           <Plus size={24} strokeWidth={2.5} color="#fff" />
