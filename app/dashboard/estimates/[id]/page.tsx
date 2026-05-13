@@ -206,7 +206,7 @@ export default function EstimateDetailPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div className="est-detail-body" style={{ padding: '24px 28px 100px' }}>
+      <div className="est-detail-body" style={{ padding: '24px 28px 180px' }}>
         <div className="est-3col">
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
@@ -383,8 +383,10 @@ export default function EstimateDetailPage() {
       {/* ── MOBILE STICKY BOTTOM BAR ── */}
       <div className="mobile-only" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#fff', borderTop: '1px solid #EEF0F4',
-        padding: '12px 16px 28px', zIndex: 20,
+        background: '#fff', borderTop: '1px solid #E2E8F0',
+        padding: 16,
+        paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
+        zIndex: 40,
       }}>
         {(isSigned || isInvoiced) ? (
           <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
