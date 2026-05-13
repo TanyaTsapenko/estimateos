@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
-import { Phone, MapPin, FileText, Trash2, Clock, Calendar } from 'lucide-react'
+import { Phone, MapPin, FileText, Trash2, Clock, Calendar, Pencil } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -51,6 +51,8 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('Upcoming')
+  const [toast, setToast] = useState('')
+  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000) }
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -105,8 +107,116 @@ export default function AppointmentsPage() {
   const todayCount = appointments.filter(a => a.appointment_date === todayStr).length
   const newLeads = appointments.filter(a => a.status === 'new_lead').length
 
-  function ApptDetail({ appt }: { appt: Appointment }) {
+  function ApptDetail({ appt, flash: flashMsg }: { appt: Appointment; flash: (m: string) => void }) {
     const sm = STATUS_META[appt.status] || { label: appt.status, color: '#64748B', bg: 'rgba(100,116,139,.1)' }
+    const [editMode, setEditMode] = useState(false)
+    const [draft, setDraft] = useState({
+      client_name: appt.client_name,
+      client_phone: appt.client_phone || '',
+      client_address: appt.client_address || '',
+      appointment_date: appt.appointment_date,
+      appointment_time: appt.appointment_time || '',
+      notes: appt.notes || '',
+    })
+    const [saving, setSaving] = useState(false)
+    const setD = (k: string) => (v: string) => setDraft(p => ({ ...p, [k]: v }))
+
+    const inputStyle: React.CSSProperties = {
+      width: '100%', padding: '9px 12px', border: '1px solid #E2E5EA',
+      borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628',
+      background: '#fff', outline: 'none', boxSizing: 'border-box',
+    }
+    const fieldLbl: React.CSSProperties = {
+      fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+      textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4, display: 'block',
+    }
+
+    async function saveEdit() {
+      if (!draft.client_name.trim()) return
+      setSaving(true)
+      await supabase.from('appointments').update({
+        client_name: draft.client_name.trim(),
+        client_phone: draft.client_phone.trim() || null,
+        client_address: draft.client_address.trim() || null,
+        appointment_date: draft.appointment_date,
+        appointment_time: draft.appointment_time || null,
+        notes: draft.notes.trim() || null,
+      }).eq('id', appt.id)
+      setAppointments(p => p.map(a => a.id === appt.id ? {
+        ...a,
+        client_name: draft.client_name.trim(),
+        client_phone: draft.client_phone.trim() || null,
+        client_address: draft.client_address.trim() || null,
+        appointment_date: draft.appointment_date,
+        appointment_time: draft.appointment_time || null,
+        notes: draft.notes.trim() || null,
+      } : a))
+      setSaving(false)
+      setEditMode(false)
+      flashMsg('Saved')
+    }
+
+    function cancelEdit() {
+      setDraft({
+        client_name: appt.client_name,
+        client_phone: appt.client_phone || '',
+        client_address: appt.client_address || '',
+        appointment_date: appt.appointment_date,
+        appointment_time: appt.appointment_time || '',
+        notes: appt.notes || '',
+      })
+      setEditMode(false)
+    }
+
+    if (editMode) {
+      return (
+        <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #EEF0F4', borderLeft: `3px solid ${sm.color}`, overflow: 'hidden' }}>
+          <div style={{ padding: '14px 16px' }}>
+            <div style={{ marginBottom: 10 }}>
+              <label style={fieldLbl}>Client Name</label>
+              <input value={draft.client_name} onChange={e => setD('client_name')(e.target.value)} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+              <div>
+                <label style={fieldLbl}>Phone</label>
+                <input type="tel" value={draft.client_phone} onChange={e => setD('client_phone')(e.target.value)} placeholder="(403) 555-0100" style={inputStyle} />
+              </div>
+              <div>
+                <label style={fieldLbl}>Address</label>
+                <input value={draft.client_address} onChange={e => setD('client_address')(e.target.value)} placeholder="123 Main St" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+              <div>
+                <label style={fieldLbl}>Date</label>
+                <input type="date" value={draft.appointment_date} onChange={e => setD('appointment_date')(e.target.value)} style={inputStyle} />
+              </div>
+              <div>
+                <label style={fieldLbl}>Time</label>
+                <input type="time" value={draft.appointment_time} onChange={e => setD('appointment_time')(e.target.value)} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={fieldLbl}>Notes</label>
+              <textarea value={draft.notes} onChange={e => setD('notes')(e.target.value)} rows={3}
+                placeholder="What does the client need?"
+                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={saveEdit} disabled={saving || !draft.client_name.trim()}
+                style={{ flex: 2, padding: '9px 0', background: saving || !draft.client_name.trim() ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                {saving ? 'Saving...' : 'Save'}
+              </button>
+              <button onClick={cancelEdit}
+                style={{ flex: 1, padding: '9px 0', background: '#fff', color: '#64748B', border: '1.5px solid #E2E5EA', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #EEF0F4', borderLeft: `3px solid ${sm.color}`, overflow: 'hidden' }}>
         <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -115,9 +225,15 @@ export default function AppointmentsPage() {
             {appt.client_phone && <div style={{ fontSize: 12, color: '#64748B' }}>{appt.client_phone}</div>}
             {appt.client_address && <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{appt.client_address}</div>}
           </div>
-          <span style={{ background: sm.bg, color: sm.color, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 6, letterSpacing: '.6px', flexShrink: 0, marginLeft: 10 }}>
-            {sm.label.toUpperCase()}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 10 }}>
+            <button onClick={() => setEditMode(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#F5F6F8', border: 'none', borderRadius: 7, fontSize: 12, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Pencil size={11} strokeWidth={2} /> Edit
+            </button>
+            <span style={{ background: sm.bg, color: sm.color, fontSize: 9, fontWeight: 700, padding: '3px 8px', borderRadius: 6, letterSpacing: '.6px' }}>
+              {sm.label.toUpperCase()}
+            </span>
+          </div>
         </div>
 
         <div style={{ padding: '0 16px 12px', display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -246,7 +362,7 @@ export default function AppointmentsPage() {
                   {label}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {items.map(appt => <ApptDetail key={appt.id} appt={appt} />)}
+                  {items.map(appt => <ApptDetail key={appt.id} appt={appt} flash={flash} />)}
                 </div>
               </div>
             ))}
@@ -257,6 +373,11 @@ export default function AppointmentsPage() {
       </div>
 
       <BottomNav />
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap' }}>
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
