@@ -43,14 +43,14 @@ function dateLabel(dateStr: string): string {
   return appt.toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
-const FILTERS = ['Upcoming', 'All', 'New Lead', 'Scheduled', 'Completed', 'Cancelled']
+const FILTERS = ['All', 'Upcoming', 'Completed']
 
 export default function AppointmentsPage() {
   const router = useRouter()
   const supabase = createClient()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('Upcoming')
+  const [filter, setFilter] = useState('All')
   const [toast, setToast] = useState('')
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000) }
 

@@ -235,14 +235,9 @@ export default function CreateInvoicePage() {
         zIndex: 20,
       }}>
         <button
-          onClick={() => router.push(`/dashboard/estimates/${id}`)}
-          style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: '1.5px solid #E2E5EA', background: '#fff', color: '#64748B', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-          ← Back
-        </button>
-        <button
           onClick={createInvoice}
           disabled={saving}
-          style={{ flex: 2, padding: '12px 0', borderRadius: 10, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+          style={{ flex: 1, padding: '12px 0', borderRadius: 10, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
           {saving ? 'Creating...' : `Create ${isFinal ? 'Final ' : ''}Invoice →`}
         </button>
       </div>

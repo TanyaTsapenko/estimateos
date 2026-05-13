@@ -361,7 +361,6 @@ export default function EstimateDetailPage() {
               {[
                 { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF', onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
                 { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => showToast('Coming soon'), danger: false },
-                { icon: <Receipt size={15} color="#64748B" />, label: 'Convert to invoice', onClick: () => router.push(`/dashboard/estimates/${id}/invoice`), danger: false },
                 { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: deleteEstimate, danger: true },
               ].map((item, i, arr) => (
                 <button
