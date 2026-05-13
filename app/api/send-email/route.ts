@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
   const { data: prof } = await supabase.from('profiles')
-    .select('company_name, phone, city, province').eq('id', est.user_id).single()
+    .select('company_name, phone, city, province, logo_url').eq('id', est.user_id).single()
 
   // For invoice type, fetch invoice (if not already fetched) and openings
   if (type === 'invoice') {
@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
   const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
   const companyName = prof?.company_name || 'Your contractor'
   const clientLink = `${request.nextUrl.origin}/estimate/${estimateId}`
+  const logoHtml = (prof as any)?.logo_url
+    ? `<img src="${(prof as any).logo_url}" style="max-width:120px;max-height:40px;display:block" alt="${companyName}" />`
+    : `<span style="font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">Estimate<span style="color:#3B82F6">OS</span></span>`
 
   let subject = ''
   let html = ''
@@ -90,9 +93,7 @@ export async function POST(request: NextRequest) {
       <!-- Logo + Save PDF -->
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:22px">
         <tr>
-          <td style="font-size:18px;font-weight:800;color:#ffffff;font-family:Arial,sans-serif">
-            Estimate<span style="color:#3B82F6">OS</span>
-          </td>
+          <td valign="middle">${logoHtml}</td>
           <td align="right">
             <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:20px;padding:6px 16px;font-size:11px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">Save PDF</a>
           </td>
@@ -276,7 +277,7 @@ export async function POST(request: NextRequest) {
 <div style="max-width:520px;margin:0 auto;padding:28px 16px">
 
   <div style="background:#0A1628;border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B82F6">OS</span></div>
+    <div style="margin-bottom:20px">${logoHtml}</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Estimate confirmed &#10003;</div>
     <div style="font-size:13px;color:rgba(255,255,255,.5)">${est.estimate_number} &middot; ${companyName}</div>
   </div>
@@ -331,7 +332,7 @@ export async function POST(request: NextRequest) {
 <div style="max-width:520px;margin:0 auto;padding:28px 16px">
 
   <div style="background:#0A1628;border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B82F6">OS</span></div>
+    <div style="margin-bottom:20px">${logoHtml}</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">${headerTitle}</div>
     <div style="font-size:13px;color:rgba(255,255,255,.5)">${est.estimate_number} &middot; ${companyName}</div>
   </div>

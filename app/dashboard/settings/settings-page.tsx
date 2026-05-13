@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
@@ -355,16 +355,141 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function CompanySection({ flash }: { flash: (m: string) => void }) {
+  const supabase = createClient()
   const [values, setValues] = useState({ companyName: 'Estimare', phone: '', website: '', addressLine: '', city: 'Calgary', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
   const [initial] = useState({ ...values })
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = !!values.companyName && !!values.city && !!values.province
   const set = (k: string) => (v: string) => setValues(s => ({ ...s, [k]: v }))
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      const { data: prof } = await supabase.from('profiles').select('logo_url').eq('id', user.id).single()
+      if (prof?.logo_url) setLogoUrl(prof.logo_url)
+    })
+  }, [])
+
+  async function compressImage(file: File): Promise<Blob> {
+    const MAX_BYTES = 2 * 1024 * 1024
+    if (file.size <= MAX_BYTES) return file
+    return new Promise(resolve => {
+      const img = new Image()
+      const objectUrl = URL.createObjectURL(file)
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        const canvas = document.createElement('canvas')
+        const MAX_DIM = 800
+        let { width, height } = img
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const ratio = Math.min(MAX_DIM / width, MAX_DIM / height)
+          width = Math.round(width * ratio); height = Math.round(height * ratio)
+        }
+        canvas.width = width; canvas.height = height
+        canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+        canvas.toBlob(b => resolve(b || file), 'image/jpeg', 0.85)
+      }
+      img.src = objectUrl
+    })
+  }
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    if (!file.type.startsWith('image/')) { flash('Please upload an image file'); return }
+    setUploading(true)
+    try {
+      const blob = await compressImage(file)
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+      const path = `${userId}/logo.${ext}`
+      const { error: uploadErr } = await supabase.storage
+        .from('logos')
+        .upload(path, blob, { upsert: true, contentType: file.type })
+      if (uploadErr) throw uploadErr
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+      await supabase.from('profiles').update({ logo_url: publicUrl }).eq('id', userId)
+      setLogoUrl(publicUrl + '?t=' + Date.now())
+      flash('Logo saved')
+    } catch (err: any) {
+      flash(err.message || 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleRemove() {
+    if (!userId || !logoUrl) return
+    const pathMatch = logoUrl.split('/object/public/logos/')
+    if (pathMatch[1]) {
+      const cleanPath = pathMatch[1].split('?')[0]
+      await supabase.storage.from('logos').remove([cleanPath])
+    }
+    await supabase.from('profiles').update({ logo_url: null }).eq('id', userId)
+    setLogoUrl(null)
+    flash('Logo removed')
+  }
+
+  const initials = values.companyName.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'CO'
 
   return (
     <div>
       <SectionHeader kicker="BUSINESS" title="Company" subtitle="Your business information shown on estimates and invoices." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Logo card */}
+        <Card>
+          <SectionLabel>Logo</SectionLabel>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: 12, border: '1px solid #E2E5EA',
+              overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center',
+              justifyContent: 'center', background: logoUrl ? '#fff' : '#F5F6F8',
+            }}>
+              {logoUrl
+                ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <span style={{ fontSize: 22, fontWeight: 700, color: '#94A3B8' }}>{initials}</span>
+              }
+            </div>
+            <div>
+              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 10 }}>
+                {logoUrl ? 'Logo uploaded' : 'No logo uploaded yet'}
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{
+                    padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none',
+                    borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
+                    cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1,
+                  }}>
+                  {uploading ? 'Uploading...' : 'Upload logo'}
+                </button>
+                {logoUrl && (
+                  <button
+                    onClick={handleRemove}
+                    style={{
+                      padding: '8px 14px', background: '#fff', color: '#DC2626',
+                      border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10,
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    }}>
+                    Remove
+                  </button>
+                )}
+              </div>
+              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>PNG, JPG or SVG · Max 2 MB</div>
+            </div>
+          </div>
+        </Card>
+
         <Card>
           <SectionLabel>Business details</SectionLabel>
           <Field label="Company name" value={values.companyName} onChange={set('companyName')} required />
@@ -494,14 +619,109 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
+  const supabase = createClient()
   const [values, setValues] = useState({ intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner...', requireSign: true, showLicence: false })
   const [initial] = useState({ ...values })
+  const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
+  const [contractFileName, setContractFileName] = useState<string | null>(null)
+  const [contractFileSize, setContractFileSize] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const pdfInputRef = useRef<HTMLInputElement>(null)
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      const { data: prof } = await supabase.from('profiles').select('contract_pdf_url').eq('id', user.id).single()
+      if (prof?.contract_pdf_url) setContractPdfUrl(prof.contract_pdf_url)
+    })
+  }, [])
+
+  function fmtSize(bytes: number): string {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    if (file.type !== 'application/pdf') { flash('Please upload a PDF file'); return }
+    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB'); return }
+    setUploading(true)
+    try {
+      const path = `${userId}/contract.pdf`
+      const { error: uploadErr } = await supabase.storage
+        .from('contracts')
+        .upload(path, file, { upsert: true, contentType: 'application/pdf' })
+      if (uploadErr) throw uploadErr
+      const { data: { publicUrl } } = supabase.storage.from('contracts').getPublicUrl(path)
+      await supabase.from('profiles').update({ contract_pdf_url: publicUrl }).eq('id', userId)
+      setContractPdfUrl(publicUrl)
+      setContractFileName(file.name)
+      setContractFileSize(fmtSize(file.size))
+      flash('Contract saved')
+    } catch (err: any) {
+      flash(err.message || 'Upload failed')
+    } finally {
+      setUploading(false)
+      if (pdfInputRef.current) pdfInputRef.current.value = ''
+    }
+  }
+
+  async function handlePdfRemove() {
+    if (!userId) return
+    await supabase.storage.from('contracts').remove([`${userId}/contract.pdf`])
+    await supabase.from('profiles').update({ contract_pdf_url: null }).eq('id', userId)
+    setContractPdfUrl(null)
+    setContractFileName(null)
+    setContractFileSize(null)
+    flash('Contract removed')
+  }
 
   return (
     <div>
       <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Template shown on every estimate PDF." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Contract PDF upload */}
+        <Card>
+          <SectionLabel>Contract PDF</SectionLabel>
+          <input ref={pdfInputRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handlePdfUpload} />
+          {contractPdfUrl ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: 'rgba(15,138,107,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 18, color: '#0F8A6B', fontWeight: 700, lineHeight: 1 }}>&#10003;</span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {contractFileName || 'contract.pdf'}
+                </div>
+                {contractFileSize && (
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{contractFileSize}</div>
+                )}
+              </div>
+              <button
+                onClick={handlePdfRemove}
+                style={{ padding: '7px 14px', background: '#fff', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 9, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div style={{ border: '1.5px dashed #CBD5E1', borderRadius: 12, padding: '28px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>Upload your contract PDF</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>PDF only · max 5 MB</div>
+              <button
+                onClick={() => pdfInputRef.current?.click()}
+                disabled={uploading}
+                style={{ padding: '9px 22px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: uploading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: uploading ? 0.7 : 1 }}>
+                {uploading ? 'Uploading...' : 'Upload PDF'}
+              </button>
+            </div>
+          )}
+        </Card>
+
         <Card>
           <SectionLabel>Intro paragraph</SectionLabel>
           <div style={{ marginBottom: 6, fontSize: 12, color: '#94A3B8' }}>Supports: {'{client_name}'}, {'{company_name}'}</div>

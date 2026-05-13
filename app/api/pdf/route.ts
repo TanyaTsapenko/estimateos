@@ -179,7 +179,10 @@ export async function GET(request: NextRequest) {
 
   <div class="doc-header">
     <div class="header-top">
-      <div class="logo-mark">Estimate<span>OS</span></div>
+      ${prof?.logo_url
+        ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block" alt="${prof?.company_name || 'Logo'}" />`
+        : `<div class="logo-mark">Estimate<span>OS</span></div>`
+      }
       <div class="est-num">${est.estimate_number}</div>
     </div>
     <div class="header-main">
