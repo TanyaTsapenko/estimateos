@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard } from 'lucide-react'
@@ -105,17 +105,17 @@ export default function DashboardPage() {
   const router = useRouter()
   const todayStr = getTodayStr()
 
-  useEffect(() => {
+  const loadAll = useCallback(async () => {
     const supabase = createClient()
-    async function loadAll() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      const meta = user.user_metadata
-      if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
-      else if (meta?.name) setUserName(meta.name.split(' ')[0])
-      else if (user.email) setUserName(user.email.split('@')[0])
-      const today = new Date().toISOString().slice(0, 10)
-      const { data: appts } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const meta = user.user_metadata
+    if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
+    else if (meta?.name) setUserName(meta.name.split(' ')[0])
+    else if (user.email) setUserName(user.email.split('@')[0])
+    const now = new Date()
+    const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+    const { data: appts } = await supabase
         .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id,duration_minutes')
         .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
       if (appts) {
@@ -229,9 +229,19 @@ export default function DashboardPage() {
         const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced'}
         setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: timeAgo(e.updated_at), estimateId: e.id })))
       }
-    }
-    loadAll()
   }, [])
+
+  useEffect(() => { loadAll() }, [loadAll])
+
+  useEffect(() => {
+    const handleVisible = () => { if (!document.hidden) loadAll() }
+    window.addEventListener('focus', loadAll)
+    document.addEventListener('visibilitychange', handleVisible)
+    return () => {
+      window.removeEventListener('focus', loadAll)
+      document.removeEventListener('visibilitychange', handleVisible)
+    }
+  }, [loadAll])
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
 
