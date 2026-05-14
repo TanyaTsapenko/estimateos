@@ -41,27 +41,32 @@ export async function GET(request: NextRequest) {
   const depositOnSigning = Math.round(est.total * depositPct / 100)
   const depositOnDelivery = est.total - depositOnSigning
 
-  const coMeta = [
-    [prof?.city, prof?.province].filter(Boolean).join(', '),
-    prof?.phone,
-    prof?.website,
-    prof?.licence   ? `Lic. ${prof.licence}`      : null,
-    prof?.insurance ? `Ins. ${prof.insurance}`     : null,
-  ].filter(Boolean).join('<br>')
-
-  const createdDate = new Date(est.created_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-  const validUntil  = est.valid_until
+  const validUntil = est.valid_until
     ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
     : '30 days from issue'
-  const tierLabel   = ((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)) + ' Package'
-  const clientHdr   = [
-    [est.client_address, est.client_city, est.client_province].filter(Boolean).join(', '),
-    est.client_email,
-  ].filter(Boolean).join('<br>')
-  const signedDate  = est.signed_at
+  const tierLabel = ((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)) + ' Package'
+  const signedDate = est.signed_at
     ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
     : ''
-  const gridSvg = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="#94A3B8"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="#94A3B8"/></svg>`
+  const signedTime = est.signed_at
+    ? new Date(est.signed_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })
+    : ''
+
+  const clientDetailRows = [
+    est.client_email   && { label: 'Email',   value: est.client_email },
+    est.client_phone   && { label: 'Phone',   value: est.client_phone },
+    (est.client_address || est.client_city) && {
+      label: 'Address',
+      value: [est.client_address, est.client_city, est.client_province].filter(Boolean).join(', '),
+    },
+    est.payment_method && { label: 'Payment', value: est.payment_method },
+  ].filter(Boolean) as { label: string; value: string }[]
+
+  const statusPillClass = est.status === 'signed' ? 'pill-signed'
+    : est.status === 'sent' ? 'pill-sent' : 'pill-draft'
+  const statusLabel = est.status.charAt(0).toUpperCase() + est.status.slice(1)
+
+  const windowSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>`
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -73,300 +78,222 @@ export async function GET(request: NextRequest) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#ECEEF2;color:#0A1628;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-
-  /* ── Toolbar ── */
-  .toolbar{background:#fff;border-bottom:1px solid #E2E8F0;padding:12px 48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
-  .back-btn{background:transparent;border:1.5px solid #E2E8F0;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;color:#64748B;cursor:pointer;font-family:inherit}
-  .back-btn:hover{background:#F8FAFC}
-  .save-btn{background:#2563EB;border:none;border-radius:8px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit}
-  .save-btn:hover{background:#1D4ED8}
-
-  /* ── Document shell ── */
-  .doc{max-width:860px;margin:28px auto 48px;background:#fff;border-radius:12px;box-shadow:0 0 0 1px rgba(10,22,40,.07),0 4px 24px rgba(10,22,40,.06);overflow:hidden}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#F5F6F8;color:#0A1628;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
   /* ── Header ── */
-  .doc-header{background:#0A1628;padding:28px 40px 32px}
-  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-  .logo-mark{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.02em}
-  .logo-mark span{color:#3B82F6}
-  .est-num{font-family:ui-monospace,'Cascadia Code',monospace;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.04em}
-  .header-main{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:start}
-  .hdr-kicker{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#3B82F6;margin-bottom:6px}
-  .hdr-client{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:6px;line-height:1.1}
-  .hdr-sub{font-size:12px;color:rgba(255,255,255,.42);line-height:1.6}
-  .hdr-right{text-align:right}
-  .tier-pill{display:inline-block;background:rgba(59,130,246,.18);border:1px solid rgba(59,130,246,.35);color:#93C5FD;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:20px;padding:3px 10px;margin-bottom:10px}
-  .hdr-total{font-size:36px;font-weight:800;color:#fff;letter-spacing:-.03em;line-height:1;margin-bottom:6px}
-  .hdr-meta{font-size:11px;color:rgba(255,255,255,.38);line-height:1.6}
+  .hdr{background:linear-gradient(135deg,#080E1C 0%,#0E1F3D 50%,#0C2847 100%);padding:28px 24px 48px}
+  .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.02em}
+  .logo span{color:#2563EB}
+  .save-btn{background:#2563EB;border:none;border-radius:20px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit}
+  .hdr-kicker{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px}
+  .hdr-client{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px;line-height:1.15}
+  .pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .pill-signed{background:rgba(5,150,105,.25);border:1px solid rgba(16,185,129,.4);color:#6EE7B7;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;display:inline-block}
+  .pill-sent{background:rgba(37,99,235,.25);border:1px solid rgba(59,130,246,.4);color:#93C5FD;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;display:inline-block}
+  .pill-draft{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;display:inline-block}
+  .pill-outline{border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.5);font-size:10px;font-weight:600;border-radius:20px;padding:4px 12px;display:inline-block}
 
   /* ── Body ── */
-  .doc-body{padding:32px 40px 40px;background:#fff}
+  .body{background:#F5F6F8;border-radius:24px 24px 0 0;margin-top:-24px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
 
-  /* ── Info cards ── */
-  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
-  .info-card{background:#F8FAFC;border-radius:10px;padding:16px 18px}
-  .card-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
-  .card-title{font-size:14px;font-weight:700;color:#0A1628;margin-bottom:5px}
-  .card-detail{font-size:12px;color:#64748B;line-height:1.7}
+  /* ── Cards ── */
+  .card{background:#fff;border-radius:16px;padding:16px}
+  .card-blue{background:#fff;border-radius:16px;padding:16px;border:1.5px solid #BFDBFE}
+  .card-green{background:#ECFDF5;border-radius:16px;padding:16px}
+  .slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
 
-  /* ── Services card ── */
-  .svc-card{background:#fff;border:1px solid rgba(10,22,40,.07);border-radius:10px;padding:20px 22px;margin-bottom:24px}
-  .svc-head{display:flex;align-items:center;gap:8px;margin-bottom:16px}
-  .svc-head-title{font-size:13px;font-weight:700;color:#0A1628}
-  table{width:100%;border-collapse:collapse}
-  thead tr{border-top:2px solid #0A1628}
-  th{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;padding:10px 0;text-align:left;white-space:nowrap}
-  th:last-child{text-align:right}
-  th.center{text-align:center}
-  tbody tr{border-bottom:.5px solid rgba(10,22,40,.06)}
-  tbody tr:last-child{border-bottom:none}
-  td{padding:13px 0;vertical-align:top;font-size:13px;color:#0A1628}
-  td:last-child{text-align:right;font-weight:700}
-  td.center{text-align:center}
-  td.muted{color:#64748B;font-weight:400}
-  .item-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:2px}
-  .item-sub{font-size:11px;color:#94A3B8}
+  /* ── Price card ── */
+  .price-value{font-size:32px;font-weight:800;color:#2563EB;letter-spacing:-.03em;line-height:1;margin-bottom:6px}
+  .price-sub{font-size:12px;color:#94A3B8}
 
-  /* ── Price breakdown ── */
-  .pricing-wrap{display:flex;justify-content:flex-end;margin-bottom:24px}
-  .pricing{width:260px}
-  .price-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:13px;border-bottom:.5px solid rgba(10,22,40,.06)}
-  .price-lbl{color:#64748B}
-  .price-val{font-weight:600;color:#0A1628}
-  .price-green .price-lbl,.price-green .price-val{color:#059669}
-  .price-divider{height:1.5px;background:#0A1628;margin:8px 0}
-  .price-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0 0}
-  .price-total-lbl{font-size:14px;font-weight:700;color:#0A1628}
-  .price-total-val{font-size:28px;font-weight:800;color:#2563EB;letter-spacing:-.02em}
+  /* ── Detail rows ── */
+  .drow{display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;padding:7px 0;border-bottom:1px solid #EEF0F4;gap:16px}
+  .drow:last-child{border-bottom:none}
+  .dkey{color:#94A3B8;flex-shrink:0}
+  .dval{font-weight:600;color:#0A1628;text-align:right}
 
-  /* ── Payment schedule ── */
-  .payment-card{background:#F0F7FF;border:1px solid rgba(37,99,235,.15);border-radius:10px;padding:14px 18px;margin-bottom:24px}
-  .payment-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#2563EB;margin-bottom:10px}
-  .pay-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px}
-  .pay-row:last-child{margin-bottom:0}
-  .pay-key{color:#64748B}
-  .pay-val{font-weight:700;color:#0A1628}
-  .pay-blue{color:#2563EB}
+  /* ── Openings card ── */
+  .svc-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .svc-title{font-size:13px;font-weight:700;color:#0A1628}
+  .svc-pkg{font-size:10px;font-weight:600;color:#2563EB;background:#EFF6FF;border-radius:6px;padding:2px 8px}
+  .op-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #EEF0F4;gap:12px}
+  .op-row:last-of-type{border-bottom:none}
+  .op-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:3px}
+  .op-sub{font-size:11px;color:#94A3B8}
+  .op-price{font-size:13px;font-weight:700;color:#0A1628;flex-shrink:0}
+  .tot-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;color:#64748B}
+  .tot-divider{height:1.5px;background:#0A1628;margin:8px 0}
+  .tot-final{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0 0}
+  .tot-lbl{font-size:14px;font-weight:700;color:#0A1628}
+  .tot-val{font-size:26px;font-weight:800;color:#2563EB;letter-spacing:-.02em}
 
-  /* ── Scope notes ── */
-  .scope-card{background:#F8FAFC;border-radius:10px;padding:16px 18px;margin-bottom:24px}
-  .scope-text{font-size:13px;color:#475569;line-height:1.7;margin-top:8px}
-
-  /* ── Contract intro / terms ── */
-  .contract-intro{background:#F8FAFC;border-radius:10px;padding:16px 18px;margin-bottom:24px}
-  .contract-terms{background:#F8FAFC;border-radius:10px;padding:16px 18px;margin-bottom:24px}
-  .contract-terms .scope-text{font-size:11px;color:#64748B;white-space:pre-wrap;line-height:1.7}
-
-  /* ── Signature line (unsigned) ── */
-  .sig-line-banner{background:#F8FAFC;border:1px solid #E2E5EA;border-radius:10px;padding:18px 22px;margin-bottom:24px}
-  .sig-line-title{font-size:9px;font-weight:700;color:#94A3B8;letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px}
-  .sig-line-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
-  .sig-line-col .sig-col-lbl{margin-bottom:20px}
-  .sig-line-bar{height:1px;background:#0A1628;margin-bottom:6px}
-  .sig-line-hint{font-size:10px;color:#94A3B8}
-
-  /* ── Signature banner ── */
-  .sig-banner{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);border-radius:10px;padding:18px 22px}
-  .sig-banner-title{font-size:11px;font-weight:700;color:#059669;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-  .sig-col-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:5px}
-  .sig-col-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:3px}
-  .sig-col-date{font-size:11px;color:#94A3B8}
-  .sig-col-img{max-height:48px;margin-top:8px;display:block}
+  /* ── Signature card ── */
+  .sig-circle{width:40px;height:40px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .sig-name{font-size:15px;font-weight:700;color:#065F46;margin-bottom:4px}
+  .sig-date{font-size:12px;color:#34D399;margin-bottom:12px}
+  .sig-img{max-height:60px;display:block;margin-top:4px}
 
   /* ── Footer ── */
-  .doc-footer{padding:14px 40px;border-top:1px solid rgba(10,22,40,.06);display:flex;justify-content:space-between;align-items:center}
-  .footer-left{font-size:11px;font-weight:600;color:#94A3B8}
-  .footer-right{font-size:11px;color:#94A3B8}
+  .footer{text-align:center;padding:28px 20px;font-size:11px;color:#9CA3AF}
 
-  /* ── Print ── */
   @media print{
-    .toolbar{display:none}
-    body{background:#fff}
-    .doc{margin:0;border-radius:0;box-shadow:none}
-    .doc-body{padding:24px 40px 40px}
-    .doc-footer{padding:12px 40px}
+    body{background:#F5F6F8}
+    .save-btn{display:none}
   }
 </style>
 </head>
 <body>
 
-<div class="toolbar">
-  <button class="back-btn" onclick="window.location.href='/dashboard/estimates/${id}'">← Back</button>
-  <button class="save-btn" onclick="window.print()">Save as PDF</button>
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <div class="hdr-top">
+    ${prof?.logo_url
+      ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block" alt="${prof?.company_name || 'Logo'}" />`
+      : `<div class="logo">Estimate<span>OS</span></div>`
+    }
+    <button class="save-btn" onclick="window.print()">Save PDF</button>
+  </div>
+  <div class="hdr-kicker">Prepared for</div>
+  <div class="hdr-client">${est.client_name || 'Client'}</div>
+  <div class="pills">
+    <span class="${statusPillClass}">${statusLabel}</span>
+    <span class="pill-outline">Valid until ${validUntil}</span>
+  </div>
 </div>
 
-<div class="doc">
+<!-- ── BODY ── -->
+<div class="body">
 
-  <div class="doc-header">
-    <div class="header-top">
-      ${prof?.logo_url
-        ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block" alt="${prof?.company_name || 'Logo'}" />`
-        : `<div class="logo-mark">Estimate<span>OS</span></div>`
-      }
-      <div class="est-num">${est.estimate_number}</div>
+  <!-- Card 1: Price -->
+  <div class="card-blue">
+    <div class="slbl">Estimate Total</div>
+    <div class="price-value">${fmtCAD(est.total)}</div>
+    <div class="price-sub">inc. ${taxLabel} · Valid until ${validUntil}</div>
+  </div>
+
+  <!-- Card 2: Client Details -->
+  ${clientDetailRows.length > 0 ? `
+  <div class="card">
+    <div class="slbl">Client Details</div>
+    ${clientDetailRows.map(r => `
+    <div class="drow">
+      <span class="dkey">${r.label}</span>
+      <span class="dval">${r.value}</span>
+    </div>`).join('')}
+  </div>` : ''}
+
+  <!-- Card 3: Openings -->
+  <div class="card">
+    <div class="svc-head">
+      ${windowSvg}
+      <span class="svc-title">Openings (${ops?.length || 0})</span>
+      <span class="svc-pkg">${tierLabel}</span>
     </div>
-    <div class="header-main">
+    ${(ops || []).map((op: any) => {
+      const installLabel = op.install ? INSTALL_LABELS[op.install] || op.install : null
+      const subParts = [
+        op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null,
+        installLabel,
+        op.colour && op.colour !== 'white' ? op.colour.charAt(0).toUpperCase() + op.colour.slice(1) : null,
+        op.room || null,
+      ].filter(Boolean)
+      return `
+    <div class="op-row">
       <div>
-        <div class="hdr-kicker">Prepared for</div>
-        <div class="hdr-client">${est.client_name || 'Client'}</div>
-        ${clientHdr ? `<div class="hdr-sub">${clientHdr}</div>` : ''}
+        <div class="op-name">${OPENING_TYPES[op.type]?.name || op.type} × ${op.qty}</div>
+        ${subParts.length > 0 ? `<div class="op-sub">${subParts.join(' · ')}</div>` : ''}
       </div>
-      <div class="hdr-right">
-        <div><span class="tier-pill">${tierLabel}</span></div>
-        <div class="hdr-total">${fmtCAD(est.total)}</div>
-        <div class="hdr-meta">inc. ${taxLabel} · Valid until ${validUntil}</div>
+      <div class="op-price">${fmtCAD(op.total_cost)}</div>
+    </div>`
+    }).join('')}
+    <div style="margin-top:12px;padding-top:4px">
+      <div class="tot-row">
+        <span>Subtotal</span>
+        <span style="color:#0A1628;font-weight:600">${fmtCAD(est.subtotal)}</span>
+      </div>
+      ${est.discount_amount > 0 ? `
+      <div class="tot-row" style="color:#059669">
+        <span>Discount${est.discount_type === 'percent' ? ` (${est.discount_value}%)` : ''}</span>
+        <span>−${fmtCAD(est.discount_amount)}</span>
+      </div>` : ''}
+      <div class="tot-row">
+        <span>${taxLabel}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtCAD(est.tax_amount)}</span>
+      </div>
+      <div class="tot-divider"></div>
+      <div class="tot-final">
+        <span class="tot-lbl">Total</span>
+        <span class="tot-val">${fmtCAD(est.total)}</span>
       </div>
     </div>
   </div>
 
-  <div class="doc-body">
-
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="card-lbl">Prepared by</div>
-        <div class="card-title">${prof?.company_name || 'Contractor'}</div>
-        <div class="card-detail">${coMeta}</div>
-      </div>
-      <div class="info-card">
-        <div class="card-lbl">Details</div>
-        <div class="card-detail">
-          <strong style="color:#0A1628;font-size:12px">Date:</strong> ${createdDate}<br>
-          <strong style="color:#0A1628;font-size:12px">Valid until:</strong> ${validUntil}${est.payment_method ? `<br><strong style="color:#0A1628;font-size:12px">Payment:</strong> ${est.payment_method}` : ''}
-        </div>
-      </div>
+  <!-- Payment schedule -->
+  <div class="card" style="border:1px solid #BFDBFE">
+    <div class="slbl" style="color:#2563EB">Payment Schedule</div>
+    <div class="drow">
+      <span class="dkey">Deposit on signing (${depositPct}%)</span>
+      <span class="dval">${fmtCAD(depositOnSigning)}</span>
     </div>
-
-    ${contractIntro ? `
-    <div class="contract-intro">
-      <div class="card-lbl">From ${prof?.company_name || 'Contractor'}</div>
-      <div class="scope-text">${contractIntro}</div>
-    </div>` : ''}
-
-    <div class="svc-card">
-      <div class="svc-head">
-        ${gridSvg}
-        <div class="svc-head-title">Services</div>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th style="width:40%">Description</th>
-            <th style="width:20%">Size</th>
-            <th class="center" style="width:8%">Qty</th>
-            <th style="width:32%;text-align:right">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${(ops || []).map(op => {
-            const installLabel = op.install ? INSTALL_LABELS[op.install] || op.install : null
-            const subParts = [installLabel, op.room].filter(Boolean)
-            return `
-          <tr>
-            <td>
-              <div class="item-name">${OPENING_TYPES[op.type]?.name || op.type}</div>
-              ${subParts.length > 0 ? `<div class="item-sub">${subParts.join(' · ')}</div>` : ''}
-            </td>
-            <td class="muted">${(op.width_in && op.height_in) ? `${op.width_in}" × ${op.height_in}"` : '—'}</td>
-            <td class="center muted">${op.qty}</td>
-            <td>${fmtCAD(op.total_cost)}</td>
-          </tr>`
-          }).join('')}
-        </tbody>
-      </table>
+    <div class="drow">
+      <span class="dkey">Balance on completion</span>
+      <span class="dval" style="color:#2563EB">${fmtCAD(depositOnDelivery)}</span>
     </div>
-
-    <div class="pricing-wrap">
-      <div class="pricing">
-        <div class="price-row">
-          <span class="price-lbl">Subtotal</span>
-          <span class="price-val">${fmtCAD(est.subtotal)}</span>
-        </div>
-        ${est.discount_amount > 0 ? `
-        <div class="price-row price-green">
-          <span class="price-lbl">Discount${est.discount_type === 'percent' ? ` (${est.discount_value}%)` : ''}</span>
-          <span class="price-val">−${fmtCAD(est.discount_amount)}</span>
-        </div>` : ''}
-        <div class="price-row">
-          <span class="price-lbl">${taxLabel}</span>
-          <span class="price-val">${fmtCAD(est.tax_amount)}</span>
-        </div>
-        <div class="price-divider"></div>
-        <div class="price-total">
-          <span class="price-total-lbl">Total</span>
-          <span class="price-total-val">${fmtCAD(est.total)}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="payment-card">
-      <div class="payment-lbl">Payment schedule</div>
-      <div class="pay-row">
-        <span class="pay-key">Deposit on signing (${depositPct}%)</span>
-        <span class="pay-val">${fmtCAD(depositOnSigning)}</span>
-      </div>
-      <div class="pay-row">
-        <span class="pay-key">Balance on completion</span>
-        <span class="pay-val pay-blue">${fmtCAD(depositOnDelivery)}</span>
-      </div>
-    </div>
-
-    ${est.scope_notes ? `
-    <div class="scope-card">
-      <div class="card-lbl">Scope of work</div>
-      <div class="scope-text">${est.scope_notes}</div>
-    </div>` : ''}
-
-    ${contractTerms ? `
-    <div class="contract-terms">
-      <div class="card-lbl">Terms &amp; Conditions</div>
-      <div class="scope-text">${contractTerms}</div>
-    </div>` : ''}
-
-    ${contractRequireSign && est.status !== 'signed' ? `
-    <div class="sig-line-banner">
-      <div class="sig-line-title">Signature required to accept estimate</div>
-      <div class="sig-line-grid">
-        <div class="sig-line-col">
-          <div class="sig-col-lbl">Client</div>
-          <div class="sig-line-bar"></div>
-          <div class="sig-line-hint">${est.client_name || 'Client'} &nbsp;·&nbsp; Date</div>
-        </div>
-        <div class="sig-line-col">
-          <div class="sig-col-lbl">Contractor</div>
-          <div class="sig-line-bar"></div>
-          <div class="sig-line-hint">${prof?.company_name || 'Contractor'} &nbsp;·&nbsp; Date</div>
-        </div>
-      </div>
-    </div>` : ''}
-
-    ${est.status === 'signed' ? `
-    <div class="sig-banner">
-      <div class="sig-banner-title">Signed &amp; agreed</div>
-      <div class="sig-grid">
-        <div>
-          <div class="sig-col-lbl">Client</div>
-          <div class="sig-col-name">${est.client_name || ''}</div>
-          <div class="sig-col-date">${signedDate}</div>
-          ${est.client_signature_url && !est.client_signature_url.startsWith('data:') ? `<img src="${est.client_signature_url}" class="sig-col-img" alt="Signature" />` : ''}
-        </div>
-        <div>
-          <div class="sig-col-lbl">Contractor</div>
-          <div class="sig-col-name">${prof?.company_name || ''}</div>
-          <div class="sig-col-date">${signedDate}</div>
-        </div>
-      </div>
-    </div>` : ''}
-
   </div>
 
-  <div class="doc-footer">
-    <div class="footer-left">${prof?.company_name || 'EstimateOS'}</div>
-    <div class="footer-right">${contractShowLicence ? `Lic. ${prof?.licence}` : 'Generated by EstimateOS'}</div>
-  </div>
+  ${contractIntro ? `
+  <div class="card">
+    <div class="slbl">From ${prof?.company_name || 'Contractor'}</div>
+    <div style="font-size:13px;color:#475569;line-height:1.7;margin-top:4px">${contractIntro}</div>
+  </div>` : ''}
+
+  ${est.scope_notes ? `
+  <div class="card">
+    <div class="slbl">Scope of Work</div>
+    <div style="font-size:13px;color:#475569;line-height:1.7;margin-top:4px">${est.scope_notes}</div>
+  </div>` : ''}
+
+  ${contractTerms ? `
+  <div class="card">
+    <div class="slbl">Terms &amp; Conditions</div>
+    <div style="font-size:11px;color:#64748B;line-height:1.7;white-space:pre-wrap;margin-top:4px">${contractTerms}</div>
+  </div>` : ''}
+
+  ${contractRequireSign && est.status !== 'signed' ? `
+  <div class="card">
+    <div class="slbl">Signature Required</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:12px">
+      <div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">Client</div>
+        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        <div style="font-size:10px;color:#94A3B8">${est.client_name || 'Client'} · Date</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">Contractor</div>
+        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        <div style="font-size:10px;color:#94A3B8">${prof?.company_name || 'Contractor'} · Date</div>
+      </div>
+    </div>
+  </div>` : ''}
+
+  <!-- Card 4: Signature (signed only) -->
+  ${est.status === 'signed' ? `
+  <div class="card-green">
+    <div class="sig-circle">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="sig-name">Signed by ${est.client_name || 'Client'}</div>
+    <div class="sig-date">${signedDate}${signedTime ? ` at ${signedTime}` : ''}</div>
+    ${est.client_signature_url && !est.client_signature_url.startsWith('data:')
+      ? `<img src="${est.client_signature_url}" class="sig-img" alt="Signature" />`
+      : ''}
+  </div>` : ''}
 
 </div>
+
+<div class="footer">Generated by EstimateOS · estimateos.ca${contractShowLicence ? ` · Lic. ${prof?.licence}` : ''}</div>
+
 </body>
 </html>`
 
