@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard } from 'lucide-react'
+import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
 import BottomNav from '@/components/BottomNav'
 
 interface Appointment {
@@ -414,7 +414,9 @@ export default function DashboardPage() {
             </div>
             {attention.length === 0 ? (
               <div style={{ padding: '36px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 22, marginBottom: 8 }}>🎉</div>
+                <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+                  <CheckCircle size={32} color="#10B981" strokeWidth={1.5} />
+                </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
                 <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
               </div>
