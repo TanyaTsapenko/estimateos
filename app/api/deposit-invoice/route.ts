@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
   const { data: est } = await admin.from('estimates').select('*').eq('id', estimateId).single()
   if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
-  // Don't double-create
   const { data: existing } = await admin.from('invoices')
     .select('id').eq('estimate_id', estimateId).eq('invoice_type', 'deposit').single()
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
@@ -29,6 +28,7 @@ export async function POST(request: NextRequest) {
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 7)
   const dueDateStr = dueDate.toISOString().slice(0, 10)
+  const dueDateFmt = new Date(dueDateStr + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
 
   const { count } = await admin.from('invoices')
     .select('*', { count: 'exact', head: true }).eq('user_id', est.user_id)
@@ -51,61 +51,97 @@ export async function POST(request: NextRequest) {
 
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
 
-  // Send email if client has an email address
   if (est.client_email) {
-    const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
     const estimateLink = `${request.nextUrl.origin}/estimate/${estimateId}`
+
+    const slbl = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94A3B8;margin-bottom:10px;font-family:Arial,sans-serif'
+    const dkeyStyle = 'font-size:13px;color:#94A3B8;padding:7px 0;border-bottom:1px solid #EEF0F4;font-family:Arial,sans-serif'
+    const dvalStyle = 'font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;border-bottom:1px solid #EEF0F4;text-align:right;font-family:Arial,sans-serif'
+    const cardBase = 'background:#ffffff;border-radius:16px;margin-bottom:10px'
 
     const html = `<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
-<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+<body style="margin:0;padding:0;background:#E2E5EC;font-family:Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#E2E5EC;padding:20px 0">
+  <tr><td align="center">
+    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border-radius:20px;overflow:hidden">
 
-  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Estimate<span style="color:#3B6CFF">OS</span></div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">Deposit Invoice</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.5)">${invoiceNum} · ${companyName}</div>
-  </div>
+      <!-- HEADER -->
+      <tr><td style="background-color:#080E1C;padding:28px 24px 52px">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px">
+          <tr><td><span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">Estimate<span style="color:#2563EB">OS</span></span></td></tr>
+        </table>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;font-family:Arial,sans-serif">Invoice for</div>
+        <div style="font-size:26px;font-weight:800;color:#ffffff;margin-bottom:14px;font-family:Arial,sans-serif;line-height:1.2">${est.client_name || 'Client'}</div>
+        <table cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding-right:6px"><span style="background:#2563EB;color:#ffffff;border-radius:20px;padding:4px 12px;font-size:10px;font-weight:700;font-family:Arial,sans-serif">Payment Due</span></td>
+            <td style="padding-right:6px"><span style="border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.55);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:600;font-family:Arial,sans-serif">${invoiceNum}</span></td>
+            <td><span style="border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.55);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:600;font-family:Arial,sans-serif">Due ${dueDateFmt}</span></td>
+          </tr>
+        </table>
+      </td></tr>
 
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
-    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est.client_name || 'there'},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
-      Thank you for signing <strong style="color:#1A1A1A">${est.estimate_number}</strong>! To get started, a <strong style="color:#1A1A1A">${depositPct}% deposit</strong> is due within 7 days.
-    </p>
+      <!-- BODY -->
+      <tr><td style="background-color:#F5F6F8;padding:20px">
 
-    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:12px">Deposit Invoice ${invoiceNum}</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-        <span>Project total</span>
-        <span style="font-weight:600;color:#1A1A1A">${fmtCAD(est.total)} inc. ${taxLabel}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:14px">
-        <span>Deposit rate</span>
-        <span style="font-weight:600;color:#1A1A1A">${depositPct}%</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #1A2744;padding-top:14px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#1A1A1A">Amount due now</div>
-          <div style="font-size:11px;color:#9ca3af;margin-top:2px">Due by ${new Date(dueDateStr).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-        </div>
-        <span style="font-size:26px;font-weight:800;color:#2045B8">${fmtCAD(depositAmount)}</span>
-      </div>
-    </div>
+        <!-- Amount Due -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Amount Due</div>
+            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(depositAmount)}</div>
+            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Due ${dueDateFmt} &middot; Net 14</div>
+          </td></tr>
+        </table>
 
-    <div style="text-align:center;margin-bottom:24px">
-      <a href="${estimateLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:13px 28px;font-size:13px;font-weight:700;display:inline-block">
-        View Signed Estimate →
-      </a>
-    </div>
+        <!-- Invoice Details -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Invoice Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="${dkeyStyle}">Invoice number</td>
+                <td style="${dvalStyle}">${invoiceNum}</td>
+              </tr>
+              <tr>
+                <td style="${dkeyStyle}">Related estimate</td>
+                <td style="${dvalStyle}">${est.estimate_number}</td>
+              </tr>
+              <tr>
+                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">Deposit rate</td>
+                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct}% of ${fmtCAD(est.total)}</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
 
-    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
-      Remaining balance of <strong style="color:#6b7280">${fmtCAD(est.total - depositAmount)}</strong> is due upon project completion.${prof?.phone ? `<br>Questions? Call ${prof.phone}` : ''}
-    </p>
-  </div>
+        <!-- Message -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
+            Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due within 7 days to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.
+          </td></tr>
+        </table>
 
-  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Sent via EstimateOS · ${companyName}</p>
-</div>
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+          <tr><td align="center" style="padding:8px 0">
+            <a href="${estimateLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Estimate &rarr;</a>
+          </td></tr>
+        </table>
+
+        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">${prof?.phone ? `Questions? Call ${prof.phone}` : `Sent by ${companyName}`}</p>
+
+      </td></tr>
+
+      <!-- FOOTER -->
+      <tr><td style="background:#ffffff;padding:14px 24px;text-align:center;font-size:11px;color:#9CA3AF;font-family:Arial,sans-serif">
+        Sent via EstimateOS &middot; ${companyName}
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
 </body>
 </html>`
 
