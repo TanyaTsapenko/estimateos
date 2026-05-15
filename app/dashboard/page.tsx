@@ -352,47 +352,55 @@ export default function DashboardPage() {
 
           {/* Mobile: dashed add button only */}
           {isMobile && (
-            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {appointments.map(appt => (
-                <div key={appt.id} style={{
-                  background: 'rgba(255,255,255,0.12)',
-                  borderRadius: 10, padding: '10px 12px',
-                  display: 'flex', alignItems: 'center', gap: 10,
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{appt.time}</span>
-                      <span style={{
-                        fontSize: 9, fontWeight: 700, letterSpacing: '0.4px', padding: '1px 6px',
-                        borderRadius: 999, textTransform: 'uppercase',
-                        ...apptPillStyle(appt.pillStatus),
-                      }}>{appt.pillStatus}</span>
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
+            <div style={{ marginTop: 14 }}>
+              {appointments.map((appt, i) => (
+                <div
+                  key={appt.id}
+                  onClick={() => appt.estimateId
+                    ? router.push(`/dashboard/estimates/${appt.estimateId}`)
+                    : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
+                  }
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
+                    borderTop: i === 0 ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.15)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ width: 42, textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)', flexShrink: 0 }}>
+                    {appt.time.replace(' AM','').replace(' PM','')}
                   </div>
-                  <button
-                    onClick={() => appt.estimateId
-                      ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                      : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
-                    }
-                    style={{
-                      padding: '6px 10px', fontSize: 11, fontWeight: 700, flexShrink: 0,
-                      background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
-                      border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
-                      borderRadius: 7, color: '#fff', cursor: 'pointer',
-                    }}
-                  >
-                    {appt.estimateId ? 'View EST →' : 'Start →'}
-                  </button>
+                  <div style={{
+                    width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                    background: appt.pillStatus === 'IN PROGRESS' ? '#F59E0B'
+                      : appt.pillStatus === 'AWAITING SIGN' ? '#F59E0B'
+                      : appt.pillStatus === 'DONE' ? 'rgba(255,255,255,0.35)'
+                      : 'rgba(255,255,255,0.35)',
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 1 }}>
+                      {appt.pillStatus === 'DONE' ? 'Completed' : appt.pillStatus === 'IN PROGRESS' ? 'In progress' : appt.pillStatus === 'AWAITING SIGN' ? 'Awaiting sign' : 'Consultation'} · {appt.address.split(',')[1]?.trim() || appt.address}
+                    </div>
+                  </div>
+                  {(appt.pillStatus === 'IN PROGRESS') && (
+                    <div style={{ background: '#F59E0B', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>NOW</div>
+                  )}
+                  {(appt.pillStatus === 'AWAITING SIGN') && (
+                    <div style={{ background: '#F59E0B', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>SIGN</div>
+                  )}
                 </div>
               ))}
-              <div style={{
-                background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
-                borderRadius: 10, padding: '9px 12px', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', cursor: 'pointer',
-              }} onClick={() => router.push('/dashboard/appointments/new')}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>+ add appointment</span>
-              </div>
+              <button
+                onClick={() => router.push('/dashboard/appointments')}
+                style={{
+                  width: '100%', marginTop: 12, padding: '13px 0',
+                  background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#fff',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                View full schedule <span style={{ fontSize: 16 }}>›</span>
+              </button>
             </div>
           )}
 
