@@ -39,13 +39,13 @@ function NewEstimateForm() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const apptId = searchParams.get('appt') || ''
+  const apptId = searchParams.get('appointment_id') || ''
 
   const [client, setClient] = useState<ClientInfo>({
-    client_name: searchParams.get('name') || '',
+    client_name: searchParams.get('client_name') || '',
     client_email: '',
-    client_phone: searchParams.get('phone') || '',
-    client_address: searchParams.get('address') || '',
+    client_phone: '',
+    client_address: searchParams.get('client_address') || '',
     client_city: '', client_province: 'AB',
     scope_notes: '',
   })
@@ -66,6 +66,23 @@ function NewEstimateForm() {
         supabase.from('price_lists').select('*').eq('user_id', user.id),
       ])
       if (prof) setProfile(prof)
+      if (apptId) {
+        const { data: appt } = await supabase
+          .from('appointments')
+          .select('client_name, client_phone, client_email, client_address, notes')
+          .eq('id', apptId)
+          .single()
+        if (appt) {
+          setClient(p => ({
+            ...p,
+            ...(appt.client_name  && { client_name:  appt.client_name }),
+            ...(appt.client_phone && { client_phone: appt.client_phone }),
+            ...(appt.client_email && { client_email: appt.client_email }),
+            ...(appt.client_address && { client_address: appt.client_address }),
+            ...(appt.notes && !p.scope_notes && { scope_notes: appt.notes }),
+          }))
+        }
+      }
       if (priceRows && priceRows.length > 0) {
         const sizesRow = priceRows.find((r: any) => r.opening_type === '_sizes')
         const types: Record<string, { base: number; lab: number }> = {}

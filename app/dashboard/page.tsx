@@ -357,7 +357,7 @@ export default function DashboardPage() {
                 <button
                   onClick={() => appt.estimateId
                     ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                    : router.push(`/dashboard/estimates/new?apptId=${appt.id}`)
+                    : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
                   }
                   style={{
                     marginTop: 10, padding: '6px 0', width: '100%',
