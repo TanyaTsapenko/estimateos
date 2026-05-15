@@ -39,7 +39,7 @@ export default function BottomTabBar() {
   return (
     <div className="bottom-tab-bar" style={{
       position: 'fixed', bottom: 0, left: 0, right: 0,
-      height: 64, background: '#fff',
+      height: 'calc(64px + env(safe-area-inset-bottom))', background: '#fff',
       borderTop: '1px solid #E2E8F0',
       display: 'flex', alignItems: 'center',
       paddingBottom: 'env(safe-area-inset-bottom)',

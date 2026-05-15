@@ -270,7 +270,7 @@ export default function DashboardPage() {
       <header style={{
         background: '#fff', borderBottom: '1px solid rgba(10,22,40,0.06)',
         padding: '16px 28px', display: 'flex', alignItems: 'center', gap: 14,
-        position: 'sticky', top: 0, zIndex: 10,
+        position: 'sticky', top: 'env(safe-area-inset-top)', zIndex: 10,
       }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>WELCOME BACK</div>

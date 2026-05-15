@@ -140,7 +140,7 @@ export default function SignPage() {
 
   if (!estimate) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 'env(safe-area-inset-top)', zIndex: 10 }}>
         <button onClick={() => router.push('/dashboard/estimates')}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
           <ArrowLeft size={15} strokeWidth={2} /> Estimates
@@ -221,7 +221,7 @@ export default function SignPage() {
   // ── REVIEW ──
   if (step === 'review') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 'env(safe-area-inset-top)', zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
           <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
             style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>

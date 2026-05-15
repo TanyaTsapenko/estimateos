@@ -939,7 +939,7 @@ export default function SettingsPage() {
               alignItems: 'center',
               justifyContent: 'space-between',
               position: 'sticky',
-              top: 0,
+              top: 'env(safe-area-inset-top)',
               zIndex: 10,
             }}>
               <div>
@@ -973,7 +973,7 @@ export default function SettingsPage() {
         ) : (
           // Detail view
           <div>
-            <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 20 }}>
+            <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 'env(safe-area-inset-top)', zIndex: 20 }}>
               <button onClick={() => setMobileDetail(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#2563EB', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, fontWeight: 600, fontFamily: 'inherit' }}>
                 <SIcon name="back" size={16} /> Settings
               </button>

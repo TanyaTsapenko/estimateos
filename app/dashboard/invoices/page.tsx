@@ -80,7 +80,7 @@ export default function InvoicesPage() {
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
-        top: 0,
+        top: 'env(safe-area-inset-top)',
         zIndex: 10,
       }}>
         <div>

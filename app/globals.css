@@ -417,7 +417,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 
 /* ── SHELL (desktop sidebar layout) ── */
 .app-shell { display: flex; min-height: 100vh; }
-.main-content { flex: 1; min-width: 0; padding-top: env(safe-area-inset-top); padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+.main-content { flex: 1; min-width: 0; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
 /* ── RESPONSIVE VISIBILITY ── */
 .mobile-only { display: block; }

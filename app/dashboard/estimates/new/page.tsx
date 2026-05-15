@@ -379,7 +379,7 @@ function NewEstimateForm() {
           alignItems: 'center',
           justifyContent: 'space-between',
           position: 'sticky',
-          top: 0,
+          top: 'env(safe-area-inset-top)',
           zIndex: 10,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -566,7 +566,7 @@ function NewEstimateForm() {
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
-        top: 0,
+        top: 'env(safe-area-inset-top)',
         zIndex: 10,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

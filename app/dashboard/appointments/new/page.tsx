@@ -88,7 +88,7 @@ export default function NewAppointmentPage() {
         alignItems: 'center',
         gap: 12,
         position: 'sticky',
-        top: 0,
+        top: 'env(safe-area-inset-top)',
         zIndex: 10,
       }}>
         <button onClick={() => router.back()} style={{
