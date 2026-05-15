@@ -353,7 +353,7 @@ export default function DashboardPage() {
           {/* Mobile: dashed add button only */}
           {isMobile && (
             <div style={{ marginTop: 14 }}>
-              {appointments.map((appt, i) => (
+              {appointments.slice(0, 3).map((appt, i) => (
                 <div
                   key={appt.id}
                   onClick={() => appt.estimateId
@@ -399,7 +399,7 @@ export default function DashboardPage() {
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}
               >
-                View full schedule <span style={{ fontSize: 16 }}>›</span>
+                {appointments.length > 3 ? `+${appointments.length - 3} more · ` : ''}View full schedule <span style={{ fontSize: 16 }}>›</span>
               </button>
             </div>
           )}
