@@ -116,7 +116,7 @@ export default function DashboardPage() {
     const now = new Date()
     const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
     const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id,duration_minutes')
+        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id')
         .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
       if (appts) {
         setAppointments(appts.map((a: any) => {
