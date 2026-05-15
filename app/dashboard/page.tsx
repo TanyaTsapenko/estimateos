@@ -122,7 +122,7 @@ export default function DashboardPage() {
     else if (meta?.name) setUserName(meta.name.split(' ')[0])
     else if (user.email) setUserName(user.email.split('@')[0])
     const now = new Date()
-    const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+    const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
         .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id')
         .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
