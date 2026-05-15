@@ -379,16 +379,6 @@ export default function EstimateDetailPage() {
           </div>
         </div>
 
-        {/* ── MOBILE ACTION BUTTON ── */}
-        {!(isSigned || isInvoiced) && (
-          <div className="mobile-only" style={{ marginTop: 24, marginBottom: 32 }}>
-            <button onClick={() => canEmail ? setShowEmailModal(true) : copyLink()} disabled={sending}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', height: 52, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
-              {sending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : canEmail ? <Mail size={16} /> : <Link2 size={16} />}
-              {sending ? 'Sending…' : canEmail ? 'Email client' : 'Copy link'}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ── TOAST ── */}

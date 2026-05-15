@@ -207,7 +207,10 @@ export async function GET(request: NextRequest) {
       ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block" alt="${companyName}" />`
       : `<div class="logo">Estimate<span>OS</span></div>`
     }
-    <button class="save-btn" onclick="window.print()">Save PDF</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="window.history.back()" style="background:rgba(255,255,255,.12);border:none;border-radius:20px;padding:7px 16px;font-size:12px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit">← Back</button>
+      <button class="save-btn" onclick="window.print()">Save PDF</button>
+    </div>
   </div>
   <div class="hdr-kicker">Bill to</div>
   <div class="hdr-row">
@@ -274,9 +277,9 @@ export async function GET(request: NextRequest) {
   <!-- Card 4: Related estimate -->
   ${est ? `
   <div class="card">
-    <div class="slbl">Related estimate</div>
-    <div class="est-badge">
-      <div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="slbl" style="margin-bottom:0">Related estimate</div>
+      <div class="est-badge" style="padding:8px 12px">
         <div class="est-badge-lbl">Estimate</div>
         <div class="est-badge-num">${est.estimate_number}</div>
       </div>

@@ -159,7 +159,7 @@ export default function PriceListPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 18 }}>{def.icon}</span>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>{def.name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)', minWidth: 100 }}>{def.name}</div>
                       {isCustom && (
                         <div style={{ fontSize: 9, color: '#2045B8', fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase' }}>Custom</div>
                       )}
