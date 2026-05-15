@@ -758,7 +758,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
     padding-bottom: 4px;
   }
   .db-kpi-row::-webkit-scrollbar { display: none; }
-  .db-kpi-card  { min-width: 140px !important; flex-shrink: 0 !important; padding: 12px !important; }
+  .db-kpi-card  { min-width: 160px !important; flex-shrink: 0 !important; padding: 12px !important; }
   .db-kpi-value { font-size: 18px !important; }
   .db-kpi-label { font-size: 9px !important; }
 

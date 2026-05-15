@@ -62,8 +62,8 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
           <Icon size={15} color={accent} strokeWidth={1.7} />
         </div>
         <div style={{ flex: 1 }}>
-          <div className="db-kpi-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>{label}</div>
-          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{period}</div>
+          <div className="db-kpi-label" style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</div>
+          <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1, whiteSpace: 'nowrap' }}>{period}</div>
         </div>
         <Sparkline data={sparkData} color={accent} />
       </div>
