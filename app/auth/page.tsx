@@ -62,29 +62,85 @@ export default function AuthPage() {
   // ─── SPLASH ───
   if (screen === 'splash') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingBottom: 52 }}>
-        <div className="h-top">
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+      {/* HEADER */}
+      <div style={{
+        position: 'relative',
+        background: 'linear-gradient(160deg, #060C18 0%, #0A1830 40%, #0E2448 100%)',
+        padding: '20px 20px 72px',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'linear-gradient(rgba(37,99,235,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(37,99,235,0.05) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+        }} />
+        <div style={{ position: 'relative', fontSize: 18, fontWeight: 800, color: '#fff', marginBottom: 20 }}>
+          Estimate<span style={{ color: '#3B82F6' }}>OS</span>
         </div>
-        <div className="h-title">
-          <div className="h-eye">For Canadian Contractors 🇨🇦</div>
-          <div className="h-big">Welcome</div>
-          <div className="h-sub">Estimates · Contracts · E-Signature</div>
-        </div>
-      </div>
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 20 }}>🪟</div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--jet)', letterSpacing: '-.02em', marginBottom: 8 }}>
+        <div style={{ position: 'relative', fontSize: 11, color: '#9CA3AF', marginBottom: 14 }}>🇨🇦 For Canadian Contractors</div>
+        <div style={{ position: 'relative', fontSize: 34, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>
           Close jobs before<br />you leave the driveway.
         </div>
-        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 36, maxWidth: 280 }}>
-          All-in-one estimates, contracts and e-signatures on your phone.
+      </div>
+
+      {/* BODY */}
+      <div style={{
+        background: '#fff',
+        borderRadius: '28px 28px 0 0',
+        marginTop: -28,
+        padding: '28px 20px 36px',
+        flex: 1,
+      }}>
+        {/* Checklist */}
+        {([
+          { title: 'Estimate on-site in minutes', sub: 'Add windows & doors, get instant pricing' },
+          { title: 'Client signs on your phone',  sub: 'Digital signature, legally binding' },
+          { title: 'Invoice sent automatically',  sub: 'GST/HST calculated · PDF to client' },
+        ] as const).map((item, i) => (
+          <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%', background: '#2563EB',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#111827', marginBottom: 2 }}>{item.title}</div>
+              <div style={{ fontSize: 12, color: '#9CA3AF' }}>{item.sub}</div>
+            </div>
+          </div>
+        ))}
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
+          <button
+            onClick={() => go('register')}
+            style={{
+              height: 54, width: '100%', background: '#2563EB', border: 'none',
+              borderRadius: 14, color: '#fff', fontWeight: 700, fontSize: 15,
+              fontFamily: 'inherit', cursor: 'pointer',
+              boxShadow: '0 8px 20px rgba(37,99,235,0.3)',
+            }}
+          >
+            Get Started — Free Trial →
+          </button>
+          <button
+            onClick={() => go('login')}
+            style={{
+              height: 50, width: '100%', background: '#fff',
+              border: '1.5px solid #E5E7EB', borderRadius: 14,
+              color: '#6B7280', fontWeight: 500, fontSize: 14,
+              fontFamily: 'inherit', cursor: 'pointer',
+            }}
+          >
+            Sign In →
+          </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
-          <button className="btn-next" onClick={() => go('register')}>Get Started — Free Trial →</button>
-          <button className="btn-back" style={{ width: '100%' }} onClick={() => go('login')}>Sign In →</button>
+        <div style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center', marginTop: 16 }}>
+          14-day free trial · No credit card needed
         </div>
-        <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 16 }}>14-day free trial · No credit card needed</div>
       </div>
     </div>
   )
