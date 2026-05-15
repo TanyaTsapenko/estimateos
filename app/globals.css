@@ -103,7 +103,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   border-radius: 10px;
   padding: 12px 14px;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--jet);
   outline: none;
   transition: border-color .15s, box-shadow .15s;
@@ -334,7 +334,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 /* ── SEARCH & FILTER ── */
 .screen-enter { animation: fu .3s ease; }
 .search-bar { background: #fff; border: 1px solid var(--border); border-radius: 12px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: 12px; }
-.search-bar input { border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--jet); outline: none; flex: 1; }
+.search-bar input { border: none; background: transparent; font-family: 'Inter', sans-serif; font-size: 16px; color: var(--jet); outline: none; flex: 1; }
 .filter-tabs { display: flex; gap: 7px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; }
 .filter-tabs::-webkit-scrollbar { display: none; }
 .filter-tab { padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--ash); transition: all .15s; }
