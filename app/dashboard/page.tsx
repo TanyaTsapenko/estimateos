@@ -352,16 +352,47 @@ export default function DashboardPage() {
 
           {/* Mobile: dashed add button only */}
           {isMobile && (
-            <div
-              style={{
-                marginTop: 14, background: 'rgba(255,255,255,0.06)',
-                border: '1px dashed rgba(255,255,255,0.25)',
-                borderRadius: 10, padding: 12,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              }}
-              onClick={() => router.push('/dashboard/appointments/new')}
-            >
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>+ add appointment</span>
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {appointments.map(appt => (
+                <div key={appt.id} style={{
+                  background: 'rgba(255,255,255,0.12)',
+                  borderRadius: 10, padding: '10px 12px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{appt.time}</span>
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, letterSpacing: '0.4px', padding: '1px 6px',
+                        borderRadius: 999, textTransform: 'uppercase',
+                        ...apptPillStyle(appt.pillStatus),
+                      }}>{appt.pillStatus}</span>
+                    </div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
+                  </div>
+                  <button
+                    onClick={() => appt.estimateId
+                      ? router.push(`/dashboard/estimates/${appt.estimateId}`)
+                      : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
+                    }
+                    style={{
+                      padding: '6px 10px', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                      background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
+                      border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
+                      borderRadius: 7, color: '#fff', cursor: 'pointer',
+                    }}
+                  >
+                    {appt.estimateId ? 'View EST →' : 'Start →'}
+                  </button>
+                </div>
+              ))}
+              <div style={{
+                background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
+                borderRadius: 10, padding: '9px 12px', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer',
+              }} onClick={() => router.push('/dashboard/appointments/new')}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>+ add appointment</span>
+              </div>
             </div>
           )}
 
@@ -415,46 +446,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* Mobile: appointments as separate cards below hero */}
-        {isMobile && appointments.length > 0 && (
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 12 }}>Today's visits</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {appointments.map(appt => (
-                <div key={appt.id} style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>{appt.time}</div>
-                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{appt.duration}</div>
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 2 }}>{appt.client}</div>
-                  <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.address}</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{
-                      fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '3px 8px',
-                      borderRadius: 999, textTransform: 'uppercase',
-                      ...mobilePillStyle(appt.pillStatus),
-                    }}>{appt.pillStatus}</div>
-                    <button
-                      onClick={() => appt.estimateId
-                        ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                        : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
-                      }
-                      style={{
-                        padding: '7px 14px', fontSize: 12, fontWeight: 700,
-                        background: appt.estimateId ? '#F0FDF4' : '#EFF6FF',
-                        color: appt.estimateId ? '#059669' : '#2563EB',
-                        border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
-                      }}
-                    >
-                      {appt.estimateId ? 'View EST →' : 'Start estimate'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* KPI row */}
         <div className="db-kpi-row" style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
