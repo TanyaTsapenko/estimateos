@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
   /* ── Cards ── */
   .card{background:#fff;border-radius:16px;padding:16px}
   .card-blue{background:#fff;border-radius:16px;padding:16px;border:1.5px solid #BFDBFE}
-  .card-green{background:#ECFDF5;border-radius:16px;padding:16px}
+  .card-green{background:#ECFDF5;border-radius:16px;padding:16px;text-align:center}
   .slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
 
   /* ── Price card ── */
@@ -129,10 +129,10 @@ export async function GET(request: NextRequest) {
   .tot-val{font-size:26px;font-weight:800;color:#2563EB;letter-spacing:-.02em}
 
   /* ── Signature card ── */
-  .sig-circle{width:40px;height:40px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .sig-circle{width:40px;height:40px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
   .sig-name{font-size:15px;font-weight:700;color:#065F46;margin-bottom:4px}
   .sig-date{font-size:12px;color:#34D399;margin-bottom:12px}
-  .sig-img{max-height:60px;display:block;margin-top:4px}
+  .sig-img{max-height:60px;display:block;margin:4px auto 0}
 
   /* ── Footer ── */
   .footer{text-align:center;padding:28px 20px;font-size:11px;color:#9CA3AF}
