@@ -1,9 +1,79 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
+import { Square, LayoutGrid, Home, Minus, Image, DoorOpen, PanelRight, BookOpen, Shield, DoorClosed } from 'lucide-react'
+
+const OPENING_ICONS: Record<string, React.ReactNode> = {
+  window_dh:  <Square    size={16} strokeWidth={1.5} color="#2563EB" />,
+  window_cas: <LayoutGrid size={16} strokeWidth={1.5} color="#2563EB" />,
+  window_bay: <Home      size={16} strokeWidth={1.5} color="#2563EB" />,
+  window_sl:  <Minus     size={16} strokeWidth={1.5} color="#2563EB" />,
+  window_fix: <Image     size={16} strokeWidth={1.5} color="#2563EB" />,
+  door_entry: <DoorOpen  size={16} strokeWidth={1.5} color="#6B7280" />,
+  door_patio: <PanelRight size={16} strokeWidth={1.5} color="#6B7280" />,
+  door_french:<BookOpen  size={16} strokeWidth={1.5} color="#6B7280" />,
+  door_storm: <Shield    size={16} strokeWidth={1.5} color="#6B7280" />,
+  door_int:   <DoorClosed size={16} strokeWidth={1.5} color="#6B7280" />,
+}
+
+function OpeningTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+          background: 'var(--surface)', border: '1.5px solid var(--border)',
+          borderRadius: 8, padding: '9px 10px', cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 13, color: 'var(--jet)', textAlign: 'left',
+        }}
+      >
+        {OPENING_ICONS[value]}
+        <span style={{ flex: 1 }}>{OPENING_TYPES[value]?.name || value}</span>
+        <span style={{ fontSize: 10, color: '#94A3B8' }}>▾</span>
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+          background: '#fff', border: '1.5px solid var(--border)', borderRadius: 10,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, overflow: 'hidden',
+        }}>
+          {Object.entries(OPENING_TYPES).map(([k, v]) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => { onChange(k); setOpen(false) }}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 12px', border: 'none',
+                background: k === value ? 'rgba(37,99,235,.07)' : '#fff',
+                cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                color: 'var(--jet)', textAlign: 'left',
+              }}
+            >
+              {OPENING_ICONS[k]}
+              {v.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface ClientInfo {
   client_name: string; client_email: string; client_phone: string
@@ -213,11 +283,7 @@ function NewEstimateForm() {
 
         <div className="r2" style={{ marginBottom: 8 }}>
           <div className="f"><label>Type</label>
-            <select value={op.type} onChange={e => updateOpening(op.id, 'type', e.target.value)}>
-              {Object.entries(OPENING_TYPES).map(([k, v]) => (
-                <option key={k} value={k}>{v.icon} {v.name}</option>
-              ))}
-            </select></div>
+            <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} /></div>
           <div className="f"><label>Qty</label>
             <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
               {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
