@@ -71,13 +71,7 @@ export default function AppointmentsPage() {
   async function createEstimate(appt: Appointment) {
     await supabase.from('appointments').update({ status: 'completed' }).eq('id', appt.id)
     setAppointments(p => p.map(a => a.id === appt.id ? { ...a, status: 'completed' } : a))
-    const q = new URLSearchParams({
-      appt: appt.id,
-      name: appt.client_name || '',
-      phone: appt.client_phone || '',
-      address: appt.client_address || '',
-    })
-    router.push(`/dashboard/estimates/new?${q}`)
+    router.push(`/dashboard/estimates/new?appointment_id=${appt.id}`)
   }
 
   async function deleteAppt(id: string) {
@@ -95,13 +89,24 @@ export default function AppointmentsPage() {
     return appointments.filter(a => a.status === key)
   })()
 
-  const groups: { label: string; items: Appointment[] }[] = []
-  const seen = new Map<string, Appointment[]>()
-  filtered.forEach(appt => {
-    const lbl = dateLabel(appt.appointment_date)
-    if (!seen.has(lbl)) { seen.set(lbl, []); groups.push({ label: lbl, items: seen.get(lbl)! }) }
-    seen.get(lbl)!.push(appt)
-  })
+  function buildDateGroups(appts: Appointment[]) {
+    const result: { label: string; items: Appointment[] }[] = []
+    const seen = new Map<string, Appointment[]>()
+    appts.forEach(appt => {
+      const lbl = dateLabel(appt.appointment_date)
+      if (!seen.has(lbl)) { seen.set(lbl, []); result.push({ label: lbl, items: seen.get(lbl)! }) }
+      seen.get(lbl)!.push(appt)
+    })
+    return result
+  }
+  const future = filtered.filter(a => a.appointment_date > todayStr)
+  const todayAppts = filtered.filter(a => a.appointment_date === todayStr)
+  const past = filtered.filter(a => a.appointment_date < todayStr).reverse()
+  const groups = [
+    ...buildDateGroups(future),
+    ...buildDateGroups(todayAppts),
+    ...buildDateGroups(past),
+  ]
 
   const todayCount = appointments.filter(a => a.appointment_date === todayStr).length
   const newLeads = appointments.filter(a => a.status === 'new_lead').length

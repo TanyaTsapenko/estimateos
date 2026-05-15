@@ -102,14 +102,14 @@ export default function Sidebar() {
                 padding: '10px 14px', borderRadius: 10,
                 color: active ? '#fff' : 'rgba(255,255,255,0.6)',
                 background: active ? '#2563EB' : 'transparent',
-                fontSize: 14, fontWeight: active ? 600 : 500, cursor: 'pointer',
+                fontSize: 14, fontWeight: 500, cursor: 'pointer',
                 transition: 'background 0.15s, color 0.15s',
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.06)' }}
               onMouseLeave={e => { if (!active) (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
             >
-              <SIcon name={item.icon} size={20} strokeWidth={active ? 2.2 : 1.7} />
+              <SIcon name={item.icon} size={20} strokeWidth={1.7} />
               {!collapsed && item.label}
             </div>
           )

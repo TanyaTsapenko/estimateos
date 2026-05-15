@@ -139,16 +139,17 @@ function NewEstimateForm() {
       if (apptId) {
         const { data: appt } = await supabase
           .from('appointments')
-          .select('client_name, client_phone, client_email, client_address, notes')
+          .select('client_name, client_phone, client_email, client_address, client_city, notes')
           .eq('id', apptId)
           .single()
         if (appt) {
           setClient(p => ({
             ...p,
-            ...(appt.client_name  && { client_name:  appt.client_name }),
-            ...(appt.client_phone && { client_phone: appt.client_phone }),
-            ...(appt.client_email && { client_email: appt.client_email }),
+            ...(appt.client_name    && { client_name:    appt.client_name }),
+            ...(appt.client_phone   && { client_phone:   appt.client_phone }),
+            ...(appt.client_email   && { client_email:   appt.client_email }),
             ...(appt.client_address && { client_address: appt.client_address }),
+            ...(appt.client_city    && { client_city:    appt.client_city }),
             ...(appt.notes && !p.scope_notes && { scope_notes: appt.notes }),
           }))
         }

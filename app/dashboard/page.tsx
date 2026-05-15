@@ -67,13 +67,13 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
         </div>
         <Sparkline data={sparkData} color={accent} />
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'baseline', marginTop: 10 }}>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', marginTop: 10 }}>
         {empty ? (
           <span style={{ fontSize: 15, fontWeight: 500, color: '#CBD5E1' }}>No data yet</span>
         ) : (
           <>
-            <span className="db-kpi-value" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor }}>{deltaPrefix}{delta}</span>
+            <span className="db-kpi-value" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
+            <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', color: deltaColor }}>{deltaPrefix}{delta}</span>
           </>
         )}
       </div>

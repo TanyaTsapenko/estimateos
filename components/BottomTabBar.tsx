@@ -28,8 +28,8 @@ export default function BottomTabBar() {
           cursor: 'pointer', color, fontFamily: 'inherit', height: '100%',
         }}
       >
-        <Icon size={22} strokeWidth={active ? 2.2 : 1.7} color={color} />
-        <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color, lineHeight: 1 }}>
+        <Icon size={22} strokeWidth={1.7} color={color} />
+        <span style={{ fontSize: 11, fontWeight: 500, color, lineHeight: 1 }}>
           {label}
         </span>
       </button>
