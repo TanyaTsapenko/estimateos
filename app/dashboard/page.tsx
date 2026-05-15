@@ -91,6 +91,13 @@ function apptPillStyle(status: string): React.CSSProperties {
   return { background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.8)' }
 }
 
+function mobilePillStyle(status: string): React.CSSProperties {
+  if (status === 'IN PROGRESS') return { background: 'rgba(37,99,235,0.1)', color: '#2563EB' }
+  if (status === 'AWAITING SIGN') return { background: 'rgba(217,119,6,0.1)', color: '#D97706' }
+  if (status === 'DONE') return { background: 'rgba(5,150,105,0.1)', color: '#059669' }
+  return { background: '#F3F4F6', color: '#6B7280' }
+}
+
 function getTodayStr() {
   return new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
 }
@@ -102,6 +109,7 @@ export default function DashboardPage() {
   const [attention, setAttention] = useState<AttentionItem[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [unread] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
   const todayStr = getTodayStr()
 
@@ -243,6 +251,13 @@ export default function DashboardPage() {
     }
   }, [loadAll])
 
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
 
   return (
@@ -317,8 +332,10 @@ export default function DashboardPage() {
                     {signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
                   </div>
                   <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                    {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.
-                    {signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
+                    {isMobile
+                      ? `${appointments.length} stop${appointments.length !== 1 ? 's' : ''} · first at ${appointments[0].time}`
+                      : `${appointments.length} stop${appointments.length !== 1 ? 's' : ''} · first at ${appointments[0].time}, last at ${appointments[appointments.length - 1].time}.${signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}`
+                    }
                   </div>
                 </>
               )}
@@ -333,54 +350,111 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Appointment cards */}
-          <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
-            {appointments.map(appt => (
-              <div key={appt.id} style={{
-                background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
-                borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
+          {/* Mobile: dashed add button only */}
+          {isMobile && (
+            <div
+              style={{
+                marginTop: 14, background: 'rgba(255,255,255,0.06)',
+                border: '1px dashed rgba(255,255,255,0.25)',
+                borderRadius: 10, padding: 12,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              }}
+              onClick={() => router.push('/dashboard/appointments/new')}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)' }}>+ add appointment</span>
+            </div>
+          )}
+
+          {/* Desktop: appointment cards grid */}
+          {!isMobile && (
+            <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
+              {appointments.map(appt => (
+                <div key={appt.id} style={{
+                  background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
+                  borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
+                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
+                  <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                    {appt.address}
+                  </div>
+                  <div style={{
+                    display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700,
+                    letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start',
+                    borderRadius: 999, textTransform: 'uppercase',
+                    ...apptPillStyle(appt.pillStatus),
+                  }}>{appt.pillStatus}</div>
+                  <button
+                    onClick={() => appt.estimateId
+                      ? router.push(`/dashboard/estimates/${appt.estimateId}`)
+                      : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
+                    }
+                    style={{
+                      marginTop: 10, padding: '6px 0', width: '100%',
+                      background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
+                      border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
+                      borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer',
+                    }}
+                  >
+                    {appt.estimateId ? 'View EST →' : 'Start estimate'}
+                  </button>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
-                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                  {appt.address}
-                </div>
-                <div style={{
-                  display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700,
-                  letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start',
-                  borderRadius: 999, textTransform: 'uppercase',
-                  ...apptPillStyle(appt.pillStatus),
-                }}>{appt.pillStatus}</div>
-                <button
-                  onClick={() => appt.estimateId
-                    ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                    : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
-                  }
-                  style={{
-                    marginTop: 10, padding: '6px 0', width: '100%',
-                    background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
-                    border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
-                    borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer',
-                  }}
-                >
-                  {appt.estimateId ? 'View EST →' : 'Start estimate'}
-                </button>
+              ))}
+              <div className="db-appt-add" style={{
+                background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
+                borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
+                justifyContent: 'center', cursor: 'pointer', minHeight: 90,
+              }} onClick={() => router.push('/dashboard/appointments/new')}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
+                  + add appointment
+                </span>
               </div>
-            ))}
-            <div className="db-appt-add" style={{
-              background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
-              borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', cursor: 'pointer', minHeight: 90,
-            }} onClick={() => router.push('/dashboard/appointments/new')}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
-                + add appointment
-              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile: appointments as separate cards below hero */}
+        {isMobile && appointments.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 12 }}>Today's visits</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {appointments.map(appt => (
+                <div key={appt.id} style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>{appt.time}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>{appt.duration}</div>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 2 }}>{appt.client}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.address}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{
+                      fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '3px 8px',
+                      borderRadius: 999, textTransform: 'uppercase',
+                      ...mobilePillStyle(appt.pillStatus),
+                    }}>{appt.pillStatus}</div>
+                    <button
+                      onClick={() => appt.estimateId
+                        ? router.push(`/dashboard/estimates/${appt.estimateId}`)
+                        : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
+                      }
+                      style={{
+                        padding: '7px 14px', fontSize: 12, fontWeight: 700,
+                        background: appt.estimateId ? '#F0FDF4' : '#EFF6FF',
+                        color: appt.estimateId ? '#059669' : '#2563EB',
+                        border: 'none', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >
+                      {appt.estimateId ? 'View EST →' : 'Start estimate'}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
 
         {/* KPI row */}
         <div className="db-kpi-row" style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
