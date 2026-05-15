@@ -156,7 +156,7 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* BODY */}
-      <div style={{ flex: 1, padding: '20px 28px', paddingBottom: 100 }}>
+      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflow: 'hidden' }}>
         {error && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
             {error}

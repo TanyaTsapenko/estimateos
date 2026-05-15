@@ -69,6 +69,16 @@ export default function CompanyProfilePage() {
     await supabase.from('profiles').update({ logo_url: publicUrl }).eq('id', user.id)
     setForm(p => ({ ...p, logo_url: publicUrl }))
     setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  async function handleLogoRemove() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !form.logo_url) return
+    const path = form.logo_url.split('/logos/')[1]
+    if (path) await supabase.storage.from('logos').remove([path])
+    await supabase.from('profiles').update({ logo_url: null }).eq('id', user.id)
+    setForm(p => ({ ...p, logo_url: null }))
   }
 
   // ── Signature canvas ──
@@ -163,6 +173,35 @@ export default function CompanyProfilePage() {
 
         {error && <div className="error-msg">{error}</div>}
         {saved && <div className="success-msg">✅ Saved</div>}
+
+        {/* ── COMPANY LOGO (always visible) ── */}
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg" style={{ display: 'none' }} onChange={handleLogoUpload} />
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 8, fontFamily: 'inherit' }}>Company Logo</div>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ flexShrink: 0 }}>
+              {form.logo_url
+                ? <img src={form.logo_url} alt="Logo" style={{ maxWidth: 120, maxHeight: 60, objectFit: 'contain', display: 'block' }} />
+                : <div style={{ width: 120, height: 60, borderRadius: 8, background: '#F3F4F6', border: '1.5px dashed #D1D5DB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 11, color: '#9CA3AF', fontWeight: 500 }}>No logo</span>
+                  </div>
+              }
+            </div>
+            <div>
+              <button onClick={() => fileRef.current?.click()} disabled={uploading}
+                style={{ border: '1.5px solid #2563EB', color: '#2563EB', background: '#fff', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'block', marginBottom: 6 }}>
+                {uploading ? 'Uploading…' : 'Upload Logo'}
+              </button>
+              <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: form.logo_url ? 6 : 0 }}>PNG or JPG, max 2MB</div>
+              {form.logo_url && (
+                <button onClick={handleLogoRemove}
+                  style={{ fontSize: 11, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Section selector */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 6, marginBottom: 16 }}>
