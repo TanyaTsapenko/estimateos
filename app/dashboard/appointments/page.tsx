@@ -8,6 +8,7 @@ interface Appointment {
   id: string
   client_name: string
   client_phone: string | null
+  client_email: string | null
   client_address: string | null
   appointment_date: string
   appointment_time: string | null
@@ -117,6 +118,7 @@ export default function AppointmentsPage() {
     const [draft, setDraft] = useState({
       client_name: appt.client_name,
       client_phone: appt.client_phone || '',
+      client_email: appt.client_email || '',
       client_address: appt.client_address || '',
       appointment_date: appt.appointment_date,
       appointment_time: appt.appointment_time || '',
@@ -141,6 +143,7 @@ export default function AppointmentsPage() {
       await supabase.from('appointments').update({
         client_name: draft.client_name.trim(),
         client_phone: draft.client_phone.trim() || null,
+        client_email: draft.client_email.trim() || null,
         client_address: draft.client_address.trim() || null,
         appointment_date: draft.appointment_date,
         appointment_time: draft.appointment_time || null,
@@ -150,6 +153,7 @@ export default function AppointmentsPage() {
         ...a,
         client_name: draft.client_name.trim(),
         client_phone: draft.client_phone.trim() || null,
+        client_email: draft.client_email.trim() || null,
         client_address: draft.client_address.trim() || null,
         appointment_date: draft.appointment_date,
         appointment_time: draft.appointment_time || null,
@@ -164,6 +168,7 @@ export default function AppointmentsPage() {
       setDraft({
         client_name: appt.client_name,
         client_phone: appt.client_phone || '',
+        client_email: appt.client_email || '',
         client_address: appt.client_address || '',
         appointment_date: appt.appointment_date,
         appointment_time: appt.appointment_time || '',
@@ -186,9 +191,13 @@ export default function AppointmentsPage() {
                 <input type="tel" value={draft.client_phone} onChange={e => setD('client_phone')(e.target.value)} placeholder="(403) 555-0100" style={inputStyle} />
               </div>
               <div>
-                <label style={fieldLbl}>Address</label>
-                <input value={draft.client_address} onChange={e => setD('client_address')(e.target.value)} placeholder="123 Main St" style={inputStyle} />
+                <label style={fieldLbl}>Email</label>
+                <input type="email" value={draft.client_email} onChange={e => setD('client_email')(e.target.value)} placeholder="jane@email.com" style={inputStyle} />
               </div>
+            </div>
+            <div style={{ marginBottom: 10 }}>
+              <label style={fieldLbl}>Address</label>
+              <input value={draft.client_address} onChange={e => setD('client_address')(e.target.value)} placeholder="123 Main St" style={inputStyle} />
             </div>
             <div className="appt-edit-datetime" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
               <div>

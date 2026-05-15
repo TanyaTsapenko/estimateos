@@ -24,6 +24,7 @@ export default function NewAppointmentPage() {
   const [form, setForm] = useState({
     client_name: '',
     client_phone: '',
+    client_email: '',
     client_address: '',
     appointment_date: today,
     appointment_time: '09:00',
@@ -65,6 +66,7 @@ export default function NewAppointmentPage() {
       user_id: user.id,
       client_name: form.client_name.trim(),
       client_phone: form.client_phone.trim() || null,
+      client_email: form.client_email.trim() || null,
       client_address: form.client_address.trim() || null,
       appointment_date: form.appointment_date,
       appointment_time: form.appointment_time || null,
@@ -121,12 +123,18 @@ export default function NewAppointmentPage() {
               onChange={e => set('client_phone', e.target.value)} />
           </div>
           <div className="f">
-            <label>Lead Source</label>
-            <select value={form.lead_source} onChange={e => set('lead_source', e.target.value)}>
-              {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            <label>Email</label>
+            <input type="email" placeholder="jane@email.com" value={form.client_email}
+              onChange={e => set('client_email', e.target.value)} />
           </div>
         </div>
+
+        <div className="r1"><div className="f">
+          <label>Lead Source</label>
+          <select value={form.lead_source} onChange={e => set('lead_source', e.target.value)}>
+            {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div></div>
 
         <div className="r1"><div className="f">
           <label>Address</label>
