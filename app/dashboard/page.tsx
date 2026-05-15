@@ -366,15 +366,21 @@ export default function DashboardPage() {
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ width: 42, textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)', flexShrink: 0 }}>
-                    {appt.time.replace(' AM','').replace(' PM','')}
+                  <div style={{ textAlign: 'right', flexShrink: 0, lineHeight: 1 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
+                      {appt.time.replace(' AM','').replace(' PM','')}
+                    </span>
+                    <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginLeft: 2 }}>
+                      {appt.time.includes('AM') ? 'AM' : 'PM'}
+                    </span>
                   </div>
                   <div style={{
                     width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
                     background: appt.pillStatus === 'IN PROGRESS' ? '#F59E0B'
-                      : appt.pillStatus === 'AWAITING SIGN' ? '#F59E0B'
-                      : appt.pillStatus === 'DONE' ? 'rgba(255,255,255,0.35)'
-                      : 'rgba(255,255,255,0.35)',
+                      : appt.pillStatus === 'AWAITING SIGN' ? '#FB923C'
+                      : appt.pillStatus === 'DONE' ? '#34D399'
+                      : appt.pillStatus === 'CONSULTATION' ? 'rgba(255,255,255,0.4)'
+                      : '#93C5FD',
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
