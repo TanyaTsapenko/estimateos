@@ -764,6 +764,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
 
   /* Lower two-panel row: single column */
   .db-lower-row { grid-template-columns: 1fr !important; }
+  .reports-lower-row { grid-template-columns: 1fr !important; }
 
   /* Panel headers */
   .db-panel-header { padding: 12px 16px !important; }

@@ -138,7 +138,7 @@ export default function ReportsPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div style={{ padding: '20px 16px 60px' }}>
+      <div style={{ padding: '20px 16px 100px' }}>
 
         {/* Period filter card */}
         <div style={{
@@ -181,7 +181,7 @@ export default function ReportsPage() {
             </div>
 
             {/* ── SALES FUNNEL + TIER BREAKDOWN ── */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="reports-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
               {/* Sales funnel */}
               <div style={{

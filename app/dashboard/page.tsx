@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
-import BottomNav from '@/components/BottomNav'
 
 interface Appointment {
   id: string; time: string; client: string; address: string

@@ -144,7 +144,7 @@ export default function ClientsPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div style={{ padding: '20px 16px 60px' }}>
+      <div style={{ padding: '20px 16px 100px' }}>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
