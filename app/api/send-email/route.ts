@@ -246,12 +246,9 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 
   // ── SEND (estimate to client) ─────────────────────────────────────────────────
   } else if (type === 'send') {
-    const contractPdfUrl = prof?.contract_pdf_url || null
+    const contractPdfUrl = (prof as any)?.contract_pdf_url || null
     const isContractOnly = sendMode === 'contract'
     const isEstimateContract = sendMode === 'estimate_contract'
-    console.log('contractPdfUrl:', contractPdfUrl)
-    console.log('isContractOnly:', isContractOnly)
-    console.log('isEstimateContract:', isEstimateContract)
     subject = isContractOnly
       ? `Your contract from ${companyName} — ${est.estimate_number}`
       : isEstimateContract
@@ -296,12 +293,12 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
           </td></tr>
         </table>
 
-        ${(isContractOnly || isEstimateContract) ? `
+        ${(isContractOnly || isEstimateContract) && contractPdfUrl ? `
         <!-- Contract PDF Link -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};margin-bottom:10px">
           <tr><td style="padding:14px 16px">
             <div style="font-size:13px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif;margin-bottom:4px">📄 Contract PDF</div>
-            <a href="https://yjcektdefguyxjufrlgb.supabase.co/storage/v1/object/public/contracts/3390e8a8-0439-44ef-8107-0aeb85085b8a/contract.pdf" style="font-size:12px;color:#2563EB;font-family:Arial,sans-serif">View contract PDF →</a>
+            <a href="${contractPdfUrl}" style="font-size:12px;color:#2563EB;font-family:Arial,sans-serif">View contract PDF →</a>
           </td></tr>
         </table>` : ''}
 
