@@ -1046,6 +1046,23 @@ export default function SettingsPage() {
                 ))}
               </div>
             ))}
+            <div style={{ padding: '24px 16px 8px' }}>
+              <button
+                onClick={async () => {
+                  const supabase = createClient()
+                  await supabase.auth.signOut()
+                  router.push('/auth')
+                }}
+                style={{
+                  width: '100%', padding: '14px', borderRadius: 12,
+                  background: '#FEF2F2', border: '1px solid #FECACA',
+                  color: '#DC2626', fontSize: 14, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Sign out
+              </button>
+            </div>
           </div>
 
           {/* Content pane */}
