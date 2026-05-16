@@ -142,6 +142,9 @@ function NewEstimateForm() {
           .select('client_name, client_phone, client_email, client_address, client_city, notes')
           .eq('id', apptId)
           .single()
+        console.log('apptId:', apptId)
+        console.log('appt data:', appt)
+        alert(`apptId: ${apptId}\nname: ${appt?.client_name}\nemail: ${appt?.client_email}`)
         if (appt) {
           setClient(p => ({
             ...p,
