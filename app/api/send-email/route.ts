@@ -249,6 +249,9 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const contractPdfUrl = prof?.contract_pdf_url || null
     const isContractOnly = sendMode === 'contract'
     const isEstimateContract = sendMode === 'estimate_contract'
+    console.log('contractPdfUrl:', contractPdfUrl)
+    console.log('isContractOnly:', isContractOnly)
+    console.log('isEstimateContract:', isEstimateContract)
     subject = isContractOnly
       ? `Your contract from ${companyName} — ${est.estimate_number}`
       : isEstimateContract
