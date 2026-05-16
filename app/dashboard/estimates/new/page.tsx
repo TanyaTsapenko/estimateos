@@ -137,14 +137,11 @@ function NewEstimateForm() {
       ])
       if (prof) setProfile(prof)
       if (apptId) {
-        const { data: appt, error: apptError } = await supabase
+        const { data: appt } = await supabase
           .from('appointments')
-          .select('client_name, client_phone, client_email, client_address, client_city, notes')
+          .select('client_name, client_phone, client_email, client_address, notes')
           .eq('id', apptId)
           .maybeSingle()
-        console.log('apptId:', apptId)
-        console.log('appt data:', appt)
-        alert(`apptId: ${apptId}\napptError: ${JSON.stringify(apptError)}\nname: ${appt?.client_name}\nemail: ${appt?.client_email}`)
         if (appt) {
           setClient(p => ({
             ...p,
@@ -152,7 +149,6 @@ function NewEstimateForm() {
             ...(appt.client_phone   && { client_phone:   appt.client_phone }),
             ...(appt.client_email   && { client_email:   appt.client_email }),
             ...(appt.client_address && { client_address: appt.client_address }),
-            ...(appt.client_city    && { client_city:    appt.client_city }),
             ...(appt.notes && !p.scope_notes && { scope_notes: appt.notes }),
           }))
         }
