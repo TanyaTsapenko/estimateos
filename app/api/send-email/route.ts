@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -8,7 +9,9 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(request: NextRequest) {
   const { estimateId: rawEstimateId, invoiceId, type, sendMode } = await request.json()
 
-  const supabase = await createClient()
+  const supabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createServiceClient()
+    : await createClient()
   let estimateId = rawEstimateId
   let invoice: any = null
   let openings: any[] = []
