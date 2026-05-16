@@ -296,12 +296,12 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
           </td></tr>
         </table>
 
-        ${(isContractOnly || isEstimateContract) && contractPdfUrl ? `
+        ${(isContractOnly || isEstimateContract) ? `
         <!-- Contract PDF Link -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};margin-bottom:10px">
           <tr><td style="padding:14px 16px">
-            <div style="font-size:13px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif;margin-bottom:4px">📄 Contract PDF attached</div>
-            <a href="${contractPdfUrl}" style="font-size:12px;color:#2563EB;font-family:Arial,sans-serif">View contract PDF →</a>
+            <div style="font-size:13px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif;margin-bottom:4px">📄 Contract PDF</div>
+            <a href="https://yjcektdefguyxjufrlgb.supabase.co/storage/v1/object/public/contracts/3390e8a8-0439-44ef-8107-0aeb85085b8a/contract.pdf" style="font-size:12px;color:#2563EB;font-family:Arial,sans-serif">View contract PDF →</a>
           </td></tr>
         </table>` : ''}
 
