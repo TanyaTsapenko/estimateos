@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estimateos-v8';
+const CACHE_NAME = 'estimateos-v9';
 
 self.addEventListener('install', () => self.skipWaiting());
 
