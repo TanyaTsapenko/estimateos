@@ -162,9 +162,16 @@ export default function PriceListPage() {
         paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
         zIndex: 10,
       }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button onClick={() => router.push('/dashboard/settings')} style={{
+            width: 32, height: 32, background: '#F5F6F8', border: 'none',
+            borderRadius: 8, cursor: 'pointer', fontSize: 16, color: '#64748B',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>←</button>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
+          </div>
         </div>
         <button
           onClick={save}
