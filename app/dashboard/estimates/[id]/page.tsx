@@ -110,6 +110,39 @@ export default function EstimateDetailPage() {
     router.push('/dashboard/estimates')
   }
 
+  async function duplicateEstimate() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !estimate) return
+    const { data: newEst } = await supabase.from('estimates').insert({
+      user_id: user.id,
+      client_name: estimate.client_name,
+      client_email: estimate.client_email,
+      client_phone: estimate.client_phone,
+      client_address: estimate.client_address,
+      client_province: estimate.client_province,
+      tier: estimate.tier,
+      status: 'draft',
+      subtotal: estimate.subtotal,
+      discount_type: estimate.discount_type,
+      discount_value: estimate.discount_value,
+      discount_amount: estimate.discount_amount,
+      tax_rate: estimate.tax_rate,
+      tax_amount: estimate.tax_amount,
+      total: estimate.total,
+      scope_notes: estimate.scope_notes,
+    }).select().single()
+    if (newEst) {
+      const { data: openings } = await supabase.from('estimate_openings')
+        .select('*').eq('estimate_id', estimate.id)
+      if (openings?.length) {
+        await supabase.from('estimate_openings').insert(
+          openings.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
+        )
+      }
+      router.push(`/dashboard/estimates/${newEst.id}`)
+    }
+  }
+
   async function copyLink() {
     const link = `${window.location.origin}/estimate/${id}`
     navigator.clipboard.writeText(link)
@@ -360,7 +393,7 @@ export default function EstimateDetailPage() {
               </div>
               {[
                 { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF', onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
-                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => showToast('Coming soon'), danger: false },
+                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: duplicateEstimate, danger: false },
                 { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: deleteEstimate, danger: true },
               ].map((item, i, arr) => (
                 <button
