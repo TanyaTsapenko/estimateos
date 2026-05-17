@@ -98,7 +98,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* ── BODY ── */}
-      <div style={{ padding: '20px 16px 60px' }}>
+      <div style={{ padding: '20px 16px 100px' }}>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
@@ -188,7 +188,7 @@ export default function InvoicesPage() {
                     </span>
                     <span style={{ fontSize: 12, color: '#64748B' }}>
                       {inv.due_date
-                        ? new Date(inv.due_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+                        ? new Date(inv.due_date + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
                         : '—'}
                     </span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', textAlign: 'right', display: 'block' }}>
@@ -255,7 +255,7 @@ export default function InvoicesPage() {
                             {inv.invoice_number}
                           </span>
                           {inv.estimates?.estimate_number ? ` · from ${inv.estimates.estimate_number}` : ''}
-                          {inv.due_date ? ` · due ${new Date(inv.due_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : ''}
+                          {inv.due_date ? ` · due ${new Date(inv.due_date + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}` : ''}
                         </div>
                       </div>
                       <span style={{
