@@ -9,6 +9,8 @@ export async function POST(request: NextRequest) {
   const { estimateId: rawEstimateId, invoiceId, type, sendMode } = await request.json()
 
   const supabase = createServiceClient()
+  const { data: testData, error: testError } = await supabase.from('profiles').select('id, company_name').limit(3)
+  console.log('test all profiles:', JSON.stringify(testData), 'error:', JSON.stringify(testError))
   console.log('supabase url:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0,30))
   console.log('service key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0,20))
   let estimateId = rawEstimateId
