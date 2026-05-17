@@ -572,10 +572,10 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
         <Card>
           <SectionLabel>Address</SectionLabel>
           <Field label="Street address" value={values.addressLine} onChange={set('addressLine')} />
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '0 12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 12px' }}>
             <Field label="City" value={values.city} onChange={set('city')} required />
             <Field label="Province" value={values.province} onChange={set('province')} required />
-            <Field label="Postal code" value={values.postal} onChange={set('postal')} />
+            <Field label="Postal Code" value={values.postal} onChange={set('postal')} />
           </div>
         </Card>
         <Card>
