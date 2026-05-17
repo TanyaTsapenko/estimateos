@@ -28,16 +28,10 @@ export async function POST(request: NextRequest) {
   const { data: est } = await supabase.from('estimates').select('*').eq('id', estimateId).single()
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
-  const profRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${est.user_id}&select=company_name,phone,city,province,logo_url,deposit_pct,contract_pdf_url,signature_url`, {
-    headers: {
-      'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-      'Content-Type': 'application/json'
-    }
-  })
-  const profData = await profRes.json()
-  const prof = profData[0] || null
-  console.log('prof direct fetch:', JSON.stringify(prof))
+  const { data: prof } = await supabase.from('profiles')
+    .select('company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url')
+    .eq('id', est.user_id.trim())
+    .single()
 
   if (type === 'invoice') {
     if (!invoice) {
