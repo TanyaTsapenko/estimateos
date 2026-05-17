@@ -822,62 +822,26 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-function PriceListSection({ flash }: { flash: (m: string) => void }) {
-  const [items, setItems] = useState([
-    { id: '1', name: 'Casement window', unit: 'ea', price: 850 },
-    { id: '2', name: 'Double hung window', unit: 'ea', price: 650 },
-    { id: '3', name: 'Entry door', unit: 'ea', price: 1200 },
-  ])
-  const [initial] = useState(JSON.stringify(items))
-  const dirty = JSON.stringify(items) !== initial
-  const units = ['ea', 'sq ft', 'linear ft', 'hour', 'per opening']
-
-  const update = (id: string, key: string, val: string | number) =>
-    setItems(s => s.map(i => i.id === id ? { ...i, [key]: val } : i))
-  const addRow = () => setItems(s => [...s, { id: Date.now().toString(), name: 'New item', unit: 'ea', price: 0 }])
-  const removeRow = (id: string) => setItems(s => s.filter(i => i.id !== id))
-
+function PriceListSection() {
+  const router = useRouter()
   return (
-    <div>
-      <SectionHeader kicker="BUSINESS" title="Price list" subtitle="Default rates for your estimate line items."
-        action={
-          <button onClick={addRow} style={{ padding: '8px 14px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <SIcon name="plus" size={14} /> Add item
-          </button>
-        }
+    <div style={{ padding: '24px 0' }}>
+      <SectionHeader
+        kicker="BUSINESS"
+        title="Price List"
+        subtitle="Manage your opening types and rates."
       />
-      <Card padding={0}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 120px 40px', gap: 0 }}>
-          {['NAME', 'UNIT', 'PRICE', ''].map(h => (
-            <div key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', borderBottom: '1px solid #EEF0F4' }}>{h}</div>
-          ))}
-          {items.map((item, i) => (
-            <>
-              <div key={`n${item.id}`} style={{ padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-                <input value={item.name} onChange={e => update(item.id, 'name', e.target.value)}
-                  style={{ width: '100%', border: 'none', outline: 'none', fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: 'transparent' }} />
-              </div>
-              <div key={`u${item.id}`} style={{ padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid #EEF0F4' : 'none', borderLeft: '1px solid #EEF0F4' }}>
-                <select value={item.unit} onChange={e => update(item.id, 'unit', e.target.value)}
-                  style={{ border: 'none', outline: 'none', fontSize: 13, fontFamily: 'inherit', color: '#475569', background: 'transparent', width: '100%', cursor: 'pointer' }}>
-                  {units.map(u => <option key={u}>{u}</option>)}
-                </select>
-              </div>
-              <div key={`p${item.id}`} style={{ padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid #EEF0F4' : 'none', borderLeft: '1px solid #EEF0F4', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ color: '#94A3B8', fontSize: 13 }}>$</span>
-                <input type="number" value={item.price} onChange={e => update(item.id, 'price', Number(e.target.value))}
-                  style={{ width: '100%', border: 'none', outline: 'none', fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: 'transparent' }} />
-              </div>
-              <div key={`d${item.id}`} style={{ padding: '10px 16px', borderBottom: i < items.length - 1 ? '1px solid #EEF0F4' : 'none', borderLeft: '1px solid #EEF0F4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button onClick={() => removeRow(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 0, display: 'flex' }}>
-                  <SIcon name="trash" size={14} />
-                </button>
-              </div>
-            </>
-          ))}
-        </div>
-      </Card>
-      <SaveBar dirty={dirty} valid={true} onSave={() => flash('Price list saved')} onDiscard={() => setItems(JSON.parse(initial))} />
+      <div style={{ marginTop: 24, textAlign: 'center', padding: '40px 24px', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>💰</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Price List</div>
+        <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>Manage your window and door types, base prices, and labour rates.</div>
+        <button
+          onClick={() => router.push('/dashboard/price-list')}
+          style={{ padding: '10px 24px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          Open Price List →
+        </button>
+      </div>
     </div>
   )
 }
@@ -979,7 +943,7 @@ const SECTIONS: Record<SectionId, (props: { flash: (m: string) => void }) => Rea
   company:       (p) => <CompanySection {...p} />,
   team:          (p) => <TeamSection {...p} />,
   contract:      (p) => <ContractSection {...p} />,
-  price:         (p) => <PriceListSection {...p} />,
+  price:         () => <PriceListSection />,
   billing:       (p) => <BillingSection {...p} />,
   invoices:      (p) => <InvoicesSection />,
 }
