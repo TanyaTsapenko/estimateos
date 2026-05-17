@@ -13,6 +13,31 @@ const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
   Object.entries(OPENING_TYPES).map(([k, v]) => [k, { base: v.base, lab: v.lab }])
 )
 
+function OpeningIcon({ typeKey }: { typeKey: string }) {
+  const isWindow = typeKey.startsWith('window_')
+  const isDoor = typeKey.startsWith('door_')
+  return (
+    <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {isWindow ? (
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+          <rect x="2" y="2" width="16" height="16" rx="1.5"/>
+          <line x1="10" y1="2" x2="10" y2="18"/>
+          <line x1="2" y1="10" x2="18" y2="10"/>
+        </svg>
+      ) : isDoor ? (
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+          <rect x="3" y="1" width="14" height="18" rx="1.5"/>
+          <circle cx="14" cy="10.5" r="1.2" fill="#2045B8" stroke="none"/>
+        </svg>
+      ) : (
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+          <rect x="2" y="2" width="16" height="16" rx="1.5"/>
+        </svg>
+      )}
+    </div>
+  )
+}
+
 const sectionLabel: React.CSSProperties = {
   fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8',
   textTransform: 'uppercase', marginBottom: 8, marginTop: 20,
@@ -192,20 +217,14 @@ export default function PriceListPage() {
                       background: isExpanded ? '#F8FAFF' : 'transparent',
                     }}
                   >
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 9, flexShrink: 0,
-                      background: isCustom ? 'rgba(37,99,235,0.12)' : 'rgba(37,99,235,0.07)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                    }}>
-                      {def.icon}
-                    </div>
+                    <OpeningIcon typeKey={key} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{def.name}</div>
                       {isCustom && (
                         <div style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', letterSpacing: '.06em', textTransform: 'uppercase' }}>Custom</div>
                       )}
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
                       <div style={{ fontSize: 18, fontWeight: 700, color: '#2563EB', lineHeight: 1 }}>{fmtCAD(total)}</div>
                       <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>installed · med</div>
                     </div>
@@ -280,15 +299,11 @@ export default function PriceListPage() {
                         background: isExpanded ? '#F8FAFF' : 'transparent',
                       }}
                     >
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 9, flexShrink: 0,
-                        background: 'rgba(37,99,235,0.07)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
-                      }}>⬜</div>
+                      <OpeningIcon typeKey={ct.key} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{ct.label}</div>
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
                         <div style={{ fontSize: 18, fontWeight: 700, color: '#2563EB', lineHeight: 1 }}>{fmtCAD(ct.base + ct.lab)}</div>
                         <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>installed · med</div>
                       </div>
