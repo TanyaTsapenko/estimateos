@@ -461,11 +461,60 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function CompanySection({ flash }: { flash: (m: string) => void }) {
-  const [values, setValues] = useState({ companyName: 'Estimare', phone: '', website: '', addressLine: '', city: 'Calgary', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
-  const [initial] = useState({ ...values })
+  const supabase = createClient()
+  const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
+  const [initial, setInitial] = useState({ ...values })
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = !!values.companyName && !!values.city && !!values.province
   const set = (k: string) => (v: string) => setValues(s => ({ ...s, [k]: v }))
+  const [userId, setUserId] = useState<string | null>(null)
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setUserId(user.id)
+      const { data: prof } = await supabase.from('profiles').select('company_name, phone, city, province, logo_url, deposit_pct').eq('id', user.id).single()
+      if (prof) {
+        const loaded = {
+          companyName: (prof as any).company_name || '',
+          phone:       (prof as any).phone        || '',
+          website:     '',
+          addressLine: '',
+          city:        (prof as any).city         || '',
+          province:    (prof as any).province     || 'AB',
+          postal:      '',
+          licence:     '',
+          insurance:   '',
+          depositPct:  String((prof as any).deposit_pct ?? 10),
+          currency:    'CAD',
+        }
+        setValues(loaded)
+        setInitial(loaded)
+        if ((prof as any).logo_url) setLogoUrl((prof as any).logo_url)
+      }
+    })
+  }, [])
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp']
+    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG, SVG or WebP allowed'); return }
+    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB'); return }
+    setLogoUploading(true)
+    const ext = file.name.split('.').pop()
+    const path = `${userId}/logo.${ext}`
+    const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) { flash('Upload failed'); setLogoUploading(false); return }
+    const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
+    setLogoUrl(url)
+    setLogoUploading(false)
+    flash('Logo uploaded')
+  }
 
   return (
     <div>
@@ -473,6 +522,47 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
           <SectionLabel>Business details</SectionLabel>
+
+          {/* Logo upload */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 10 }}>Company Logo</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 80, height: 80, borderRadius: 12,
+                background: '#F4F4F2', border: '1px solid #E2E8F0',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', flexShrink: 0,
+              }}>
+                {logoUrl
+                  ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                  : <span style={{ fontSize: 28 }}>🏢</span>
+                }
+              </div>
+              <div>
+                <label style={{
+                  display: 'inline-block', padding: '8px 16px',
+                  background: '#2563EB', color: '#fff', borderRadius: 8,
+                  fontSize: 13, fontWeight: 600, cursor: logoUploading ? 'not-allowed' : 'pointer',
+                  opacity: logoUploading ? 0.7 : 1,
+                }}>
+                  {logoUploading ? 'Uploading...' : logoUrl ? 'Change logo' : 'Upload logo'}
+                  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={logoUploading} />
+                </label>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>PNG, JPG, SVG or WebP · Max 5 MB</div>
+                {logoUrl && (
+                  <button onClick={async () => {
+                    if (!userId) return
+                    await supabase.from('profiles').update({ logo_url: null }).eq('id', userId)
+                    setLogoUrl(null)
+                    flash('Logo removed')
+                  }} style={{ marginTop: 6, background: 'none', border: 'none', color: '#DC2626', fontSize: 12, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                    Remove logo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
           <Field label="Company name" value={values.companyName} onChange={set('companyName')} required />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <Field label="Phone" value={values.phone} onChange={set('phone')} placeholder="+1 (555) 000-0000" />
