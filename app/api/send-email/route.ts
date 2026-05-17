@@ -28,10 +28,7 @@ export async function POST(request: NextRequest) {
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
   const { data: prof } = await supabase.from('profiles')
-    .select('company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url').eq('id', est.user_id).single()
-  console.log('prof user_id:', est.user_id)
-  console.log('prof result:', JSON.stringify(prof))
-  console.log('service key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    .select('company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url').eq('id', est.user_id).single()
 
   if (type === 'invoice') {
     if (!invoice) {
