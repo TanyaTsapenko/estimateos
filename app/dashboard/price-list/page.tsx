@@ -128,7 +128,7 @@ export default function PriceListPage() {
       <div style={{
         background: '#fff',
         borderBottom: '1px solid #EEF0F4',
-        padding: '16px 20px',
+        padding: '16px 28px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -137,24 +137,17 @@ export default function PriceListPage() {
         paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
         zIndex: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => router.back()} style={{
-            width: 32, height: 32, background: '#F5F6F8', border: 'none',
-            borderRadius: 8, cursor: 'pointer', fontSize: 16, color: '#64748B',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>←</button>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
-          </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
         </div>
         <button
           onClick={save}
           disabled={saving}
           style={{
-            padding: '9px 20px', borderRadius: 10, border: 'none',
+            padding: '8px 16px', borderRadius: 10, border: 'none',
             background: saved ? '#059669' : saving ? '#CBD5E1' : '#2563EB',
-            color: '#fff', fontSize: 14, fontWeight: 600,
+            color: '#fff', fontSize: 13, fontWeight: 600,
             cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
             transition: 'background .2s',
           }}

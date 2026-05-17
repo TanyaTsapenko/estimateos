@@ -880,26 +880,8 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
 
 function PriceListSection() {
   const router = useRouter()
-  return (
-    <div style={{ padding: '24px 0' }}>
-      <SectionHeader
-        kicker="BUSINESS"
-        title="Price List"
-        subtitle="Manage your opening types and rates."
-      />
-      <div style={{ marginTop: 24, textAlign: 'center', padding: '40px 24px', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0' }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>💰</div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Price List</div>
-        <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 20 }}>Manage your window and door types, base prices, and labour rates.</div>
-        <button
-          onClick={() => router.push('/dashboard/price-list')}
-          style={{ padding: '10px 24px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-        >
-          Open Price List →
-        </button>
-      </div>
-    </div>
-  )
+  useEffect(() => { router.replace('/dashboard/price-list') }, [])
+  return null
 }
 
 function BillingSection({ flash }: { flash: (m: string) => void }) {
