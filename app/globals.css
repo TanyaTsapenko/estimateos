@@ -792,6 +792,7 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   /* ── APPOINTMENTS ── */
   .appts-body { padding: 16px 14px 90px !important; }
   .appt-edit-datetime { grid-template-columns: 1fr !important; }
+  .appt-new-desktop { display: none !important; }
 
   /* ── ESTIMATES LIST ── */
   .est-topbar-meta { display: none !important; }

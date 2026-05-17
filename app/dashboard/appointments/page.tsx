@@ -103,11 +103,11 @@ export default function AppointmentsPage() {
   }
   const future = filtered.filter(a => a.appointment_date > todayStr)
   const todayAppts = filtered.filter(a => a.appointment_date === todayStr)
-  const past = filtered.filter(a => a.appointment_date < todayStr).reverse()
+  const past = filtered.filter(a => a.appointment_date < todayStr)
   const groups = [
     ...buildDateGroups(future),
     ...buildDateGroups(todayAppts),
-    ...buildDateGroups(past),
+    ...buildDateGroups(past).reverse(),
   ]
 
   const todayCount = appointments.filter(a => a.appointment_date === todayStr).length
@@ -270,12 +270,12 @@ export default function AppointmentsPage() {
 
         <div style={{ display: 'flex', gap: 8, padding: '12px 16px', borderTop: '1px solid #EEF0F4' }}>
           {appt.client_phone && (
-            <a href={`tel:${appt.client_phone}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#EFF6FF', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#2563EB', textDecoration: 'none' }}>
+            <a href={`tel:${appt.client_phone}`} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: appt.status === 'completed' ? '#F1F5F9' : '#EFF6FF', borderRadius: 9, fontSize: 12, fontWeight: 600, color: appt.status === 'completed' ? '#94A3B8' : '#2563EB', textDecoration: 'none', opacity: appt.status === 'completed' ? 0.7 : 1 }}>
               <Phone size={14} strokeWidth={1.7} /> Call
             </a>
           )}
           {appt.client_address && (
-            <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: '#F0FDF4', borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#0F8A6B', textDecoration: 'none' }}>
+            <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`} target="_blank" rel="noreferrer" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px 0', background: appt.status === 'completed' ? '#F1F5F9' : '#F0FDF4', borderRadius: 9, fontSize: 12, fontWeight: 600, color: appt.status === 'completed' ? '#94A3B8' : '#0F8A6B', textDecoration: 'none', opacity: appt.status === 'completed' ? 0.7 : 1 }}>
               <MapPin size={14} strokeWidth={1.7} /> Map
             </a>
           )}
@@ -353,6 +353,7 @@ export default function AppointmentsPage() {
             {todayCount} today{newLeads > 0 ? ` · ${newLeads} new lead${newLeads > 1 ? 's' : ''}` : ''}
           </span>
           <button
+            className="appt-new-desktop"
             onClick={() => router.push('/dashboard/appointments/new')}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             + New
