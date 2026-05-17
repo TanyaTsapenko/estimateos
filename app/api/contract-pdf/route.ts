@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms')
+    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url')
     .eq('id', user.id)
     .single()
 
@@ -102,6 +102,13 @@ ${paragraphs.length > 0 ? `
     <div class="sig-line"></div>
     <div class="sig-label">Client signature, printed name &amp; date</div>
   </div>
+</div>` : ''}
+
+${(prof as any)?.signature_url ? `
+<div style="margin-top:40px;padding-top:20px;border-top:1px solid #E2E8F0">
+  <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Authorized by</div>
+  <img src="${(prof as any).signature_url}" style="max-height:50px;max-width:180px;object-fit:contain" alt="Contractor signature" />
+  <div style="font-size:12px;color:#475569;margin-top:6px">${companyName || ''}</div>
 </div>` : ''}
 
 <div class="footer">
