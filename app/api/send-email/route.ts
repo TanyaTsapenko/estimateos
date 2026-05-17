@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
   console.log('user_id type:', typeof est.user_id, 'value:', JSON.stringify(est.user_id))
-  const { data: profArr } = await supabase.from('profiles').select('id, company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url')
+  const { data: profArr } = await supabase.from('profiles').select('id, company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url').limit(100)
   const prof = profArr?.find(p => p.id === est.user_id) || null
   console.log('ids compare:', profArr?.map(p => p.id === est.user_id), profArr?.map(p => p.id.length), est.user_id.length)
   console.log('prof found:', JSON.stringify(prof))
