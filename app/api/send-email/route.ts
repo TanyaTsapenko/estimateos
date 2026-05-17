@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
   const { data: est } = await supabase.from('estimates').select('*').eq('id', estimateId).single()
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
+  console.log('user_id type:', typeof est.user_id, 'value:', JSON.stringify(est.user_id))
   const { data: prof } = await supabase.from('profiles')
     .select('company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url')
     .eq('id', est.user_id.trim())
