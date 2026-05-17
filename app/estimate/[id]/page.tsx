@@ -54,8 +54,10 @@ export default function ClientEstimatePage() {
       ])
       setEstimate(est); setSelectedTier(est.tier || 'better')
       setOpenings(ops || []); setProfile(prof)
-      if ((est.sent_method === 'email_estimate_contract' || est.sent_method === 'email_contract') && prof?.contract_pdf_url) {
-        setScreen('contract')
+      if (est.sent_method === 'email_estimate_contract') {
+        setScreen(prof?.contract_pdf_url ? 'contract' : 'summary')
+      } else if (est.sent_method === 'email_contract') {
+        setScreen(prof?.contract_pdf_url ? 'contract' : 'sign')
       }
     }
     load()
@@ -285,7 +287,7 @@ export default function ClientEstimatePage() {
 
   // ── CONTRACT SCREEN ───────────────────────────
   if (screen === 'contract') {
-    const nextScreen: Screen = estimate.sent_method === 'email_contract' ? 'sign' : 'view'
+    const nextScreen: Screen = estimate.sent_method === 'email_contract' ? 'sign' : 'summary'
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div className="gh">
@@ -334,16 +336,18 @@ export default function ClientEstimatePage() {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div className="gh">
           <div className="h-top">
-            <button onClick={() => setScreen('view')}
-              style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              ←
-            </button>
+            {estimate.sent_method !== 'email_estimate_contract' && (
+              <button onClick={() => setScreen('view')}
+                style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ←
+              </button>
+            )}
             <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
           </div>
           <div className="h-title">
             <div className="h-eye">{estimate.estimate_number} · {tierLabel} Package</div>
             <div className="h-big">Order Summary</div>
-            <div className="h-sub">Review before signing</div>
+            <div className="h-sub">{estimate.sent_method === 'email_estimate_contract' ? 'Review and sign below' : 'Review before signing'}</div>
           </div>
         </div>
 
@@ -458,16 +462,45 @@ export default function ClientEstimatePage() {
             </div>
           )}
 
-          {/* CTA */}
-          <div style={{ marginTop: 20 }}>
-            <button className="gen-btn" onClick={() => setScreen('sign')}
+          {/* Contract note for estimate+contract sends */}
+          {estimate.sent_method === 'email_estimate_contract' && (
+            <div style={{ marginTop: 16, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10, fontSize: 11, color: '#6b7280', lineHeight: 1.7 }}>
+              ✅ Contract reviewed and accepted.
+              {profile?.contract_pdf_url && (
+                <a href={profile.contract_pdf_url} target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#2045B8', marginLeft: 6, textDecoration: 'none' }}>
+                  Review contract again →
+                </a>
+              )}
+            </div>
+          )}
+
+          {/* Signature pad */}
+          {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginTop: 20, marginBottom: 6 }}>Your signature</div>
+          <div className="sig-wrap" style={{ marginBottom: 14 }}>
+            <canvas ref={canvasRef} width={354} height={140} className="sig-canvas"
+              onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
+              onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
+            {!hasSignature && (
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 12, color: '#C8C8C8', pointerEvents: 'none', textAlign: 'center' }}>
+                Sign here with your finger
+              </div>
+            )}
+            <button className="sig-clear" onClick={clearCanvas}>Clear</button>
+          </div>
+
+          <div style={{ marginTop: 4 }}>
+            <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}
               style={{ marginBottom: 10 }}>
-              ✍️ Sign &amp; Approve — {fmtCAD(pricing.total)} →
+              {saving ? '⏳ Processing...' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
             </button>
-            <button onClick={() => setScreen('view')}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '10px 0', cursor: 'pointer' }}>
-              ← Change package
-            </button>
+            {estimate.sent_method !== 'email_estimate_contract' && (
+              <button onClick={() => setScreen('view')}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '10px 0', cursor: 'pointer' }}>
+                ← Change package
+              </button>
+            )}
             <button onClick={declineEstimate}
               style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc262640', fontSize: 12, padding: '6px 0', cursor: 'pointer' }}>
               Decline this estimate
