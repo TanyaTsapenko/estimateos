@@ -961,30 +961,19 @@ function BillingSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function InvoicesSection() {
-  const invoices = [
-    { id: 'INV-2026-05', date: 'May 1, 2026', amount: 'CA$149.00', status: 'paid' },
-    { id: 'INV-2026-04', date: 'Apr 1, 2026', amount: 'CA$149.00', status: 'paid' },
-    { id: 'INV-2026-03', date: 'Mar 1, 2026', amount: 'CA$149.00', status: 'paid' },
-  ]
   return (
     <div>
       <SectionHeader kicker="BILLING" title="Invoices" subtitle="Your subscription billing history." />
       <Card padding={0}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 80px 40px' }}>
-          {['INVOICE', 'DATE', 'AMOUNT', 'STATUS', ''].map(h => (
-            <div key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', borderBottom: '1px solid #EEF0F4' }}>{h}</div>
-          ))}
-          {invoices.map((inv, i) => (
-            <>
-              <div key={`id${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#2563EB' }}>{inv.id}</div>
-              <div key={`d${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, color: '#475569' }}>{inv.date}</div>
-              <div key={`a${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{inv.amount}</div>
-              <div key={`s${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none' }}><Pill tone="green">{inv.status}</Pill></div>
-              <div key={`dl${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 0, display: 'flex' }}><SIcon name="download" size={14} /></button>
-              </div>
-            </>
-          ))}
+        <div style={{ overflowX: 'auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 80px 48px', minWidth: 420 }}>
+            {['INVOICE', 'DATE', 'AMOUNT', 'STATUS', ''].map(h => (
+              <div key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', borderBottom: '1px solid #EEF0F4' }}>{h}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#94A3B8' }}>
+          No invoices yet.
         </div>
       </Card>
     </div>
