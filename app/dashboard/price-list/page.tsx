@@ -7,6 +7,7 @@ import { OPENING_TYPES, DEFAULT_SIZE_MULTS, fmtCAD } from '@/lib/pricing'
 
 interface PriceRow { base: number; lab: number }
 interface Sizes { sm: number; md: number; lg: number; xl: number }
+interface CustomType { key: string; label: string; base: number; lab: number }
 
 const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
   Object.entries(OPENING_TYPES).map(([k, v]) => [k, { base: v.base, lab: v.lab }])
@@ -22,6 +23,9 @@ export default function PriceListPage() {
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [customTypes, setCustomTypes] = useState<CustomType[]>([])
+  const [newLabel, setNewLabel] = useState('')
+  const [deletedCustomKeys, setDeletedCustomKeys] = useState<string[]>([])
 
   useEffect(() => {
     async function load() {
@@ -32,10 +36,12 @@ export default function PriceListPage() {
         const sizesRow = data.find(r => r.opening_type === '_sizes')
         if (sizesRow) setSizes({ sm: sizesRow.sz_sm, md: sizesRow.sz_md, lg: sizesRow.sz_lg, xl: sizesRow.sz_xl })
         const loaded: Record<string, PriceRow> = { ...DEFAULT_PRICES }
-        data.filter(r => r.opening_type !== '_sizes').forEach(r => {
+        data.filter(r => r.opening_type !== '_sizes' && !r.custom_label).forEach(r => {
           loaded[r.opening_type] = { base: r.base_price, lab: r.labour_price }
         })
         setPrices(loaded)
+        const customRows = data.filter(r => r.opening_type !== '_sizes' && r.custom_label)
+        setCustomTypes(customRows.map(r => ({ key: r.opening_type, label: r.custom_label, base: r.base_price, lab: r.labour_price })))
       }
       setLoading(false)
     }
@@ -47,6 +53,11 @@ export default function PriceListPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
+    if (deletedCustomKeys.length > 0) {
+      await supabase.from('price_lists').delete().eq('user_id', user.id).in('opening_type', deletedCustomKeys)
+      setDeletedCustomKeys([])
+    }
+
     const rows = [
       {
         user_id: user.id, opening_type: '_sizes',
@@ -57,6 +68,14 @@ export default function PriceListPage() {
       ...Object.entries(prices).map(([type, p]) => ({
         user_id: user.id, opening_type: type,
         base_price: p.base, labour_price: p.lab,
+        sz_sm: DEFAULT_SIZE_MULTS.sm, sz_md: DEFAULT_SIZE_MULTS.md,
+        sz_lg: DEFAULT_SIZE_MULTS.lg, sz_xl: DEFAULT_SIZE_MULTS.xl,
+        updated_at: new Date().toISOString(),
+      })),
+      ...customTypes.map(ct => ({
+        user_id: user.id, opening_type: ct.key,
+        base_price: ct.base, labour_price: ct.lab,
+        custom_label: ct.label,
         sz_sm: DEFAULT_SIZE_MULTS.sm, sz_md: DEFAULT_SIZE_MULTS.md,
         sz_lg: DEFAULT_SIZE_MULTS.lg, sz_xl: DEFAULT_SIZE_MULTS.xl,
         updated_at: new Date().toISOString(),
@@ -200,6 +219,54 @@ export default function PriceListPage() {
               </div>
             )
           })}
+
+          {/* Custom Types */}
+          <div style={{ marginTop: 24, marginBottom: 16 }}>
+            <div className="sl">Custom Types</div>
+
+            {customTypes.map((ct, i) => (
+              <div key={ct.key} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, background: '#fff', borderRadius: 10, padding: '12px 14px', border: '1px solid #E2E8F0' }}>
+                <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{ct.label}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, color: '#94A3B8' }}>Base</span>
+                  <input type="number" value={ct.base} onChange={e => setCustomTypes(prev => prev.map((t, j) => j === i ? { ...t, base: Number(e.target.value) } : t))}
+                    style={{ width: 80, padding: '5px 8px', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 13, fontFamily: 'inherit' }} />
+                  <span style={{ fontSize: 11, color: '#94A3B8' }}>Labour</span>
+                  <input type="number" value={ct.lab} onChange={e => setCustomTypes(prev => prev.map((t, j) => j === i ? { ...t, lab: Number(e.target.value) } : t))}
+                    style={{ width: 80, padding: '5px 8px', border: '1px solid #E2E8F0', borderRadius: 6, fontSize: 13, fontFamily: 'inherit' }} />
+                  <button
+                    onClick={() => {
+                      setDeletedCustomKeys(prev => [...prev, ct.key])
+                      setCustomTypes(prev => prev.filter((_, j) => j !== i))
+                    }}
+                    style={{ background: '#FEF2F2', border: 'none', borderRadius: 6, padding: '5px 8px', color: '#DC2626', cursor: 'pointer', fontSize: 12 }}>✕</button>
+                </div>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <input
+                placeholder="e.g. Skylight, Garden Window..."
+                value={newLabel}
+                onChange={e => setNewLabel(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && newLabel.trim()) {
+                    setCustomTypes(prev => [...prev, { key: 'custom_' + Date.now(), label: newLabel.trim(), base: 500, lab: 200 }])
+                    setNewLabel('')
+                  }
+                }}
+                style={{ flex: 1, padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+              />
+              <button
+                onClick={() => {
+                  if (!newLabel.trim()) return
+                  setCustomTypes(prev => [...prev, { key: 'custom_' + Date.now(), label: newLabel.trim(), base: 500, lab: 200 }])
+                  setNewLabel('')
+                }}
+                style={{ padding: '10px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >+ Add</button>
+            </div>
+          </div>
 
           <button className="gen-btn" onClick={save} disabled={saving} style={{ marginBottom: 10 }}>
             {saving ? '⏳ Saving...' : '💾 Save Price List'}

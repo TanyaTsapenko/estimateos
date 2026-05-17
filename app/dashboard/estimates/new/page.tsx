@@ -19,7 +19,11 @@ const OPENING_ICONS: Record<string, React.ReactNode> = {
   door_int:   <DoorClosed size={16} strokeWidth={1.5} color="#6B7280" />,
 }
 
-function OpeningTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function OpeningTypeSelect({ value, onChange, customOpeningTypes }: {
+  value: string
+  onChange: (v: string) => void
+  customOpeningTypes?: Record<string, { label: string; base: number; lab: number }>
+}) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -30,6 +34,7 @@ function OpeningTypeSelect({ value, onChange }: { value: string; onChange: (v: s
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
+  const customEntries = customOpeningTypes ? Object.entries(customOpeningTypes) : []
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
@@ -42,8 +47,8 @@ function OpeningTypeSelect({ value, onChange }: { value: string; onChange: (v: s
           fontSize: 13, color: 'var(--jet)', textAlign: 'left',
         }}
       >
-        {OPENING_ICONS[value]}
-        <span style={{ flex: 1 }}>{OPENING_TYPES[value]?.name || value}</span>
+        {OPENING_ICONS[value] || <span style={{ fontSize: 14, width: 16, display: 'inline-block', textAlign: 'center' }}>⬜</span>}
+        <span style={{ flex: 1 }}>{OPENING_TYPES[value]?.name || customOpeningTypes?.[value]?.label || value}</span>
         <span style={{ fontSize: 10, color: '#94A3B8' }}>▾</span>
       </button>
       {open && (
@@ -69,6 +74,30 @@ function OpeningTypeSelect({ value, onChange }: { value: string; onChange: (v: s
               {v.name}
             </button>
           ))}
+          {customEntries.length > 0 && (
+            <>
+              <div style={{ padding: '6px 12px 4px', fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '.06em', textTransform: 'uppercase', borderTop: '1px solid #F1F5F9' }}>
+                Custom
+              </div>
+              {customEntries.map(([k, v]) => (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => { onChange(k); setOpen(false) }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px', border: 'none',
+                    background: k === value ? 'rgba(37,99,235,.07)' : '#fff',
+                    cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                    color: 'var(--jet)', textAlign: 'left',
+                  }}
+                >
+                  <span style={{ fontSize: 14, width: 16, display: 'inline-block', textAlign: 'center' }}>⬜</span>
+                  {v.label}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -124,6 +153,7 @@ function NewEstimateForm() {
   const [tier, setTier] = useState('better')
   const [profile, setProfile] = useState<{ province: string } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
+  const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, { label: string; base: number; lab: number }>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -165,6 +195,11 @@ function NewEstimateForm() {
             : { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 },
           types,
         })
+        const customTypesMap: Record<string, { label: string; base: number; lab: number }> = {}
+        priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
+          customTypesMap[r.opening_type] = { label: r.custom_label, base: r.base_price, lab: r.labour_price }
+        })
+        setCustomOpeningTypes(customTypesMap)
       }
     })
   }, [])
@@ -265,7 +300,7 @@ function NewEstimateForm() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="op-badge">{idx + 1}</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>
-              {OPENING_TYPES[op.type]?.name || 'Opening'}
+              {OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || 'Opening'}
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -283,7 +318,7 @@ function NewEstimateForm() {
 
         <div className="r2" style={{ marginBottom: 8 }}>
           <div className="f"><label>Type</label>
-            <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} /></div>
+            <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} /></div>
           <div className="f"><label>Qty</label>
             <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
               {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
@@ -497,7 +532,7 @@ function NewEstimateForm() {
               <div className="sum-box">
                 {openings.map(op => (
                   <div key={op.id} className="sum-row">
-                    <span>{OPENING_TYPES[op.type]?.name} × {op.qty}</span>
+                    <span>{(OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type)} × {op.qty}</span>
                     <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
                   </div>
                 ))}
