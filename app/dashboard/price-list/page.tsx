@@ -218,7 +218,7 @@ export default function PriceListPage() {
                     }}
                   >
                     <OpeningIcon typeKey={key} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{def.name}</div>
                       {isCustom && (
                         <div style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', letterSpacing: '.06em', textTransform: 'uppercase' }}>Custom</div>
@@ -300,7 +300,7 @@ export default function PriceListPage() {
                       }}
                     >
                       <OpeningIcon typeKey={ct.key} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                         <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{ct.label}</div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
