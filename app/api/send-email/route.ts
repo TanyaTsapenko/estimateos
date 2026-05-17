@@ -9,10 +9,6 @@ export async function POST(request: NextRequest) {
   const { estimateId: rawEstimateId, invoiceId, type, sendMode } = await request.json()
 
   const supabase = createServiceClient()
-  const { data: testData, error: testError } = await supabase.from('profiles').select('id, company_name').limit(3)
-  console.log('test all profiles:', JSON.stringify(testData), 'error:', JSON.stringify(testError))
-  console.log('supabase url:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0,30))
-  console.log('service key prefix:', process.env.SUPABASE_SERVICE_ROLE_KEY?.slice(0,20))
   let estimateId = rawEstimateId
   let invoice: any = null
   let openings: any[] = []
@@ -28,12 +24,34 @@ export async function POST(request: NextRequest) {
   const { data: est } = await supabase.from('estimates').select('*').eq('id', estimateId).single()
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
-  console.log('user_id type:', typeof est.user_id, 'value:', JSON.stringify(est.user_id))
-  const { data: profArr, error: profErr } = await supabase.from('profiles').select('id, company_name, phone, city, province, logo_url, deposit_pct, contract_pdf_url, signature_url').limit(3)
-  console.log('profArr:', JSON.stringify(profArr), 'profErr:', JSON.stringify(profErr))
-  const prof = profArr?.find(p => p.id === est.user_id) || null
-  console.log('ids compare:', profArr?.map(p => p.id === est.user_id), profArr?.map(p => p.id.length), est.user_id.length)
-  console.log('prof found:', JSON.stringify(prof))
+  const cleanUserId = (est.user_id ?? '')
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/[^\x20-\x7E]/g, '')
+
+  const { data: profiles, error: profError } = await supabase
+    .from('profiles')
+    .select('*')
+
+  if (profError) {
+    console.error('Error fetching profiles:', profError)
+    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
+  }
+
+  const prof = (profiles ?? []).find(p => {
+    const cleanProfileId = (p.id ?? '')
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^\x20-\x7E]/g, '')
+    return cleanProfileId === cleanUserId
+  }) ?? null
+
+  if (!prof) {
+    console.error('Profile not found. cleanUserId:', JSON.stringify(cleanUserId))
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  }
 
   if (type === 'invoice') {
     if (!invoice) {
