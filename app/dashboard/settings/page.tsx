@@ -701,17 +701,19 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [contractFileName, setContractFileName] = useState<string>('')
   const [uploading, setUploading] = useState(false)
   const pdfInputRef = useRef<HTMLInputElement>(null)
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      supabase.from('profiles').select('contract_pdf_url, contract_intro, contract_terms, contract_require_sign, contract_show_licence').eq('id', data.user.id).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('contract_pdf_url, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url').eq('id', data.user.id).single().then(({ data: prof }) => {
         if (prof?.contract_pdf_url) {
           setContractPdfUrl(prof.contract_pdf_url)
           const parts = prof.contract_pdf_url.split('/')
           setContractFileName(decodeURIComponent(parts[parts.length - 1]))
         }
+        if ((prof as any)?.signature_url) setSignatureUrl((prof as any).signature_url)
         const loaded = {
           intro: (prof as any)?.contract_intro ?? CONTRACT_DEFAULTS.intro,
           terms: (prof as any)?.contract_terms ?? CONTRACT_DEFAULTS.terms,
@@ -762,6 +764,22 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     flash('Contract PDF removed')
   }
 
+  async function handleSignatureUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']
+    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG or WebP allowed'); return }
+    if (file.size > 2 * 1024 * 1024) { flash('File must be under 2 MB'); return }
+    const path = `${userId}/signature.png`
+    const { error } = await supabase.storage.from('signatures').upload(path, file, { upsert: true, contentType: file.type })
+    if (error) { flash('Upload failed'); return }
+    const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path)
+    const url = urlData.publicUrl + '?t=' + Date.now()
+    await supabase.from('profiles').update({ signature_url: url }).eq('id', userId)
+    setSignatureUrl(url)
+    flash('Signature saved')
+  }
+
   return (
     <div>
       <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Template shown on every estimate PDF." />
@@ -788,6 +806,44 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
               <div style={{ fontSize: 12, color: '#94A3B8' }}>PDF only · Max 10 MB</div>
             </button>
           )}
+        </Card>
+        <Card>
+          <SectionLabel>Contractor Signature</SectionLabel>
+          <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
+            Appears on all estimate PDFs sent to clients.
+          </p>
+          <div style={{
+            background: '#F8FAFC', border: '1px dashed #E2E8F0',
+            borderRadius: 12, padding: 16, minHeight: 80,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 12,
+          }}>
+            {signatureUrl
+              ? <img src={signatureUrl} alt="Signature" style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain' }} />
+              : <span style={{ fontSize: 13, color: '#CBD5E1' }}>No signature uploaded</span>
+            }
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <label style={{
+              flex: 1, textAlign: 'center', padding: '10px',
+              background: '#2563EB', color: '#fff', borderRadius: 8,
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'block',
+            }}>
+              {signatureUrl ? 'Change signature' : 'Upload signature'}
+              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={handleSignatureUpload} />
+            </label>
+            {signatureUrl && (
+              <button onClick={async () => {
+                if (!userId) return
+                await supabase.from('profiles').update({ signature_url: null }).eq('id', userId)
+                setSignatureUrl(null)
+                flash('Signature removed')
+              }} style={{
+                padding: '10px 16px', background: '#FEF2F2', border: '1px solid #FECACA',
+                color: '#DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
+              }}>Remove</button>
+            )}
+          </div>
         </Card>
         <Card>
           <SectionLabel>Intro paragraph</SectionLabel>
