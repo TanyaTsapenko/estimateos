@@ -111,6 +111,8 @@ export default function EstimateDetailPage() {
   }
 
   async function duplicateEstimate() {
+    console.log('duplicate clicked')
+    alert('duplicate clicked')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !estimate) return
     const { data: newEst } = await supabase.from('estimates').insert({
