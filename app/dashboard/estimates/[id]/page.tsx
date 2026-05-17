@@ -111,49 +111,38 @@ export default function EstimateDetailPage() {
   }
 
   async function duplicateEstimate() {
-    try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      if (userError) { alert('AUTH ERROR: ' + JSON.stringify(userError)); return }
-      if (!user) { alert('NO USER: not logged in'); return }
-      if (!estimate) { alert('NO ESTIMATE: estimate state is null'); return }
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user || !estimate) return
 
-      const { data: newEst, error: insertError } = await supabase.from('estimates').insert({
-        user_id: user.id,
-        client_name: estimate.client_name,
-        client_email: estimate.client_email,
-        client_phone: estimate.client_phone,
-        client_address: estimate.client_address,
-        client_province: estimate.client_province,
-        tier: estimate.tier,
-        status: 'draft',
-        subtotal: estimate.subtotal,
-        tax_rate: estimate.tax_rate,
-        tax_amount: estimate.tax_amount,
-        total: estimate.total,
-        scope_notes: estimate.scope_notes,
-      }).select().single()
+    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
 
-      if (insertError) { alert('INSERT ESTIMATE ERROR: ' + JSON.stringify(insertError)); return }
-      if (!newEst) { alert('INSERT ESTIMATE: no data returned (newEst is null)'); return }
+    const { data: newEst } = await supabase.from('estimates').insert({
+      user_id: user.id,
+      estimate_number: num,
+      client_name: estimate.client_name,
+      client_email: estimate.client_email,
+      client_phone: estimate.client_phone,
+      client_address: estimate.client_address,
+      client_province: estimate.client_province,
+      tier: estimate.tier,
+      status: 'draft',
+      subtotal: estimate.subtotal,
+      tax_rate: estimate.tax_rate,
+      tax_amount: estimate.tax_amount,
+      total: estimate.total,
+      scope_notes: estimate.scope_notes,
+    }).select().single()
 
-      alert('New estimate created: ' + newEst.id)
-
-      const { data: openings, error: openingsError } = await supabase.from('estimate_openings')
+    if (newEst) {
+      const { data: openings } = await supabase.from('estimate_openings')
         .select('*').eq('estimate_id', estimate.id)
-      if (openingsError) { alert('FETCH OPENINGS ERROR: ' + JSON.stringify(openingsError)); return }
-
-      alert('Openings fetched: ' + (openings?.length ?? 0))
-
       if (openings?.length) {
-        const { error: copyError } = await supabase.from('estimate_openings').insert(
+        await supabase.from('estimate_openings').insert(
           openings.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
         )
-        if (copyError) { alert('COPY OPENINGS ERROR: ' + JSON.stringify(copyError)); return }
       }
-
       router.push(`/dashboard/estimates/${newEst.id}`)
-    } catch (e: any) {
-      alert('UNEXPECTED ERROR: ' + (e?.message || JSON.stringify(e)))
     }
   }
 
