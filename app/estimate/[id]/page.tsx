@@ -512,6 +512,7 @@ export default function ClientEstimatePage() {
   }
 
   // ── MAIN VIEW (tier selection) ─────────────────
+  const viewTierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
@@ -570,7 +571,7 @@ export default function ClientEstimatePage() {
         )}
 
         <div className="sum-box" style={{ marginTop: 12 }}>
-          <div className="sum-row"><span>Subtotal</span><span>{fmtCAD(pricing.rawSubtotal)}</span></div>
+          <div className="sum-row"><span>Subtotal ({viewTierLabel})</span><span>{fmtCAD(pricing.rawSubtotal)}</span></div>
           {pricing.discountAmt > 0 && (
             <div className="sum-row" style={{ color: '#16a34a' }}>
               <span>Discount</span><span>−{fmtCAD(pricing.discountAmt)}</span>
@@ -590,7 +591,7 @@ export default function ClientEstimatePage() {
         )}
 
         <button className="gen-btn" onClick={() => setScreen('summary')}>
-          Review &amp; Approve {selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} — {fmtCAD(pricing.total)} →
+          Continue to {viewTierLabel} — {fmtCAD(pricing.total)} →
         </button>
 
         <button onClick={declineEstimate}
