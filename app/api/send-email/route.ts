@@ -284,9 +284,9 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const bodyText = isContractOnly
       ? `<strong style="color:#0A1628">${companyName}</strong> has sent you a contract to review and sign.`
       : isEstimateContract
-        ? `<strong style="color:#0A1628">${companyName}</strong> has sent you an estimate and contract. Please review the contract first, then review the estimate and sign.`
+        ? `<strong style="color:#0A1628">${companyName}</strong> has prepared an estimate and contract for your project. Review the pricing and sign online &mdash; it takes less than a minute.`
         : `<strong style="color:#0A1628">${companyName}</strong> has prepared an estimate for your project. Review the details and sign online &mdash; it takes less than a minute.`
-    const btnText = isContractOnly ? 'Review &amp; Sign Contract &rarr;' : isEstimateContract ? 'View Contract &amp; Estimate &rarr;' : 'View &amp; Sign Estimate &rarr;'
+    const btnText = isContractOnly ? 'Review &amp; Sign Contract &rarr;' : isEstimateContract ? 'Review Estimate &amp; Contract &rarr;' : 'View &amp; Sign Estimate &rarr;'
     const tierLabel = (est.tier || 'better').toUpperCase()
 
     html = outerWrap(`
@@ -319,14 +319,6 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
           </td></tr>
         </table>
 
-        ${(isContractOnly || isEstimateContract) && contractPdfUrl ? `
-        <!-- Contract PDF Link -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};margin-bottom:10px">
-          <tr><td style="padding:14px 16px">
-            <div style="font-size:13px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif;margin-bottom:4px">📄 Contract PDF</div>
-            <a href="${contractPdfUrl}" style="font-size:12px;color:#2563EB;font-family:Arial,sans-serif">View contract PDF →</a>
-          </td></tr>
-        </table>` : ''}
 
         <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
 
