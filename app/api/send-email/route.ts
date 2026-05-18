@@ -324,6 +324,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 
       </td></tr>
 `)
+
   }
 
   try {

@@ -214,26 +214,33 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [values, setValues] = useState({ firstName: '', lastName: '', email: '', phone: '' })
   const [initial, setInitial] = useState({ firstName: '', lastName: '', email: '', phone: '' })
-  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = !!values.firstName && !!values.lastName && !!values.email
   const [userId, setUserId] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)   // persisted URL from DB
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)  // local blob preview
+  const [pendingFile, setPendingFile] = useState<File | null>(null)   // file waiting to upload
+  const [saving, setSaving] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const fieldsDirty = JSON.stringify(values) !== JSON.stringify(initial)
+  const dirty = fieldsDirty || pendingFile !== null
+  const valid = !!values.firstName && !!values.lastName && !!values.email
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      setValues(v => ({ ...v, email: user.email || '' }))
       if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url)
-      const { data: prof } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', user.id).single()
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('first_name, last_name, phone')
+        .eq('id', user.id)
+        .single()
       if (prof) {
         const loaded = {
-          firstName: prof.first_name || '',
-          lastName:  prof.last_name  || '',
-          email:     user.email      || '',
-          phone:     prof.phone      || '',
+          firstName: (prof as any).first_name || '',
+          lastName:  (prof as any).last_name  || '',
+          email:     user.email || '',
+          phone:     (prof as any).phone || '',
         }
         setValues(loaded)
         setInitial(loaded)
@@ -241,33 +248,100 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
     })
   }, [])
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || !userId) return
-    if (file.size > 5 * 1024 * 1024) { flash('Image must be under 5 MB'); return }
-    setAvatarUploading(true)
-    const path = `${userId}/avatar.jpg`
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { flash('Upload failed'); setAvatarUploading(false); return }
-    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
-    await supabase.auth.updateUser({ data: { avatar_url: url } })
-    setAvatarUrl(url)
-    setAvatarUploading(false)
-    flash('Avatar updated')
+    if (!file) return
+    if (!file.type.startsWith('image/')) { alert('Please select an image file'); return }
+    if (file.size > 5 * 1024 * 1024) { alert('Image must be under 5 MB'); return }
+    // Revoke previous blob URL to free memory
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    setPendingFile(file)
+    e.target.value = ''
   }
 
   async function saveProfile() {
-    if (!userId) return
-    await supabase.from('profiles').update({
-      first_name: values.firstName,
-      last_name:  values.lastName,
-      phone:      values.phone,
-    }).eq('id', userId)
-    setInitial({ ...values })
-    flash('Profile saved')
+    if (!userId || saving) return
+    setSaving(true)
+    try {
+      // 1. Upload avatar if a new file was selected
+      if (pendingFile) {
+        const ext = pendingFile.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const path = `${userId}/avatar.${ext}`
+        const { error: uploadErr } = await supabase.storage
+          .from('avatars')
+          .upload(path, pendingFile, { upsert: true, contentType: pendingFile.type })
+        if (uploadErr) {
+          alert(`Avatar upload failed: ${uploadErr.message}`)
+          return
+        }
+        const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+        const finalUrl = `${publicUrl}?t=${Date.now()}`
+        const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: finalUrl } })
+        if (metaErr) {
+          alert(`Failed to save avatar: ${metaErr.message}`)
+          return
+        }
+        setAvatarUrl(finalUrl)
+        if (previewUrl) URL.revokeObjectURL(previewUrl)
+        setPreviewUrl(null)
+        setPendingFile(null)
+      }
+
+      // 2. Save profile text fields
+      const { error: profileErr } = await supabase
+        .from('profiles')
+        .update({ first_name: values.firstName, last_name: values.lastName, phone: values.phone })
+        .eq('id', userId)
+      if (profileErr) {
+        alert(`Failed to save profile: ${profileErr.message}`)
+        return
+      }
+
+      setInitial({ ...values })
+      flash('Profile saved')
+    } catch (err: any) {
+      alert(`Unexpected error: ${err?.message || String(err)}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
+  async function removeAvatar() {
+    if (!userId) return
+    // If there's only a pending local file (not yet uploaded), just clear it
+    if (pendingFile) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+      setPendingFile(null)
+      return
+    }
+    // Delete from storage — extract path from the public URL
+    if (avatarUrl) {
+      try {
+        const parts = avatarUrl.split('/object/public/avatars/')
+        if (parts[1]) {
+          const storagePath = parts[1].split('?')[0]
+          await supabase.storage.from('avatars').remove([storagePath])
+        }
+      } catch {
+        // Storage delete failure is non-fatal — continue to clear metadata
+      }
+    }
+    const { error: metaErr } = await supabase.auth.updateUser({ data: { avatar_url: null } })
+    if (metaErr) { alert(`Failed to remove avatar: ${metaErr.message}`); return }
+    setAvatarUrl(null)
+    flash('Photo removed')
+  }
+
+  function handleDiscard() {
+    setValues({ ...initial })
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPendingFile(null)
+  }
+
+  const displayAvatar = previewUrl || avatarUrl
   const initials = `${values.firstName?.[0] || ''}${values.lastName?.[0] || ''}`.toUpperCase() || '?'
 
   return (
@@ -275,37 +349,65 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
       <SectionHeader kicker="ACCOUNT" title="Profile" subtitle="Your personal information and avatar." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
-          {/* Avatar */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          {/* Avatar with camera badge */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 24, gap: 10 }}>
             <div style={{ position: 'relative', width: 80, height: 80 }}>
-              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleFileSelect}
+              />
               <div
-                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                onClick={() => avatarInputRef.current?.click()}
                 style={{
                   width: 80, height: 80, borderRadius: '50%', background: '#2563EB',
-                  overflow: 'hidden', cursor: avatarUploading ? 'wait' : 'pointer',
+                  overflow: 'hidden', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
                 }}
               >
-                {avatarUrl
-                  ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px' }}>{initials}</span>
+                {displayAvatar
+                  ? <img src={displayAvatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700 }}>{initials}</span>
                 }
               </div>
+              {/* Camera badge — absolute bottom-right, flush with circle edge */}
               <div
-                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                onClick={() => avatarInputRef.current?.click()}
                 style={{
-                  position: 'absolute', bottom: 0, right: 0,
-                  width: 26, height: 26, borderRadius: '50%',
-                  background: '#fff', border: '2px solid #EEF0F4',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  border: '2px solid #EEF0F4',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  flexShrink: 0,
                 }}
               >
                 <Camera size={13} strokeWidth={2} color="#475569" />
               </div>
             </div>
+            {/* Remove link — only visible when a photo exists */}
+            {displayAvatar && (
+              <button
+                onClick={removeAvatar}
+                style={{
+                  background: 'none', border: 'none', padding: 0,
+                  fontSize: 12, color: '#DC2626', cursor: 'pointer',
+                  fontFamily: 'inherit', fontWeight: 600,
+                }}
+              >
+                Remove photo
+              </button>
+            )}
           </div>
 
           {/* Form fields */}
@@ -317,38 +419,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
           <Field label="Phone" value={values.phone} onChange={v => setValues(s => ({ ...s, phone: v }))} placeholder="+1 (555) 000-0000" />
         </Card>
       </div>
-
-      {/* Action buttons */}
-      <div style={{ marginTop: 24, background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => setValues({ ...initial })}
-            disabled={!dirty}
-            style={{
-              flex: 1, height: 48, borderRadius: 12, border: '1px solid #E2E8F0',
-              background: '#fff', color: dirty ? '#475569' : '#94A3B8',
-              fontSize: 14, fontWeight: 600, cursor: dirty ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-            }}
-          >
-            Discard
-          </button>
-          <button
-            onClick={saveProfile}
-            disabled={!dirty || !valid}
-            style={{
-              flex: 1, height: 48, borderRadius: 12, border: 'none',
-              background: '#2563EB', color: '#fff',
-              fontSize: 14, fontWeight: 600,
-              cursor: dirty && valid ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-              opacity: dirty && valid ? 1 : 0.5,
-            }}
-          >
-            Save changes
-          </button>
-        </div>
-      </div>
+      <SaveBar dirty={dirty} valid={valid && !saving} onSave={saveProfile} onDiscard={handleDiscard} />
     </div>
   )
 }

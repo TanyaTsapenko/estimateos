@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
 const INSTALL_LABELS: Record<string, string> = {
@@ -10,7 +11,11 @@ export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
+  // Use session client for estimate (public RLS allows it), service client for profile
+  // (profiles RLS requires auth.uid() = id, which may not be set in all contexts)
   const supabase = await createClient()
+  const svc = createServiceClient()
+
   const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
   if (!est) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -20,7 +25,7 @@ export async function GET(request: NextRequest) {
     .eq('estimate_id', id)
     .order('sort_order')
 
-  const { data: prof } = await supabase
+  const { data: prof } = await svc
     .from('profiles')
     .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_pct, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url')
     .eq('id', est.user_id)

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening } from '@/lib/pricing'
 
@@ -14,6 +14,7 @@ interface Estimate {
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
   logo_url: string | null; deposit_pct: number | null; contract_pdf_url: string | null
+  contract_terms: string | null
 }
 
 const TIERS = [
@@ -29,6 +30,8 @@ type Screen = 'view' | 'summary' | 'sign' | 'success' | 'declined' | 'already_si
 
 export default function ClientEstimatePage() {
   const { id } = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const isPreview = searchParams.get('view') === 'preview'
   const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [estimate, setEstimate] = useState<Estimate | null>(null)
@@ -39,6 +42,7 @@ export default function ClientEstimatePage() {
   const [hasSignature, setHasSignature] = useState(false)
   const [saving, setSaving] = useState(false)
   const [contractRead, setContractRead] = useState(false)
+  const [pdfLoaded, setPdfLoaded] = useState(false)
   const [error, setError] = useState('')
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
@@ -47,11 +51,14 @@ export default function ClientEstimatePage() {
     async function load() {
       const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
       if (!est) return
-      if (est.status === 'signed') { setEstimate(est); setScreen('already_signed'); return }
-      const [{ data: ops }, { data: prof }] = await Promise.all([
+      if (est.status === 'signed' && !isPreview) { setEstimate(est); setScreen('already_signed'); return }
+      // Fetch openings via anon client (public RLS) and profile via server API
+      // (profiles table has RLS: auth.uid() = id, which blocks anon clients)
+      const [{ data: ops }, profRes] = await Promise.all([
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_pdf_url').eq('id', (est as any).user_id).single(),
+        fetch(`/api/estimate-profile?estimateId=${id}`).then(r => r.ok ? r.json() : null),
       ])
+      const prof = profRes && !profRes.error ? profRes : null
       setEstimate(est); setSelectedTier(est.tier || 'better')
       setOpenings(ops || []); setProfile(prof)
       if (est.sent_method === 'email_estimate_contract') {
@@ -61,7 +68,7 @@ export default function ClientEstimatePage() {
       }
     }
     load()
-  }, [id])
+  }, [id, isPreview])
 
   // ── PRICING CALCULATIONS ──────────────────────
   function calcPricing(tierKey: string) {
@@ -159,9 +166,21 @@ export default function ClientEstimatePage() {
     </div>
   )
 
+  const previewBanner = isPreview ? (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 200, background: '#1E293B',
+      color: '#fff', padding: '10px 16px', fontSize: 12, fontWeight: 600,
+      display: 'flex', alignItems: 'center', gap: 8, letterSpacing: '.01em',
+    }}>
+      <span style={{ fontSize: 15 }}>👁️</span>
+      Preview Mode — This is how your client will see the estimate.
+    </div>
+  ) : null
+
   // ── ALREADY SIGNED ────────────────────────────
   if (screen === 'already_signed') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {previewBanner}
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done</div><div className="h-big">Already signed</div></div>
       </div>
@@ -178,6 +197,7 @@ export default function ClientEstimatePage() {
   // ── DECLINED ─────────────────────────────────
   if (screen === 'declined') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {previewBanner}
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">Declined</div><div className="h-big">No problem.</div></div>
       </div>
@@ -194,6 +214,7 @@ export default function ClientEstimatePage() {
   // ── SUCCESS ───────────────────────────────────
   if (screen === 'success') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {previewBanner}
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done!</div><div className="h-big">Signed! 🎉</div></div>
       </div>
@@ -213,6 +234,7 @@ export default function ClientEstimatePage() {
   // ── SIGN SCREEN ───────────────────────────────
   if (screen === 'sign') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {previewBanner}
       <div className="gh">
         <div className="h-top">
           <button onClick={() => setScreen(estimate.sent_method === 'email_contract' ? 'contract' : 'summary')}
@@ -262,8 +284,21 @@ export default function ClientEstimatePage() {
           </div>
         )}
 
+        {profile?.contract_pdf_url && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>Contract</div>
+            <iframe
+              src={`https://docs.google.com/gview?url=${encodeURIComponent(profile.contract_pdf_url)}&embedded=true`}
+              width="100%"
+              height={500}
+              style={{ borderRadius: 12, border: 'none', display: 'block' }}
+              title="Contract PDF"
+            />
+          </div>
+        )}
+
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 6 }}>Your signature</div>
-        <div className="sig-wrap" style={{ marginBottom: 14 }}>
+        <div className="sig-wrap" style={{ marginBottom: 14, pointerEvents: isPreview ? 'none' : undefined, opacity: isPreview ? 0.5 : 1 }}>
           <canvas ref={canvasRef} width={354} height={140} className="sig-canvas"
             onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
             onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
@@ -274,13 +309,15 @@ export default function ClientEstimatePage() {
           )}
           <button className="sig-clear" onClick={clearCanvas}>Clear</button>
         </div>
-        <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}>
+        <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature || isPreview}>
           {saving ? '⏳ Processing...' : estimate.sent_method === 'email_contract' ? '✅ I Agree — Sign Contract' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
         </button>
-        <button onClick={declineEstimate}
-          style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 8 }}>
-          {estimate.sent_method === 'email_contract' ? 'Decline' : 'Decline this estimate'}
-        </button>
+        {!isPreview && (
+          <button onClick={declineEstimate}
+            style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 8 }}>
+            {estimate.sent_method === 'email_contract' ? 'Decline' : 'Decline this estimate'}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -290,6 +327,7 @@ export default function ClientEstimatePage() {
     const nextScreen: Screen = estimate.sent_method === 'email_contract' ? 'sign' : 'summary'
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {previewBanner}
         <div className="gh">
           <div className="h-top">
             <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
@@ -303,7 +341,7 @@ export default function ClientEstimatePage() {
         <div className="card screen-enter">
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
             <iframe
-              src={profile?.contract_pdf_url || ''}
+              src={profile?.contract_pdf_url ? `https://docs.google.com/gview?url=${encodeURIComponent(profile.contract_pdf_url)}&embedded=true` : ''}
               style={{ width: '100%', height: 400, border: 'none', display: 'block' }}
               title="Contract PDF"
             />
@@ -315,7 +353,7 @@ export default function ClientEstimatePage() {
               I have read and agree to the contract terms and conditions presented by {profile?.company_name || 'the contractor'}.
             </span>
           </label>
-          <button className="gen-btn" disabled={!contractRead} onClick={() => setScreen(nextScreen)}>
+          <button className="gen-btn" disabled={!contractRead || isPreview} onClick={() => setScreen(nextScreen)}>
             {nextScreen === 'sign' ? 'Continue to Sign →' : 'Continue to Estimate →'}
           </button>
           {profile?.contract_pdf_url && (
@@ -334,6 +372,7 @@ export default function ClientEstimatePage() {
     const tierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {previewBanner}
         <div className="gh">
           <div className="h-top">
             {estimate.sent_method !== 'email_estimate_contract' && (
@@ -462,23 +501,59 @@ export default function ClientEstimatePage() {
             </div>
           )}
 
-          {/* Contract note for estimate+contract sends */}
-          {estimate.sent_method === 'email_estimate_contract' && (
-            <div style={{ marginTop: 16, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10, fontSize: 11, color: '#6b7280', lineHeight: 1.7 }}>
-              ✅ Contract reviewed and accepted.
-              {profile?.contract_pdf_url && (
-                <a href={profile.contract_pdf_url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#2045B8', marginLeft: 6, textDecoration: 'none' }}>
-                  Review contract again →
-                </a>
+          {/* Contract terms for estimate+contract and contract-only sends */}
+          {(estimate.sent_method === 'email_estimate_contract' || estimate.sent_method === 'email_contract') && (
+            <div style={{ marginTop: 20 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>
+                Contract Terms
+              </div>
+
+              {profile?.contract_pdf_url ? (
+                /* Contractor uploaded a PDF contract — embed it */
+                <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border-light)', height: 420, background: '#F8FAFC' }}>
+                  {!pdfLoaded && (
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, zIndex: 1 }}>
+                      <div style={{ width: 32, height: 32, border: '3px solid #E2E8F0', borderTopColor: '#2045B8', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                      <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}>Loading contract…</div>
+                    </div>
+                  )}
+                  <iframe
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(profile.contract_pdf_url)}&embedded=true`}
+                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                    onLoad={() => setPdfLoaded(true)}
+                    title="Contract"
+                  />
+                </div>
+              ) : profile?.contract_terms ? (
+                /* Contractor entered contract text — show scrollable block */
+                <div style={{
+                  maxHeight: 300, overflowY: 'auto',
+                  background: '#F8FAFC', border: '1px solid var(--border-light)',
+                  borderRadius: 12, padding: '14px 16px',
+                  fontSize: 12, color: '#374151', lineHeight: 1.75, whiteSpace: 'pre-wrap',
+                }}>
+                  {profile.contract_terms}
+                </div>
+              ) : (
+                <div style={{ padding: '12px 14px', background: '#F8FAFC', border: '1px solid var(--border-light)', borderRadius: 12, fontSize: 12, color: '#94A3B8' }}>
+                  No contract terms have been added by the contractor.
+                </div>
               )}
+
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginTop: 14 }}>
+                <input type="checkbox" checked={contractRead} onChange={e => setContractRead(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: '#2045B8', width: 16, height: 16, flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: 'var(--jet)', lineHeight: 1.5 }}>
+                  I have read and agree to the terms and conditions presented by <strong>{profile?.company_name || 'the contractor'}</strong>.
+                </span>
+              </label>
             </div>
           )}
 
           {/* Signature pad */}
           {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginTop: 20, marginBottom: 6 }}>Your signature</div>
-          <div className="sig-wrap" style={{ marginBottom: 14 }}>
+          <div className="sig-wrap" style={{ marginBottom: 14, pointerEvents: isPreview ? 'none' : undefined, opacity: isPreview ? 0.5 : 1 }}>
             <canvas ref={canvasRef} width={354} height={140} className="sig-canvas"
               onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
               onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
@@ -491,7 +566,8 @@ export default function ClientEstimatePage() {
           </div>
 
           <div style={{ marginTop: 4 }}>
-            <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}
+            <button className="gen-btn" onClick={submitSignature}
+              disabled={saving || !hasSignature || isPreview || ((estimate.sent_method === 'email_estimate_contract' || estimate.sent_method === 'email_contract') && !contractRead)}
               style={{ marginBottom: 10 }}>
               {saving ? '⏳ Processing...' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
             </button>
@@ -501,10 +577,12 @@ export default function ClientEstimatePage() {
                 ← Change package
               </button>
             )}
-            <button onClick={declineEstimate}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc262640', fontSize: 12, padding: '6px 0', cursor: 'pointer' }}>
-              Decline this estimate
-            </button>
+            {!isPreview && (
+              <button onClick={declineEstimate}
+                style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc262640', fontSize: 12, padding: '6px 0', cursor: 'pointer' }}>
+                Decline this estimate
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -515,6 +593,7 @@ export default function ClientEstimatePage() {
   const viewTierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {previewBanner}
       <div className="gh">
         <div className="h-top">
           <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
@@ -590,14 +669,16 @@ export default function ClientEstimatePage() {
           </div>
         )}
 
-        <button className="gen-btn" onClick={() => setScreen('summary')}>
+        <button className="gen-btn" onClick={() => setScreen('summary')} disabled={isPreview}>
           Continue to {viewTierLabel} — {fmtCAD(pricing.total)} →
         </button>
 
-        <button onClick={declineEstimate}
-          style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 4 }}>
-          Decline this estimate
-        </button>
+        {!isPreview && (
+          <button onClick={declineEstimate}
+            style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 4 }}>
+            Decline this estimate
+          </button>
+        )}
       </div>
     </div>
   )
