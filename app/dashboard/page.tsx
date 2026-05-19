@@ -328,9 +328,15 @@ export default function DashboardPage() {
                 </>
               ) : (
                 <>
-                  <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6 }}>
-                    {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
-                    {signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
+                  <div style={{ marginTop: 6 }}>
+                    <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
+                      {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
+                    </div>
+                    {signaturesNeeded > 0 && (
+                      <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
+                        {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+                      </div>
+                    )}
                   </div>
                   <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
                     {isMobile
