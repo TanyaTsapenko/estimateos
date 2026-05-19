@@ -728,12 +728,13 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
 
   async function saveContract() {
     if (!userId) return
-    await supabase.from('profiles').update({
+    const { error } = await supabase.from('profiles').update({
       contract_intro: values.intro,
       contract_terms: values.terms,
       contract_require_sign: values.requireSign,
       contract_show_licence: values.showLicence,
     }).eq('id', userId)
+    if (error) { flash('Save failed: ' + error.message); console.error('saveContract error:', error); return }
     setInitial({ ...values })
     flash('Contract saved')
   }

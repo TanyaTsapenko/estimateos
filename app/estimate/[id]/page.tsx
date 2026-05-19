@@ -55,10 +55,18 @@ export default function ClientEstimatePage() {
       ])
       setEstimate(est); setSelectedTier(est.tier || 'better')
       setOpenings(ops || []); setProfile(prof)
+      console.log('DEBUG est.sent_method:', est.sent_method)
+      console.log('DEBUG profile:', prof)
+      console.log('DEBUG contract_terms:', prof?.contract_terms)
+      console.log('DEBUG contract_pdf_url:', prof?.contract_pdf_url)
       if (est.sent_method === 'email_estimate_contract') {
-        setScreen(prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'summary')
+        const nextScreen = prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'summary'
+        console.log('DEBUG screen set to:', nextScreen)
+        setScreen(nextScreen)
       } else if (est.sent_method === 'email_contract') {
-        setScreen(prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'sign')
+        const nextScreen = prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'sign'
+        console.log('DEBUG screen set to:', nextScreen)
+        setScreen(nextScreen)
       }
     }
     load()
