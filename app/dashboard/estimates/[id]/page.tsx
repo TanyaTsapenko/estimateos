@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, Eye } from 'lucide-react'
+import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 
 interface Opening {
   id: string; type: string; qty: number; width: string
@@ -113,49 +113,36 @@ export default function EstimateDetailPage() {
   async function duplicateEstimate() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !estimate) return
-    try {
-      const { count } = await supabase.from('estimates')
-        .select('*', { count: 'exact', head: true }).eq('user_id', user.id)
-      const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
 
-      const { data: newEst, error: insertErr } = await supabase.from('estimates').insert({
-        user_id:          user.id,
-        estimate_number:  num,
-        client_name:      estimate.client_name,
-        client_email:     estimate.client_email,
-        client_phone:     estimate.client_phone,
-        client_address:   estimate.client_address,
-        client_city:      estimate.client_city,
-        client_province:  estimate.client_province,
-        tier:             estimate.tier,
-        status:           'draft',
-        subtotal:         estimate.subtotal,
-        tax_rate:         estimate.tax_rate,
-        tax_amount:       estimate.tax_amount,
-        total:            estimate.total,
-        discount_type:    estimate.discount_type,
-        discount_value:   estimate.discount_value,
-        discount_amount:  estimate.discount_amount,
-        payment_method:   estimate.payment_method,
-        scope_notes:      estimate.scope_notes,
-        valid_until:      estimate.valid_until,
-      }).select().single()
+    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
 
-      if (insertErr) throw insertErr
+    const { data: newEst } = await supabase.from('estimates').insert({
+      user_id: user.id,
+      estimate_number: num,
+      client_name: estimate.client_name,
+      client_email: estimate.client_email,
+      client_phone: estimate.client_phone,
+      client_address: estimate.client_address,
+      client_province: estimate.client_province,
+      tier: estimate.tier,
+      status: 'draft',
+      subtotal: estimate.subtotal,
+      tax_rate: estimate.tax_rate,
+      tax_amount: estimate.tax_amount,
+      total: estimate.total,
+      scope_notes: estimate.scope_notes,
+    }).select().single()
 
-      if (newEst) {
-        const { data: srcOpenings } = await supabase.from('estimate_openings')
-          .select('*').eq('estimate_id', estimate.id)
-        if (srcOpenings?.length) {
-          await supabase.from('estimate_openings').insert(
-            srcOpenings.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
-          )
-        }
-        showToast('✅ Estimate duplicated')
-        router.push(`/dashboard/estimates/${newEst.id}`)
+    if (newEst) {
+      const { data: openings } = await supabase.from('estimate_openings')
+        .select('*').eq('estimate_id', estimate.id)
+      if (openings?.length) {
+        await supabase.from('estimate_openings').insert(
+          openings.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
+        )
       }
-    } catch (e: any) {
-      showToast('⚠️ Failed to duplicate: ' + (e?.message || 'Unknown error'))
+      router.push(`/dashboard/estimates/${newEst.id}`)
     }
   }
 
@@ -399,10 +386,6 @@ export default function EstimateDetailPage() {
                     <PenLine size={13} /> Sign now
                   </button>
                 </div>
-                <button onClick={() => window.open(`/estimate/${id}?view=preview`, '_blank')}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '9px 0', background: 'rgba(255,255,255,.1)', color: 'rgba(255,255,255,.75)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
-                  <Eye size={13} /> Preview client view
-                </button>
               </div>
             )}
 

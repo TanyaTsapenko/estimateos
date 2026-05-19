@@ -12,7 +12,7 @@ interface Estimate {
   subtotal: number; tax_amount: number; total: number; valid_until: string | null
   scope_notes: string | null
 }
-interface Profile { company_name: string | null; city: string | null; province: string | null; contract_terms: string | null; contract_pdf_url: string | null }
+interface Profile { company_name: string | null; city: string | null; province: string | null; contract_terms: string | null }
 
 type Step = 'review' | 'sign' | 'success'
 
@@ -38,7 +38,7 @@ export default function SignPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, contract_terms, contract_pdf_url').eq('id', user.id).single(),
+        supabase.from('profiles').select('company_name, city, province, contract_terms').eq('id', user.id).single(),
       ])
       setEstimate(est)
       setOpenings(ops || [])
@@ -329,20 +329,6 @@ export default function SignPage() {
         {error && (
           <div style={{ background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#DC2626', marginBottom: 16 }}>
             {error}
-          </div>
-        )}
-
-        {/* Contract PDF (if uploaded) */}
-        {profile?.contract_pdf_url && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Contract</div>
-            <iframe
-              src={`https://docs.google.com/gview?url=${encodeURIComponent(profile.contract_pdf_url)}&embedded=true`}
-              width="100%"
-              height={500}
-              style={{ borderRadius: 12, border: 'none', display: 'block' }}
-              title="Contract PDF"
-            />
           </div>
         )}
 

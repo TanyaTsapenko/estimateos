@@ -169,7 +169,7 @@ export default function DashboardPage() {
         revenueDelta: revenueDelta ? `${revenueDelta}%` : '—',
         revenueUp: revenueLast > 0 ? revenueThis >= revenueLast : null,
         pipelineTotal: fmt(pipelineTotal),
-        pipelineCount: `· ${openEstimates.length} job${openEstimates.length !== 1 ? 's' : ''}`,
+        pipelineCount: `${openEstimates.length} estimate${openEstimates.length !== 1 ? 's' : ''}`,
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
         signaturesNeeded: estSigned?.length || 0,
@@ -339,6 +339,14 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
+            <button className="db-hero-open-btn" style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+              background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
+              borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
+            }} onClick={() => router.push('/dashboard/appointments')}>
+              <Calendar size={13} strokeWidth={1.7} />
+              Open schedule
+            </button>
           </div>
 
           {/* Mobile: dashed add button only */}
