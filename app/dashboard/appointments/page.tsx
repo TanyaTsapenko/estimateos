@@ -35,6 +35,7 @@ interface Appt {
   lead_source: string | null
   status: string
   estimate_id: string | null
+  estimate_number: string | null
 }
 
 type DesignStatus = 'upcoming' | 'completed' | 'canceled'
@@ -504,9 +505,9 @@ function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: {
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
             </div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const }}>Estimate linked</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const }}>Estimate</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginTop: 2, letterSpacing: '-0.01em' }}>
-                #{appt.estimate_id.slice(0, 8).toUpperCase()}
+                {appt.estimate_number ?? '—'}
               </div>
             </div>
           </div>
@@ -686,11 +687,18 @@ export default function AppointmentsPage() {
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from('appointments').select('*').eq('user_id', user.id)
       .order('appointment_date', { ascending: true })
       .order('appointment_time', { ascending: true, nullsFirst: false })
-    setAppts(data || [])
+    const appts = rows || []
+    const estIds = appts.flatMap(a => a.estimate_id ? [a.estimate_id as string] : [])
+    let estMap = new Map<string, string>()
+    if (estIds.length > 0) {
+      const { data: ests } = await supabase.from('estimates').select('id, estimate_number').in('id', estIds)
+      estMap = new Map((ests ?? []).map(e => [e.id, e.estimate_number]))
+    }
+    setAppts(appts.map(a => ({ ...a, estimate_number: a.estimate_id ? (estMap.get(a.estimate_id) ?? null) : null })))
     setLoading(false)
   }, [])
 
