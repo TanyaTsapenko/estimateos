@@ -52,7 +52,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
   const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
   const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
   return (
-    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1 }}>
+    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1, overflow: 'hidden', minWidth: 0 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
           width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -171,7 +171,7 @@ export default function DashboardPage() {
         revenueDelta: revenueDelta ? `${revenueDelta}%` : '—',
         revenueUp: revenueLast > 0 ? revenueThis >= revenueLast : null,
         pipelineTotal: fmt(pipelineTotal),
-        pipelineCount: `${openEstimates.length} estimate${openEstimates.length !== 1 ? 's' : ''}`,
+        pipelineCount: `${openEstimates.length} est.`,
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
         signaturesNeeded: estSigned?.length || 0,
@@ -341,14 +341,6 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-            <button className="db-hero-open-btn" style={{
-              display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
-              background: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.55)',
-              borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
-            }} onClick={() => router.push('/dashboard/appointments')}>
-              <Calendar size={13} strokeWidth={1.7} />
-              Open schedule
-            </button>
           </div>
 
           {/* Mobile: dashed add button only */}
