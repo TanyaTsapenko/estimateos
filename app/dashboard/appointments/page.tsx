@@ -127,15 +127,15 @@ function AppointmentCard({
       }} />
 
       {/* Collapsed header — always visible */}
-      <div style={{ padding: '14px 14px 14px 18px' }}>
+      <div style={{ padding: '12px 12px 12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: T.ink, letterSpacing: '-0.01em', lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, letterSpacing: '-0.01em', lineHeight: 1.15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {appt.client_name}
             </div>
-            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 8 }}>
               {appt.appointment_time && (
-                <span style={{ fontSize: 14, color: T.inkMid, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                <span style={{ fontSize: 13, color: T.inkMid, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                   {fmt12h(appt.appointment_time)}
                 </span>
               )}
@@ -162,46 +162,46 @@ function AppointmentCard({
         overflow: 'hidden',
         transition: 'max-height 280ms ease, opacity 220ms ease',
       }}>
-        <div style={{ padding: '0 14px 14px 18px' }}>
-          <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 12 }}>
+        <div style={{ padding: '0 12px 12px 16px' }}>
+          <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 10 }}>
             {appt.client_phone && (
-              <div style={{ fontSize: 14, color: T.ink, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: 13, color: T.ink, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                 {fmtPhone(appt.client_phone)}
               </div>
             )}
             {appt.client_address && (
-              <div style={{ fontSize: 14, color: T.inkMid, marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: T.inkMid, marginTop: 3 }}>
                 {appt.client_address}
               </div>
             )}
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
             {appt.client_phone && (
               <a href={`tel:${appt.client_phone}`} onClick={e => e.stopPropagation()}
-                style={{ flex: 1, height: 40, borderRadius: 10, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" /></svg>
+                style={{ flex: 1, height: 36, borderRadius: 9, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" /></svg>
                 Call
               </a>
             )}
             {appt.client_address && (
               <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                style={{ flex: 1, height: 40, borderRadius: 10, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s-7-7.5-7-12a7 7 0 1114 0c0 4.5-7 12-7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
+                style={{ flex: 1, height: 36, borderRadius: 9, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, textDecoration: 'none' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s-7-7.5-7-12a7 7 0 1114 0c0 4.5-7 12-7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
                 Map
               </a>
             )}
             {appt.estimate_id ? (
               <button onClick={e => { e.stopPropagation(); onViewEstimate(appt.estimate_id!) }}
-                style={{ flex: 1.6, height: 40, borderRadius: 10, border: 'none', background: T.blue, color: '#fff', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
+                style={{ flex: 1.6, height: 36, borderRadius: 9, border: 'none', background: T.blue, color: '#fff', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
                 View estimate
               </button>
             ) : ds !== 'canceled' ? (
               <button onClick={e => { e.stopPropagation(); onCreateEstimate(appt) }}
-                style={{ flex: 1.6, height: 40, borderRadius: 10, border: 'none', background: T.blueSoft, color: T.blue, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                style={{ flex: 1.6, height: 36, borderRadius: 9, border: 'none', background: T.blueSoft, color: T.blue, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
                 Create estimate
               </button>
             ) : null}
@@ -209,7 +209,7 @@ function AppointmentCard({
 
           {/* Edit appointment row */}
           <button onClick={e => { e.stopPropagation(); onEdit(appt) }}
-            style={{ marginTop: 8, width: '100%', height: 36, borderRadius: 10, border: 'none', background: 'transparent', color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
+            style={{ marginTop: 6, width: '100%', height: 32, borderRadius: 9, border: 'none', background: 'transparent', color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="M14 6l4 4" /></svg>
             Edit appointment
           </button>
@@ -524,14 +524,14 @@ export default function AppointmentsPage() {
         {!loading && groups.map(({ label, items }) => (
           <div key={label}>
             {/* Section header */}
-            <div style={{ padding: '20px 16px 4px' }}>
+            <div style={{ padding: '14px 16px 4px' }}>
               <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: sectionColor(label) }}>
                 {label.toUpperCase()}
               </div>
               <div style={{ height: 1, background: T.border, marginTop: 6 }} />
             </div>
             {/* Cards */}
-            <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {items.map(appt => (
                 <AppointmentCard
                   key={appt.id}
