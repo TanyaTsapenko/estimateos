@@ -72,7 +72,9 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
         ) : (
           <>
             <span className="db-kpi-value" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.6px', color: '#0A1628' }}>{value}</span>
-            <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', color: deltaColor }}>{deltaPrefix}{delta}</span>
+            {delta && delta !== '—' && (
+              <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1, whiteSpace: 'nowrap', color: deltaColor }}>{deltaPrefix}{delta}</span>
+            )}
           </>
         )}
       </div>
@@ -300,7 +302,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Body */}
-      <main className="db-main-body" style={{ padding: '20px 28px 32px', flex: 1 }}>
+      <main className="db-main-body" style={{ padding: '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
 
         {/* Hero */}
         <div className="db-hero" style={{
@@ -341,7 +343,7 @@ export default function DashboardPage() {
             </div>
             <button className="db-hero-open-btn" style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
-              background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.28)', border: '1px solid rgba(255,255,255,0.55)',
               borderRadius: 9, fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', flexShrink: 0,
             }} onClick={() => router.push('/dashboard/appointments')}>
               <Calendar size={13} strokeWidth={1.7} />
@@ -399,7 +401,7 @@ export default function DashboardPage() {
                 onClick={() => router.push('/dashboard/appointments')}
                 style={{
                   width: '100%', marginTop: 12, padding: '13px 0',
-                  background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)',
+                  background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.5)',
                   borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#fff',
                   cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}
