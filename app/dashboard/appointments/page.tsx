@@ -536,6 +536,134 @@ function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: {
   )
 }
 
+// ─── Desktop: edit panel ────────────────────────────────────────────────────
+function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
+  appt: Appt
+  onCancel: () => void
+  onSave: (id: string, patch: Partial<Appt>) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+}) {
+  const [draft, setDraft] = useState<Partial<Appt>>({})
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    setDraft({
+      client_name:      appt.client_name,
+      client_phone:     appt.client_phone  ?? '',
+      client_address:   appt.client_address ?? '',
+      lead_source:      appt.lead_source    ?? '',
+      appointment_date: appt.appointment_date,
+      appointment_time: appt.appointment_time ?? '',
+      notes:            appt.notes ?? '',
+    })
+  }, [appt.id])
+
+  const ds  = toDesignStatus(appt.status)
+  const set = (k: keyof Appt) => (v: string) => setDraft(p => ({ ...p, [k]: v }))
+
+  const inp: React.CSSProperties = {
+    width: '100%', height: 42, padding: '0 14px', borderRadius: 10,
+    border: `1px solid ${T.borderStrong}`, background: T.card, color: T.ink,
+    fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+  }
+  const chevSvg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A94A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>")`
+  const fldLbl: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase', marginBottom: 6, display: 'block' }
+  const secHdr: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.inkSoft, textTransform: 'uppercase', padding: '4px 4px 10px' }
+  const secCard: React.CSSProperties = { background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }
+
+  async function handleSave() {
+    if (!draft.client_name?.trim()) return
+    setSaving(true)
+    await onSave(appt.id, draft)
+    setSaving(false)
+  }
+  async function handleDelete() {
+    if (!confirm('Delete this appointment?')) return
+    await onDelete(appt.id)
+  }
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px 24px', maxWidth: 880 }}>
+        {/* Heading */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <StatusTag status={ds} />
+          <span style={{ color: T.inkFaint }}>·</span>
+          <span style={{ fontSize: 12, color: T.inkSoft }}>Edit mode</span>
+        </div>
+        <div style={{ fontSize: 30, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em', marginBottom: 20 }}>
+          Edit appointment
+        </div>
+
+        {/* CLIENT */}
+        <div style={secHdr}>Client</div>
+        <div style={secCard}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={fldLbl}>Name</label>
+            <input style={inp} value={draft.client_name ?? ''} onChange={e => set('client_name')(e.target.value)} />
+          </div>
+          <div>
+            <label style={fldLbl}>Phone</label>
+            <input type="tel" style={inp} value={draft.client_phone ?? ''} onChange={e => set('client_phone')(e.target.value)} placeholder="(403) 555-0100" />
+          </div>
+          <div>
+            <label style={fldLbl}>Source</label>
+            <select style={{ ...inp, appearance: 'none', WebkitAppearance: 'none', backgroundImage: chevSvg, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '16px', paddingRight: 32 }}
+              value={draft.lead_source ?? ''} onChange={e => set('lead_source')(e.target.value)}>
+              <option value="">Select source</option>
+              {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={fldLbl}>Address</label>
+            <input style={inp} value={draft.client_address ?? ''} onChange={e => set('client_address')(e.target.value)} placeholder="123 Main St" />
+          </div>
+        </div>
+
+        {/* WHEN */}
+        <div style={{ ...secHdr, paddingTop: 20 }}>When</div>
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label style={fldLbl}>Date</label>
+            <input type="date" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+          </div>
+          <div>
+            <label style={fldLbl}>Time</label>
+            <input type="time" style={inp} value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)} />
+          </div>
+        </div>
+
+        {/* NOTES */}
+        <div style={{ ...secHdr, paddingTop: 20 }}>Notes</div>
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18 }}>
+          <textarea
+            style={{ ...inp, height: 96, padding: 14, resize: 'vertical' as const }}
+            value={draft.notes ?? ''}
+            onChange={e => set('notes')(e.target.value)}
+            placeholder="What does the client need?"
+          />
+        </div>
+
+        {/* Delete */}
+        <button onClick={handleDelete} style={{ marginTop: 24, height: 42, padding: '0 18px', borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13" /><path d="M10 11v6M14 11v6" /></svg>
+          Delete appointment
+        </button>
+      </div>
+
+      {/* Sticky save bar */}
+      <div style={{ background: T.card, borderTop: `1px solid ${T.border}`, padding: '14px 40px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, flexShrink: 0 }}>
+        <button onClick={onCancel} style={{ height: 44, padding: '0 22px', borderRadius: 10, border: `1px solid ${T.borderStrong}`, background: T.card, color: T.inkMid, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+          Cancel
+        </button>
+        <button onClick={handleSave} disabled={saving} style={{ height: 44, padding: '0 26px', borderRadius: 10, border: 'none', background: saving ? T.inkSoft : T.blue, color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
   const router   = useRouter()
@@ -549,6 +677,7 @@ export default function AppointmentsPage() {
   const [toast, setToast]       = useState('')
   const [isDesktop, setIsDesktop] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [desktopEditing, setDesktopEditing] = useState(false)
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
 
@@ -627,6 +756,29 @@ export default function AppointmentsPage() {
     await supabase.from('appointments').delete().eq('id', id)
     setAppts(prev => prev.filter(a => a.id !== id))
     closeEdit()
+    flash('Deleted')
+  }
+
+  async function desktopSaveEdit(id: string, patch: Partial<Appt>) {
+    await supabase.from('appointments').update({
+      client_name:      patch.client_name?.trim(),
+      client_phone:     patch.client_phone?.trim()   || null,
+      client_address:   patch.client_address?.trim() || null,
+      lead_source:      patch.lead_source?.trim()    || null,
+      appointment_date: patch.appointment_date,
+      appointment_time: patch.appointment_time       || null,
+      notes:            patch.notes?.trim()          || null,
+    }).eq('id', id)
+    setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
+    setDesktopEditing(false)
+    flash('Saved')
+  }
+
+  async function desktopDeleteAppt(id: string) {
+    await supabase.from('appointments').delete().eq('id', id)
+    setAppts(prev => prev.filter(a => a.id !== id))
+    setSelectedId(null)
+    setDesktopEditing(false)
     flash('Deleted')
   }
 
@@ -717,14 +869,14 @@ export default function AppointmentsPage() {
                     key={appt.id}
                     appt={appt}
                     active={selectedId === appt.id}
-                    onClick={() => setSelectedId(appt.id)}
+                    onClick={() => { setSelectedId(appt.id); setDesktopEditing(false) }}
                   />
                 ))}
               </div>
             ))}
           </div>
 
-          {/* Right column — empty state or detail view */}
+          {/* Right column — empty / view / edit */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, overflow: 'hidden' }}>
             {(() => {
               const sel = appts.find(a => a.id === selectedId) ?? null
@@ -735,10 +887,20 @@ export default function AppointmentsPage() {
                   </div>
                 )
               }
+              if (desktopEditing) {
+                return (
+                  <DesktopEditPanel
+                    appt={sel}
+                    onCancel={() => setDesktopEditing(false)}
+                    onSave={desktopSaveEdit}
+                    onDelete={desktopDeleteAppt}
+                  />
+                )
+              }
               return (
                 <DesktopViewPanel
                   appt={sel}
-                  onEdit={() => openEdit(sel)}
+                  onEdit={() => setDesktopEditing(true)}
                   onCreateEstimate={createEstimate}
                   onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
                 />
@@ -746,15 +908,6 @@ export default function AppointmentsPage() {
             })()}
           </div>
         </div>
-
-        {/* Edit overlay (mobile-style still works on desktop) */}
-        <EditScreen
-          open={editOpen}
-          appt={editing}
-          onClose={closeEdit}
-          onSave={saveEdit}
-          onDelete={deleteAppt}
-        />
 
         {toast && (
           <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', background: T.ink, color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
