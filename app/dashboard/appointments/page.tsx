@@ -678,6 +678,8 @@ export default function AppointmentsPage() {
   const [isDesktop, setIsDesktop] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [desktopEditing, setDesktopEditing] = useState(false)
+  const [desktopFilter, setDesktopFilter] = useState<'All' | 'Upcoming' | 'Past'>('All')
+  const [search, setSearch] = useState('')
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
 
@@ -730,6 +732,33 @@ export default function AppointmentsPage() {
     ...buildGroups(today),
     ...buildGroups(future),
     ...buildGroups(past).reverse(),
+  ]
+
+  // ── Desktop computed ─────────────────────────────────────────────────────
+  const deskUpcomingList = appts.filter(a => toDesignStatus(a.status) === 'upcoming')
+  const deskPastList     = appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
+  const deskCounts = { all: appts.length, upcoming: deskUpcomingList.length, past: deskPastList.length }
+
+  const deskBase: Appt[] = (() => {
+    if (desktopFilter === 'Upcoming') return deskUpcomingList
+    if (desktopFilter === 'Past')     return deskPastList
+    return appts
+  })()
+
+  const deskFiltered = search.trim()
+    ? deskBase.filter(a =>
+        a.client_name.toLowerCase().includes(search.toLowerCase()) ||
+        (a.client_address ?? '').toLowerCase().includes(search.toLowerCase())
+      )
+    : deskBase
+
+  const deskToday  = deskFiltered.filter(a => a.appointment_date === todayStr)
+  const deskFuture = deskFiltered.filter(a => a.appointment_date > todayStr)
+  const deskPast   = deskFiltered.filter(a => a.appointment_date < todayStr)
+  const deskGroups = [
+    ...buildGroups(deskToday),
+    ...buildGroups(deskFuture),
+    ...buildGroups(deskPast).reverse(),
   ]
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -798,24 +827,36 @@ export default function AppointmentsPage() {
         WebkitFontSmoothing: 'antialiased',
       }}>
         {/* Header */}
-        <div style={{
-          background: T.card, borderBottom: `1px solid ${T.border}`,
-          padding: '20px 32px', flexShrink: 0,
-        }}>
+        <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, padding: '20px 32px', flexShrink: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase' }}>
             Schedule
           </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 2 }}>
-            <div style={{ fontSize: 26, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>
-              Appointments
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 13.5, color: T.inkSoft }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}>
+              <div style={{ fontSize: 26, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>Appointments</div>
+              <span style={{ fontSize: 13.5, color: T.inkSoft, paddingBottom: 2 }}>
                 <span style={{ fontWeight: 600, color: T.ink }}>{todayCount} today</span>
               </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Search */}
+              <div style={{ width: 280, height: 40, background: T.bg, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', flexShrink: 0 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={T.inkSoft} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+                <input
+                  value={search} onChange={e => setSearch(e.target.value)}
+                  placeholder="Search client or address"
+                  style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: 14, color: T.ink, fontFamily: 'inherit' }}
+                />
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: T.card, border: `1px solid ${T.border}`, color: T.inkSoft, flexShrink: 0 }}>⌘K</span>
+              </div>
+              {/* Bell */}
+              <button style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${T.borderStrong}`, background: T.card, color: T.inkMid, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M18 16V11a6 6 0 10-12 0v5l-2 3h16z" /><path d="M10 21h4" /></svg>
+              </button>
+              {/* New appointment */}
               <button
                 onClick={() => router.push('/dashboard/appointments/new')}
-                style={{ background: T.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '9px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', background: T.blue, color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)', display: 'inline-flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
                 New appointment
               </button>
@@ -824,21 +865,29 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Filter tabs */}
-        <div style={{ padding: '12px 32px', display: 'flex', gap: 8, background: T.card, borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
-          {FILTERS.map(f => {
-            const active = filter === f
-            return (
-              <button key={f} onClick={() => setFilter(f)} style={{
-                padding: '7px 14px', borderRadius: 99,
-                border: `1px solid ${active ? T.blue : T.borderStrong}`,
-                background: active ? T.blueSoft : T.card,
-                color: active ? T.blue : T.inkMid,
-                fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
-              }}>
-                {f}
-              </button>
-            )
-          })}
+        <div style={{ padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: T.card, borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['All', 'Upcoming', 'Past'] as const).map(f => {
+              const active = desktopFilter === f
+              const count = f === 'All' ? deskCounts.all : f === 'Upcoming' ? deskCounts.upcoming : deskCounts.past
+              return (
+                <button key={f} onClick={() => { setDesktopFilter(f); setDesktopEditing(false) }} style={{
+                  padding: '7px 12px', borderRadius: 99,
+                  border: `1px solid ${active ? T.blue : T.borderStrong}`,
+                  background: active ? T.blueSoft : T.card,
+                  color: active ? T.blue : T.inkMid,
+                  fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                }}>
+                  {f}
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 99, background: active ? T.blue : 'rgba(15,23,42,0.06)', color: active ? '#fff' : T.inkSoft }}>
+                    {count}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <span style={{ fontSize: 12.5, color: T.inkSoft }}>Last synced just now</span>
         </div>
 
         {/* Master-detail */}
@@ -854,10 +903,10 @@ export default function AppointmentsPage() {
             {loading && (
               <div style={{ textAlign: 'center', padding: '48px 0', color: T.inkSoft, fontSize: 13 }}>Loading…</div>
             )}
-            {!loading && filtered.length === 0 && (
+            {!loading && deskFiltered.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 16px', color: T.inkSoft, fontSize: 13 }}>No appointments.</div>
             )}
-            {!loading && groups.map(({ label, items }) => (
+            {!loading && deskGroups.map(({ label, items }) => (
               <div key={label}>
                 <DesktopSectionHeader
                   label={label}
