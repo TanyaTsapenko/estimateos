@@ -14,6 +14,7 @@ interface Estimate {
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
   logo_url: string | null; deposit_pct: number | null; contract_pdf_url: string | null
+  contract_terms: string | null
 }
 
 const TIERS = [
@@ -50,14 +51,14 @@ export default function ClientEstimatePage() {
       if (est.status === 'signed') { setEstimate(est); setScreen('already_signed'); return }
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_pdf_url').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_pdf_url, contract_terms').eq('id', (est as any).user_id).single(),
       ])
       setEstimate(est); setSelectedTier(est.tier || 'better')
       setOpenings(ops || []); setProfile(prof)
       if (est.sent_method === 'email_estimate_contract') {
-        setScreen(prof?.contract_pdf_url ? 'contract' : 'summary')
+        setScreen(prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'summary')
       } else if (est.sent_method === 'email_contract') {
-        setScreen(prof?.contract_pdf_url ? 'contract' : 'sign')
+        setScreen(prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'sign')
       }
     }
     load()
@@ -302,11 +303,19 @@ export default function ClientEstimatePage() {
         </div>
         <div className="card screen-enter">
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-            <iframe
-              src={profile?.contract_pdf_url || ''}
-              style={{ width: '100%', height: 400, border: 'none', display: 'block' }}
-              title="Contract PDF"
-            />
+            {profile?.contract_pdf_url ? (
+              <iframe
+                src={profile.contract_pdf_url}
+                style={{ width: '100%', height: 400, border: 'none', display: 'block' }}
+                title="Contract PDF"
+              />
+            ) : (
+              <div style={{ padding: '16px 18px', maxHeight: 400, overflowY: 'auto' }}>
+                <div style={{ fontSize: 12, color: 'var(--jet)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+                  {profile?.contract_terms || 'No contract terms provided.'}
+                </div>
+              </div>
+            )}
           </div>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20 }}>
             <input type="checkbox" checked={contractRead} onChange={e => setContractRead(e.target.checked)}
@@ -463,7 +472,7 @@ export default function ClientEstimatePage() {
           )}
 
           {/* Contract note for estimate+contract sends */}
-          {estimate.sent_method === 'email_estimate_contract' && (
+          {estimate.sent_method === 'email_estimate_contract' && (profile?.contract_pdf_url || profile?.contract_terms) && (
             <div style={{ marginTop: 16, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10, fontSize: 11, color: '#6b7280', lineHeight: 1.7 }}>
               ✅ Contract reviewed and accepted.
               {profile?.contract_pdf_url && (
