@@ -19,6 +19,7 @@ const T = {
   red:          '#C0341A',
   redSoft:      '#FBE9E4',
   yesterday:    '#DC2626',
+  surface:      '#FAFAFB',
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -377,6 +378,8 @@ export default function AppointmentsPage() {
   const [editing, setEditing]   = useState<Appt | null>(null)
   const [editOpen, setEditOpen] = useState(false)
   const [toast, setToast]       = useState('')
+  const [isDesktop, setIsDesktop] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
 
@@ -392,6 +395,13 @@ export default function AppointmentsPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 1024)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   // ── Computed values ───────────────────────────────────────────────────────
   const now      = new Date()
@@ -457,7 +467,130 @@ export default function AppointmentsPage() {
     router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client_name)}&client_address=${encodeURIComponent(appt.client_address || '')}`)
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Desktop render ────────────────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', height: '100vh',
+        background: T.bg,
+        fontFamily: '-apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif',
+        WebkitFontSmoothing: 'antialiased',
+      }}>
+        {/* Header */}
+        <div style={{
+          background: T.card, borderBottom: `1px solid ${T.border}`,
+          padding: '20px 32px', flexShrink: 0,
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase' }}>
+            Schedule
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 2 }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>
+              Appointments
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 13.5, color: T.inkSoft }}>
+                <span style={{ fontWeight: 600, color: T.ink }}>{todayCount} today</span>
+              </span>
+              <button
+                onClick={() => router.push('/dashboard/appointments/new')}
+                style={{ background: T.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '9px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+                New appointment
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter tabs */}
+        <div style={{ padding: '12px 32px', display: 'flex', gap: 8, background: T.card, borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
+          {FILTERS.map(f => {
+            const active = filter === f
+            return (
+              <button key={f} onClick={() => setFilter(f)} style={{
+                padding: '7px 14px', borderRadius: 99,
+                border: `1px solid ${active ? T.blue : T.borderStrong}`,
+                background: active ? T.blueSoft : T.card,
+                color: active ? T.blue : T.inkMid,
+                fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {f}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Master-detail */}
+        <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+
+          {/* Left column — 420px list */}
+          <div style={{
+            width: 420, flexShrink: 0,
+            background: T.surface,
+            borderRight: `1px solid ${T.border}`,
+            overflowY: 'auto',
+          }}>
+            {loading && (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: T.inkSoft, fontSize: 13 }}>Loading…</div>
+            )}
+            {!loading && filtered.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px 16px', color: T.inkSoft, fontSize: 13 }}>No appointments.</div>
+            )}
+            {!loading && groups.map(({ label, items }) => (
+              <div key={label}>
+                <div style={{ padding: '14px 16px 4px', background: T.surface }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: sectionColor(label) }}>
+                    {label.toUpperCase()}
+                  </div>
+                  <div style={{ height: 1, background: T.border, marginTop: 6 }} />
+                </div>
+                <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {items.map(appt => (
+                    <AppointmentCard
+                      key={appt.id}
+                      appt={appt}
+                      expanded={openId === appt.id}
+                      onToggle={() => toggle(appt.id)}
+                      onEdit={openEdit}
+                      onCreateEstimate={createEstimate}
+                      onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Right column — detail (empty state for now) */}
+          <div style={{
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: T.bg,
+          }}>
+            <div style={{ color: T.inkSoft, fontSize: 14 }}>
+              Select an appointment to see details.
+            </div>
+          </div>
+        </div>
+
+        {/* Edit overlay (mobile-style still works on desktop) */}
+        <EditScreen
+          open={editOpen}
+          appt={editing}
+          onClose={closeEdit}
+          onSave={saveEdit}
+          onDelete={deleteAppt}
+        />
+
+        {toast && (
+          <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', background: T.ink, color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+            {toast}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Mobile render ────────────────────────────────────────────────────────────
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', minHeight: '100vh', background: T.bg,
