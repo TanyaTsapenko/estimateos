@@ -367,6 +367,175 @@ function EditScreen({
   )
 }
 
+// ─── Desktop: list row ───────────────────────────────────────────────────────
+function DesktopListRow({ appt, active, onClick }: { appt: Appt; active: boolean; onClick: () => void }) {
+  const ds = toDesignStatus(appt.status)
+  const rc = { upcoming: T.blue, completed: T.green, canceled: T.red }[ds]
+  const dimmed = (ds === 'completed' || ds === 'canceled') && !active
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        position: 'relative', textAlign: 'left', width: '100%',
+        background: active ? T.blueSoft : T.card,
+        border: 'none', borderBottom: `1px solid ${T.border}`,
+        padding: '14px 16px 14px 22px',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+        opacity: dimmed ? 0.62 : 1,
+        transition: 'background 160ms ease, opacity 160ms ease',
+        cursor: 'pointer',
+      }}
+    >
+      <span style={{ position: 'absolute', left: 12, top: 16, bottom: 16, width: 3, background: rc, borderRadius: 99 }} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: T.ink, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {appt.client_name}
+        </div>
+        <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {appt.client_address || 'No address'}
+        </div>
+      </div>
+      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+        {appt.appointment_time && (
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink, fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>
+            {fmt12h(appt.appointment_time)}
+          </div>
+        )}
+        <div style={{ marginTop: 4 }}>
+          <StatusTag status={ds} />
+        </div>
+      </div>
+    </button>
+  )
+}
+
+// ─── Desktop: section header ─────────────────────────────────────────────────
+function DesktopSectionHeader({ label, color, count }: { label: string; color: string; count: string }) {
+  return (
+    <div style={{ padding: '14px 22px 8px', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', background: T.surface }}>
+      <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color, textTransform: 'uppercase' as const }}>
+        {label}
+      </span>
+      <span style={{ fontSize: 11.5, color: T.inkSoft, fontWeight: 600 }}>{count}</span>
+    </div>
+  )
+}
+
+// ─── Desktop: detail view panel ──────────────────────────────────────────────
+function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: {
+  appt: Appt
+  onEdit: () => void
+  onCreateEstimate: (a: Appt) => void
+  onViewEstimate: (id: string) => void
+}) {
+  const ds = toDesignStatus(appt.status)
+  const dl = dateLabel(appt.appointment_date)
+
+  const btnBase: React.CSSProperties = {
+    height: 40, padding: '0 14px', borderRadius: 10,
+    border: `1px solid ${T.border}`, background: T.card, color: T.inkMid,
+    fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none',
+  }
+
+  return (
+    <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px 40px', maxWidth: 880 }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <StatusTag status={ds} />
+            <span style={{ color: T.inkFaint }}>·</span>
+            <span style={{ fontSize: 12, color: T.inkSoft }}>
+              {dl}{appt.appointment_time ? ` at ${fmt12h(appt.appointment_time)}` : ''}
+            </span>
+          </div>
+          <div style={{ fontSize: 30, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>
+            {appt.client_name}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, paddingTop: 4 }}>
+          {appt.client_phone && (
+            <a href={`tel:${appt.client_phone}`} style={btnBase}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z" /></svg>
+              Call
+            </a>
+          )}
+          {appt.client_address && (
+            <a href={`https://maps.google.com/?q=${encodeURIComponent(appt.client_address)}`} target="_blank" rel="noreferrer" style={btnBase}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s-7-7.5-7-12a7 7 0 1114 0c0 4.5-7 12-7 12z" /><circle cx="12" cy="10" r="2.5" /></svg>
+              Map
+            </a>
+          )}
+          <button onClick={onEdit} style={btnBase}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="M14 6l4 4" /></svg>
+            Edit
+          </button>
+        </div>
+      </div>
+
+      {/* Info card */}
+      <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: '4px 20px', marginBottom: 20 }}>
+        {[
+          { label: 'Phone',       value: fmtPhone(appt.client_phone), mono: true },
+          { label: 'Address',     value: appt.client_address || '—' },
+          { label: 'Date & time', value: `${dl}, ${appt.appointment_date}${appt.appointment_time ? ` · ${fmt12h(appt.appointment_time)}` : ''}`, mono: true },
+          { label: 'Lead source', value: appt.lead_source || '—' },
+        ].map(({ label, value, mono }) => (
+          <div key={label} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 16, padding: '14px 0', borderBottom: `1px solid ${T.border}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const }}>{label}</div>
+            <div style={{ fontSize: 14, color: value === '—' ? T.inkFaint : T.ink, fontVariantNumeric: mono ? 'tabular-nums' : 'normal' as const }}>{value || '—'}</div>
+          </div>
+        ))}
+        {/* Notes row — no bottom border */}
+        <div style={{ padding: '14px 0' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const, marginBottom: 8 }}>Notes</div>
+          <div style={{ fontSize: 14, color: appt.notes ? T.ink : T.inkFaint, lineHeight: 1.55 }}>
+            {appt.notes || 'No notes'}
+          </div>
+        </div>
+      </div>
+
+      {/* Estimate card */}
+      {appt.estimate_id ? (
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: T.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.blue }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const }}>Estimate linked</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: T.ink, marginTop: 2, letterSpacing: '-0.01em' }}>
+                #{appt.estimate_id.slice(0, 8).toUpperCase()}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => onViewEstimate(appt.estimate_id!)} style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', background: T.blue, color: '#fff', fontSize: 13.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+            View estimate
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+          </button>
+        </div>
+      ) : ds !== 'canceled' ? (
+        <div style={{ background: T.blueSoft, borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#DBE6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.blue }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M7 3h8l4 4v14a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.blue, textTransform: 'uppercase' as const }}>No estimate yet</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginTop: 2 }}>Quote this visit when you're ready.</div>
+            </div>
+          </div>
+          <button onClick={() => onCreateEstimate(appt)} style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', background: T.blue, color: '#fff', fontSize: 13.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>
+            Create estimate
+          </button>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
   const router   = useRouter()
@@ -523,7 +692,7 @@ export default function AppointmentsPage() {
         {/* Master-detail */}
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
 
-          {/* Left column — 420px list */}
+          {/* Left column — 420px flat list */}
           <div style={{
             width: 420, flexShrink: 0,
             background: T.surface,
@@ -538,37 +707,43 @@ export default function AppointmentsPage() {
             )}
             {!loading && groups.map(({ label, items }) => (
               <div key={label}>
-                <div style={{ padding: '14px 16px 4px', background: T.surface }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: sectionColor(label) }}>
-                    {label.toUpperCase()}
-                  </div>
-                  <div style={{ height: 1, background: T.border, marginTop: 6 }} />
-                </div>
-                <div style={{ padding: '8px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {items.map(appt => (
-                    <AppointmentCard
-                      key={appt.id}
-                      appt={appt}
-                      expanded={openId === appt.id}
-                      onToggle={() => toggle(appt.id)}
-                      onEdit={openEdit}
-                      onCreateEstimate={createEstimate}
-                      onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
-                    />
-                  ))}
-                </div>
+                <DesktopSectionHeader
+                  label={label}
+                  color={sectionColor(label)}
+                  count={`${items.length} ${items.length === 1 ? 'visit' : 'visits'}`}
+                />
+                {items.map(appt => (
+                  <DesktopListRow
+                    key={appt.id}
+                    appt={appt}
+                    active={selectedId === appt.id}
+                    onClick={() => setSelectedId(appt.id)}
+                  />
+                ))}
               </div>
             ))}
           </div>
 
-          {/* Right column — detail (empty state for now) */}
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: T.bg,
-          }}>
-            <div style={{ color: T.inkSoft, fontSize: 14 }}>
-              Select an appointment to see details.
-            </div>
+          {/* Right column — empty state or detail view */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, overflow: 'hidden' }}>
+            {(() => {
+              const sel = appts.find(a => a.id === selectedId) ?? null
+              if (!sel) {
+                return (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ color: T.inkSoft, fontSize: 14 }}>Select an appointment to see details.</div>
+                  </div>
+                )
+              }
+              return (
+                <DesktopViewPanel
+                  appt={sel}
+                  onEdit={() => openEdit(sel)}
+                  onCreateEstimate={createEstimate}
+                  onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
+                />
+              )
+            })()}
           </div>
         </div>
 
