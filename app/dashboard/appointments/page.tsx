@@ -78,7 +78,7 @@ function sectionColor(label: string): string {
 }
 
 const SOURCES = ['Phone call', 'Referral', 'Web form', 'Walk-in', 'Repeat client']
-const FILTERS = ['All', 'Upcoming', 'Completed'] as const
+const FILTERS = ['All', 'Upcoming', 'Done'] as const
 
 // ─── StatusTag ────────────────────────────────────────────────────────────────
 function StatusTag({ status }: { status: DesignStatus }) {
@@ -678,7 +678,7 @@ export default function AppointmentsPage() {
   const [isDesktop, setIsDesktop] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [desktopEditing, setDesktopEditing] = useState(false)
-  const [desktopFilter, setDesktopFilter] = useState<'All' | 'Upcoming' | 'Past'>('All')
+  const [desktopFilter, setDesktopFilter] = useState<'All' | 'Upcoming' | 'Done'>('All')
   const [search, setSearch] = useState('')
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
@@ -709,8 +709,8 @@ export default function AppointmentsPage() {
   const todayCount = appts.filter(a => a.appointment_date === todayStr).length
 
   const filtered: Appt[] = (() => {
-    if (filter === 'Upcoming')  return appts.filter(a => a.appointment_date >= todayStr && a.status !== 'cancelled')
-    if (filter === 'Completed') return appts.filter(a => a.status === 'completed')
+    if (filter === 'Upcoming') return appts.filter(a => toDesignStatus(a.status) === 'upcoming')
+    if (filter === 'Done')     return appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
     return appts
   })()
 
@@ -736,12 +736,12 @@ export default function AppointmentsPage() {
 
   // ── Desktop computed ─────────────────────────────────────────────────────
   const deskUpcomingList = appts.filter(a => toDesignStatus(a.status) === 'upcoming')
-  const deskPastList     = appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
-  const deskCounts = { all: appts.length, upcoming: deskUpcomingList.length, past: deskPastList.length }
+  const deskDoneList     = appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
+  const deskCounts = { all: appts.length, upcoming: deskUpcomingList.length, done: deskDoneList.length }
 
   const deskBase: Appt[] = (() => {
     if (desktopFilter === 'Upcoming') return deskUpcomingList
-    if (desktopFilter === 'Past')     return deskPastList
+    if (desktopFilter === 'Done')     return deskDoneList
     return appts
   })()
 
@@ -867,9 +867,9 @@ export default function AppointmentsPage() {
         {/* Filter tabs */}
         <div style={{ padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: T.card, borderBottom: `1px solid ${T.border}`, flexShrink: 0 }}>
           <div style={{ display: 'flex', gap: 8 }}>
-            {(['All', 'Upcoming', 'Past'] as const).map(f => {
+            {(['All', 'Upcoming', 'Done'] as const).map(f => {
               const active = desktopFilter === f
-              const count = f === 'All' ? deskCounts.all : f === 'Upcoming' ? deskCounts.upcoming : deskCounts.past
+              const count = f === 'All' ? deskCounts.all : f === 'Upcoming' ? deskCounts.upcoming : deskCounts.done
               return (
                 <button key={f} onClick={() => { setDesktopFilter(f); setDesktopEditing(false) }} style={{
                   padding: '7px 12px', borderRadius: 99,
