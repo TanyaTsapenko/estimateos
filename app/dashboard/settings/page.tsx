@@ -954,7 +954,7 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Settings</div>
               </div>
             </div>
-            <div style={{ padding: '16px 16px 100px' }}>
+            <div style={{ padding: '16px 16px 0' }}>
               {GROUPS.map(g => (
                 <div key={g.title} style={{ marginBottom: 24 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', padding: '0 4px', marginBottom: 8 }}>{g.title}</div>
@@ -976,7 +976,7 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
-            <div style={{ padding: '8px 16px 24px' }}>
+            <div style={{ padding: '0 16px 24px', marginTop: 24 }}>
               <button
                 onClick={async () => {
                   const supabase = createClient()
