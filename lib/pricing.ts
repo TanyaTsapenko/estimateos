@@ -53,10 +53,7 @@ export function dimToSizeBucket(wIn: number, hIn: number): string {
   return dim >= 48 ? 'xl' : dim >= 36 ? 'lg' : dim >= 24 ? 'md' : 'sm'
 }
 
-export const DEFAULT_SIZE_MULTS = { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 }
-
 export interface CustomPrices {
-  sizes: { sm: number; md: number; lg: number; xl: number }
   types: Record<string, { base: number; lab: number }>
 }
 
@@ -64,9 +61,6 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices): number
   const defaults = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
   const base = custom?.types[op.type]?.base ?? defaults.base
   const lab  = custom?.types[op.type]?.lab  ?? defaults.lab
-  const sizes = custom?.sizes ?? DEFAULT_SIZE_MULTS
-  const bucket = (op.width_in && op.height_in) ? dimToSizeBucket(op.width_in, op.height_in) : op.width
-  const sz = bucket === 'sm' ? sizes.sm : bucket === 'lg' ? sizes.lg : bucket === 'xl' ? sizes.xl : sizes.md
   const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
   const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
   const ia = op.install === 'fullframe' ? 200 : op.install === 'stud_to_stud' ? 350 : 0
@@ -74,8 +68,7 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices): number
   const col = op.colour === 'black' || op.colour === 'grey' ? 80 : op.colour === 'custom' ? 150 : 0
   const gl = op.glass === 'lowe' ? 60 : op.glass === 'frosted' ? 90 : op.glass === 'tinted' ? 70 : op.glass === 'tempered' ? 110 : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
-  const unitCost = ((base + lab) * sz * sh + fa + ia + fc + col + gl + ex) * mult
-  console.log(`[opCost] type=${op.type} dims=${op.width_in || '?'}"×${op.height_in || '?'}" → bucket=${bucket} sz=${sz}× | base=${base} lab=${lab} | (base+lab)×sz=${Math.round((base+lab)*sz)} | unitCost=${Math.round(unitCost)} × qty${op.qty} = ${Math.round(unitCost*(op.qty||1))}`)
+  const unitCost = ((base + lab) * sh + fa + ia + fc + col + gl + ex) * mult
   return unitCost * (op.qty || 1)
 }
 

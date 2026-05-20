@@ -197,12 +197,7 @@ function NewEstimateForm() {
         priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
           types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
         })
-        setCustomPrices({
-          sizes: sizesRow
-            ? { sm: sizesRow.sz_sm, md: sizesRow.sz_md, lg: sizesRow.sz_lg, xl: sizesRow.sz_xl }
-            : { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 },
-          types,
-        })
+        setCustomPrices({ types })
         const customTypesMap: Record<string, { label: string; base: number; lab: number }> = {}
         priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
           customTypesMap[r.opening_type] = { label: r.custom_label, base: r.base_price, lab: r.labour_price }

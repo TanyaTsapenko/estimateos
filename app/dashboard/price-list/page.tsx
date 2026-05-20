@@ -1,13 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
-import { OPENING_TYPES, DEFAULT_SIZE_MULTS, fmtCAD } from '@/lib/pricing'
+import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface PriceRow { base: number; lab: number }
-interface Sizes { sm: number; md: number; lg: number; xl: number }
 interface CustomType { key: string; label: string; base: number; lab: number }
 
 const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
@@ -16,26 +15,48 @@ const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
 
 function OpeningIcon({ typeKey }: { typeKey: string }) {
   const isWindow = typeKey.startsWith('window_')
-  const isDoor = typeKey.startsWith('door_')
+  const isDoor   = typeKey.startsWith('door_')
   return (
-    <div style={{ width: 48, height: 48, borderRadius: 12, flexShrink: 0, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {isWindow ? (
-        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
           <rect x="2" y="2" width="16" height="16" rx="1.5"/>
           <line x1="10" y1="2" x2="10" y2="18"/>
           <line x1="2" y1="10" x2="18" y2="10"/>
         </svg>
       ) : isDoor ? (
-        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
           <rect x="3" y="1" width="14" height="18" rx="1.5"/>
           <circle cx="14" cy="10.5" r="1.2" fill="#2045B8" stroke="none"/>
         </svg>
       ) : (
-        <svg width="24" height="24" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
           <rect x="2" y="2" width="16" height="16" rx="1.5"/>
         </svg>
       )}
     </div>
+  )
+}
+
+function DragHandle() {
+  return (
+    <svg width="12" height="18" viewBox="0 0 12 18" fill="none" style={{ flexShrink: 0 }}>
+      <circle cx="3" cy="3"  r="1.5" fill="#CBD5E1"/>
+      <circle cx="9" cy="3"  r="1.5" fill="#CBD5E1"/>
+      <circle cx="3" cy="9"  r="1.5" fill="#CBD5E1"/>
+      <circle cx="9" cy="9"  r="1.5" fill="#CBD5E1"/>
+      <circle cx="3" cy="15" r="1.5" fill="#CBD5E1"/>
+      <circle cx="9" cy="15" r="1.5" fill="#CBD5E1"/>
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13"/>
+      <path d="M10 11v6M14 11v6"/>
+    </svg>
   )
 }
 
@@ -51,21 +72,69 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function PriceListPage() {
-  const router = useRouter()
+  const router   = useRouter()
   const supabase = createClient()
 
-  const [prices, setPrices] = useState<Record<string, PriceRow>>(DEFAULT_PRICES)
-  const [sizes, setSizes] = useState<Sizes>(DEFAULT_SIZE_MULTS)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [customTypes, setCustomTypes] = useState<CustomType[]>([])
-  const [newLabel, setNewLabel] = useState('')
-  const [deletedCustomKeys, setDeletedCustomKeys] = useState<string[]>([])
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [resetOpen, setResetOpen] = useState(false)
+  const [prices,           setPrices]           = useState<Record<string, PriceRow>>(DEFAULT_PRICES)
+  const [saving,           setSaving]           = useState(false)
+  const [saved,            setSaved]            = useState(false)
+  const [error,            setError]            = useState('')
+  const [loading,          setLoading]          = useState(true)
+  const [customTypes,      setCustomTypes]      = useState<CustomType[]>([])
+  const [newLabel,         setNewLabel]         = useState('')
+  const [deletedCustomKeys,setDeletedCustomKeys]= useState<string[]>([])
+  const [expandedKey,      setExpandedKey]      = useState<string | null>(null)
+  const [deletingCustom,   setDeletingCustom]   = useState<CustomType | null>(null)
+
+  // Drag state — refs for use inside stable useEffect closures
+  const [dragIndexState,   setDragIndexState]   = useState<number | null>(null)
+  const [dragOverState,    setDragOverState]    = useState<number | null>(null)
+  const dragIndexRef = useRef<number | null>(null)
+  const dragOverRef  = useRef<number | null>(null)
+  const itemRefs     = useRef<(HTMLDivElement | null)[]>([])
+
+  function setDragIndex(v: number | null) { dragIndexRef.current = v; setDragIndexState(v) }
+  function setDragOver(v: number | null)  { dragOverRef.current  = v; setDragOverState(v) }
+
+  function getOverIndex(clientY: number): number {
+    for (let i = 0; i < itemRefs.current.length; i++) {
+      const el = itemRefs.current[i]
+      if (!el) continue
+      const rect = el.getBoundingClientRect()
+      if (clientY < rect.top + rect.height / 2) return i
+    }
+    return Math.max(0, itemRefs.current.filter(Boolean).length - 1)
+  }
+
+  useEffect(() => {
+    function onMove(e: PointerEvent) {
+      if (dragIndexRef.current === null) return
+      e.preventDefault()
+      const over = getOverIndex(e.clientY)
+      if (over !== dragOverRef.current) setDragOver(over)
+    }
+    function onUp() {
+      if (dragIndexRef.current === null) return
+      const from = dragIndexRef.current
+      const to   = dragOverRef.current
+      if (to !== null && to !== from) {
+        setCustomTypes(prev => {
+          const arr = [...prev]
+          const [item] = arr.splice(from, 1)
+          arr.splice(to, 0, item)
+          return arr
+        })
+      }
+      setDragIndex(null)
+      setDragOver(null)
+    }
+    window.addEventListener('pointermove', onMove, { passive: false })
+    window.addEventListener('pointerup',   onUp)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup',   onUp)
+    }
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -73,15 +142,16 @@ export default function PriceListPage() {
       if (!user) { router.push('/auth'); return }
       const { data } = await supabase.from('price_lists').select('*').eq('user_id', user.id)
       if (data && data.length > 0) {
-        const sizesRow = data.find(r => r.opening_type === '_sizes')
-        if (sizesRow) setSizes({ sm: sizesRow.sz_sm, md: sizesRow.sz_md, lg: sizesRow.sz_lg, xl: sizesRow.sz_xl })
         const loaded: Record<string, PriceRow> = { ...DEFAULT_PRICES }
         data.filter(r => r.opening_type !== '_sizes' && !r.custom_label).forEach(r => {
           loaded[r.opening_type] = { base: r.base_price, lab: r.labour_price }
         })
         setPrices(loaded)
         const customRows = data.filter(r => r.opening_type !== '_sizes' && r.custom_label)
-        setCustomTypes(customRows.map(r => ({ key: r.opening_type, label: r.custom_label, base: r.base_price, lab: r.labour_price })))
+        setCustomTypes(customRows.map(r => ({
+          key: r.opening_type, label: r.custom_label,
+          base: r.base_price, lab: r.labour_price,
+        })))
       }
       setLoading(false)
     }
@@ -93,31 +163,29 @@ export default function PriceListPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setSaving(false); return }
 
+    const zeroCustom = customTypes.find(ct => ct.base + ct.lab === 0)
+    if (zeroCustom) {
+      setError(`Please enter a price for "${zeroCustom.label}"`)
+      setExpandedKey(zeroCustom.key)
+      setSaving(false)
+      return
+    }
+
     if (deletedCustomKeys.length > 0) {
       await supabase.from('price_lists').delete().eq('user_id', user.id).in('opening_type', deletedCustomKeys)
       setDeletedCustomKeys([])
     }
 
     const rows = [
-      {
-        user_id: user.id, opening_type: '_sizes',
-        base_price: 0, labour_price: 0,
-        sz_sm: sizes.sm, sz_md: sizes.md, sz_lg: sizes.lg, sz_xl: sizes.xl,
-        updated_at: new Date().toISOString(),
-      },
       ...Object.entries(prices).map(([type, p]) => ({
         user_id: user.id, opening_type: type,
         base_price: p.base, labour_price: p.lab,
-        sz_sm: DEFAULT_SIZE_MULTS.sm, sz_md: DEFAULT_SIZE_MULTS.md,
-        sz_lg: DEFAULT_SIZE_MULTS.lg, sz_xl: DEFAULT_SIZE_MULTS.xl,
         updated_at: new Date().toISOString(),
       })),
       ...customTypes.map(ct => ({
         user_id: user.id, opening_type: ct.key,
         base_price: ct.base, labour_price: ct.lab,
         custom_label: ct.label,
-        sz_sm: DEFAULT_SIZE_MULTS.sm, sz_md: DEFAULT_SIZE_MULTS.md,
-        sz_lg: DEFAULT_SIZE_MULTS.lg, sz_xl: DEFAULT_SIZE_MULTS.xl,
         updated_at: new Date().toISOString(),
       })),
     ]
@@ -128,48 +196,69 @@ export default function PriceListPage() {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  async function resetToDefaults() {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    await supabase.from('price_lists').delete().eq('user_id', user.id)
-    setPrices(DEFAULT_PRICES)
-    setSizes(DEFAULT_SIZE_MULTS)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+  function setPrice(type: string, field: 'base' | 'lab', raw: string) {
+    const val = parseFloat(raw.replace(',', '.')) || 0
+    setPrices(p => ({ ...p, [type]: { ...p[type], [field]: val } }))
   }
 
-  function setPrice(type: string, field: 'base' | 'lab', raw: string) {
-    const val = parseFloat(raw) || 0
-    setPrices(p => ({ ...p, [type]: { ...p[type], [field]: val } }))
+  function setCustomPrice(key: string, field: 'base' | 'lab', raw: string) {
+    const val = parseFloat(raw.replace(',', '.')) || 0
+    setCustomTypes(prev => prev.map(ct => ct.key === key ? { ...ct, [field]: val } : ct))
   }
 
   function toggleExpand(key: string) {
     setExpandedKey(prev => prev === key ? null : key)
   }
 
+  function addCustomType() {
+    if (!newLabel.trim()) return
+    const key = 'custom_' + Date.now()
+    setCustomTypes(prev => [...prev, { key, label: newLabel.trim(), base: 0, lab: 0 }])
+    setExpandedKey(key)
+    setNewLabel('')
+  }
+
+  function onHandlePointerDown(e: React.PointerEvent, index: number) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragIndex(index)
+    setDragOver(index)
+  }
+
+  // ── Price display helpers ──
+  const priceNum: React.CSSProperties = {
+    fontSize: 15, fontWeight: 600, color: '#0B1220', lineHeight: 1,
+  }
+  const priceSub: React.CSSProperties = {
+    fontSize: 10, color: '#94A3B8', marginTop: 2,
+  }
+
   return (
     <>
     <ConfirmModal
-      open={resetOpen}
-      icon="alert"
-      title="Reset to defaults?"
-      body="All custom prices will be replaced with system defaults. This cannot be undone."
-      confirmLabel="Reset"
-      onConfirm={() => { setResetOpen(false); resetToDefaults() }}
-      onCancel={() => setResetOpen(false)}
+      open={!!deletingCustom}
+      icon="trash"
+      title={`Delete ${deletingCustom?.label ?? ''}?`}
+      body="This cannot be undone."
+      confirmLabel="Delete"
+      onConfirm={() => {
+        if (!deletingCustom) return
+        setDeletedCustomKeys(prev => [...prev, deletingCustom.key])
+        setCustomTypes(prev => prev.filter(t => t.key !== deletingCustom.key))
+        if (expandedKey === deletingCustom.key) setExpandedKey(null)
+        setDeletingCustom(null)
+      }}
+      onCancel={() => setDeletingCustom(null)}
     />
+
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
       <div style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
+        background: '#fff', borderBottom: '1px solid #EEF0F4',
+        padding: '16px 20px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'sticky', top: 0,
         paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
         zIndex: 10,
       }}>
@@ -184,17 +273,13 @@ export default function PriceListPage() {
             <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
           </div>
         </div>
-        <button
-          onClick={save}
-          disabled={saving}
-          style={{
-            padding: '8px 16px', borderRadius: 10, border: 'none',
-            background: saved ? '#059669' : saving ? '#CBD5E1' : '#2563EB',
-            color: '#fff', fontSize: 13, fontWeight: 600,
-            cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-            transition: 'background .2s',
-          }}
-        >
+        <button onClick={save} disabled={saving} style={{
+          padding: '8px 16px', borderRadius: 10, border: 'none',
+          background: saved ? '#059669' : saving ? '#CBD5E1' : '#2563EB',
+          color: '#fff', fontSize: 13, fontWeight: 600,
+          cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+          transition: 'background .2s',
+        }}>
           {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
         </button>
       </div>
@@ -213,43 +298,41 @@ export default function PriceListPage() {
             </div>
           )}
 
-          {/* ── OPENING TYPES ── */}
+          {/* ── STANDARD TYPES ── */}
           <div style={sectionLabel}>Opening Types</div>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}>
             {Object.entries(OPENING_TYPES).map(([key, def], idx, arr) => {
-              const p = prices[key] || { base: def.base, lab: def.lab }
-              const total = p.base + p.lab
-              const isCustom = p.base !== def.base || p.lab !== def.lab
+              const p         = prices[key] || { base: def.base, lab: def.lab }
+              const total     = p.base + p.lab
+              const isCustom  = p.base !== def.base || p.lab !== def.lab
               const isExpanded = expandedKey === key
-              const isLast = idx === arr.length - 1
+              const isLast    = idx === arr.length - 1
               return (
                 <div key={key}>
-                  {/* Row header — tap to expand */}
                   <div
                     onClick={() => toggleExpand(key)}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '13px 16px',
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '12px 16px',
                       borderBottom: (!isExpanded && !isLast) ? '1px solid rgba(10,22,40,0.05)' : 'none',
                       cursor: 'pointer',
                       background: isExpanded ? '#F8FAFF' : 'transparent',
                     }}
                   >
                     <OpeningIcon typeKey={key} />
-                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{def.name}</div>
                       {isCustom && (
                         <div style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', letterSpacing: '.06em', textTransform: 'uppercase' }}>Custom</div>
                       )}
                     </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#2563EB', lineHeight: 1 }}>{fmtCAD(total)}</div>
-                      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>installed · med</div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={priceNum}>{fmtCAD(total)}</div>
+                      <div style={priceSub}>per opening</div>
                     </div>
-                    <div style={{ fontSize: 12, color: '#94A3B8', marginLeft: 4, transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>▶</div>
+                    <div style={{ fontSize: 11, color: '#CBD5E1', marginLeft: 2, transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>▶</div>
                   </div>
 
-                  {/* Expanded inputs */}
                   {isExpanded && (
                     <div style={{
                       padding: '12px 16px 16px',
@@ -261,8 +344,7 @@ export default function PriceListPage() {
                           <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Materials</div>
                           <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                            <input
-                              type="number" min="0" step="50"
+                            <input type="number" min="0" step="50"
                               value={p.base}
                               onClick={e => e.stopPropagation()}
                               onChange={e => setPrice(key, 'base', e.target.value)}
@@ -274,8 +356,7 @@ export default function PriceListPage() {
                           <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Labour</div>
                           <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                            <input
-                              type="number" min="0" step="50"
+                            <input type="number" min="0" step="50"
                               value={p.lab}
                               onClick={e => e.stopPropagation()}
                               onChange={e => setPrice(key, 'lab', e.target.value)}
@@ -301,40 +382,66 @@ export default function PriceListPage() {
           {/* ── CUSTOM TYPES ── */}
           <div style={sectionLabel}>Custom Types</div>
           {customTypes.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}>
+            <div
+              style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}
+            >
               {customTypes.map((ct, i) => {
-                const isExpanded = expandedKey === ct.key
-                const isLast = i === customTypes.length - 1
+                const isExpanded   = expandedKey === ct.key
+                const isLast       = i === customTypes.length - 1
+                const isDragging   = dragIndexState === i
+                const isDropTarget = dragOverState !== null && dragOverState === i && dragIndexState !== null && dragIndexState !== i
+
                 return (
-                  <div key={ct.key}>
+                  <div
+                    key={ct.key}
+                    ref={el => { itemRefs.current[i] = el }}
+                    style={{
+                      borderTop: isDropTarget ? '2px solid #2563EB' : undefined,
+                      opacity: isDragging ? 0.45 : 1,
+                      transition: 'opacity 150ms',
+                    }}
+                  >
                     <div
-                      onClick={() => toggleExpand(ct.key)}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '13px 16px',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '12px 14px 12px 10px',
                         borderBottom: (!isExpanded && !isLast) ? '1px solid rgba(10,22,40,0.05)' : 'none',
-                        cursor: 'pointer',
                         background: isExpanded ? '#F8FAFF' : 'transparent',
                       }}
                     >
-                      <OpeningIcon typeKey={ct.key} />
-                      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{ct.label}</div>
+                      {/* Drag handle */}
+                      <div
+                        onPointerDown={e => onHandlePointerDown(e, i)}
+                        style={{ padding: '6px 4px', cursor: 'grab', touchAction: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}
+                      >
+                        <DragHandle />
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0, whiteSpace: 'nowrap', minWidth: 'fit-content' }}>
-                        <div style={{ fontSize: 18, fontWeight: 700, color: '#2563EB', lineHeight: 1 }}>{fmtCAD(ct.base + ct.lab)}</div>
-                        <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>installed · med</div>
+
+                      {/* Tap area to expand */}
+                      <div onClick={() => toggleExpand(ct.key)} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, cursor: 'pointer' }}>
+                        <OpeningIcon typeKey={ct.key} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ct.label}</div>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <div style={priceNum}>{fmtCAD(ct.base + ct.lab)}</div>
+                          <div style={priceSub}>per opening</div>
+                        </div>
                       </div>
+
+                      {/* Trash */}
                       <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setDeletedCustomKeys(prev => [...prev, ct.key])
-                          setCustomTypes(prev => prev.filter((_, j) => j !== i))
-                          if (expandedKey === ct.key) setExpandedKey(null)
-                        }}
-                        style={{ background: '#FEF2F2', border: 'none', borderRadius: 6, padding: '4px 8px', color: '#DC2626', cursor: 'pointer', fontSize: 13, marginLeft: 4, flexShrink: 0 }}>
-                        ✕
+                        onClick={e => { e.stopPropagation(); setDeletingCustom(ct) }}
+                        style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#DC2626', cursor: 'pointer', flexShrink: 0, borderRadius: 8 }}
+                      >
+                        <TrashIcon />
                       </button>
+
+                      {/* Chevron */}
+                      <div
+                        onClick={() => toggleExpand(ct.key)}
+                        style={{ fontSize: 11, color: '#CBD5E1', transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none', cursor: 'pointer', flexShrink: 0 }}
+                      >▶</div>
                     </div>
 
                     {isExpanded && (
@@ -343,17 +450,22 @@ export default function PriceListPage() {
                         borderBottom: !isLast ? '1px solid rgba(10,22,40,0.05)' : 'none',
                         background: '#F8FAFF',
                       }}>
+                        {ct.base + ct.lab === 0 && (
+                          <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 8, fontWeight: 500 }}>
+                            Please enter a price
+                          </div>
+                        )}
                         <div style={{ display: 'flex', gap: 10 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Materials</div>
                             <div style={{ position: 'relative' }}>
                               <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                              <input
-                                type="number" min="0" step="50"
-                                value={ct.base}
+                              <input type="number" min="0" step="50"
+                                value={ct.base || ''}
+                                placeholder="0"
                                 onClick={e => e.stopPropagation()}
-                                onChange={e => setCustomTypes(prev => prev.map((t, j) => j === i ? { ...t, base: Number(e.target.value) } : t))}
-                                style={{ ...inputStyle, paddingLeft: 22 }}
+                                onChange={e => setCustomPrice(ct.key, 'base', e.target.value)}
+                                style={{ ...inputStyle, paddingLeft: 22, borderColor: ct.base + ct.lab === 0 ? '#FECACA' : undefined }}
                               />
                             </div>
                           </div>
@@ -361,12 +473,12 @@ export default function PriceListPage() {
                             <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Labour</div>
                             <div style={{ position: 'relative' }}>
                               <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                              <input
-                                type="number" min="0" step="50"
-                                value={ct.lab}
+                              <input type="number" min="0" step="50"
+                                value={ct.lab || ''}
+                                placeholder="0"
                                 onClick={e => e.stopPropagation()}
-                                onChange={e => setCustomTypes(prev => prev.map((t, j) => j === i ? { ...t, lab: Number(e.target.value) } : t))}
-                                style={{ ...inputStyle, paddingLeft: 22 }}
+                                onChange={e => setCustomPrice(ct.key, 'lab', e.target.value)}
+                                style={{ ...inputStyle, paddingLeft: 22, borderColor: ct.base + ct.lab === 0 ? '#FECACA' : undefined }}
                               />
                             </div>
                           </div>
@@ -380,70 +492,18 @@ export default function PriceListPage() {
           )}
 
           {/* Add custom type */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8, marginBottom: 4 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <input
               placeholder="e.g. Skylight, Garden Window…"
               value={newLabel}
               onChange={e => setNewLabel(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && newLabel.trim()) {
-                  setCustomTypes(prev => [...prev, { key: 'custom_' + Date.now(), label: newLabel.trim(), base: 500, lab: 200 }])
-                  setNewLabel('')
-                }
-              }}
+              onKeyDown={e => { if (e.key === 'Enter') addCustomType() }}
               style={{ flex: 1, padding: '10px 12px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
             />
             <button
-              onClick={() => {
-                if (!newLabel.trim()) return
-                setCustomTypes(prev => [...prev, { key: 'custom_' + Date.now(), label: newLabel.trim(), base: 500, lab: 200 }])
-                setNewLabel('')
-              }}
+              onClick={addCustomType}
               style={{ padding: '10px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
             >+ Add</button>
-          </div>
-
-          {/* ── ADVANCED (size multipliers) ── */}
-          <div style={{ marginTop: 20 }}>
-            <button
-              onClick={() => setShowAdvanced(p => !p)}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 0',
-                fontFamily: 'inherit',
-              }}
-            >
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase' }}>Advanced</span>
-              <span style={{ fontSize: 12, color: '#94A3B8', transition: 'transform .2s', display: 'inline-block', transform: showAdvanced ? 'rotate(90deg)' : 'none' }}>▶</span>
-            </button>
-
-            {showAdvanced && (
-              <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: '16px', marginTop: 8 }}>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 14, lineHeight: 1.5 }}>
-                  Size multipliers — applied on top of base + labour. Medium (1.0×) is the reference price.
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
-                  {(['sm', 'md', 'lg', 'xl'] as const).map(sz => (
-                    <div key={sz}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                        {sz === 'sm' ? 'Small' : sz === 'md' ? 'Medium' : sz === 'lg' ? 'Large' : 'XL'}
-                      </div>
-                      <input
-                        type="number" step="0.05" min="0.1" max="5"
-                        value={sizes[sz]}
-                        onChange={e => setSizes(p => ({ ...p, [sz]: parseFloat(e.target.value) || 1 }))}
-                        style={{ ...inputStyle, textAlign: 'center' }}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => setResetOpen(true)}
-                  style={{ marginTop: 14, background: 'none', border: 'none', color: '#DC2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                  Reset all to defaults
-                </button>
-              </div>
-            )}
           </div>
         </>}
       </div>
