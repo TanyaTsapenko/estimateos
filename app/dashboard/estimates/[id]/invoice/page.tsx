@@ -157,7 +157,7 @@ export default function CreateInvoicePage() {
       </div>
 
       {/* BODY */}
-      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflow: 'hidden' }}>
+      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflowY: 'auto' }}>
         {error && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
             {error}
@@ -193,7 +193,7 @@ export default function CreateInvoicePage() {
 
         {/* Form card */}
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, overflow: 'hidden' }}>
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 16, width: '100%', overflow: 'hidden' }}>
             <label style={labelStyle}>Due Date *</label>
             <input
               type="date"
