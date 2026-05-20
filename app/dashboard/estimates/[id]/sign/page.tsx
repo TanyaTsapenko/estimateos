@@ -240,7 +240,7 @@ export default function SignPage() {
         </span>
       </div>
 
-      <div className="card">
+      <div className="card" style={{ paddingTop: 72 }}>
         <div className="sum-box" style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
             {estimate.client_name} · {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Package

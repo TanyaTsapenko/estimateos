@@ -51,6 +51,7 @@ export default function EstimateDetailPage() {
   const [estimate,       setEstimate]       = useState<Estimate | null>(null)
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
+  const [profile,        setProfile]        = useState<{ contract_terms: string | null } | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -65,6 +66,10 @@ export default function EstimateDetailPage() {
       ])
       setEstimate(est)
       setOpenings(ops || [])
+      if (est?.user_id) {
+        const { data: prof } = await supabase.from('profiles').select('contract_terms').eq('id', est.user_id).single()
+        setProfile(prof)
+      }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
         const { data: dep } = await supabase.from('invoices')
           .select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single()
@@ -427,23 +432,39 @@ export default function EstimateDetailPage() {
 
       {/* ── EMAIL MODAL ── */}
       {showEmailModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setShowEmailModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, margin: '0 20px' }}
+          <div style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', width: 320, textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>Send estimate</div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>
-              Sending <strong style={{ color: '#0A1628' }}>{estimate.estimate_number}</strong> to <strong style={{ color: '#0A1628' }}>{estimate.client_email}</strong>.<br />
-              <span style={{ fontSize: 12, color: '#94A3B8' }}>Terms &amp; conditions are included for client review.</span>
+            {/* Icon */}
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#EFF4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+              </svg>
             </div>
+            {/* Title */}
+            <div style={{ fontSize: 17, fontWeight: 600, color: '#0B1220', marginBottom: 8 }}>Send estimate</div>
+            {/* Description */}
+            <div style={{ fontSize: 13, color: '#8A94A6', marginBottom: 4 }}>
+              Sending {estimate.estimate_number} to
+            </div>
+            <div style={{ fontSize: 13, color: '#2563EB', fontWeight: 500, marginBottom: profile?.contract_terms ? 8 : 20 }}>
+              {estimate.client_email}
+            </div>
+            {profile?.contract_terms && (
+              <div style={{ fontSize: 12, color: '#B3BAC6', marginBottom: 20, lineHeight: 1.5 }}>
+                Terms &amp; conditions included for client review.
+              </div>
+            )}
+            {/* Buttons */}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={handleSendEmail} disabled={sending}
-                style={{ flex: 1, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {sending ? 'Sending…' : 'Send'}
-              </button>
               <button onClick={() => setShowEmailModal(false)}
-                style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, background: '#fff', color: '#475467', border: '1px solid #e5e7eb', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Cancel
+              </button>
+              <button onClick={handleSendEmail} disabled={sending}
+                style={{ flex: 1.6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {sending ? 'Sending…' : 'Send'}
               </button>
             </div>
           </div>
