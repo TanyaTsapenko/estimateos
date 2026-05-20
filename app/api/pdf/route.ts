@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   .pill-outline{border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.5);font-size:10px;font-weight:600;border-radius:20px;padding:4px 12px;display:inline-block}
 
   /* ── Body ── */
-  .body{background:#F5F6F8;border-radius:24px 24px 0 0;margin-top:-24px;padding:20px;display:flex;flex-direction:column;gap:12px;min-height:100vh}
+  .body{background:#F5F6F8;border-radius:24px 24px 0 0;margin-top:-24px;padding:20px 20px 40px;display:flex;flex-direction:column;gap:12px}
 
   /* ── Cards ── */
   .card{background:#fff;border-radius:16px;padding:16px}
@@ -269,7 +269,7 @@ export async function GET(request: NextRequest) {
         <div style="font-size:10px;color:#94A3B8">${est.client_name || 'Client'} · Date</div>
       </div>
       <div>
-        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">Contractor</div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">${prof?.company_name || 'Contractor'}</div>
         <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
         <div style="font-size:10px;color:#94A3B8">${prof?.company_name || 'Contractor'} · Date</div>
       </div>
