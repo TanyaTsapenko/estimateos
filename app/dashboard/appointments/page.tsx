@@ -821,12 +821,27 @@ export default function AppointmentsPage() {
       if (!map.has(lbl)) { map.set(lbl, []); order.push(lbl) }
       map.get(lbl)!.push(a)
     })
-    return order.map(lbl => ({ label: lbl, items: map.get(lbl)! }))
+    return order.map(lbl => {
+      const items = map.get(lbl)!.slice().sort((a, b) => {
+        // upcoming first, done/canceled last
+        const aRank = toDesignStatus(a.status) === 'upcoming' ? 0 : 1
+        const bRank = toDesignStatus(b.status) === 'upcoming' ? 0 : 1
+        if (aRank !== bRank) return aRank - bRank
+        // within same status group — sort by time ascending
+        const aT = a.appointment_time ?? ''
+        const bT = b.appointment_time ?? ''
+        return aT < bT ? -1 : aT > bT ? 1 : 0
+      })
+      return { label: lbl, items }
+    })
   }
 
+  // future sorted ascending (tomorrow first), past reversed so yesterday is first
   const future = filtered.filter(a => a.appointment_date > todayStr)
   const today  = filtered.filter(a => a.appointment_date === todayStr)
-  const past   = filtered.filter(a => a.appointment_date < todayStr)
+  const past   = [...filtered.filter(a => a.appointment_date < todayStr)].sort(
+    (a, b) => a.appointment_date < b.appointment_date ? -1 : 1
+  )
   const groups = [
     ...buildGroups(today),
     ...buildGroups(future),
@@ -853,7 +868,9 @@ export default function AppointmentsPage() {
 
   const deskToday  = deskFiltered.filter(a => a.appointment_date === todayStr)
   const deskFuture = deskFiltered.filter(a => a.appointment_date > todayStr)
-  const deskPast   = deskFiltered.filter(a => a.appointment_date < todayStr)
+  const deskPast   = [...deskFiltered.filter(a => a.appointment_date < todayStr)].sort(
+    (a, b) => a.appointment_date < b.appointment_date ? -1 : 1
+  )
   const deskGroups = [
     ...buildGroups(deskToday),
     ...buildGroups(deskFuture),
