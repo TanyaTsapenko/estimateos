@@ -689,80 +689,40 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-const CONTRACT_DEFAULTS = { intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner. Any alteration or deviation from scope involving extra costs will be executed only upon written orders, and will become an extra charge over and above the estimate.', requireSign: true, showLicence: false }
+const DEFAULT_TERMS = `Payment: A deposit of 50% is due upon signing. The remaining balance is due upon completion of work.
+Cancellation: If cancelled after materials are ordered, the deposit is non-refundable.
+Warranty: All materials carry manufacturer warranty. Labour is warranted for 1 year.
+Validity: This estimate is valid for 30 days from the date of issue.
+Changes: Any changes to the scope of work must be agreed upon in writing.
+Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [values, setValues] = useState(CONTRACT_DEFAULTS)
-  const [initial, setInitial] = useState(CONTRACT_DEFAULTS)
-  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
+  const [terms, setTerms] = useState(DEFAULT_TERMS)
+  const [initialTerms, setInitialTerms] = useState(DEFAULT_TERMS)
+  const dirty = terms !== initialTerms
   const [userId, setUserId] = useState<string | null>(null)
-  const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
-  const [contractFileName, setContractFileName] = useState<string>('')
-  const [uploading, setUploading] = useState(false)
-  const pdfInputRef = useRef<HTMLInputElement>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      supabase.from('profiles').select('contract_pdf_url, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url').eq('id', data.user.id).single().then(({ data: prof }) => {
-        if (prof?.contract_pdf_url) {
-          setContractPdfUrl(prof.contract_pdf_url)
-          const parts = prof.contract_pdf_url.split('/')
-          setContractFileName(decodeURIComponent(parts[parts.length - 1]))
-        }
+      supabase.from('profiles').select('contract_terms, signature_url').eq('id', data.user.id).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url) setSignatureUrl((prof as any).signature_url)
-        const loaded = {
-          intro: (prof as any)?.contract_intro ?? CONTRACT_DEFAULTS.intro,
-          terms: (prof as any)?.contract_terms ?? CONTRACT_DEFAULTS.terms,
-          requireSign: (prof as any)?.contract_require_sign ?? CONTRACT_DEFAULTS.requireSign,
-          showLicence: (prof as any)?.contract_show_licence ?? CONTRACT_DEFAULTS.showLicence,
-        }
-        setValues(loaded)
-        setInitial(loaded)
+        const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
+        setTerms(loaded)
+        setInitialTerms(loaded)
       })
     })
   }, [])
 
   async function saveContract() {
     if (!userId) return
-    const { error } = await supabase.from('profiles').update({
-      contract_intro: values.intro,
-      contract_terms: values.terms,
-      contract_require_sign: values.requireSign,
-      contract_show_licence: values.showLicence,
-    }).eq('id', userId)
-    if (error) { flash('Save failed: ' + error.message); console.error('saveContract error:', error); return }
-    setInitial({ ...values })
-    flash('Contract saved')
-  }
-
-  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
-    if (file.size > 10 * 1024 * 1024) { flash('File must be under 10 MB'); return }
-    setUploading(true)
-    const path = `${userId}/contract.pdf`
-    const { error } = await supabase.storage.from('contracts').upload(path, file, { upsert: true, contentType: 'application/pdf' })
-    if (error) { flash('Upload failed'); setUploading(false); return }
-    const { data: urlData } = supabase.storage.from('contracts').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
-    await supabase.from('profiles').update({ contract_pdf_url: url }).eq('id', userId)
-    setContractPdfUrl(url)
-    setContractFileName(file.name)
-    setUploading(false)
-    flash('Contract PDF uploaded')
-  }
-
-  async function handlePdfRemove() {
-    if (!userId) return
-    await supabase.storage.from('contracts').remove([`${userId}/contract.pdf`])
-    await supabase.from('profiles').update({ contract_pdf_url: null }).eq('id', userId)
-    setContractPdfUrl(null)
-    setContractFileName('')
-    flash('Contract PDF removed')
+    const { error } = await supabase.from('profiles').update({ contract_terms: terms }).eq('id', userId)
+    if (error) { flash('Save failed: ' + error.message); return }
+    setInitialTerms(terms)
+    flash('Saved')
   }
 
   async function handleSignatureUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -783,28 +743,19 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
 
   return (
     <div>
-      <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Template shown on every estimate PDF." />
+      <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Shown on every estimate before the client signs." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
-          <SectionLabel>Contract PDF</SectionLabel>
-          <input ref={pdfInputRef} type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handlePdfUpload} />
-          {contractPdfUrl ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, background: '#0F8A6B', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ color: '#fff', fontSize: 18 }}>✓</span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{contractFileName || 'contract.pdf'}</div>
-                <div style={{ fontSize: 12, color: '#0F8A6B', marginTop: 1 }}>Uploaded</div>
-              </div>
-              <button onClick={handlePdfRemove} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>Remove</button>
-            </div>
-          ) : (
-            <button onClick={() => pdfInputRef.current?.click()} disabled={uploading}
-              style={{ width: '100%', padding: '20px', border: '2px dashed #CBD5E1', borderRadius: 10, background: 'transparent', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <SIcon name="pdf" size={24} style={{ color: '#94A3B8' }} />
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{uploading ? 'Uploading…' : 'Upload contract PDF'}</div>
-              <div style={{ fontSize: 12, color: '#94A3B8' }}>PDF only · Max 10 MB</div>
+          <SectionLabel>Terms &amp; Conditions</SectionLabel>
+          <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10 }}>
+            Displayed inline on the signing page. Default text is used if left empty.
+          </p>
+          <textarea value={terms} onChange={e => setTerms(e.target.value)} rows={9}
+            style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
+          {terms !== DEFAULT_TERMS && (
+            <button onClick={() => setTerms(DEFAULT_TERMS)}
+              style={{ marginTop: 8, padding: '5px 10px', background: 'transparent', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 11, color: '#94A3B8', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Reset to default
             </button>
           )}
         </Card>
@@ -846,35 +797,8 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
             )}
           </div>
         </Card>
-        <Card>
-          <SectionLabel>Intro paragraph</SectionLabel>
-          <div style={{ marginBottom: 6, fontSize: 12, color: '#94A3B8' }}>Supports: {'{client_name}'}, {'{company_name}'}</div>
-          <textarea value={values.intro} onChange={e => setValues(s => ({ ...s, intro: e.target.value }))} rows={3}
-            style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-        </Card>
-        <Card>
-          <SectionLabel>Terms & conditions</SectionLabel>
-          <textarea value={values.terms} onChange={e => setValues(s => ({ ...s, terms: e.target.value }))} rows={6}
-            style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-        </Card>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #EEF0F4' }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>Require client signature</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>Client must sign before estimate is accepted</div>
-            </div>
-            <Toggle on={values.requireSign} onChange={v => setValues(s => ({ ...s, requireSign: v }))} />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', marginTop: 8 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>Show licence # in footer</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>Display your business licence on the PDF</div>
-            </div>
-            <Toggle on={values.showLicence} onChange={v => setValues(s => ({ ...s, showLicence: v }))} />
-          </div>
-        </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => setTerms(initialTerms)} />
     </div>
   )
 }

@@ -13,9 +13,15 @@ interface Estimate {
 }
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
-  logo_url: string | null; deposit_pct: number | null; contract_pdf_url: string | null
-  contract_terms: string | null
+  logo_url: string | null; deposit_pct: number | null; contract_terms: string | null
 }
+
+const DEFAULT_TERMS = `Payment: A deposit of 50% is due upon signing. The remaining balance is due upon completion of work.
+Cancellation: If cancelled after materials are ordered, the deposit is non-refundable.
+Warranty: All materials carry manufacturer warranty. Labour is warranted for 1 year.
+Validity: This estimate is valid for 30 days from the date of issue.
+Changes: Any changes to the scope of work must be agreed upon in writing.
+Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
 
 const TIERS = [
   { key: 'good',   label: 'Good',   mult: 1.0, why: 'Standard materials & workmanship. 1-year labour warranty.', badge: '' },
@@ -26,7 +32,7 @@ const TIERS = [
 const INSTALL_LABELS: Record<string, string> = { insert: 'Retrofit', retrofit: 'Retrofit', fullframe: 'Full Frame', stud_to_stud: 'Stud to Stud' }
 const FLOOR_LABELS: Record<string, string> = { first: '', second: '2nd floor', third: '3rd+ floor' }
 
-type Screen = 'view' | 'summary' | 'sign' | 'success' | 'declined' | 'already_signed' | 'contract'
+type Screen = 'view' | 'summary' | 'sign' | 'success' | 'declined' | 'already_signed'
 
 export default function ClientEstimatePage() {
   const { id } = useParams<{ id: string }>()
@@ -39,7 +45,6 @@ export default function ClientEstimatePage() {
   const [screen, setScreen] = useState<Screen>('view')
   const [hasSignature, setHasSignature] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [contractRead, setContractRead] = useState(false)
   const [error, setError] = useState('')
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
@@ -51,22 +56,14 @@ export default function ClientEstimatePage() {
       if (est.status === 'signed') { setEstimate(est); setScreen('already_signed'); return }
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_pdf_url, contract_terms').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_terms').eq('id', (est as any).user_id).single(),
       ])
       setEstimate(est); setSelectedTier(est.tier || 'better')
       setOpenings(ops || []); setProfile(prof)
-      console.log('DEBUG est.sent_method:', est.sent_method)
-      console.log('DEBUG profile:', prof)
-      console.log('DEBUG contract_terms:', prof?.contract_terms)
-      console.log('DEBUG contract_pdf_url:', prof?.contract_pdf_url)
       if (est.sent_method === 'email_estimate_contract') {
-        const nextScreen = prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'summary'
-        console.log('DEBUG screen set to:', nextScreen)
-        setScreen(nextScreen)
+        setScreen('summary')
       } else if (est.sent_method === 'email_contract') {
-        const nextScreen = prof?.contract_pdf_url || prof?.contract_terms ? 'contract' : 'sign'
-        console.log('DEBUG screen set to:', nextScreen)
-        setScreen(nextScreen)
+        setScreen('sign')
       }
     }
     load()
@@ -224,7 +221,7 @@ export default function ClientEstimatePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
         <div className="h-top">
-          <button onClick={() => setScreen(estimate.sent_method === 'email_contract' ? 'contract' : 'summary')}
+          <button onClick={() => setScreen('summary')}
             style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             ←
           </button>
@@ -293,58 +290,6 @@ export default function ClientEstimatePage() {
       </div>
     </div>
   )
-
-  // ── CONTRACT SCREEN ───────────────────────────
-  if (screen === 'contract') {
-    const nextScreen: Screen = estimate.sent_method === 'email_contract' ? 'sign' : 'summary'
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <div className="gh">
-          <div className="h-top">
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          </div>
-          <div className="h-title">
-            <div className="h-eye">{estimate.estimate_number} · {profile?.company_name || 'Contractor'}</div>
-            <div className="h-big">Review Contract</div>
-            <div className="h-sub">Read and acknowledge before continuing</div>
-          </div>
-        </div>
-        <div className="card screen-enter">
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
-            {profile?.contract_pdf_url ? (
-              <iframe
-                src={profile.contract_pdf_url}
-                style={{ width: '100%', height: 400, border: 'none', display: 'block' }}
-                title="Contract PDF"
-              />
-            ) : (
-              <div style={{ padding: '16px 18px', maxHeight: 400, overflowY: 'auto' }}>
-                <div style={{ fontSize: 12, color: 'var(--jet)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                  {profile?.contract_terms || 'No contract terms provided.'}
-                </div>
-              </div>
-            )}
-          </div>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20 }}>
-            <input type="checkbox" checked={contractRead} onChange={e => setContractRead(e.target.checked)}
-              style={{ marginTop: 2, accentColor: '#2045B8', width: 16, height: 16, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, color: 'var(--jet)', lineHeight: 1.5 }}>
-              I have read and agree to the contract terms and conditions presented by {profile?.company_name || 'the contractor'}.
-            </span>
-          </label>
-          <button className="gen-btn" disabled={!contractRead} onClick={() => setScreen(nextScreen)}>
-            {nextScreen === 'sign' ? 'Continue to Sign →' : 'Continue to Estimate →'}
-          </button>
-          {profile?.contract_pdf_url && (
-            <a href={profile.contract_pdf_url} target="_blank" rel="noopener noreferrer"
-              style={{ display: 'block', textAlign: 'center', fontSize: 11, color: '#2045B8', marginTop: 12, textDecoration: 'none' }}>
-              Open PDF in new tab →
-            </a>
-          )}
-        </div>
-      </div>
-    )
-  }
 
   // ── SUMMARY SCREEN ────────────────────────────
   if (screen === 'summary') {
@@ -479,18 +424,13 @@ export default function ClientEstimatePage() {
             </div>
           )}
 
-          {/* Contract note for estimate+contract sends */}
-          {estimate.sent_method === 'email_estimate_contract' && (profile?.contract_pdf_url || profile?.contract_terms) && (
-            <div style={{ marginTop: 16, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10, fontSize: 11, color: '#6b7280', lineHeight: 1.7 }}>
-              ✅ Contract reviewed and accepted.
-              {profile?.contract_pdf_url && (
-                <a href={profile.contract_pdf_url} target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#2045B8', marginLeft: 6, textDecoration: 'none' }}>
-                  Review contract again →
-                </a>
-              )}
+          {/* Terms & Conditions */}
+          <div style={{ marginTop: 20, marginBottom: 4 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>Terms &amp; Conditions</div>
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '12px 14px', maxHeight: 150, overflowY: 'auto', fontSize: 11.5, color: '#475569', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+              {profile?.contract_terms || DEFAULT_TERMS}
             </div>
-          )}
+          </div>
 
           {/* Signature pad */}
           {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}

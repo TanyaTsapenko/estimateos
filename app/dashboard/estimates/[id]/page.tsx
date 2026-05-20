@@ -52,7 +52,6 @@ export default function EstimateDetailPage() {
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
-  const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [toast,          setToast]          = useState('')
 
@@ -64,10 +63,6 @@ export default function EstimateDetailPage() {
       ])
       setEstimate(est)
       setOpenings(ops || [])
-      if (est?.user_id) {
-        const { data: prof } = await supabase.from('profiles').select('contract_pdf_url').eq('id', est.user_id).single()
-        setContractPdfUrl((prof as any)?.contract_pdf_url || null)
-      }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
         const { data: dep } = await supabase.from('invoices')
           .select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single()
@@ -83,20 +78,19 @@ export default function EstimateDetailPage() {
     setTimeout(() => setToast(''), 2500)
   }
 
-  async function handleSendEmail(mode: 'estimate' | 'estimate_contract' | 'contract') {
+  async function handleSendEmail() {
     if (!estimate?.client_email) { showToast('⚠️ No client email on this estimate'); return }
     setSending(true); setShowEmailModal(false)
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estimateId: id, type: 'send', sendMode: mode }),
+        body: JSON.stringify({ estimateId: id, type: 'send', sendMode: 'estimate' }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed')
-      const sentMethod = mode === 'estimate' ? 'email_estimate' : mode === 'estimate_contract' ? 'email_estimate_contract' : 'email_contract'
-      await supabase.from('estimates').update({ status: 'sent', sent_method: sentMethod }).eq('id', id)
-      setEstimate(p => p ? { ...p, status: 'sent', sent_method: sentMethod } : p)
+      await supabase.from('estimates').update({ status: 'sent', sent_method: 'email_estimate' }).eq('id', id)
+      setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'email_estimate' } : p)
       showToast('📧 Sent to ' + (json.sentTo || estimate.client_email))
     } catch (e: any) {
       showToast('⚠️ ' + e.message)
@@ -424,43 +418,23 @@ export default function EstimateDetailPage() {
       {showEmailModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={() => setShowEmailModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 420, margin: '0 20px' }}
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '100%', maxWidth: 380, margin: '0 20px' }}
             onClick={e => e.stopPropagation()}>
-
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>Send to client</div>
-              <button onClick={() => setShowEmailModal(false)}
-                style={{ background: '#F1F5F9', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', fontSize: 14, flexShrink: 0 }}>✕</button>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>Send estimate</div>
+            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20 }}>
+              Sending <strong style={{ color: '#0A1628' }}>{estimate.estimate_number}</strong> to <strong style={{ color: '#0A1628' }}>{estimate.client_email}</strong>.<br />
+              <span style={{ fontSize: 12, color: '#94A3B8' }}>Terms &amp; conditions are included for client review.</span>
             </div>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Sending to {estimate.client_email}</div>
-
-            {/* Option 1: Estimate only — always available */}
-            <button
-              style={{ width: '100%', background: '#F8FAFF', border: '1px solid #BFDBFE', borderRadius: 10, padding: '12px 14px', marginBottom: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}
-              onClick={() => handleSendEmail('estimate')}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#1E40AF', marginBottom: 3 }}>Estimate only</div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>Send the estimate with pricing and tier selection</div>
-            </button>
-
-            {/* Option 2: Estimate + Contract */}
-            <button
-              disabled={!contractPdfUrl}
-              style={{ width: '100%', background: contractPdfUrl ? '#F8FAFF' : '#F5F6F8', border: `1px solid ${contractPdfUrl ? '#BFDBFE' : '#EEF0F4'}`, borderRadius: 10, padding: '12px 14px', marginBottom: 8, cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.5 }}
-              onClick={() => contractPdfUrl && handleSendEmail('estimate_contract')}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: contractPdfUrl ? '#1E40AF' : '#94A3B8', marginBottom: 3 }}>Estimate + Contract</div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>{contractPdfUrl ? 'Client reads contract first, then reviews and signs the estimate' : 'No contract uploaded — go to Settings → Contract'}</div>
-            </button>
-
-            {/* Option 3: Contract only */}
-            <button
-              disabled={!contractPdfUrl}
-              style={{ width: '100%', background: contractPdfUrl ? '#F8FAFF' : '#F5F6F8', border: `1px solid ${contractPdfUrl ? '#BFDBFE' : '#EEF0F4'}`, borderRadius: 10, padding: '12px 14px', cursor: contractPdfUrl ? 'pointer' : 'not-allowed', textAlign: 'left', fontFamily: 'inherit', opacity: contractPdfUrl ? 1 : 0.5 }}
-              onClick={() => contractPdfUrl && handleSendEmail('contract')}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: contractPdfUrl ? '#1E40AF' : '#94A3B8', marginBottom: 3 }}>Contract only</div>
-              <div style={{ fontSize: 11, color: '#94A3B8' }}>{contractPdfUrl ? 'Send only the contract PDF for client signature' : 'No contract uploaded — go to Settings → Contract'}</div>
-            </button>
-
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={handleSendEmail} disabled={sending}
+                style={{ flex: 1, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {sending ? 'Sending…' : 'Send'}
+              </button>
+              <button onClick={() => setShowEmailModal(false)}
+                style={{ flex: 1, background: '#F1F5F9', color: '#475569', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
