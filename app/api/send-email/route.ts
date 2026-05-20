@@ -326,16 +326,24 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 `)
   }
 
+  const emailPayload = {
+    from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+    to: [est.client_email],
+    subject,
+    html,
+  }
+  console.log('RESEND PAYLOAD:', JSON.stringify({ from: emailPayload.from, to: emailPayload.to, subject: emailPayload.subject, htmlLength: html.length }))
+
   try {
-    const { data, error } = await resend.emails.send({
-      from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
-      to: [est.client_email],
-      subject,
-      html,
-    })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ success: true, id: data?.id })
+    const { data, error } = await resend.emails.send(emailPayload)
+    if (error) {
+      console.error('RESEND ERROR:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    console.log('RESEND SUCCESS:', data?.id, '→ to:', est.client_email)
+    return NextResponse.json({ success: true, id: data?.id, sentTo: est.client_email, subject })
   } catch (e: any) {
+    console.error('RESEND EXCEPTION:', e.message)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

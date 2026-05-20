@@ -97,7 +97,7 @@ export default function EstimateDetailPage() {
       const sentMethod = mode === 'estimate' ? 'email_estimate' : mode === 'estimate_contract' ? 'email_estimate_contract' : 'email_contract'
       await supabase.from('estimates').update({ status: 'sent', sent_method: sentMethod }).eq('id', id)
       setEstimate(p => p ? { ...p, status: 'sent', sent_method: sentMethod } : p)
-      showToast('📧 Sent to ' + estimate.client_email)
+      showToast('📧 Sent to ' + (json.sentTo || estimate.client_email))
     } catch (e: any) {
       showToast('⚠️ ' + e.message)
     }
