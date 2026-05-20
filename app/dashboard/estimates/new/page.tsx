@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 import { Square, LayoutGrid, Home, Minus, Image, DoorOpen, PanelRight, BookOpen, Shield, DoorClosed } from 'lucide-react'
+import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+
+const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
+const estErrBorder = '1.5px solid #C0341A'
 
 const OPENING_ICONS: Record<string, React.ReactNode> = {
   window_dh:  <Square    size={16} strokeWidth={1.5} color="#2563EB" />,
@@ -157,6 +161,10 @@ function NewEstimateForm() {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
+  const [clientErrors, setClientErrors] = useState<ClientErrors>({})
+
+  const setCErr = (k: keyof ClientErrors, v: string | null) => setClientErrors(p => ({ ...p, [k]: v }))
+  const clearCErr = (k: keyof ClientErrors) => setCErr(k, null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -228,19 +236,28 @@ function NewEstimateForm() {
     setOpenings(p => p.map(o => o.id === id ? { ...o, [k]: v } : o))
   }
 
-  function validateStep(): string {
-    if (step === 1 && !client.client_name.trim()) return 'Client name is required'
-    return ''
+  function validateClientFields(): ClientErrors {
+    return {
+      client_name:    validateName(client.client_name),
+      client_phone:   validatePhone(client.client_phone),
+      client_email:   validateEmail(client.client_email),
+      client_address: validateAddress(client.client_address),
+    }
   }
   function next() {
-    const err = validateStep()
-    if (err) { setError(err); return }
+    if (step === 1) {
+      const errs = validateClientFields()
+      setClientErrors(errs)
+      if (hasErrors(errs)) return
+    }
     setError(''); setStep(s => s + 1); window.scrollTo(0, 0)
   }
   function back() { setError(''); setStep(s => s - 1); window.scrollTo(0, 0) }
 
   async function saveEstimate() {
-    if (!client.client_name.trim()) { setError('Client name is required'); return }
+    const errs = validateClientFields()
+    setClientErrors(errs)
+    if (hasErrors(errs)) return
     setSaving(true); setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
@@ -377,22 +394,22 @@ function NewEstimateForm() {
             </select></div>
         </div>
 
-        <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Installation Type</label>
+        <div className="r1" style={{ marginBottom: 8 }}>
+          <div className="f"><label>Installation</label>
             <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
               <option value="retrofit">Retrofit</option>
               <option value="fullframe">Full Frame (+$200)</option>
               <option value="stud_to_stud">Stud to Stud (+$350)</option>
             </select></div>
+        </div>
+
+        <div className="r2">
           <div className="f"><label>Floor</label>
             <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
               <option value="first">Ground floor</option>
               <option value="second">2nd floor (+$80)</option>
               <option value="third">3rd+ floor (+$180)</option>
             </select></div>
-        </div>
-
-        <div className="r2">
           <div className="f"><label>Room (optional)</label>
             <input placeholder="Living room" value={op.room}
               onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
@@ -445,21 +462,49 @@ function NewEstimateForm() {
 
               <div className="r1"><div className="f">
                 <label>Client Name *</label>
-                <input placeholder="Andriy Koval" value={client.client_name}
-                  onChange={e => setClient(p => ({ ...p, client_name: e.target.value }))} />
+                <input
+                  placeholder="Andriy Koval"
+                  value={client.client_name}
+                  style={clientErrors.client_name ? { border: estErrBorder } : undefined}
+                  onChange={e => { clearCErr('client_name'); setClient(p => ({ ...p, client_name: e.target.value })) }}
+                  onBlur={() => setCErr('client_name', validateName(client.client_name))}
+                />
+                {clientErrors.client_name && <div style={estErrStyle}>{clientErrors.client_name}</div>}
               </div></div>
               <div className="r2">
                 <div className="f"><label>Email</label>
-                  <input type="email" placeholder="andriy@email.com" value={client.client_email}
-                    onChange={e => setClient(p => ({ ...p, client_email: e.target.value }))} /></div>
+                  <input
+                    type="email"
+                    placeholder="andriy@email.com"
+                    value={client.client_email}
+                    style={clientErrors.client_email ? { border: estErrBorder } : undefined}
+                    onChange={e => { clearCErr('client_email'); setClient(p => ({ ...p, client_email: e.target.value })) }}
+                    onBlur={() => setCErr('client_email', validateEmail(client.client_email))}
+                  />
+                  {clientErrors.client_email && <div style={estErrStyle}>{clientErrors.client_email}</div>}
+                </div>
                 <div className="f"><label>Phone</label>
-                  <input type="tel" placeholder="(403) 555-0100" value={client.client_phone}
-                    onChange={e => setClient(p => ({ ...p, client_phone: e.target.value }))} /></div>
+                  <input
+                    type="tel"
+                    placeholder="(403) 555-0100"
+                    value={client.client_phone}
+                    style={clientErrors.client_phone ? { border: estErrBorder } : undefined}
+                    onChange={e => { clearCErr('client_phone'); setClient(p => ({ ...p, client_phone: formatPhone(e.target.value) })) }}
+                    onBlur={() => setCErr('client_phone', validatePhone(client.client_phone))}
+                  />
+                  {clientErrors.client_phone && <div style={estErrStyle}>{clientErrors.client_phone}</div>}
+                </div>
               </div>
               <div className="r1"><div className="f">
                 <label>Address</label>
-                <input placeholder="123 Maple St" value={client.client_address}
-                  onChange={e => setClient(p => ({ ...p, client_address: e.target.value }))} />
+                <input
+                  placeholder="123 Maple St"
+                  value={client.client_address}
+                  style={clientErrors.client_address ? { border: estErrBorder } : undefined}
+                  onChange={e => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: e.target.value })) }}
+                  onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
+                />
+                {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
               </div></div>
               <div className="r2">
                 <div className="f"><label>City</label>
@@ -630,21 +675,49 @@ function NewEstimateForm() {
           <>
             <div className="r1"><div className="f">
               <label>Client Name *</label>
-              <input placeholder="Andriy Koval" value={client.client_name}
-                onChange={e => setClient(p => ({ ...p, client_name: e.target.value }))} />
+              <input
+                placeholder="Andriy Koval"
+                value={client.client_name}
+                style={clientErrors.client_name ? { border: estErrBorder } : undefined}
+                onChange={e => { clearCErr('client_name'); setClient(p => ({ ...p, client_name: e.target.value })) }}
+                onBlur={() => setCErr('client_name', validateName(client.client_name))}
+              />
+              {clientErrors.client_name && <div style={estErrStyle}>{clientErrors.client_name}</div>}
             </div></div>
             <div className="r2">
               <div className="f"><label>Email</label>
-                <input type="email" placeholder="andriy@email.com" value={client.client_email}
-                  onChange={e => setClient(p => ({ ...p, client_email: e.target.value }))} /></div>
+                <input
+                  type="email"
+                  placeholder="andriy@email.com"
+                  value={client.client_email}
+                  style={clientErrors.client_email ? { border: estErrBorder } : undefined}
+                  onChange={e => { clearCErr('client_email'); setClient(p => ({ ...p, client_email: e.target.value })) }}
+                  onBlur={() => setCErr('client_email', validateEmail(client.client_email))}
+                />
+                {clientErrors.client_email && <div style={estErrStyle}>{clientErrors.client_email}</div>}
+              </div>
               <div className="f"><label>Phone</label>
-                <input type="tel" placeholder="(403) 555-0100" value={client.client_phone}
-                  onChange={e => setClient(p => ({ ...p, client_phone: e.target.value }))} /></div>
+                <input
+                  type="tel"
+                  placeholder="(403) 555-0100"
+                  value={client.client_phone}
+                  style={clientErrors.client_phone ? { border: estErrBorder } : undefined}
+                  onChange={e => { clearCErr('client_phone'); setClient(p => ({ ...p, client_phone: formatPhone(e.target.value) })) }}
+                  onBlur={() => setCErr('client_phone', validatePhone(client.client_phone))}
+                />
+                {clientErrors.client_phone && <div style={estErrStyle}>{clientErrors.client_phone}</div>}
+              </div>
             </div>
             <div className="r1"><div className="f">
               <label>Address</label>
-              <input placeholder="123 Maple St" value={client.client_address}
-                onChange={e => setClient(p => ({ ...p, client_address: e.target.value }))} />
+              <input
+                placeholder="123 Maple St"
+                value={client.client_address}
+                style={clientErrors.client_address ? { border: estErrBorder } : undefined}
+                onChange={e => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: e.target.value })) }}
+                onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
+              />
+              {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
             </div></div>
             <div className="r2">
               <div className="f"><label>City</label>

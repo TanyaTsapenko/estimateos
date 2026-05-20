@@ -2,6 +2,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import ConfirmModal from '@/components/ConfirmModal'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -222,6 +224,9 @@ function AppointmentCard({
 }
 
 // ─── EditScreen ───────────────────────────────────────────────────────────────
+const editErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
+const editErrBorder = `1px solid ${T.red}`
+
 function EditScreen({
   open, appt, onClose, onSave, onDelete,
 }: {
@@ -233,16 +238,24 @@ function EditScreen({
 }) {
   const [draft, setDraft] = useState<Partial<Appt>>({})
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ClientErrors>({})
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
+  const clearErr = (k: keyof ClientErrors) => setErr(k, null)
 
   useEffect(() => {
-    if (appt) setDraft({
-      client_name:      appt.client_name,
-      client_phone:     appt.client_phone  ?? '',
-      client_address:   appt.client_address ?? '',
-      lead_source:      appt.lead_source    ?? '',
-      appointment_date: appt.appointment_date,
-      appointment_time: appt.appointment_time ?? '',
-    })
+    if (appt) {
+      setDraft({
+        client_name:      appt.client_name,
+        client_phone:     appt.client_phone  ?? '',
+        client_address:   appt.client_address ?? '',
+        lead_source:      appt.lead_source    ?? '',
+        appointment_date: appt.appointment_date,
+        appointment_time: appt.appointment_time ?? '',
+      })
+      setErrors({})
+    }
   }, [appt?.id])
 
   if (!appt) return null
@@ -269,18 +282,32 @@ function EditScreen({
   }
 
   async function handleSave() {
-    if (!draft.client_name?.trim()) return
+    const nameErr  = validateName(draft.client_name ?? '')
+    const phoneErr = validatePhone(draft.client_phone ?? '')
+    const addrErr  = validateAddress(draft.client_address ?? '')
+    const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr, client_address: addrErr }
+    setErrors(newErrors)
+    if (hasErrors(newErrors)) return
     setSaving(true)
     await onSave(currentAppt.id, draft)
     setSaving(false)
   }
 
   async function handleDelete() {
-    if (!confirm('Delete this appointment?')) return
     await onDelete(currentAppt.id)
   }
 
   return (
+    <>
+    <ConfirmModal
+      open={deleteOpen}
+      icon="trash"
+      title="Delete appointment?"
+      body={`${currentAppt.client_name} appointment will be permanently deleted. This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => { setDeleteOpen(false); handleDelete() }}
+      onCancel={() => setDeleteOpen(false)}
+    />
     <div style={{
       position: 'fixed', inset: 0, zIndex: 200, background: T.bg,
       transform: open ? 'translateY(0)' : 'translateY(100%)',
@@ -310,12 +337,26 @@ function EditScreen({
         <div style={sectionCard}>
           <div>
             <label style={fieldLabel}>Name</label>
-            <input style={inp} value={draft.client_name ?? ''} onChange={e => set('client_name')(e.target.value)} />
+            <input
+              style={errors.client_name ? { ...inp, border: editErrBorder } : inp}
+              value={draft.client_name ?? ''}
+              onChange={e => { clearErr('client_name'); set('client_name')(e.target.value) }}
+              onBlur={() => setErr('client_name', validateName(draft.client_name ?? ''))}
+            />
+            {errors.client_name && <div style={editErrStyle}>{errors.client_name}</div>}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div>
               <label style={fieldLabel}>Phone</label>
-              <input type="tel" style={inp} value={draft.client_phone ?? ''} onChange={e => set('client_phone')(e.target.value)} placeholder="(403) 555-0100" />
+              <input
+                type="tel"
+                style={errors.client_phone ? { ...inp, border: editErrBorder } : inp}
+                value={draft.client_phone ?? ''}
+                onChange={e => { clearErr('client_phone'); set('client_phone')(formatPhone(e.target.value)) }}
+                onBlur={() => setErr('client_phone', validatePhone(draft.client_phone ?? ''))}
+                placeholder="(403) 555-0100"
+              />
+              {errors.client_phone && <div style={editErrStyle}>{errors.client_phone}</div>}
             </div>
             <div>
               <label style={fieldLabel}>Source</label>
@@ -331,7 +372,14 @@ function EditScreen({
           </div>
           <div>
             <label style={fieldLabel}>Address</label>
-            <input style={inp} value={draft.client_address ?? ''} onChange={e => set('client_address')(e.target.value)} placeholder="123 Main St" />
+            <input
+              style={errors.client_address ? { ...inp, border: editErrBorder } : inp}
+              value={draft.client_address ?? ''}
+              onChange={e => { clearErr('client_address'); set('client_address')(e.target.value) }}
+              onBlur={() => setErr('client_address', validateAddress(draft.client_address ?? ''))}
+              placeholder="123 Main St"
+            />
+            {errors.client_address && <div style={editErrStyle}>{errors.client_address}</div>}
           </div>
         </div>
 
@@ -349,7 +397,7 @@ function EditScreen({
         </div>
 
         {/* DELETE */}
-        <button onClick={handleDelete} style={{ marginTop: 24, width: '100%', height: 44, borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, width: '100%', height: 44, borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13" /><path d="M10 11v6M14 11v6" /></svg>
           Delete appointment
         </button>
@@ -360,11 +408,12 @@ function EditScreen({
         <button onClick={onClose} style={{ flex: 1, height: 48, borderRadius: 12, border: `1px solid ${T.borderStrong}`, background: T.card, color: T.inkMid, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
           Cancel
         </button>
-        <button onClick={handleSave} disabled={saving} style={{ flex: 2, height: 48, borderRadius: 12, border: 'none', background: saving ? T.inkSoft : T.blue, color: '#fff', fontSize: 15, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
+        <button onClick={handleSave} disabled={saving || hasErrors(errors)} style={{ flex: 2, height: 48, borderRadius: 12, border: 'none', background: (saving || hasErrors(errors)) ? T.inkSoft : T.blue, color: '#fff', fontSize: 15, fontWeight: 700, cursor: (saving || hasErrors(errors)) ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
           {saving ? 'Saving…' : 'Save changes'}
         </button>
       </div>
     </div>
+    </>
   )
 }
 
@@ -546,6 +595,11 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
 }) {
   const [draft, setDraft] = useState<Partial<Appt>>({})
   const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<ClientErrors>({})
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
+  const clearErr = (k: keyof ClientErrors) => setErr(k, null)
 
   useEffect(() => {
     setDraft({
@@ -557,6 +611,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
       appointment_time: appt.appointment_time ?? '',
       notes:            appt.notes ?? '',
     })
+    setErrors({})
   }, [appt.id])
 
   const ds  = toDesignStatus(appt.status)
@@ -573,17 +628,31 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
   const secCard: React.CSSProperties = { background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }
 
   async function handleSave() {
-    if (!draft.client_name?.trim()) return
+    const nameErr  = validateName(draft.client_name ?? '')
+    const phoneErr = validatePhone(draft.client_phone ?? '')
+    const addrErr  = validateAddress(draft.client_address ?? '')
+    const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr, client_address: addrErr }
+    setErrors(newErrors)
+    if (hasErrors(newErrors)) return
     setSaving(true)
     await onSave(appt.id, draft)
     setSaving(false)
   }
   async function handleDelete() {
-    if (!confirm('Delete this appointment?')) return
     await onDelete(appt.id)
   }
 
   return (
+    <>
+    <ConfirmModal
+      open={deleteOpen}
+      icon="trash"
+      title="Delete appointment?"
+      body={`${appt.client_name} appointment will be permanently deleted. This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => { setDeleteOpen(false); handleDelete() }}
+      onCancel={() => setDeleteOpen(false)}
+    />
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={{ flex: 1, overflowY: 'auto', padding: '32px 40px 24px', maxWidth: 880 }}>
         {/* Heading */}
@@ -601,11 +670,25 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
         <div style={secCard}>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={fldLbl}>Name</label>
-            <input style={inp} value={draft.client_name ?? ''} onChange={e => set('client_name')(e.target.value)} />
+            <input
+              style={errors.client_name ? { ...inp, border: editErrBorder } : inp}
+              value={draft.client_name ?? ''}
+              onChange={e => { clearErr('client_name'); set('client_name')(e.target.value) }}
+              onBlur={() => setErr('client_name', validateName(draft.client_name ?? ''))}
+            />
+            {errors.client_name && <div style={editErrStyle}>{errors.client_name}</div>}
           </div>
           <div>
             <label style={fldLbl}>Phone</label>
-            <input type="tel" style={inp} value={draft.client_phone ?? ''} onChange={e => set('client_phone')(e.target.value)} placeholder="(403) 555-0100" />
+            <input
+              type="tel"
+              style={errors.client_phone ? { ...inp, border: editErrBorder } : inp}
+              value={draft.client_phone ?? ''}
+              onChange={e => { clearErr('client_phone'); set('client_phone')(formatPhone(e.target.value)) }}
+              onBlur={() => setErr('client_phone', validatePhone(draft.client_phone ?? ''))}
+              placeholder="(403) 555-0100"
+            />
+            {errors.client_phone && <div style={editErrStyle}>{errors.client_phone}</div>}
           </div>
           <div>
             <label style={fldLbl}>Source</label>
@@ -617,7 +700,14 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
           </div>
           <div style={{ gridColumn: 'span 2' }}>
             <label style={fldLbl}>Address</label>
-            <input style={inp} value={draft.client_address ?? ''} onChange={e => set('client_address')(e.target.value)} placeholder="123 Main St" />
+            <input
+              style={errors.client_address ? { ...inp, border: editErrBorder } : inp}
+              value={draft.client_address ?? ''}
+              onChange={e => { clearErr('client_address'); set('client_address')(e.target.value) }}
+              onBlur={() => setErr('client_address', validateAddress(draft.client_address ?? ''))}
+              placeholder="123 Main St"
+            />
+            {errors.client_address && <div style={editErrStyle}>{errors.client_address}</div>}
           </div>
         </div>
 
@@ -646,7 +736,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
         </div>
 
         {/* Delete */}
-        <button onClick={handleDelete} style={{ marginTop: 24, height: 42, padding: '0 18px', borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, height: 42, padding: '0 18px', borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13" /><path d="M10 11v6M14 11v6" /></svg>
           Delete appointment
         </button>
@@ -657,11 +747,12 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
         <button onClick={onCancel} style={{ height: 44, padding: '0 22px', borderRadius: 10, border: `1px solid ${T.borderStrong}`, background: T.card, color: T.inkMid, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
           Cancel
         </button>
-        <button onClick={handleSave} disabled={saving} style={{ height: 44, padding: '0 26px', borderRadius: 10, border: 'none', background: saving ? T.inkSoft : T.blue, color: '#fff', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
+        <button onClick={handleSave} disabled={saving || hasErrors(errors)} style={{ height: 44, padding: '0 26px', borderRadius: 10, border: 'none', background: (saving || hasErrors(errors)) ? T.inkSoft : T.blue, color: '#fff', fontSize: 14, fontWeight: 700, cursor: (saving || hasErrors(errors)) ? 'not-allowed' : 'pointer', boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}>
           {saving ? 'Saving…' : 'Save changes'}
         </button>
       </div>
     </div>
+    </>
   )
 }
 

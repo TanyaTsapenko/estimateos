@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
   id: string; type: string; qty: number; width: string
@@ -53,6 +54,7 @@ export default function EstimateDetailPage() {
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
+  const [deleteOpen,     setDeleteOpen]     = useState(false)
   const [toast,          setToast]          = useState('')
 
   useEffect(() => {
@@ -99,7 +101,6 @@ export default function EstimateDetailPage() {
   }
 
   async function deleteEstimate() {
-    if (!confirm('Delete this estimate?')) return
     await supabase.from('estimates').delete().eq('id', id)
     router.push('/dashboard/estimates')
   }
@@ -203,6 +204,16 @@ export default function EstimateDetailPage() {
 
   // ── MAIN RENDER ──────────────────────────────────────
   return (
+    <>
+    <ConfirmModal
+      open={deleteOpen}
+      icon="trash"
+      title="Delete estimate?"
+      body={`${estimate.estimate_number} will be permanently deleted. This cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => { setDeleteOpen(false); deleteEstimate() }}
+      onCancel={() => setDeleteOpen(false)}
+    />
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
@@ -391,7 +402,7 @@ export default function EstimateDetailPage() {
               {[
                 { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF', onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
                 { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: duplicateEstimate, danger: false },
-                { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: deleteEstimate, danger: true },
+                { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: () => setDeleteOpen(true), danger: true },
               ].map((item, i, arr) => (
                 <button
                   key={item.label}
@@ -439,5 +450,6 @@ export default function EstimateDetailPage() {
         </div>
       )}
     </div>
+    </>
   )
 }

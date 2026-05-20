@@ -46,10 +46,11 @@ export interface Opening {
   screen: number
 }
 
-// Derive sm/md/lg/xl from measured area (sq in)
+// Derive sm/md/lg/xl from the larger of width or height (in inches)
+// Small <24", Medium 24–36", Large 36–48", XL >48"
 export function dimToSizeBucket(wIn: number, hIn: number): string {
-  const area = wIn * hIn
-  return area >= 2500 ? 'xl' : area >= 1400 ? 'lg' : area >= 700 ? 'md' : 'sm'
+  const dim = Math.max(wIn, hIn)
+  return dim >= 48 ? 'xl' : dim >= 36 ? 'lg' : dim >= 24 ? 'md' : 'sm'
 }
 
 export const DEFAULT_SIZE_MULTS = { sm: 0.85, md: 1.0, lg: 1.2, xl: 1.4 }
@@ -73,7 +74,9 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices): number
   const col = op.colour === 'black' || op.colour === 'grey' ? 80 : op.colour === 'custom' ? 150 : 0
   const gl = op.glass === 'lowe' ? 60 : op.glass === 'frosted' ? 90 : op.glass === 'tinted' ? 70 : op.glass === 'tempered' ? 110 : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
-  return ((base + lab) * sz * sh + fa + ia + fc + col + gl + ex) * mult * (op.qty || 1)
+  const unitCost = ((base + lab) * sz * sh + fa + ia + fc + col + gl + ex) * mult
+  console.log(`[opCost] type=${op.type} dims=${op.width_in || '?'}"×${op.height_in || '?'}" → bucket=${bucket} sz=${sz}× | base=${base} lab=${lab} | (base+lab)×sz=${Math.round((base+lab)*sz)} | unitCost=${Math.round(unitCost)} × qty${op.qty} = ${Math.round(unitCost*(op.qty||1))}`)
+  return unitCost * (op.qty || 1)
 }
 
 export function fmtCAD(n: number): string {

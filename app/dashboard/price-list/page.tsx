@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { OPENING_TYPES, DEFAULT_SIZE_MULTS, fmtCAD } from '@/lib/pricing'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface PriceRow { base: number; lab: number }
 interface Sizes { sm: number; md: number; lg: number; xl: number }
@@ -64,6 +65,7 @@ export default function PriceListPage() {
   const [deletedCustomKeys, setDeletedCustomKeys] = useState<string[]>([])
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -127,7 +129,6 @@ export default function PriceListPage() {
   }
 
   async function resetToDefaults() {
-    if (!confirm('Reset all prices to system defaults?')) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('price_lists').delete().eq('user_id', user.id)
@@ -147,6 +148,16 @@ export default function PriceListPage() {
   }
 
   return (
+    <>
+    <ConfirmModal
+      open={resetOpen}
+      icon="alert"
+      title="Reset to defaults?"
+      body="All custom prices will be replaced with system defaults. This cannot be undone."
+      confirmLabel="Reset"
+      onConfirm={() => { setResetOpen(false); resetToDefaults() }}
+      onCancel={() => setResetOpen(false)}
+    />
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
@@ -427,7 +438,7 @@ export default function PriceListPage() {
                   ))}
                 </div>
                 <button
-                  onClick={resetToDefaults}
+                  onClick={() => setResetOpen(true)}
                   style={{ marginTop: 14, background: 'none', border: 'none', color: '#DC2626', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                   Reset all to defaults
                 </button>
@@ -439,5 +450,6 @@ export default function PriceListPage() {
 
       <BottomNav />
     </div>
+    </>
   )
 }

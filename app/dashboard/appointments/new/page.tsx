@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
@@ -12,12 +13,16 @@ const STATUSES = [
 
 interface TeamMember { id: string; name: string }
 
+const errStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
+const errBorder = '1.5px solid #C0341A'
+
 export default function NewAppointmentPage() {
   const router = useRouter()
   const supabase = createClient()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [errors, setErrors] = useState<ClientErrors>({})
 
   const today = new Date().toISOString().slice(0, 10)
 
@@ -35,11 +40,12 @@ export default function NewAppointmentPage() {
   })
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
+  const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
+  const clearErr = (k: keyof ClientErrors) => setErr(k, null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      // Load team members if any exist
       const { data: members } = await supabase
         .from('team_members')
         .select('id, first_name, last_name, email')
@@ -55,7 +61,13 @@ export default function NewAppointmentPage() {
 
   async function save() {
     setError('')
-    if (!form.client_name.trim()) return setError('Client name is required')
+    const nameErr = validateName(form.client_name)
+    const phoneErr = validatePhone(form.client_phone)
+    const emailErr = validateEmail(form.client_email)
+    const addrErr = validateAddress(form.client_address)
+    const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr, client_email: emailErr, client_address: addrErr }
+    setErrors(newErrors)
+    if (hasErrors(newErrors)) return
     if (!form.appointment_date) return setError('Date is required')
     setSaving(true)
 
@@ -112,20 +124,40 @@ export default function NewAppointmentPage() {
 
         <div className="r1"><div className="f">
           <label>Client Name *</label>
-          <input placeholder="Jane Smith" value={form.client_name}
-            onChange={e => set('client_name', e.target.value)} />
+          <input
+            placeholder="Jane Smith"
+            value={form.client_name}
+            style={errors.client_name ? { border: errBorder } : undefined}
+            onChange={e => { clearErr('client_name'); set('client_name', e.target.value) }}
+            onBlur={() => setErr('client_name', validateName(form.client_name))}
+          />
+          {errors.client_name && <div style={errStyle}>{errors.client_name}</div>}
         </div></div>
 
         <div className="r2">
           <div className="f">
             <label>Phone</label>
-            <input type="tel" placeholder="(403) 555-0100" value={form.client_phone}
-              onChange={e => set('client_phone', e.target.value)} />
+            <input
+              type="tel"
+              placeholder="(403) 555-0100"
+              value={form.client_phone}
+              style={errors.client_phone ? { border: errBorder } : undefined}
+              onChange={e => { clearErr('client_phone'); set('client_phone', formatPhone(e.target.value)) }}
+              onBlur={() => setErr('client_phone', validatePhone(form.client_phone))}
+            />
+            {errors.client_phone && <div style={errStyle}>{errors.client_phone}</div>}
           </div>
           <div className="f">
             <label>Email</label>
-            <input type="email" placeholder="jane@email.com" value={form.client_email}
-              onChange={e => set('client_email', e.target.value)} />
+            <input
+              type="email"
+              placeholder="jane@email.com"
+              value={form.client_email}
+              style={errors.client_email ? { border: errBorder } : undefined}
+              onChange={e => { clearErr('client_email'); set('client_email', e.target.value) }}
+              onBlur={() => setErr('client_email', validateEmail(form.client_email))}
+            />
+            {errors.client_email && <div style={errStyle}>{errors.client_email}</div>}
           </div>
         </div>
 
@@ -138,8 +170,14 @@ export default function NewAppointmentPage() {
 
         <div className="r1"><div className="f">
           <label>Address</label>
-          <input placeholder="123 Maple St, Calgary, AB" value={form.client_address}
-            onChange={e => set('client_address', e.target.value)} />
+          <input
+            placeholder="123 Maple St, Calgary, AB"
+            value={form.client_address}
+            style={errors.client_address ? { border: errBorder } : undefined}
+            onChange={e => { clearErr('client_address'); set('client_address', e.target.value) }}
+            onBlur={() => setErr('client_address', validateAddress(form.client_address))}
+          />
+          {errors.client_address && <div style={errStyle}>{errors.client_address}</div>}
         </div></div>
 
         <div className="sl">When</div>
@@ -167,7 +205,7 @@ export default function NewAppointmentPage() {
             style={{ background: '#fff', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 14, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical' }}
             onChange={e => set('notes', e.target.value)} />
         </div></div>
-        {/* Assigned to — shown only if team members exist */}
+
         {teamMembers.length > 0 && (
           <div className="r1"><div className="f">
             <label>Assigned To</label>
@@ -188,7 +226,7 @@ export default function NewAppointmentPage() {
 
         <div style={{ height: 16 }} />
 
-        <button className="btn-next" style={{ width: '100%' }} onClick={save} disabled={saving}>
+        <button className="btn-next" style={{ width: '100%' }} onClick={save} disabled={saving || hasErrors(errors)}>
           {saving ? 'Saving...' : 'Save Appointment →'}
         </button>
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { useRole } from '@/lib/useRole'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface Member {
   id: string; first_name: string | null; last_name: string | null
@@ -52,6 +53,7 @@ export default function TeamPage() {
   const [screen, setScreen] = useState<'list' | 'invite'>('list')
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState('')
+  const [removingMember, setRemovingMember] = useState<Member | null>(null)
 
   const [invEmail, setInvEmail] = useState('')
   const [invName, setInvName] = useState('')
@@ -119,7 +121,6 @@ export default function TeamPage() {
   }
 
   async function removeMember(memberId: string) {
-    if (!confirm('Remove this team member? They will lose access to the workspace.')) return
     await supabase.from('profiles').update({ team_owner_id: null, member_role: null }).eq('id', memberId)
     setMembers(p => p.filter(m => m.id !== memberId))
     showToast('✅ Member removed')
@@ -137,7 +138,21 @@ export default function TeamPage() {
     </div>
   )
 
+  const removingMemberName = removingMember
+    ? [removingMember.first_name, removingMember.last_name].filter(Boolean).join(' ') || removingMember.email || 'This member'
+    : ''
+
   return (
+    <>
+    <ConfirmModal
+      open={!!removingMember}
+      icon="user-minus"
+      title="Remove team member?"
+      body={`${removingMemberName} will be removed from your workspace.`}
+      confirmLabel="Remove"
+      onConfirm={() => { const m = removingMember; setRemovingMember(null); if (m) removeMember(m.id) }}
+      onCancel={() => setRemovingMember(null)}
+    />
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
         <div className="h-top">
@@ -298,7 +313,7 @@ export default function TeamPage() {
                       <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>All access</span>
                     )}
                   </div>
-                  <button onClick={() => removeMember(m.id)}
+                  <button onClick={() => setRemovingMember(m)}
                     style={{ width: '100%', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.15)', borderRadius: 9, padding: '8px 0', fontSize: 11, fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}>
                     Remove from team
                   </button>
@@ -381,5 +396,6 @@ export default function TeamPage() {
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
       <BottomNav />
     </div>
+    </>
   )
 }

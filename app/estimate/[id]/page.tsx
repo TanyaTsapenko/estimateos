@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening } from '@/lib/pricing'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_province: string | null
@@ -46,6 +47,7 @@ export default function ClientEstimatePage() {
   const [hasSignature, setHasSignature] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [declineOpen, setDeclineOpen] = useState(false)
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
 
@@ -154,7 +156,6 @@ export default function ClientEstimatePage() {
   }
 
   async function declineEstimate() {
-    if (!confirm('Decline this estimate?')) return
     await supabase.from('estimates').update({ status: 'declined' }).eq('id', id)
     setScreen('declined')
   }
@@ -218,6 +219,16 @@ export default function ClientEstimatePage() {
 
   // ── SIGN SCREEN ───────────────────────────────
   if (screen === 'sign') return (
+    <>
+    <ConfirmModal
+      open={declineOpen}
+      icon="alert"
+      title="Decline this estimate?"
+      body="Are you sure you want to decline? The contractor will be notified."
+      confirmLabel="Decline"
+      onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
+      onCancel={() => setDeclineOpen(false)}
+    />
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
         <div className="h-top">
@@ -283,18 +294,29 @@ export default function ClientEstimatePage() {
         <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}>
           {saving ? '⏳ Processing...' : estimate.sent_method === 'email_contract' ? '✅ I Agree — Sign Contract' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
         </button>
-        <button onClick={declineEstimate}
+        <button onClick={() => setDeclineOpen(true)}
           style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 8 }}>
           {estimate.sent_method === 'email_contract' ? 'Decline' : 'Decline this estimate'}
         </button>
       </div>
     </div>
+    </>
   )
 
   // ── SUMMARY SCREEN ────────────────────────────
   if (screen === 'summary') {
     const tierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
     return (
+      <>
+      <ConfirmModal
+        open={declineOpen}
+        icon="alert"
+        title="Decline this estimate?"
+        body="Are you sure you want to decline? The contractor will be notified."
+        confirmLabel="Decline"
+        onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
+        onCancel={() => setDeclineOpen(false)}
+      />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <div className="gh">
           <div className="h-top">
@@ -458,19 +480,30 @@ export default function ClientEstimatePage() {
                 ← Change package
               </button>
             )}
-            <button onClick={declineEstimate}
+            <button onClick={() => setDeclineOpen(true)}
               style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc262640', fontSize: 12, padding: '6px 0', cursor: 'pointer' }}>
               Decline this estimate
             </button>
           </div>
         </div>
       </div>
+      </>
     )
   }
 
   // ── MAIN VIEW (tier selection) ─────────────────
   const viewTierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
   return (
+    <>
+    <ConfirmModal
+      open={declineOpen}
+      icon="alert"
+      title="Decline this estimate?"
+      body="Are you sure you want to decline? The contractor will be notified."
+      confirmLabel="Decline"
+      onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
+      onCancel={() => setDeclineOpen(false)}
+    />
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
         <div className="h-top">
@@ -551,11 +584,12 @@ export default function ClientEstimatePage() {
           Continue to {viewTierLabel} — {fmtCAD(pricing.total)} →
         </button>
 
-        <button onClick={declineEstimate}
+        <button onClick={() => setDeclineOpen(true)}
           style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 4 }}>
           Decline this estimate
         </button>
       </div>
     </div>
+    </>
   )
 }
