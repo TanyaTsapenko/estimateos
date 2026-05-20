@@ -172,7 +172,7 @@ export default function ClientEstimatePage() {
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done</div><div className="h-big">Already signed</div></div>
       </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
+      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
         <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>{estimate.estimate_number} is signed</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
@@ -188,7 +188,7 @@ export default function ClientEstimatePage() {
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">Declined</div><div className="h-big">No problem.</div></div>
       </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
+      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
         <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
         <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>Estimate declined</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
@@ -204,7 +204,7 @@ export default function ClientEstimatePage() {
       <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done!</div><div className="h-big">Signed! 🎉</div></div>
       </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
+      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>You&apos;re all set!</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, maxWidth: 280, margin: '0 auto' }}>
@@ -244,7 +244,7 @@ export default function ClientEstimatePage() {
           {estimate.sent_method !== 'email_contract' && <div className="h-sub">Total: {fmtCAD(pricing.total)} · Deposit: {fmtCAD(pricing.deposit)}</div>}
         </div>
       </div>
-      <div className="card">
+      <div className="card" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
         {error && <div className="error-msg">{error}</div>}
 
         {estimate.sent_method !== 'email_contract' && (
@@ -335,7 +335,7 @@ export default function ClientEstimatePage() {
           </div>
         </div>
 
-        <div className="card screen-enter">
+        <div className="card screen-enter" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
           {/* ── Line items ── */}
           <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 10, paddingBottom: 8, borderBottom: '1.5px solid var(--border-light)' }}>
             Line items ({openings.length})
@@ -516,7 +516,7 @@ export default function ClientEstimatePage() {
         </div>
       </div>
 
-      <div className="card screen-enter">
+      <div className="card screen-enter" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
         {estimate.scope_notes && (
           <div className="info-box" style={{ marginBottom: 16 }}>
             <strong>Scope of work:</strong> {estimate.scope_notes}
