@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
 
 interface Appointment {
-  id: string; time: string; client: string; address: string
+  id: string; time: string; client: string; address: string; phone: string
   pillStatus: string; estimateId: string | null; duration: string
 }
 interface Metrics {
@@ -125,7 +125,7 @@ export default function DashboardPage() {
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,appointment_time,status,estimate_id')
+        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id')
         .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
       if (appts) {
         setAppointments(appts.map((a: any) => {
@@ -142,6 +142,7 @@ export default function DashboardPage() {
             time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--',
             client: a.client_name || 'Client',
             address: a.client_address || '',
+            phone: a.client_phone || '',
             pillStatus,
             estimateId: a.estimate_id || null,
             duration: a.duration_minutes ? `${a.duration_minutes}m` : '60m',
@@ -260,6 +261,9 @@ export default function DashboardPage() {
   }, [])
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
+  const doneCount  = appointments.filter(a => a.pillStatus === 'DONE').length
+  const nextAppt   = appointments.find(a => a.pillStatus !== 'DONE') ?? null
+  const otherAppts = appointments.filter(a => a.id !== nextAppt?.id)
 
   return (
     <div style={{
@@ -304,161 +308,159 @@ export default function DashboardPage() {
       {/* Body */}
       <main className="db-main-body" style={{ padding: '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
 
-        {/* Hero */}
-        <div className="db-hero" style={{
-          borderRadius: 16, padding: 22, marginBottom: 18,
-          background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)',
-          color: '#fff',
-        }}>
-          <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
-              <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', opacity: 0.7, textTransform: 'uppercase' }}>
+        {/* ── MOBILE HERO ── */}
+        {isMobile && (
+          <div className="db-hero" style={{ borderRadius: 16, padding: 20, marginBottom: 18, background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)', color: '#fff' }}>
+            {/* Row 1: date + done count */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
                 YOUR DAY · {todayStr.toUpperCase()}
               </div>
-              {appointments.length === 0 ? (
-                <>
-                  <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
-                    No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
-                  </div>
-                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
-                    {signaturesNeeded > 0
-                      ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.`
-                      : 'Add your first appointment to get started.'}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ marginTop: 6 }}>
-                    <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
-                      {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
-                    </div>
-                    {signaturesNeeded > 0 && (
-                      <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
-                        {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+              {appointments.length > 0 && (
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
+                  {doneCount} / {appointments.length} done
+                </div>
+              )}
+            </div>
+
+            {/* NEXT card */}
+            {appointments.length === 0 ? (
+              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 16px', marginBottom: 14, textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>No visits today</div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Tap + to add an appointment</div>
+              </div>
+            ) : nextAppt ? (
+              <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: '14px 16px', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', display: 'inline-block', textTransform: 'uppercase', marginBottom: 8 }}>NEXT</span>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>{nextAppt.time}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: nextAppt.address ? 8 : 0 }}>{nextAppt.client}</div>
+                    {nextAppt.address && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 22s-7-7.5-7-12a7 7 0 1114 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/>
+                        </svg>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextAppt.address}</span>
                       </div>
                     )}
                   </div>
-                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                    {isMobile
-                      ? `${appointments.length} stop${appointments.length !== 1 ? 's' : ''} · first at ${appointments[0].time}`
-                      : `${appointments.length} stop${appointments.length !== 1 ? 's' : ''} · first at ${appointments[0].time}, last at ${appointments[appointments.length - 1].time}.${signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}`
-                    }
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Mobile: dashed add button only */}
-          {isMobile && (
-            <div style={{ marginTop: 14 }}>
-              {appointments.slice(0, 3).map((appt, i) => (
-                <div
-                  key={appt.id}
-                  onClick={() => appt.estimateId
-                    ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                    : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
-                  }
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 0',
-                    borderTop: i === 0 ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(255,255,255,0.15)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ textAlign: 'right', flexShrink: 0, lineHeight: 1 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
-                      {appt.time.replace(' AM','').replace(' PM','')}
-                    </span>
-                    <span style={{ fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginLeft: 2 }}>
-                      {appt.time.includes('AM') ? 'AM' : 'PM'}
-                    </span>
-                  </div>
-                  <div style={{
-                    width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                    background: appt.pillStatus === 'IN PROGRESS' ? '#F59E0B'
-                      : appt.pillStatus === 'AWAITING SIGN' ? '#FB923C'
-                      : appt.pillStatus === 'DONE' ? '#34D399'
-                      : appt.pillStatus === 'CONSULTATION' ? 'rgba(255,255,255,0.4)'
-                      : '#93C5FD',
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 1 }}>
-                      {appt.pillStatus === 'DONE' ? 'Completed' : appt.pillStatus === 'IN PROGRESS' ? 'In progress' : appt.pillStatus === 'AWAITING SIGN' ? 'Awaiting sign' : 'Consultation'} · {appt.address.split(',')[1]?.trim() || appt.address}
-                    </div>
-                  </div>
-                  {(appt.pillStatus === 'IN PROGRESS') && (
-                    <div style={{ background: '#F59E0B', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>NOW</div>
-                  )}
-                  {(appt.pillStatus === 'AWAITING SIGN') && (
-                    <div style={{ background: '#F59E0B', borderRadius: 999, padding: '3px 10px', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>SIGN</div>
-                  )}
+                  {nextAppt.phone ? (
+                    <a href={`tel:${nextAppt.phone}`} onClick={e => e.stopPropagation()}
+                      style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>
+                      </svg>
+                    </a>
+                  ) : <div style={{ width: 40, flexShrink: 0 }} />}
                 </div>
-              ))}
-              <button
-                onClick={() => router.push('/dashboard/appointments')}
-                style={{
-                  width: '100%', marginTop: 12, padding: '13px 0',
-                  background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.5)',
-                  borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#fff',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                }}
-              >
-                {appointments.length > 3 ? `+${appointments.length - 3} more · ` : ''}View full schedule <span style={{ fontSize: 16 }}>›</span>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 99, background: 'rgba(52,211,153,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>All visits complete for today!</div>
+              </div>
+            )}
+
+            {/* Other appointments list */}
+            {otherAppts.length > 0 && (
+              <div style={{ marginBottom: 14 }}>
+                {otherAppts.map(appt => {
+                  const isDone = appt.pillStatus === 'DONE'
+                  return (
+                    <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.08)', opacity: isDone ? 0.5 : 1 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>
+                        {appt.time}
+                      </span>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>·</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {appt.client}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Bottom chips */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {signaturesNeeded > 0 && (
+                <button onClick={() => router.push('/dashboard/estimates')}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 99, border: 'none', background: 'rgba(0,0,0,0.30)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                  ~ {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+                </button>
+              )}
+              <button onClick={() => router.push('/dashboard/appointments')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 99, border: 'none', background: 'rgba(255,255,255,0.92)', color: '#2563EB', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                <Calendar size={12} strokeWidth={2} />
+                Open schedule
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Desktop: appointment cards grid */}
-          {!isMobile && (
+        {/* ── DESKTOP HERO ── */}
+        {!isMobile && (
+          <div className="db-hero" style={{ borderRadius: 16, padding: 22, marginBottom: 18, background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)', color: '#fff' }}>
+            <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', opacity: 0.7, textTransform: 'uppercase' }}>
+                  YOUR DAY · {todayStr.toUpperCase()}
+                </div>
+                {appointments.length === 0 ? (
+                  <>
+                    <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
+                      No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
+                    </div>
+                    <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
+                      {signaturesNeeded > 0 ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : 'Add your first appointment to get started.'}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ marginTop: 6 }}>
+                      <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
+                        {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
+                      </div>
+                      {signaturesNeeded > 0 && (
+                        <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
+                          {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+                        </div>
+                      )}
+                    </div>
+                    <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                      {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.{signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
             <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
               {appointments.map(appt => (
-                <div key={appt.id} style={{
-                  background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)',
-                  borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column',
-                }}>
+                <div key={appt.id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
                     <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
                     <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
-                  <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                    {appt.address}
-                  </div>
-                  <div style={{
-                    display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700,
-                    letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start',
-                    borderRadius: 999, textTransform: 'uppercase',
-                    ...apptPillStyle(appt.pillStatus),
-                  }}>{appt.pillStatus}</div>
+                  <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
+                  <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(appt.pillStatus) }}>{appt.pillStatus}</div>
                   <button
-                    onClick={() => appt.estimateId
-                      ? router.push(`/dashboard/estimates/${appt.estimateId}`)
-                      : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)
-                    }
-                    style={{
-                      marginTop: 10, padding: '6px 0', width: '100%',
-                      background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)',
-                      border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`,
-                      borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer',
-                    }}
-                  >
+                    onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
+                    style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
                     {appt.estimateId ? 'View EST →' : 'Start estimate'}
                   </button>
                 </div>
               ))}
-              <div className="db-appt-add" style={{
-                background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)',
-                borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center',
-                justifyContent: 'center', cursor: 'pointer', minHeight: 90,
-              }} onClick={() => router.push('/dashboard/appointments/new')}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>
-                  + add appointment
-                </span>
+              <div className="db-appt-add" style={{ background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 90 }}
+                onClick={() => router.push('/dashboard/appointments/new')}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>+ add appointment</span>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* KPI row */}
         <div className="db-kpi-row" style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
