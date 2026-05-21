@@ -66,7 +66,7 @@ const sectionLabel: React.CSSProperties = {
 }
 
 const inputStyle: React.CSSProperties = {
-  flex: 1, background: '#F8FAFC', border: '1.5px solid #E2E8F0',
+  width: '100%', boxSizing: 'border-box', background: '#F8FAFC', border: '1.5px solid #E2E8F0',
   borderRadius: 8, padding: '8px 10px', fontSize: 14, color: '#0A1628',
   fontFamily: 'inherit', outline: 'none', minWidth: 0,
 }
