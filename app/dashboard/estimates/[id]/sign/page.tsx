@@ -129,6 +129,7 @@ export default function SignPage() {
           title:   'Estimate signed',
           body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
           read:    false,
+          link:    `/dashboard/estimates/${estimate.id}`,
         })
       }
     }

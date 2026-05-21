@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     title:   'Estimate expired',
     body:    `${e.estimate_number} expired without a response${e.client_name ? ` from ${e.client_name}` : ''}`,
     read:    false,
+    link:    `/dashboard/estimates/${e.id}`,
   }))
 
   await supabase.from('notifications').insert(notifications)

@@ -104,7 +104,7 @@ function getTodayStr() {
 }
 
 interface Notif {
-  id: string; type: string; title: string; body: string; read: boolean; created_at: string
+  id: string; type: string; title: string; body: string; read: boolean; created_at: string; link: string | null
 }
 
 function notifIcon(type: string) {
@@ -301,7 +301,7 @@ export default function DashboardPage() {
       if (!user) return
       const { data, error } = await supabase
         .from('notifications')
-        .select('id,type,title,body,read,created_at')
+        .select('id,type,title,body,read,created_at,link')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20)
@@ -403,7 +403,18 @@ export default function DashboardPage() {
               {notifs.length === 0 ? (
                 <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#8A94A6' }}>No notifications yet.</div>
               ) : notifs.map(n => (
-                <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: n.read ? '#FAFAFA' : '#fff', borderBottom: '1px solid #EEF0F4' }}>
+                <button
+                  key={n.id}
+                  onClick={() => { if (n.link) router.push(n.link); setBellOpen(false) }}
+                  style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px',
+                    background: n.read ? '#FAFAFA' : '#fff', borderBottom: '1px solid #EEF0F4',
+                    width: '100%', textAlign: 'left', border: 'none', fontFamily: 'inherit',
+                    cursor: n.link ? 'pointer' : 'default',
+                  }}
+                  onMouseEnter={e => { if (n.link) (e.currentTarget as HTMLElement).style.background = '#F1F5FF' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#FAFAFA' : '#fff' }}
+                >
                   {!n.read && <div style={{ width: 6, height: 6, borderRadius: 999, background: '#2563EB', flexShrink: 0, marginTop: 6 }} />}
                   {n.read && <div style={{ width: 6, flexShrink: 0 }} />}
                   {notifIcon(n.type)}
@@ -412,7 +423,7 @@ export default function DashboardPage() {
                     <div style={{ fontSize: 12, color: '#475467', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>
                     <div style={{ fontSize: 11, color: '#B3BAC6', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

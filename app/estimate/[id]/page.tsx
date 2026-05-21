@@ -154,6 +154,7 @@ export default function ClientEstimatePage() {
       title:   'Estimate signed',
       body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
       read:    false,
+      link:    `/dashboard/estimates/${estimate.id}`,
     })
 
     await Promise.allSettled([
@@ -168,11 +169,12 @@ export default function ClientEstimatePage() {
     if (estimate) {
       const clientName = estimate.client_name || 'Client'
       await supabase.from('notifications').insert({
-        user_id:    (estimate as any).user_id,
-        type:       'estimate_declined',
-        title:      'Estimate declined',
-        body:       `${clientName} declined ${estimate.estimate_number}`,
-        read:       false,
+        user_id: (estimate as any).user_id,
+        type:    'estimate_declined',
+        title:   'Estimate declined',
+        body:    `${clientName} declined ${estimate.estimate_number}`,
+        read:    false,
+        link:    `/dashboard/estimates/${estimate.id}`,
       })
     }
     setScreen('declined')
