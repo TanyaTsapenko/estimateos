@@ -1,9 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Bell } from 'lucide-react'
+import { useNotifications } from '@/hooks/useNotifications'
+import NotifDropdown from '@/components/NotifDropdown'
 
 interface Appointment {
   id: string; time: string; client: string; address: string; phone: string
@@ -112,6 +114,17 @@ export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
   const todayStr = getTodayStr()
+  const { notifs, unread, open: bellOpen, setOpen: setBellOpen, openPanel, markAllRead } = useNotifications()
+  const bellRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!bellOpen) return
+    const handle = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [bellOpen, setBellOpen])
 
   const loadAll = useCallback(async () => {
     const supabase = createClient()
@@ -284,6 +297,31 @@ export default function DashboardPage() {
             <span className="db-greeting-date" style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
           </div>
         </div>
+        {/* Bell — desktop only (mobile uses BottomTabBar) */}
+        {!isMobile && (
+          <div ref={bellRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => bellOpen ? setBellOpen(false) : openPanel()}
+              style={{
+                position: 'relative', width: 36, height: 36,
+                background: '#fff', border: '1px solid #E2E5EA',
+                borderRadius: 9, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <Bell size={15} strokeWidth={1.7} color="#475569" />
+              {unread > 0 && (
+                <span style={{ position: 'absolute', top: 5, right: 5, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
+              )}
+            </button>
+            {bellOpen && (
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100 }}>
+                <NotifDropdown notifs={notifs} onClose={() => setBellOpen(false)} markAllRead={markAllRead} />
+              </div>
+            )}
+          </div>
+        )}
+
         <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
