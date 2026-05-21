@@ -241,14 +241,23 @@ export default function EstimateDetailPage() {
             {estimate.client_name || 'Client'}
           </span>
         </div>
-        <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
-          color: STATUS_COLOR[estimate.status] || '#64748B',
-          background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)',
-          borderRadius: 6, padding: '4px 10px', flexShrink: 0, marginLeft: 16,
-        }}>
-          {estimate.status.toUpperCase()}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 16 }}>
+          {estimate.status === 'draft' && (
+            <button
+              onClick={() => router.push(`/dashboard/estimates/new?edit=${id}`)}
+              style={{ border: '1px solid #2045B8', color: '#2045B8', borderRadius: 8, padding: '4px 12px', fontSize: 13, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
+              Edit
+            </button>
+          )}
+          <span style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+            color: STATUS_COLOR[estimate.status] || '#64748B',
+            background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)',
+            borderRadius: 6, padding: '4px 10px',
+          }}>
+            {estimate.status.toUpperCase()}
+          </span>
+        </div>
       </div>
 
       {/* ── BODY ── */}

@@ -143,6 +143,7 @@ function NewEstimateForm() {
   }, [])
 
   const apptId = searchParams.get('appointment_id') || ''
+  const editId = searchParams.get('edit') || ''
 
   const [client, setClient] = useState<ClientInfo>({
     client_name: searchParams.get('client_name') || '',
@@ -174,7 +175,39 @@ function NewEstimateForm() {
         supabase.from('price_lists').select('*').eq('user_id', user.id),
       ])
       if (prof) setProfile(prof)
-      if (apptId) {
+      if (editId) {
+        const [{ data: est }, { data: ops }] = await Promise.all([
+          supabase.from('estimates').select('*').eq('id', editId).single(),
+          supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
+        ])
+        if (est) {
+          setClient({
+            client_name:     est.client_name || '',
+            client_email:    est.client_email || '',
+            client_phone:    est.client_phone || '',
+            client_address:  est.client_address || '',
+            client_city:     est.client_city || '',
+            client_province: est.client_province || 'AB',
+            scope_notes:     est.scope_notes || '',
+          })
+          setTier(est.tier || 'better')
+          setPaymentMethod(est.payment_method || '')
+          if (est.discount_type) {
+            setDiscountType(est.discount_type as 'fixed' | 'percent')
+            setDiscountValue(String(est.discount_value || ''))
+          }
+        }
+        if (ops && ops.length > 0) {
+          setOpenings(ops.map((op: any) => ({
+            id: op.id,
+            type: op.type, qty: op.qty,
+            width: op.width, width_in: op.width_in || '', height_in: op.height_in || '',
+            shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
+            install: op.install, floor: op.floor, room: op.room || '',
+            sidelight: op.sidelight, transom: op.transom, screen: op.screen,
+          })))
+        }
+      } else if (apptId) {
         const { data: appt } = await supabase
           .from('appointments')
           .select('client_name, client_phone, client_email, client_address, notes')
@@ -257,14 +290,8 @@ function NewEstimateForm() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
 
-    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
-    const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
-
-    const { data: est, error: estErr } = await supabase.from('estimates').insert({
-      user_id: user.id,
-      estimate_number: num,
+    const estimateFields = {
       ...client,
-      status: 'draft',
       tier,
       subtotal: Math.round(subtotal * 100) / 100,
       discount_type: discountAmt > 0 ? discountType : null,
@@ -274,14 +301,31 @@ function NewEstimateForm() {
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
-      valid_until: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
-      appointment_id: apptId || null,
-    }).select().single()
+    }
 
-    if (estErr || !est) { setError(estErr?.message || 'Failed to save'); setSaving(false); return }
+    let savedId: string
+
+    if (editId) {
+      const { error: estErr } = await supabase.from('estimates').update(estimateFields).eq('id', editId)
+      if (estErr) { setError(estErr.message); setSaving(false); return }
+      savedId = editId
+    } else {
+      const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+      const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
+      const { data: est, error: estErr } = await supabase.from('estimates').insert({
+        user_id: user.id,
+        estimate_number: num,
+        ...estimateFields,
+        status: 'draft',
+        valid_until: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        appointment_id: apptId || null,
+      }).select('id').single()
+      if (estErr || !est) { setError(estErr?.message || 'Failed to save'); setSaving(false); return }
+      savedId = est.id
+    }
 
     const rows = openings.map((op, i) => ({
-      estimate_id: est.id,
+      estimate_id: savedId,
       type: op.type, qty: op.qty,
       width: (op.width_in && op.height_in) ? dimToSizeBucket(op.width_in, op.height_in) : op.width,
       width_in: op.width_in || null,
@@ -294,14 +338,17 @@ function NewEstimateForm() {
       sort_order: i,
     }))
 
+    if (editId) {
+      await supabase.from('estimate_openings').delete().eq('estimate_id', editId)
+    }
     const { error: opErr } = await supabase.from('estimate_openings').insert(rows)
     if (opErr) { setError(opErr.message); setSaving(false); return }
 
-    if (apptId) {
-      await supabase.from('appointments').update({ estimate_id: est.id, status: 'completed' }).eq('id', apptId)
+    if (!editId && apptId) {
+      await supabase.from('appointments').update({ estimate_id: savedId, status: 'completed' }).eq('id', apptId)
     }
 
-    router.push(`/dashboard/estimates/${est.id}`)
+    router.push(`/dashboard/estimates/${savedId}`)
   }
 
   // ── SHARED OPENING CARD ──────────────────────
@@ -436,9 +483,9 @@ function NewEstimateForm() {
               alignItems: 'center', justifyContent: 'center', color: '#64748B',
             }}>←</button>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>NEW ESTIMATE</div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>{editId ? 'EDIT ESTIMATE' : 'NEW ESTIMATE'}</div>
               <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
-                {client.client_name || 'New Estimate'}
+                {client.client_name || (editId ? 'Edit Estimate' : 'New Estimate')}
               </div>
             </div>
           </div>
