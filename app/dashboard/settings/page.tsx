@@ -155,37 +155,30 @@ function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'green' | 'amber'
 function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: boolean; onSave: () => void; onDiscard: () => void }) {
   return (
     <div style={{
-      position: 'sticky', bottom: 0,
-      background: '#fff',
-      borderTop: '1px solid rgba(15,23,42,0.06)',
-      padding: '12px 20px',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      zIndex: 10,
+      background: '#fff', borderRadius: 14, padding: 16, marginTop: 16,
+      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
     }}>
-      <div style={{ fontSize: 13, color: '#94A3B8' }}>
-        {dirty ? 'Unsaved changes' : 'All changes saved'}
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 12 }}>
         <button
           onClick={onDiscard} disabled={!dirty}
           style={{
-            height: 36, padding: '0 16px', borderRadius: 8,
-            border: '1px solid #e5e7eb',
-            background: '#fff', color: dirty ? '#475467' : '#94A3B8',
-            fontSize: 13, fontWeight: 600,
-            cursor: dirty ? 'pointer' : 'not-allowed',
+            flex: 1, height: 52, borderRadius: 12,
+            border: '1px solid #e5e7eb', background: '#fff',
+            color: dirty ? '#475467' : '#94A3B8',
+            fontSize: 15, fontWeight: 500,
+            cursor: dirty ? 'pointer' : 'default',
             fontFamily: 'inherit',
           }}>
           Discard
         </button>
         <button
-          onClick={onSave} disabled={!dirty || !valid}
+          onClick={onSave} disabled={!valid}
           style={{
-            height: 36, padding: '0 16px', borderRadius: 8, border: 'none',
-            background: dirty && valid ? '#2563EB' : '#E2E5EA',
-            color: dirty && valid ? '#fff' : '#94A3B8',
-            fontSize: 13, fontWeight: 600,
-            cursor: dirty && valid ? 'pointer' : 'not-allowed',
+            flex: 1, height: 52, borderRadius: 12, border: 'none',
+            background: dirty && valid ? '#2563EB' : '#93aef5',
+            color: '#fff',
+            fontSize: 15, fontWeight: 600,
+            cursor: dirty && valid ? 'pointer' : 'default',
             fontFamily: 'inherit',
           }}>
           Save changes
