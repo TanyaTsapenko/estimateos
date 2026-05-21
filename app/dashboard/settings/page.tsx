@@ -404,18 +404,27 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function NotificationsSection({ flash }: { flash: (m: string) => void }) {
-  const [email, setEmail] = useState({ estimateViewed: true, estimateSigned: true, depositPaid: true, invoiceOverdue: true, teamInvite: false })
+  const [email, setEmail] = useState({ estimateViewed: true, estimateSigned: true, depositPaid: true, invoiceOverdue: true, teamInvite: false, estimateDeclined: true, estimateExpired: true })
   const [digest, setDigest] = useState<'off' | 'weekly' | 'daily'>('weekly')
-  const [push, setPush] = useState({ pushNew: true, pushPayment: true, pushTeam: false })
+  const [push, setPush] = useState({ pushNew: true, pushPayment: true, pushTeam: false, pushDeclined: true, pushExpired: true })
   const [initial] = useState({ email: { ...email }, digest, push: { ...push } })
   const dirty = JSON.stringify({ email, digest, push }) !== JSON.stringify(initial)
 
-  const emailLabels: Record<string, string> = {
-    estimateViewed: 'Estimate viewed', estimateSigned: 'Estimate signed',
-    depositPaid: 'Deposit paid', invoiceOverdue: 'Invoice overdue', teamInvite: 'Team invite',
+  const emailLabels: Record<string, { label: string; desc: string }> = {
+    estimateViewed:  { label: 'Estimate viewed',   desc: 'Client opened your estimate' },
+    estimateSigned:  { label: 'Estimate signed',   desc: 'Client signed your estimate' },
+    estimateDeclined:{ label: 'Estimate declined', desc: 'Client declined your estimate' },
+    estimateExpired: { label: 'Estimate expired',  desc: 'Estimate passed 30 days without response' },
+    depositPaid:     { label: 'Deposit paid',      desc: 'Client paid the deposit' },
+    invoiceOverdue:  { label: 'Invoice overdue',   desc: 'Invoice payment is overdue' },
+    teamInvite:      { label: 'Team invite',        desc: 'Someone invited you to a team' },
   }
-  const pushLabels: Record<string, string> = {
-    pushNew: 'New estimates', pushPayment: 'Payments', pushTeam: 'Team activity',
+  const pushLabels: Record<string, { label: string; desc: string }> = {
+    pushNew:      { label: 'New estimates',      desc: 'Notify on new estimate activity' },
+    pushPayment:  { label: 'Payments',           desc: 'Deposits and invoice payments' },
+    pushDeclined: { label: 'Estimate declined',  desc: 'Client declined your estimate' },
+    pushExpired:  { label: 'Estimate expired',   desc: 'Estimate passed 30 days without response' },
+    pushTeam:     { label: 'Team activity',      desc: 'Team member actions' },
   }
 
   return (
@@ -424,9 +433,12 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
           <SectionLabel>Email notifications</SectionLabel>
-          {Object.entries(emailLabels).map(([key, label]) => (
+          {Object.entries(emailLabels).map(([key, { label, desc }]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
-              <div style={{ fontSize: 14, color: '#0A1628' }}>{label}</div>
+              <div>
+                <div style={{ fontSize: 14, color: '#0A1628' }}>{label}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{desc}</div>
+              </div>
               <Toggle on={email[key as keyof typeof email]} onChange={v => setEmail(s => ({ ...s, [key]: v }))} />
             </div>
           ))}
@@ -447,9 +459,12 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
         </Card>
         <Card>
           <SectionLabel>Push notifications</SectionLabel>
-          {Object.entries(pushLabels).map(([key, label]) => (
+          {Object.entries(pushLabels).map(([key, { label, desc }]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
-              <div style={{ fontSize: 14, color: '#0A1628' }}>{label}</div>
+              <div>
+                <div style={{ fontSize: 14, color: '#0A1628' }}>{label}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{desc}</div>
+              </div>
               <Toggle on={push[key as keyof typeof push]} onChange={v => setPush(s => ({ ...s, [key]: v }))} />
             </div>
           ))}

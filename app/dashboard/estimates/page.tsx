@@ -18,6 +18,7 @@ const SC: Record<string, { text: string; bg: string }> = {
   sent:     { text: '#2563EB', bg: 'rgba(37,99,235,.1)'   },
   signed:   { text: '#059669', bg: 'rgba(5,150,105,.1)'   },
   declined: { text: '#DC2626', bg: 'rgba(220,38,38,.1)'   },
+  expired:  { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
   invoiced: { text: '#7C3AED', bg: 'rgba(124,58,237,.1)'  },
 }
 

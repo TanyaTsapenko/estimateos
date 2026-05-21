@@ -157,6 +157,16 @@ export default function ClientEstimatePage() {
 
   async function declineEstimate() {
     await supabase.from('estimates').update({ status: 'declined' }).eq('id', id)
+    if (estimate) {
+      const clientName = estimate.client_name || 'Client'
+      await supabase.from('notifications').insert({
+        user_id:    (estimate as any).user_id,
+        type:       'estimate_declined',
+        title:      'Estimate declined',
+        body:       `${clientName} declined ${estimate.estimate_number}`,
+        read:       false,
+      })
+    }
     setScreen('declined')
   }
 
