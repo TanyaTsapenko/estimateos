@@ -775,7 +775,7 @@ function NewEstimateForm() {
           <>
             <div className="sum-box">
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
-                {client.client_name} — {client.client_city || 'N/A'}
+                {client.client_name} — {client.client_address || client.client_city || ''}
               </div>
               {openings.map(op => (
                 <div key={op.id} className="sum-row">
