@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/expire-estimates",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
