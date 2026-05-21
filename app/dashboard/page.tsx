@@ -295,17 +295,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    let userId: string
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
+      console.log('[notifs] user:', user?.id)
       if (!user) return
-      userId = user.id
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('notifications')
         .select('id,type,title,body,read,created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20)
+      console.log('[notifs] data:', data, 'error:', error)
       if (data) setNotifs(data)
       supabase.channel('notifs')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
