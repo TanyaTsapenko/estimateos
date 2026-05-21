@@ -1097,23 +1097,26 @@ export default function AppointmentsPage() {
         background: T.card, borderBottom: `1px solid ${T.border}`,
         padding: '16px 20px 18px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
         position: 'sticky', top: 0, zIndex: 10, flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase' }}>
-          Schedule
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase', marginBottom: 2 }}>
+            Schedule
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: T.ink, letterSpacing: '-0.4px' }}>
+              Appointments
+            </div>
+            <span style={{ fontSize: 13, color: T.inkSoft }}>{todayCount} today</span>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: 2 }}>
-          <div style={{ fontSize: 30, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>
-            Appointments
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 14, color: T.inkSoft }}>{todayCount} today</span>
-            <BellButton />
-            <button
-              onClick={() => router.push('/dashboard/appointments/new')}
-              style={{ background: T.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              + New
-            </button>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BellButton />
+          <button
+            onClick={() => router.push('/dashboard/appointments/new')}
+            style={{ background: T.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            + New
+          </button>
         </div>
       </div>
 
