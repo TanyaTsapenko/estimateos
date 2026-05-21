@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 import ConfirmModal from '@/components/ConfirmModal'
+import BellButton from '@/components/BellButton'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -1106,6 +1107,7 @@ export default function AppointmentsPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 14, color: T.inkSoft }}>{todayCount} today</span>
+            <BellButton />
             <button
               onClick={() => router.push('/dashboard/appointments/new')}
               style={{ background: T.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>

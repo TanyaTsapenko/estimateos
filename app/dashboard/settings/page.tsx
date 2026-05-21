@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
 import { Camera } from 'lucide-react'
+import BellButton from '@/components/BellButton'
 
 // ── TYPES ────────────────────────────────────────
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
@@ -154,25 +155,25 @@ function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'green' | 'amber'
 function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: boolean; onSave: () => void; onDiscard: () => void }) {
   return (
     <div style={{
-      position: 'sticky', bottom: 0, left: 0, right: 0,
+      position: 'sticky', bottom: 0,
       background: '#fff',
-      borderTop: `1px solid ${dirty ? '#2563EB' : '#EEF0F4'}`,
-      boxShadow: dirty ? '0 12px 32px -16px rgba(37,99,235,0.45)' : 'none',
-      padding: '14px 22px',
+      borderTop: '1px solid rgba(15,23,42,0.06)',
+      padding: '12px 20px',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      transition: 'border-color 0.2s, box-shadow 0.2s',
       zIndex: 10,
     }}>
-      <div style={{ fontSize: 13, color: dirty ? '#475569' : '#94A3B8' }}>
-        {dirty ? 'You have unsaved changes' : 'All changes saved'}
+      <div style={{ fontSize: 13, color: '#94A3B8' }}>
+        {dirty ? 'Unsaved changes' : 'All changes saved'}
       </div>
-      <div style={{ display: 'flex', gap: 10 }}>
+      <div style={{ display: 'flex', gap: 8 }}>
         <button
           onClick={onDiscard} disabled={!dirty}
           style={{
-            padding: '8px 16px', borderRadius: 10, border: '1px solid #E2E5EA',
-            background: '#fff', color: dirty ? '#475569' : '#94A3B8',
-            fontSize: 13, fontWeight: 600, cursor: dirty ? 'pointer' : 'not-allowed',
+            height: 36, padding: '0 16px', borderRadius: 8,
+            border: '1px solid #e5e7eb',
+            background: '#fff', color: dirty ? '#475467' : '#94A3B8',
+            fontSize: 13, fontWeight: 600,
+            cursor: dirty ? 'pointer' : 'not-allowed',
             fontFamily: 'inherit',
           }}>
           Discard
@@ -180,13 +181,12 @@ function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: b
         <button
           onClick={onSave} disabled={!dirty || !valid}
           style={{
-            padding: '8px 20px', borderRadius: 10, border: 'none',
+            height: 36, padding: '0 16px', borderRadius: 8, border: 'none',
             background: dirty && valid ? '#2563EB' : '#E2E5EA',
             color: dirty && valid ? '#fff' : '#94A3B8',
             fontSize: 13, fontWeight: 600,
             cursor: dirty && valid ? 'pointer' : 'not-allowed',
             fontFamily: 'inherit',
-            boxShadow: dirty && valid ? '0 6px 16px -6px rgba(37,99,235,0.5)' : 'none',
           }}>
           Save changes
         </button>
@@ -318,37 +318,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
         </Card>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ marginTop: 24, background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button
-            onClick={() => setValues({ ...initial })}
-            disabled={!dirty}
-            style={{
-              flex: 1, height: 48, borderRadius: 12, border: '1px solid #E2E8F0',
-              background: '#fff', color: dirty ? '#475569' : '#94A3B8',
-              fontSize: 14, fontWeight: 600, cursor: dirty ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-            }}
-          >
-            Discard
-          </button>
-          <button
-            onClick={saveProfile}
-            disabled={!dirty || !valid}
-            style={{
-              flex: 1, height: 48, borderRadius: 12, border: 'none',
-              background: '#2563EB', color: '#fff',
-              fontSize: 14, fontWeight: 600,
-              cursor: dirty && valid ? 'pointer' : 'not-allowed',
-              fontFamily: 'inherit',
-              opacity: dirty && valid ? 1 : 0.5,
-            }}
-          >
-            Save changes
-          </button>
-        </div>
-      </div>
+      <SaveBar dirty={dirty} valid={valid} onSave={saveProfile} onDiscard={() => setValues({ ...initial })} />
     </div>
   )
 }
@@ -1019,6 +989,7 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>WORKSPACE</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Settings</div>
               </div>
+              <BellButton />
             </div>
             <div style={{ padding: '16px 16px 0' }}>
               {GROUPS.map(g => (
