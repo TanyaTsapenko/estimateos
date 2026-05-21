@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Bell, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
@@ -103,14 +103,47 @@ function getTodayStr() {
   return new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
+interface Notif {
+  id: string; type: string; title: string; body: string; read: boolean; created_at: string
+}
+
+function notifIcon(type: string) {
+  const icons: Record<string, { bg: string; stroke: string; svg: React.ReactNode }> = {
+    estimate_signed:   { bg: '#DCFCE7', stroke: '#16A34A', svg: <polyline points="5,12 10,17 19,8" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /> },
+    estimate_declined: { bg: '#FEE2E2', stroke: '#C0341A', svg: <><line x1="18" y1="6" x2="6" y2="18" strokeWidth={2} strokeLinecap="round" /><line x1="6" y1="6" x2="18" y2="18" strokeWidth={2} strokeLinecap="round" /></> },
+    estimate_viewed:   { bg: '#EFF4FF', stroke: '#2563EB', svg: <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeWidth={2} strokeLinecap="round" /><circle cx="12" cy="12" r="3" strokeWidth={2} /></> },
+    invoice_overdue:   { bg: '#FEF3C7', stroke: '#D97706', svg: <><circle cx="12" cy="12" r="10" strokeWidth={2} /><line x1="12" y1="8" x2="12" y2="12" strokeWidth={2} strokeLinecap="round" /><line x1="12" y1="16" x2="12.01" y2="16" strokeWidth={2} strokeLinecap="round" /></> },
+    estimate_expired:  { bg: 'rgba(100,116,139,0.1)', stroke: '#64748B', svg: <><circle cx="12" cy="12" r="10" strokeWidth={2} /><polyline points="12,6 12,12 16,14" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></> },
+  }
+  const cfg = icons[type] ?? { bg: '#EFF4FF', stroke: '#2563EB', svg: <circle cx="12" cy="12" r="4" strokeWidth={2} /> }
+  return (
+    <div style={{ width: 34, height: 34, borderRadius: 9, background: cfg.bg, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={cfg.stroke}>{cfg.svg}</svg>
+    </div>
+  )
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'Just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
+}
+
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [attention, setAttention] = useState<AttentionItem[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
-  const [unread] = useState(0)
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [bellOpen, setBellOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const bellRef = useRef<HTMLDivElement>(null)
+  const unread = notifs.filter(n => !n.read).length
   const router = useRouter()
   const todayStr = getTodayStr()
 
@@ -234,10 +267,10 @@ export default function DashboardPage() {
 
       if (estAll) {
         const now = Date.now()
-        const timeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
+        const actTimeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
         const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED'}
         const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced'}
-        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: timeAgo(e.updated_at), estimateId: e.id })))
+        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: actTimeAgo(e.updated_at), estimateId: e.id })))
       }
   }, [])
 
@@ -259,6 +292,39 @@ export default function DashboardPage() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+    let userId: string
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      userId = user.id
+      const { data } = await supabase
+        .from('notifications')
+        .select('id,type,title,body,read,created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+      if (data) setNotifs(data)
+      supabase.channel('notifs')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          (payload) => setNotifs(prev => [payload.new as Notif, ...prev].slice(0, 20))
+        )
+        .subscribe()
+    }
+    load()
+    return () => { supabase.channel('notifs').unsubscribe() }
+  }, [])
+
+  useEffect(() => {
+    if (!bellOpen) return
+    const handle = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
+    }
+    document.addEventListener('mousedown', handle)
+    return () => document.removeEventListener('mousedown', handle)
+  }, [bellOpen])
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
   const doneCount  = appointments.filter(a => a.pillStatus === 'DONE').length
@@ -285,15 +351,72 @@ export default function DashboardPage() {
             <span className="db-greeting-date" style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
           </div>
         </div>
-        <button style={{
-          position: 'relative', background: '#fff', border: '1px solid #E2E5EA',
-          borderRadius: 9, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center',
-        }}>
-          <Bell size={15} strokeWidth={1.7} color="#475569" />
-          {unread > 0 && (
-            <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
+        <div ref={bellRef} style={{ position: 'relative' }}>
+          <button
+            onClick={async () => {
+              const next = !bellOpen
+              setBellOpen(next)
+              if (next && unread > 0) {
+                const supabase = createClient()
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                  await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+                  setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+                }
+              }
+            }}
+            style={{ position: 'relative', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 9, padding: '7px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <Bell size={15} strokeWidth={1.7} color="#475569" />
+            {unread > 0 && (
+              <span style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, background: '#DC2626', borderRadius: 999, border: '1.5px solid #fff' }} />
+            )}
+          </button>
+
+          {bellOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+              width: 340, maxHeight: 480, overflowY: 'auto',
+              background: '#fff', borderRadius: 14, border: '1px solid rgba(15,23,42,0.06)',
+              boxShadow: '0 4px 24px rgba(15,23,42,0.12)',
+              fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
+              zIndex: 200,
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0B1220' }}>Notifications</span>
+                {notifs.some(n => !n.read) && (
+                  <button onClick={async () => {
+                    const supabase = createClient()
+                    const { data: { user } } = await supabase.auth.getUser()
+                    if (user) {
+                      await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
+                      setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+                    }
+                  }} style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+
+              {/* List */}
+              {notifs.length === 0 ? (
+                <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#8A94A6' }}>No notifications yet.</div>
+              ) : notifs.map(n => (
+                <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px', background: n.read ? '#FAFAFA' : '#fff', borderBottom: '1px solid #EEF0F4' }}>
+                  {!n.read && <div style={{ width: 6, height: 6, borderRadius: 999, background: '#2563EB', flexShrink: 0, marginTop: 6 }} />}
+                  {n.read && <div style={{ width: 6, flexShrink: 0 }} />}
+                  {notifIcon(n.type)}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: n.read ? '#475467' : '#0B1220', lineHeight: 1.3 }}>{n.title}</div>
+                    <div style={{ fontSize: 12, color: '#475467', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>
+                    <div style={{ fontSize: 11, color: '#B3BAC6', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </button>
+        </div>
         <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
           display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
           color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
