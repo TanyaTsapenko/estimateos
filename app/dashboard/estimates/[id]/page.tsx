@@ -321,8 +321,8 @@ export default function EstimateDetailPage() {
               </div>
             ))}
 
-            {/* Scope notes */}
-            {estimate.scope_notes && (
+            {/* Scope notes — internal only, hide after signing */}
+            {estimate.scope_notes && ['draft', 'sent'].includes(estimate.status) && (
               <>
                 <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
                 <div style={SL}>Scope of Work</div>

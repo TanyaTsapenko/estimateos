@@ -466,13 +466,15 @@ export default function ClientEstimatePage() {
             </div>
           )}
 
-          {/* Terms & Conditions */}
-          <div style={{ marginTop: 20, marginBottom: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>Terms &amp; Conditions</div>
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '12px 14px', maxHeight: 150, overflowY: 'auto', fontSize: 11.5, color: '#475569', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-              {profile?.contract_terms || DEFAULT_TERMS}
+          {/* Terms & Conditions — only show if contractor has set custom terms */}
+          {profile?.contract_terms && (
+            <div style={{ marginTop: 20, marginBottom: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>Terms &amp; Conditions</div>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '12px 14px', maxHeight: 150, overflowY: 'auto', fontSize: 11.5, color: '#475569', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
+                {profile.contract_terms}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Signature pad */}
           {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
@@ -537,12 +539,6 @@ export default function ClientEstimatePage() {
       </div>
 
       <div className="card screen-enter" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        {estimate.scope_notes && (
-          <div className="info-box" style={{ marginBottom: 16 }}>
-            <strong>Scope of work:</strong> {estimate.scope_notes}
-          </div>
-        )}
-
         <div className="sl" style={{ marginBottom: 12 }}>Choose your package</div>
 
         <div className="tier-grid">
