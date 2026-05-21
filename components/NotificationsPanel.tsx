@@ -96,44 +96,59 @@ export default function NotificationsPanel() {
   }
 
   return (
-    <div ref={ref} style={{
-      position: 'fixed',
-      top: 'max(12px, calc(env(safe-area-inset-top) + 8px))',
-      right: 16,
-      zIndex: 1000,
-    }}>
-      {/* Bell button */}
-      <button
-        onClick={handleOpen}
-        style={{
-          position: 'relative', width: 36, height: 36,
-          background: '#fff', border: '1px solid #E2E5EA',
-          borderRadius: 10, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 1px 4px rgba(10,22,40,0.08)',
-        }}
-      >
-        <Bell size={15} strokeWidth={1.7} color="#475569" />
-        {unread > 0 && (
-          <span style={{
-            position: 'absolute', top: 5, right: 5,
-            minWidth: 7, height: 7,
-            background: '#DC2626', borderRadius: 999,
-            border: '1.5px solid #fff',
-          }} />
-        )}
-      </button>
+    <>
+      {/* Bell button — always fixed top-right */}
+      <div ref={ref} style={{
+        position: 'fixed',
+        top: 'max(12px, calc(env(safe-area-inset-top) + 8px))',
+        right: 16,
+        zIndex: 101,
+      }}>
+        <button
+          onClick={handleOpen}
+          style={{
+            position: 'relative', width: 36, height: 36,
+            background: '#fff', border: '1px solid #E2E5EA',
+            borderRadius: 10, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(10,22,40,0.08)',
+          }}
+        >
+          <Bell size={15} strokeWidth={1.7} color="#475569" />
+          {unread > 0 && (
+            <span style={{
+              position: 'absolute', top: 5, right: 5,
+              minWidth: 7, height: 7,
+              background: '#DC2626', borderRadius: 999,
+              border: '1.5px solid #fff',
+            }} />
+          )}
+        </button>
+      </div>
 
-      {/* Dropdown panel */}
+      {/* Overlay + panel */}
       {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-          width: 340, maxHeight: 480, overflowY: 'auto',
-          background: '#fff', borderRadius: 14,
-          border: '1px solid rgba(15,23,42,0.06)',
-          boxShadow: '0 4px 24px rgba(15,23,42,0.12)',
-          fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
-        }}>
+        <>
+          {/* Dark overlay */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 99 }}
+          />
+
+          {/* Dropdown panel */}
+          <div style={{
+            position: 'fixed',
+            top: 'max(56px, calc(env(safe-area-inset-top) + 52px))',
+            right: 16,
+            width: 'min(340px, calc(100vw - 32px))',
+            maxHeight: 'min(480px, calc(100vh - 80px))',
+            overflowY: 'auto',
+            background: '#fff', borderRadius: 14,
+            border: '1px solid rgba(15,23,42,0.06)',
+            boxShadow: '0 4px 24px rgba(15,23,42,0.12)',
+            fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
+            zIndex: 100,
+          }}>
           {/* Header */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#0B1220' }}>Notifications</span>
@@ -170,8 +185,9 @@ export default function NotificationsPanel() {
               </div>
             </button>
           ))}
-        </div>
+          </div>
+        </>
       )}
-    </div>
+    </>
   )
 }
