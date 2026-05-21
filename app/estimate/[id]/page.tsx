@@ -189,7 +189,7 @@ export default function ClientEstimatePage() {
   // ── ALREADY SIGNED ────────────────────────────
   if (screen === 'already_signed') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
+      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done</div><div className="h-big">Already signed</div></div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
@@ -205,7 +205,7 @@ export default function ClientEstimatePage() {
   // ── DECLINED ─────────────────────────────────
   if (screen === 'declined') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
+      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">Declined</div><div className="h-big">No problem.</div></div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
@@ -221,7 +221,7 @@ export default function ClientEstimatePage() {
   // ── SUCCESS ───────────────────────────────────
   if (screen === 'success') return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
+      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
         <div className="h-title"><div className="h-eye">All done!</div><div className="h-big">Signed! 🎉</div></div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
@@ -250,7 +250,7 @@ export default function ClientEstimatePage() {
       onCancel={() => setDeclineOpen(false)}
     />
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
+      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
         <div className="h-top">
           <button onClick={() => setScreen('summary')}
             style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -338,7 +338,7 @@ export default function ClientEstimatePage() {
         onCancel={() => setDeclineOpen(false)}
       />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <div className="gh">
+        <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
           <div className="h-top">
             {estimate.sent_method !== 'email_estimate_contract' && (
               <button onClick={() => setScreen('view')}
@@ -527,7 +527,7 @@ export default function ClientEstimatePage() {
       onCancel={() => setDeclineOpen(false)}
     />
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh">
+      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
         <div className="h-top">
           <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
         </div>
