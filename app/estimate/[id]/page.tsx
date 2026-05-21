@@ -148,6 +148,14 @@ export default function ClientEstimatePage() {
 
     if (updateErr) { setError(updateErr.message); setSaving(false); return }
 
+    await supabase.from('notifications').insert({
+      user_id: (estimate as any).user_id,
+      type:    'estimate_signed',
+      title:   'Estimate signed',
+      body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
+      read:    false,
+    })
+
     await Promise.allSettled([
       fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id, type: 'signed' }) }),
       ...(estimate.sent_method !== 'email_contract' ? [fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })] : []),

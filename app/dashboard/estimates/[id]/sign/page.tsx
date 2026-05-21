@@ -120,6 +120,19 @@ export default function SignPage() {
 
     if (updateErr) { setError(updateErr.message); setSaving(false); return }
 
+    if (estimate) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase.from('notifications').insert({
+          user_id: user.id,
+          type:    'estimate_signed',
+          title:   'Estimate signed',
+          body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
+          read:    false,
+        })
+      }
+    }
+
     // Send confirmation email + auto-create deposit invoice
     await Promise.allSettled([
       estimate?.client_email
