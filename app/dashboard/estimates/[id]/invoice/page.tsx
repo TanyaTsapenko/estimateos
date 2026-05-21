@@ -193,14 +193,20 @@ export default function CreateInvoicePage() {
 
         {/* Form card */}
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, overflow: 'hidden' }}>
-          <div style={{ marginBottom: 16, width: '100%', overflow: 'hidden' }}>
+          <div style={{ marginBottom: 16, width: '100%' }}>
             <label style={labelStyle}>Due Date *</label>
             <input
               type="date"
+              lang="en"
               value={dueDate}
               onChange={e => setDueDate(e.target.value)}
               style={inputStyle}
             />
+            {dueDate && (
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>
+                {new Date(dueDate + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 16 }}>

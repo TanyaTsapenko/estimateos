@@ -398,8 +398,7 @@ function EditScreen({
         </div>
 
         {/* DELETE */}
-        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, width: '100%', height: 44, borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13" /><path d="M10 11v6M14 11v6" /></svg>
+        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, width: '100%', padding: 16, borderRadius: 16, background: '#FEF2F2', color: '#EF4444', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
           Delete appointment
         </button>
       </div>
@@ -737,8 +736,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
         </div>
 
         {/* Delete */}
-        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, height: 42, padding: '0 18px', borderRadius: 10, background: 'transparent', color: T.red, border: `1px solid ${T.redSoft}`, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13" /><path d="M10 11v6M14 11v6" /></svg>
+        <button onClick={() => setDeleteOpen(true)} style={{ marginTop: 24, width: '100%', padding: 16, borderRadius: 16, background: '#FEF2F2', color: '#EF4444', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
           Delete appointment
         </button>
       </div>
