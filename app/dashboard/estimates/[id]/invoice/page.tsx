@@ -204,7 +204,7 @@ export default function CreateInvoicePage() {
             />
             {dueDate && (
               <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>
-                {new Date(dueDate + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dueDate + 'T00:00:00'))}
               </div>
             )}
           </div>

@@ -197,7 +197,7 @@ export default function EstimateDetailPage() {
   const canEmail      = !!estimate.client_email && !isSigned && !isInvoiced && !isDeclined
   const tierLabel     = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'
   const signedDate    = estimate.signed_at
-    ? new Date(estimate.signed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.signed_at))
     : null
 
   const clientRows = [

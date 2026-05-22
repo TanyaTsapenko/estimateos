@@ -42,11 +42,11 @@ export async function GET(request: NextRequest) {
   const depositOnDelivery = est.total - depositOnSigning
 
   const validUntil = est.valid_until
-    ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
     : '30 days from issue'
   const tierLabel = ((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)) + ' Package'
   const signedDate = est.signed_at
-    ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.signed_at))
     : ''
   const signedTime = est.signed_at
     ? new Date(est.signed_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })

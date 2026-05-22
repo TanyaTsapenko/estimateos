@@ -72,7 +72,7 @@ function dateLabel(ds: string): string {
   if (diff === -1) return 'Yesterday'
   if (diff === 0)  return 'Today'
   if (diff === 1)  return 'Tomorrow'
-  return appt.toLocaleDateString('en-CA', { weekday: 'long', month: 'short', day: 'numeric' })
+  return new Intl.DateTimeFormat('en-CA', { weekday: 'long', month: 'short', day: 'numeric' }).format(appt)
 }
 
 function sectionColor(label: string): string {
@@ -392,7 +392,7 @@ function EditScreen({
             <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
             {draft.appointment_date && (
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                {new Date(draft.appointment_date + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(draft.appointment_date + 'T00:00:00'))}
               </div>
             )}
           </div>
@@ -724,7 +724,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
             <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
             {draft.appointment_date && (
               <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                {new Date(draft.appointment_date + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(draft.appointment_date + 'T00:00:00'))}
               </div>
             )}
           </div>

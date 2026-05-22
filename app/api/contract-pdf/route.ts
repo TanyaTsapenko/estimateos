@@ -17,7 +17,7 @@ export async function GET() {
   const contractText = prof.contract_terms?.trim()
   const companyName = prof.company_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Your Company'
   const location = [prof.city, prof.province].filter(Boolean).join(', ')
-  const today = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+  const today = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
 
   const paragraphs = contractText
     ? contractText.split(/\n\n+/).map((p: string) => p.trim()).filter(Boolean)

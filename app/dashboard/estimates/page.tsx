@@ -226,7 +226,7 @@ export default function EstimatesPage() {
                     </span>
                     <span style={{ fontSize: 12, color: '#64748B' }}>{e.client_city || '—'}</span>
                     <span style={{ fontSize: 12, color: '#64748B' }}>
-                      {new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}
+                      {new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(e.created_at))}
                     </span>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(e.total || 0)}</div>
@@ -269,7 +269,7 @@ export default function EstimatesPage() {
                           {e.estimate_number}
                         </span>
                         {e.client_city ? ` · ${e.client_city}` : ''}
-                        {` · ${new Date(e.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}`}
+                        {` · ${new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(e.created_at))}`}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>

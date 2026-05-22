@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
   const [, taxLabel] = TAX_RATES[est?.client_province || 'AB'] || [0.05, 'Tax']
 
   const dueDate = inv.due_date
-    ? new Date(inv.due_date).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(inv.due_date))
     : null
 
   const isFinal = inv.invoice_type === 'final'

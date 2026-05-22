@@ -335,7 +335,7 @@ export default function TeamPage() {
                         <div style={{ fontSize: 13, fontWeight: 700, color: '#2045B8' }}>{inv.invitee_name || inv.invitee_email}</div>
                         <div style={{ fontSize: 11, color: '#2045B8', marginTop: 1 }}>{inv.invitee_email}</div>
                         <div style={{ fontSize: 10, color: 'rgba(59,108,255,.6)', marginTop: 2 }}>
-                          Sent {new Date(inv.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {ROLES.find(r => r.key === inv.role)?.label || inv.role}
+                          Sent {new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(inv.created_at))} · {ROLES.find(r => r.key === inv.role)?.label || inv.role}
                         </div>
                       </div>
                       <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(59,108,255,.15)', color: 'var(--amber)', padding: '3px 8px', borderRadius: 6 }}>Pending</span>

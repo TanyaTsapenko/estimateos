@@ -126,7 +126,7 @@ ${inner}
   // ── INVOICE ──────────────────────────────────────────────────────────────────
   if (type === 'invoice' && invoice) {
     const dueDateFmt = invoice.due_date
-      ? new Date(invoice.due_date + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(invoice.due_date + 'T00:00:00'))
       : ''
 
     subject = `Invoice ${invoice.invoice_number} · ${fmtCAD(invoice.amount)} due ${dueDateFmt}`
@@ -190,7 +190,7 @@ ${hdrBlock('Invoice for', est.client_name || 'Client',
   // ── SIGNED ───────────────────────────────────────────────────────────────────
   } else if (type === 'signed') {
     const signedDateFmt = est.signed_at
-      ? new Date(est.signed_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.signed_at))
       : ''
     const signedTimeFmt = est.signed_at
       ? new Date(est.signed_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })

@@ -101,7 +101,7 @@ function mobilePillStyle(status: string): React.CSSProperties {
 }
 
 function getTodayStr() {
-  return new Date().toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
+  return new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 }
 
 export default function DashboardPage() {

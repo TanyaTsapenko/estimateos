@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 7)
   const dueDateStr = dueDate.toISOString().slice(0, 10)
-  const dueDateFmt = new Date(dueDateStr + 'T00:00:00').toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
+  const dueDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dueDateStr + 'T00:00:00'))
 
   const { count } = await admin.from('invoices')
     .select('*', { count: 'exact', head: true }).eq('user_id', est.user_id)
