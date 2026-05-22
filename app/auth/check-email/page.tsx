@@ -45,12 +45,7 @@ export default function CheckEmailPage() {
         </div>
       </div>
       <div style={{padding:'22px 18px 28px', textAlign:'center'}}>
-        <div style={{width:72, height:72, background:'#EEF2FF', borderRadius:22, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px'}}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-          </svg>
-        </div>
-        <p style={{fontSize:17, fontWeight:700, color:'#0A0E1A', marginBottom:8}}>Reset link sent!</p>
+        <p style={{fontSize:17, fontWeight:700, color:'#0A0E1A', marginBottom:8, marginTop:8}}>Reset link sent!</p>
         <p style={{fontSize:13, color:'#8892b0', lineHeight:1.55, marginBottom:16}}>
           We sent a link to<br/><span style={{color:'#0A0E1A', fontWeight:600}}>{email || 'your email'}</span><br/>Check your inbox and follow the instructions.
         </p>
