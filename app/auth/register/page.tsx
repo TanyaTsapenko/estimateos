@@ -5,9 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 
 const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
 const HDR = 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'
-const GLOW = 'radial-gradient(ellipse at 100% 0%, rgba(59,108,255,0.35) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(32,69,184,0.2) 0%, transparent 55%)'
 const inp: React.CSSProperties = { width: '100%', padding: '13px 14px', background: '#fff', border: '1px solid #E8E8E8', borderRadius: 11, fontSize: 14, fontFamily: F, color: '#0A1628', outline: 'none', boxSizing: 'border-box', display: 'block' }
-const lbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#6B7280', display: 'block', marginBottom: 6, fontFamily: F }
+const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892b0', display: 'block', marginBottom: 6, fontFamily: F }
 
 const PW_COLORS = ['#EF4444', '#F59E0B', '#FBBF24', '#22C55E']
 const PW_LABELS = ['Weak', 'Fair', 'Good', 'Strong']
@@ -30,16 +29,6 @@ function GoogleIcon() {
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
     </svg>
-  )
-}
-
-function StepDots({ step, total }: { step: number; total: number }) {
-  return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} style={{ width: i + 1 === step ? 20 : 8, height: 8, borderRadius: 4, background: i + 1 === step ? '#fff' : i + 1 < step ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.25)', transition: 'all 0.3s' }} />
-      ))}
-    </div>
   )
 }
 
@@ -83,23 +72,46 @@ export default function RegisterPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>
 
       {/* HEADER */}
-      <div style={{ background: HDR, padding: '52px 24px 64px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: GLOW, pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div style={{ background: HDR, padding: '52px 24px 56px', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow top-right */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Glow bottom-left */}
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+        {/* Top bar: back + logo + step indicator */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={() => router.push('/auth')} style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>←</button>
             <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Estimate<span style={{ color: '#3B6CFF' }}>OS</span></span>
           </div>
-          <StepDots step={1} total={3} />
+          {/* Step text + dots */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Step 1 of 3</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 1 ? '#3B6CFF' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }} />
+              ))}
+            </div>
+          </div>
         </div>
+
+        {/* Icon box */}
+        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <line x1="19" y1="8" x2="19" y2="14"/>
+            <line x1="22" y1="11" x2="16" y2="11"/>
+          </svg>
+        </div>
+
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Step 1 of 3 · Your account</div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#fff', lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 6 }}>Let&apos;s get<br />you started</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Takes 2 minutes · Free for 14 days</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 6 }}>Create your account</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Takes 2 minutes · Free for 14 days</div>
         </div>
       </div>
 
-      {/* CARD */}
+      {/* BODY */}
       <div style={{ background: '#F4F4F2', borderRadius: '20px 20px 0 0', marginTop: -20, flex: 1, padding: '28px 20px 48px', position: 'relative', zIndex: 2 }}>
         {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>{error}</div>}
 
@@ -122,7 +134,6 @@ export default function RegisterPage() {
         <div style={{ marginBottom: 6 }}>
           <label style={lbl}>Password</label>
           <input type="password" placeholder="Min 8 characters" value={password} onChange={e => setPassword(e.target.value)} style={inp} />
-          {/* Strength bars */}
           <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
             {[1, 2, 3, 4].map(i => (
               <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: score >= i ? PW_COLORS[score - 1] : '#E8E8E8', transition: 'background 0.3s' }} />

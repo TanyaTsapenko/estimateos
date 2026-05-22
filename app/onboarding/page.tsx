@@ -5,21 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 
 const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
 const HDR = 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'
-const GLOW = 'radial-gradient(ellipse at 100% 0%, rgba(59,108,255,0.35) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(32,69,184,0.2) 0%, transparent 55%)'
 const inp: React.CSSProperties = { width: '100%', padding: '13px 14px', background: '#fff', border: '1px solid #E8E8E8', borderRadius: 11, fontSize: 14, fontFamily: F, color: '#0A1628', outline: 'none', boxSizing: 'border-box', display: 'block' }
-const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#8892b0', display: 'block', marginBottom: 6, fontFamily: F }
+const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892b0', display: 'block', marginBottom: 6, fontFamily: F }
 
-function StepDots({ step, total }: { step: number; total: number }) {
-  return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} style={{ width: i + 1 === step ? 20 : 8, height: 8, borderRadius: 4, background: i + 1 <= step ? '#fff' : 'rgba(255,255,255,0.25)', transition: 'all 0.3s' }} />
-      ))}
-    </div>
-  )
-}
-
-// Niche icon SVGs (inline, no dependency)
 function IconWindowsDoors() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#2045B8" strokeWidth="1.6" strokeLinecap="round">
@@ -122,30 +110,38 @@ export default function OnboardingPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>
 
       {/* HEADER */}
-      <div style={{ background: HDR, padding: '52px 24px 64px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: GLOW, pointerEvents: 'none' }} />
+      <div style={{ background: HDR, padding: '52px 24px 56px', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow top-right */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Glow bottom-left */}
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
+        {/* Top bar: logo + step indicator */}
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
           <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
             Estimate<span style={{ color: '#3B6CFF' }}>OS</span>
           </span>
-          <StepDots step={2} total={3} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Step 2 of 3</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 2 ? '#3B6CFF' : i < 2 ? 'rgba(59,108,255,0.4)' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Briefcase icon */}
-        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(59,108,255,0.18)', border: '1px solid rgba(59,108,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        {/* Icon box */}
+        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <rect x="2" y="7" width="20" height="14" rx="2"/>
             <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-            <line x1="12" y1="12" x2="12" y2="16"/>
-            <line x1="10" y1="14" x2="14" y2="14"/>
           </svg>
         </div>
 
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Step 2 of 3 · Your business</div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.02em', marginBottom: 6 }}>Tell us about<br />your business</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>We&apos;ll set up your workspace in seconds.</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 6 }}>Tell us about your business</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>We&apos;ll set up your workspace in seconds.</div>
         </div>
       </div>
 
@@ -154,19 +150,16 @@ export default function OnboardingPage() {
 
         {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>{error}</div>}
 
-        {/* Company name */}
         <div style={{ marginBottom: 14 }}>
           <label style={lbl}>Company Name <span style={{ color: '#EF4444' }}>*</span></label>
           <input placeholder="Arctic Climate Solutions" value={companyName} onChange={e => setCompanyName(e.target.value)} style={inp} />
         </div>
 
-        {/* Phone */}
         <div style={{ marginBottom: 24 }}>
           <label style={lbl}>Phone</label>
           <input type="tel" placeholder="+1 (403) 555-0000" value={phone} onChange={e => setPhone(e.target.value)} style={inp} />
         </div>
 
-        {/* Niche grid */}
         <label style={{ ...lbl, marginBottom: 12 }}>Your Trade</label>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
           {NICHES.map(({ key, label, Icon, enabled }) => {
@@ -186,13 +179,11 @@ export default function OnboardingPage() {
                   transition: 'all 0.15s',
                 }}
               >
-                {/* SOON badge */}
                 {!enabled && (
                   <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', background: '#F0F0EE', color: '#C0C0C0', borderRadius: 4, padding: '2px 5px' }}>
                     SOON
                   </div>
                 )}
-                {/* Icon box */}
                 <div style={{ width: 32, height: 32, borderRadius: 9, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                   <Icon />
                 </div>
@@ -202,7 +193,6 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        {/* How did you hear */}
         <label style={{ ...lbl, marginBottom: 10 }}>How did you hear about us?</label>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
           {HEARD_FROM.map(opt => {
@@ -218,7 +208,6 @@ export default function OnboardingPage() {
           })}
         </div>
 
-        {/* CTA */}
         <button
           onClick={handleNext}
           disabled={loading}

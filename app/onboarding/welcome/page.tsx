@@ -5,17 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 
 const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
 const HDR = 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'
-const GLOW = 'radial-gradient(ellipse at 100% 0%, rgba(59,108,255,0.35) 0%, transparent 55%), radial-gradient(ellipse at 0% 100%, rgba(32,69,184,0.2) 0%, transparent 55%)'
-
-function StepDots({ step, total }: { step: number; total: number }) {
-  return (
-    <div style={{ display: 'flex', gap: 5, alignItems: 'center', justifyContent: 'center' }}>
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} style={{ width: i + 1 === step ? 20 : 8, height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.9)', transition: 'all 0.3s' }} />
-      ))}
-    </div>
-  )
-}
 
 const FEATURES = [
   {
@@ -76,33 +65,45 @@ export default function WelcomePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>
 
       {/* HEADER */}
-      <div style={{ background: HDR, padding: '52px 24px 64px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
-        <div style={{ position: 'absolute', inset: 0, background: GLOW, pointerEvents: 'none' }} />
+      <div style={{ background: HDR, padding: '52px 24px 56px', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow top-right */}
+        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        {/* Glow bottom-left */}
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', marginBottom: 28 }}>
-          <StepDots step={3} total={3} />
+        {/* Top bar: logo + step indicator */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+          <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
+            Estimate<span style={{ color: '#3B6CFF' }}>OS</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Step 3 of 3</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 3 ? '#3B6CFF' : 'rgba(59,108,255,0.4)', transition: 'all 0.3s' }} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Checkmark icon */}
-        <div style={{ position: 'relative', width: 56, height: 56, borderRadius: 18, background: 'rgba(34,197,94,0.15)', border: '1.5px solid rgba(34,197,94,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4ADE80" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Icon box — green checkmark */}
+        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
 
         <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 10 }}>Step 3 of 3 · All done</div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', lineHeight: 1.2, letterSpacing: '-0.02em', marginBottom: 8 }}>
-            You&apos;re all set,<br />{firstName}!
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 6 }}>
+            You&apos;re all set, {firstName}!
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Your workspace is ready. Here&apos;s what to do first.</div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Your workspace is ready. Here&apos;s what to do first.</div>
         </div>
       </div>
 
       {/* BODY */}
       <div style={{ background: '#F4F4F2', borderRadius: '20px 20px 0 0', marginTop: -20, flex: 1, padding: '28px 20px 48px', position: 'relative', zIndex: 2 }}>
 
-        {/* Feature list card */}
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #EBEBEB', overflow: 'hidden', marginBottom: 28 }}>
           {FEATURES.map((f, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderBottom: i < FEATURES.length - 1 ? '1px solid #F3F4F6' : 'none' }}>
@@ -117,7 +118,6 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
             onClick={handleNotifications}
