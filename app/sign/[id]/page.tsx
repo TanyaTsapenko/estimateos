@@ -22,6 +22,8 @@ export default function PublicSignPage() {
   const [hasSignature, setHasSignature] = useState(false)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
+  const [declined, setDeclined] = useState(false)
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false)
   const [error, setError] = useState('')
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
@@ -108,6 +110,20 @@ export default function PublicSignPage() {
     setSaving(false)
   }
 
+  async function handleDecline() {
+    if (!estimate) return
+    await supabase.from('estimates').update({ status: 'declined' }).eq('id', id)
+    await supabase.from('notifications').insert({
+      user_id: estimate.user_id,
+      type:    'estimate_declined',
+      title:   'Estimate declined',
+      body:    `${estimate.client_name || 'Client'} declined ${estimate.estimate_number}`,
+      read:    false,
+      link:    `/dashboard/estimates/${estimate.id}`,
+    })
+    setDeclined(true)
+  }
+
   const today = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
 
   if (!estimate) return (
@@ -132,6 +148,19 @@ export default function PublicSignPage() {
           {estimate.estimate_number} has been signed for <strong>{fmtCAD(estimate.total)}</strong>.
           {estimate.client_email && ' A copy will be sent to your email.'}
           {' '}{profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
+        </div>
+      </div>
+    </div>
+  )
+
+  if (declined) return (
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Estimate<span style={{ color: '#2563EB' }}>OS</span></div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+        <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
+          You have declined {estimate?.estimate_number}. {profile?.company_name || 'Your contractor'} has been notified.
         </div>
       </div>
     </div>
@@ -238,12 +267,36 @@ export default function PublicSignPage() {
         paddingBottom: 'max(12px, calc(env(safe-area-inset-bottom) + 8px))',
         zIndex: 45,
       }}>
-        <button
-          onClick={submitSignature}
-          disabled={saving || !hasSignature}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52, background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s' }}>
-          {saving ? 'Saving…' : `I Agree — Sign ${estimate.estimate_number}`}
-        </button>
+        {showDeclineConfirm ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#0A1628', fontWeight: 600, textAlign: 'center', marginBottom: 12 }}>
+              Are you sure you want to decline this estimate?
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setShowDeclineConfirm(false)}
+                style={{ flex: 1, height: 44, background: 'none', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button onClick={handleDecline}
+                style={{ flex: 1, height: 44, background: '#DC2626', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Yes, decline
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <button
+              onClick={submitSignature}
+              disabled={saving || !hasSignature}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52, background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s', marginBottom: 8 }}>
+              {saving ? 'Saving…' : `I Agree — Sign ${estimate.estimate_number}`}
+            </button>
+            <button onClick={() => setShowDeclineConfirm(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 36, background: 'none', border: 'none', fontSize: 12, fontWeight: 600, color: '#94A3B8', cursor: 'pointer', fontFamily: 'inherit' }}>
+              Decline this estimate
+            </button>
+          </div>
+        )}
       </div>
 
     </div>
