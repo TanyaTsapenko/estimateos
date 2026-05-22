@@ -389,7 +389,12 @@ function EditScreen({
         <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             <label style={fieldLabel}>Date</label>
-            <input type="date" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            {draft.appointment_date && (
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                {new Date(draft.appointment_date + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            )}
           </div>
           <div>
             <label style={fieldLabel}>Time</label>
@@ -716,7 +721,12 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
         <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
           <div>
             <label style={fldLbl}>Date</label>
-            <input type="date" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            {draft.appointment_date && (
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                {new Date(draft.appointment_date + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            )}
           </div>
           <div>
             <label style={fldLbl}>Time</label>

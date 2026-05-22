@@ -185,8 +185,13 @@ export default function NewAppointmentPage() {
         <div className="r2">
           <div className="f">
             <label>Date</label>
-            <input type="date" value={form.appointment_date}
+            <input type="date" lang="en" value={form.appointment_date}
               onChange={e => set('appointment_date', e.target.value)} />
+            {form.appointment_date && (
+              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
+                {new Date(form.appointment_date + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            )}
           </div>
           <div className="f">
             <label>Time</label>
