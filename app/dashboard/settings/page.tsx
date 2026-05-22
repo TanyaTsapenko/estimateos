@@ -937,6 +937,7 @@ export default function SettingsPage() {
   const [toast, setToast] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
+  const [companyName, setCompanyName] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -946,8 +947,10 @@ export default function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/auth')
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.push('/auth'); return }
+      const { data: prof } = await supabase.from('profiles').select('company_name').eq('id', user.id).single()
+      if (prof?.company_name) setCompanyName(prof.company_name)
     })
   }, [])
 
@@ -1056,7 +1059,7 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.5px' }}>Settings</div>
               <div style={{ color: '#CBD5E1' }}>·</div>
-              <div style={{ fontSize: 14, color: '#475569' }}>Estimare</div>
+              <div style={{ fontSize: 14, color: '#475569' }}>{companyName || 'Your contractor'}</div>
             </div>
           </div>
           <Pill tone="blue">PRO PLAN</Pill>

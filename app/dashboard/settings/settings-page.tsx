@@ -356,8 +356,8 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
 
 function CompanySection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [values, setValues] = useState({ companyName: 'Estimare', phone: '', website: '', addressLine: '', city: 'Calgary', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
-  const [initial] = useState({ ...values })
+  const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
+  const [initial, setInitial] = useState({ ...values })
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -371,8 +371,24 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('logo_url').eq('id', user.id).single()
-      if (prof?.logo_url) setLogoUrl(prof.logo_url)
+      const { data: prof } = await supabase.from('profiles').select('company_name, phone, website, city, province, postal, licence, insurance, deposit_pct, logo_url').eq('id', user.id).single()
+      if (!prof) return
+      if (prof.logo_url) setLogoUrl(prof.logo_url)
+      const loaded = {
+        companyName: (prof as any).company_name || '',
+        phone: (prof as any).phone || '',
+        website: (prof as any).website || '',
+        addressLine: (prof as any).address_line || '',
+        city: (prof as any).city || '',
+        province: (prof as any).province || 'AB',
+        postal: (prof as any).postal || '',
+        licence: (prof as any).licence || '',
+        insurance: (prof as any).insurance || '',
+        depositPct: String((prof as any).deposit_pct ?? 10),
+        currency: 'CAD',
+      }
+      setValues(loaded)
+      setInitial(loaded)
     })
   }, [])
 
@@ -925,6 +941,7 @@ export default function SettingsPage() {
   const [toast, setToast] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
+  const [companyName, setCompanyName] = useState('')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -934,8 +951,10 @@ export default function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push('/auth')
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.push('/auth'); return }
+      const { data: prof } = await supabase.from('profiles').select('company_name').eq('id', user.id).single()
+      if (prof?.company_name) setCompanyName(prof.company_name)
     })
   }, [])
 
@@ -1049,7 +1068,7 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.5px' }}>Settings</div>
               <div style={{ color: '#CBD5E1' }}>·</div>
-              <div style={{ fontSize: 14, color: '#475569' }}>Estimare</div>
+              <div style={{ fontSize: 14, color: '#475569' }}>{companyName || 'Your contractor'}</div>
             </div>
           </div>
           <Pill tone="blue">PRO PLAN</Pill>
