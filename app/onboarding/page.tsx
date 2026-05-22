@@ -106,113 +106,86 @@ export default function OnboardingPage() {
     router.push('/onboarding/welcome')
   }
 
+  const hearAbout = heardFrom
+  const setHearAbout = setHeardFrom
+  const handleSubmit = handleNext
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>
-
-      {/* HEADER */}
-      <div style={{ background: HDR, padding: '52px 24px 56px', position: 'relative', overflow: 'hidden' }}>
-        {/* Glow top-right */}
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        {/* Glow bottom-left */}
-        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-        {/* Top bar: logo + step indicator */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-          <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-            Estimate<span style={{ color: '#3B6CFF' }}>OS</span>
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Step 2 of 3</span>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 2 ? '#3B6CFF' : i < 2 ? 'rgba(59,108,255,0.4)' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }} />
-              ))}
+    <div style={{minHeight:'100vh', background:'#F4F4F2'}}>
+      <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px'}}>
+        <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
+        <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
+        <div style={{position:'absolute', width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', bottom:-40, left:-20}} />
+        <div style={{position:'relative', zIndex:1}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24}}>
+            <span style={{fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.35)', letterSpacing:'0.09em'}}>YOUR BUSINESS</span>
+            <div style={{display:'flex', gap:5}}>
+              <div style={{height:2, width:22, borderRadius:2, background:'rgba(59,108,255,0.4)'}} />
+              <div style={{height:2, width:22, borderRadius:2, background:'#3B6CFF'}} />
+              <div style={{height:2, width:22, borderRadius:2, background:'rgba(255,255,255,0.12)'}} />
             </div>
           </div>
-        </div>
-
-        {/* Icon box */}
-        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2"/>
-            <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-          </svg>
-        </div>
-
-        <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 6 }}>Tell us about your business</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>We&apos;ll set up your workspace in seconds.</div>
+          <div style={{width:50, height:50, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:15, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:18}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
+            </svg>
+          </div>
+          <p style={{fontSize:26, fontWeight:700, color:'#fff', lineHeight:1.12, marginBottom:7, letterSpacing:-0.2}}>Tell us about<br/>your business</p>
+          <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>We&apos;ll set up your workspace in seconds.</p>
         </div>
       </div>
+      <div style={{padding:'22px 18px 28px'}}>
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Company Name *</label>
+        <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Northview Windows"
+          style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:12, boxSizing:'border-box'}} />
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Phone</label>
+        <input type="text" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+1 (403) 555-0000"
+          style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:18, boxSizing:'border-box'}} />
 
-      {/* BODY */}
-      <div style={{ background: '#F4F4F2', borderRadius: '20px 20px 0 0', marginTop: -20, flex: 1, padding: '28px 20px 60px', position: 'relative', zIndex: 2 }}>
-
-        {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>{error}</div>}
-
-        <div style={{ marginBottom: 14 }}>
-          <label style={lbl}>Company Name <span style={{ color: '#EF4444' }}>*</span></label>
-          <input placeholder="Arctic Climate Solutions" value={companyName} onChange={e => setCompanyName(e.target.value)} style={inp} />
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <label style={lbl}>Phone</label>
-          <input type="tel" placeholder="+1 (403) 555-0000" value={phone} onChange={e => setPhone(e.target.value)} style={inp} />
-        </div>
-
-        <label style={{ ...lbl, marginBottom: 12 }}>Your Trade</label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-          {NICHES.map(({ key, label, Icon, enabled }) => {
-            const selected = niche === key && enabled
-            return (
-              <div
-                key={key}
-                onClick={() => enabled && setNiche(key)}
-                style={{
-                  background: selected ? '#F0F4FF' : '#fff',
-                  border: `1.5px solid ${selected ? '#2045B8' : '#E8E8E8'}`,
-                  borderRadius: 13,
-                  padding: '12px 12px 10px',
-                  cursor: enabled ? 'pointer' : 'default',
-                  opacity: enabled ? 1 : 0.42,
-                  position: 'relative',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {!enabled && (
-                  <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', background: '#F0F0EE', color: '#C0C0C0', borderRadius: 4, padding: '2px 5px' }}>
-                    SOON
-                  </div>
-                )}
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: '#EEF2FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                  <Icon />
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: selected ? '#2045B8' : '#0A1628', lineHeight: 1.2 }}>{label}</div>
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:10, textTransform:'uppercase'}}>What do you install? *</label>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:18}}>
+          {[
+            {id:'windows', name:'Windows & Doors', sub:'Residential & commercial', active:true,
+              icon:<><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="2" y1="12" x2="22" y2="12"/></>},
+            {id:'roofing', name:'Roofing', disabled:true,
+              icon:<><path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1v-9.5z"/><polyline points="9 21 9 12 15 12 15 21"/></>},
+            {id:'siding', name:'Siding', disabled:true,
+              icon:<><rect x="2" y="7" width="20" height="14" rx="1"/><path d="M6 7V5a2 2 0 012-2h8a2 2 0 012 2v2"/><line x1="2" y1="13" x2="22" y2="13"/></>},
+            {id:'flooring', name:'Flooring', disabled:true,
+              icon:<><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="9" x2="9" y2="21"/><line x1="15" y1="9" x2="15" y2="21"/></>},
+            {id:'hvac', name:'HVAC', disabled:true,
+              icon:<><path d="M9.5 2A2.5 2.5 0 0112 4.5A2.5 2.5 0 019.5 7h-5A2.5 2.5 0 012 4.5A2.5 2.5 0 014.5 2h5z"/><path d="M14.5 8a2.5 2.5 0 012.5 2.5v7a2.5 2.5 0 01-5 0v-7A2.5 2.5 0 0114.5 8z"/><path d="M6 7v10a2 2 0 002 2h1"/></>},
+            {id:'other', name:'Other trades', disabled:true,
+              icon:<><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></>},
+          ].map(item => (
+            <div key={item.id} style={{background: item.active ? '#F0F4FF' : '#fff', border: `1.5px solid ${item.active ? '#2045B8' : '#E8E8E8'}`, borderRadius:14, padding:'14px 12px 12px', position:'relative', opacity: item.disabled ? 0.42 : 1, cursor: item.disabled ? 'default' : 'pointer'}}>
+              <div style={{position:'absolute', top:10, right:10, width:15, height:15, borderRadius:'50%', border:`1.5px solid ${item.active ? '#2045B8' : '#D0D5DD'}`, background: item.active ? '#2045B8' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                {item.active && <div style={{width:6, height:6, borderRadius:'50%', background:'#fff'}} />}
               </div>
-            )
-          })}
+              <div style={{width:36, height:36, background: item.active ? '#dce6ff' : '#EEF2FF', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:8}}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={item.disabled ? '#C0C0C0' : '#2045B8'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
+              </div>
+              <p style={{fontSize:13, fontWeight:600, color: item.active ? '#2045B8' : item.disabled ? '#8892b0' : '#0A0E1A', marginBottom:2, paddingRight:18}}>{item.name}</p>
+              {item.sub && <p style={{fontSize:11, color:'#8892b0'}}>{item.sub}</p>}
+              {item.disabled && <span style={{display:'inline-block', fontSize:9, fontWeight:700, background:'#F0F0EE', color:'#C0C0C0', borderRadius:20, padding:'2px 7px', marginTop:4, letterSpacing:'0.03em'}}>COMING SOON</span>}
+            </div>
+          ))}
         </div>
 
-        <label style={{ ...lbl, marginBottom: 10 }}>How did you hear about us?</label>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 32 }}>
-          {HEARD_FROM.map(opt => {
-            const active = heardFrom === opt
-            return (
-              <button
-                key={opt}
-                onClick={() => setHeardFrom(active ? '' : opt)}
-                style={{ background: active ? '#EEF2FF' : '#fff', border: `1.5px solid ${active ? '#2045B8' : '#E8E8E8'}`, borderRadius: 20, padding: '5px 13px', fontSize: 12, fontWeight: 500, color: active ? '#2045B8' : '#6B7280', cursor: 'pointer', fontFamily: F, transition: 'all 0.15s' }}>
-                {opt}
-              </button>
-            )
-          })}
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:10, textTransform:'uppercase'}}>How did you hear about us?</label>
+        <div style={{display:'flex', flexWrap:'wrap', gap:7, marginBottom:18}}>
+          {['Google','Instagram','Word of mouth','YouTube','Trade show','Other'].map(chip => (
+            <div key={chip} onClick={() => setHearAbout(chip)}
+              style={{fontSize:12, fontWeight:500, background: hearAbout===chip ? '#EEF2FF' : '#fff', border: `1.5px solid ${hearAbout===chip ? '#2045B8' : '#E8E8E8'}`, borderRadius:20, padding:'6px 12px', cursor:'pointer', color: hearAbout===chip ? '#2045B8' : '#353A3E'}}>
+              {chip}
+            </div>
+          ))}
         </div>
 
-        <button
-          onClick={handleNext}
-          disabled={loading}
-          style={{ width: '100%', height: 52, background: loading ? '#8892b0' : '#2045B8', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: F, cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? 'Saving…' : 'Continue →'}
+        {error && <p style={{color:'#EF4444', fontSize:13, marginBottom:12}}>{error}</p>}
+        <button onClick={handleSubmit} disabled={loading}
+          style={{width:'100%', background:'#2045B8', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
+          {loading ? 'Setting up...' : 'Set up my workspace →'}
         </button>
       </div>
     </div>
