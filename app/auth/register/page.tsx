@@ -69,113 +69,75 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>
-
-      {/* HEADER */}
-      <div style={{ background: HDR, padding: '52px 24px 56px', position: 'relative', overflow: 'hidden' }}>
-        {/* Glow top-right */}
-        <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.25) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        {/* Glow bottom-left */}
-        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
-        {/* Top bar: back + logo + step indicator */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button onClick={() => router.push('/auth')} style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>←</button>
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Estimate<span style={{ color: '#3B6CFF' }}>OS</span></span>
-          </div>
-          {/* Step text + dots */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Step 1 of 3</span>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: i === 1 ? '#3B6CFF' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s' }} />
-              ))}
+    <div style={{minHeight:'100vh', background:'#F4F4F2'}}>
+      <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px'}}>
+        <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
+        <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
+        <div style={{position:'absolute', width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', bottom:-40, left:-20}} />
+        <div style={{position:'relative', zIndex:1}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24}}>
+            <span style={{fontSize:11, fontWeight:600, color:'rgba(255,255,255,0.35)', letterSpacing:'0.09em'}}>YOUR ACCOUNT</span>
+            <div style={{display:'flex', gap:5}}>
+              <div style={{height:2, width:22, borderRadius:2, background:'#3B6CFF'}} />
+              <div style={{height:2, width:22, borderRadius:2, background:'rgba(255,255,255,0.12)'}} />
+              <div style={{height:2, width:22, borderRadius:2, background:'rgba(255,255,255,0.12)'}} />
             </div>
           </div>
-        </div>
-
-        {/* Icon box */}
-        <div style={{ position: 'relative', width: 48, height: 48, borderRadius: 14, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <line x1="19" y1="8" x2="19" y2="14"/>
-            <line x1="22" y1="11" x2="16" y2="11"/>
-          </svg>
-        </div>
-
-        <div style={{ position: 'relative' }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', lineHeight: 1.25, letterSpacing: '-0.02em', marginBottom: 6 }}>Create your account</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Takes 2 minutes · Free for 14 days</div>
+          <div style={{width:50, height:50, background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:15, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:18}}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <p style={{fontSize:26, fontWeight:700, color:'#fff', lineHeight:1.12, marginBottom:7, letterSpacing:-0.2}}>Let&apos;s get<br/>you started</p>
+          <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>Takes 2 minutes · Free for 14 days</p>
         </div>
       </div>
-
-      {/* BODY */}
-      <div style={{ background: '#F4F4F2', borderRadius: '20px 20px 0 0', marginTop: -20, flex: 1, padding: '28px 20px 48px', position: 'relative', zIndex: 2 }}>
-        {error && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>{error}</div>}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+      <div style={{padding:'22px 18px 28px'}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:16}}>
           <div>
-            <label style={lbl}>First Name</label>
-            <input placeholder="Andriy" value={firstName} onChange={e => setFirstName(e.target.value)} style={inp} />
+            <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>First Name</label>
+            <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="James"
+              style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', boxSizing:'border-box'}} />
           </div>
           <div>
-            <label style={lbl}>Last Name</label>
-            <input placeholder="Koval" value={lastName} onChange={e => setLastName(e.target.value)} style={inp} />
+            <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Last Name</label>
+            <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Morrison"
+              style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', boxSizing:'border-box'}} />
           </div>
         </div>
-
-        <div style={{ marginBottom: 14 }}>
-          <label style={lbl}>Email</label>
-          <input type="email" placeholder="andriy@arcticclimate.ca" value={email} onChange={e => setEmail(e.target.value)} style={inp} />
-        </div>
-
-        <div style={{ marginBottom: 6 }}>
-          <label style={lbl}>Password</label>
-          <input type="password" placeholder="Min 8 characters" value={password} onChange={e => setPassword(e.target.value)} style={inp} />
-          <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: score >= i ? PW_COLORS[score - 1] : '#E8E8E8', transition: 'background 0.3s' }} />
-            ))}
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Email</label>
+        <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="james@northview.ca"
+          style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:12, boxSizing:'border-box'}} />
+        <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Password</label>
+        <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 characters"
+          style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:16, boxSizing:'border-box'}} />
+        <div style={{display:'flex', alignItems:'flex-start', gap:10, marginBottom:16}}>
+          <div onClick={() => setAgreed(!agreed)}
+            style={{width:17, height:17, borderRadius:5, background: agreed ? '#2045B8' : '#fff', border: agreed ? 'none' : '1.5px solid #D0D5DD', flexShrink:0, marginTop:1, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer'}}>
+            {agreed && <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>}
           </div>
-          {password && (
-            <div style={{ fontSize: 11, color: score > 0 ? PW_COLORS[score - 1] : '#9CA3AF', marginTop: 4, fontWeight: 600 }}>
-              {PW_LABELS[score - 1] || ''}
-            </div>
-          )}
+          <p style={{fontSize:12, color:'#8892b0', lineHeight:1.5}}>
+            I agree to the <span style={{color:'#2045B8', fontWeight:600}}>Terms of Service</span> and <span style={{color:'#2045B8', fontWeight:600}}>Privacy Policy</span>. Data stored securely in Canada.
+          </p>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, margin: '16px 0 20px' }}>
-          <div
-            onClick={() => setAgreed(!agreed)}
-            style={{ width: 20, height: 20, borderRadius: 6, border: agreed ? 'none' : '1.5px solid #E8E8E8', background: agreed ? '#2045B8' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 1 }}>
-            {agreed && <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-          </div>
-          <div style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.6 }}>
-            I agree to the <strong style={{ color: '#0A1628' }}>Terms of Service</strong> and <strong style={{ color: '#0A1628' }}>Privacy Policy</strong>. Data stored securely in Canada.
-          </div>
-        </div>
-
-        <button onClick={handleRegister} disabled={loading} style={{ width: '100%', height: 52, background: loading ? '#8892b0' : '#2045B8', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, fontFamily: F, cursor: loading ? 'not-allowed' : 'pointer', marginBottom: 16 }}>
-          {loading ? 'Creating account…' : 'Create Account →'}
+        {error && <p style={{color:'#EF4444', fontSize:13, marginBottom:12}}>{error}</p>}
+        <button onClick={handleRegister} disabled={loading}
+          style={{width:'100%', background:'#2045B8', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
+          {loading ? 'Creating account...' : 'Create account →'}
         </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-          <div style={{ flex: 1, height: 1, background: '#E8E8E8' }} />
-          <span style={{ fontSize: 12, color: '#9CA3AF' }}>or</span>
-          <div style={{ flex: 1, height: 1, background: '#E8E8E8' }} />
+        <div style={{display:'flex', alignItems:'center', gap:10, margin:'13px 0'}}>
+          <div style={{flex:1, height:1, background:'#E8E8E8'}} />
+          <span style={{fontSize:11, color:'#C0C8D8'}}>or continue with</span>
+          <div style={{flex:1, height:1, background:'#E8E8E8'}} />
         </div>
-
-        <button onClick={handleGoogle} disabled={loading} style={{ width: '100%', background: '#fff', border: '1px solid #E8E8E8', borderRadius: 11, padding: '13px 16px', fontFamily: F, fontSize: 14, fontWeight: 600, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
-          <GoogleIcon />
+        <button onClick={handleGoogle}
+          style={{width:'100%', background:'#fff', border:'1.5px solid #E8E8E8', borderRadius:13, padding:12, fontSize:14, fontWeight:500, color:'#353A3E', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8}}>
+          <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continue with Google
         </button>
-
-        <div style={{ textAlign: 'center', fontSize: 13, color: '#9CA3AF' }}>
-          Already have an account?{' '}
-          <span onClick={() => router.push('/auth/login')} style={{ color: '#2045B8', fontWeight: 700, cursor: 'pointer' }}>Sign in</span>
-        </div>
+        <p style={{textAlign:'center', fontSize:12, color:'#8892b0', marginTop:13}}>
+          Already have an account? <span onClick={() => router.push('/auth/login')} style={{color:'#2045B8', fontWeight:600, cursor:'pointer'}}>Sign in</span>
+        </p>
       </div>
     </div>
   )
