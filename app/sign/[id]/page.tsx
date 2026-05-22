@@ -131,6 +131,7 @@ export default function PublicSignPage() {
         <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
           {estimate.estimate_number} has been signed for <strong>{fmtCAD(estimate.total)}</strong>.
           {estimate.client_email && ' A copy will be sent to your email.'}
+          {' '}{profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
         </div>
       </div>
     </div>
