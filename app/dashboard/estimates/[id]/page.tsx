@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, Link2, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, MessageSquare, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -51,7 +51,7 @@ export default function EstimateDetailPage() {
   const [estimate,       setEstimate]       = useState<Estimate | null>(null)
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
-  const [profile,        setProfile]        = useState<{ contract_terms: string | null } | null>(null)
+  const [profile,        setProfile]        = useState<{ contract_terms: string | null; company_name: string | null } | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -67,7 +67,7 @@ export default function EstimateDetailPage() {
       setEstimate(est)
       setOpenings(ops || [])
       if (est?.user_id) {
-        const { data: prof } = await supabase.from('profiles').select('contract_terms').eq('id', est.user_id).single()
+        const { data: prof } = await supabase.from('profiles').select('contract_terms, company_name').eq('id', est.user_id).single()
         setProfile(prof)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
@@ -396,9 +396,12 @@ export default function EstimateDetailPage() {
                   </button>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={copyLink}
+                  <button onClick={() => {
+                    if (!estimate.client_phone) { showToast('No phone number on file'); return }
+                    window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here's your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/sign/${estimate.id}`)
+                  }}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Link2 size={13} /> Copy link
+                    <MessageSquare size={13} /> Text client
                   </button>
                   <button onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
