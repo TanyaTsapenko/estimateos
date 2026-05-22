@@ -111,6 +111,8 @@ export default function DashboardPage() {
   const [attention, setAttention] = useState<AttentionItem[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [isMobile, setIsMobile] = useState(false)
+  const [showDiscover, setShowDiscover] = useState(true)
+  const [showGBBModal, setShowGBBModal] = useState(false)
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -557,8 +559,105 @@ export default function DashboardPage() {
             ))}
           </div>
 
+          {/* Discover */}
+          {showDiscover && (
+            <div style={{ marginTop: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 10 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Discover</div>
+                <button onClick={() => setShowDiscover(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 16, lineHeight: 1, padding: '2px 4px', fontFamily: 'inherit' }}>✕</button>
+              </div>
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 0 16px', scrollbarWidth: 'none' }}>
+
+                {/* GBB card */}
+                <div style={{ width: 270, flexShrink: 0, borderRadius: 20, overflow: 'hidden' }}>
+                  {/* Blue header */}
+                  <div style={{ background: '#2045B8', padding: '20px 18px 18px', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(59,108,255,0.6)', top: -80, right: -60 }} />
+                    <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', bottom: -30, left: 20 }} />
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                      <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>⚡ CLOSE MORE JOBS</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.2, margin: '14px 0 8px' }}>Sell Good / Better / Best</div>
+                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>Let clients pick their package. <strong style={{ color: 'rgba(255,255,255,0.75)' }}>68% choose mid or top tier.</strong></div>
+                      <div style={{ display: 'flex', gap: 8, margin: '16px 0' }}>
+                        <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 10px', flex: 1 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>+$420</div>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>avg ticket increase</div>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: '8px 10px', flex: 1 }}>
+                          <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>38%</div>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>more jobs closed</div>
+                        </div>
+                      </div>
+                      <button onClick={() => setShowGBBModal(true)}
+                        style={{ background: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Learn more →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
+
+      {/* GBB Modal overlay */}
+      {showGBBModal && (
+        <>
+          <div onClick={() => setShowGBBModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(10,14,26,0.6)', zIndex: 50 }} />
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 390, background: '#F4F4F2', borderRadius: '24px 24px 0 0', zIndex: 51, overflow: 'hidden' }}>
+            {/* Modal blue header */}
+            <div style={{ background: '#2045B8', padding: '24px 20px 22px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(59,108,255,0.6)', top: -80, right: -60 }} />
+              <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', bottom: -30, left: 20 }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em', marginBottom: 12 }}>⚡ CLOSE MORE JOBS</div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Good / Better / Best pricing</div>
+              </div>
+            </div>
+            {/* Modal body */}
+            <div style={{ padding: '20px 18px 32px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, padding: '14px 12px' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628' }}>+$420</div>
+                  <div style={{ fontSize: 11, color: '#8892b0', marginTop: 2 }}>avg ticket increase</div>
+                </div>
+                <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, padding: '14px 12px' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628' }}>68%</div>
+                  <div style={{ fontSize: 11, color: '#8892b0', marginTop: 2 }}>pick Better or Best</div>
+                </div>
+              </div>
+              <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, overflow: 'hidden', marginBottom: 16 }}>
+                {[
+                  'Client picks the package — no awkward upsell',
+                  'Three options on one estimate, sign on the spot',
+                  'Name tiers your way — Standard / Pro / Elite',
+                  'Set prices once in Price List, auto-fills every estimate',
+                ].map((text, i, arr) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', borderBottom: i < arr.length - 1 ? '1px solid #E8E8E8' : undefined }}>
+                    <div style={{ width: 20, height: 20, background: '#EEF2FF', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#2045B8" strokeWidth="2.5" strokeLinecap="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+                    </div>
+                    <span style={{ fontSize: 13, color: '#0A1628', lineHeight: 1.4 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+              <button style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 14, padding: 16, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 10 }}>
+                Enable G-B-B pricing →
+              </button>
+              <button onClick={() => setShowGBBModal(false)}
+                style={{ width: '100%', background: 'none', border: 'none', padding: 10, fontSize: 13, color: '#8892b0', cursor: 'pointer', fontFamily: 'inherit' }}>
+                Not right now
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
     </div>
   )
 }
