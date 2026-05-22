@@ -234,7 +234,7 @@ export default function ClientEstimatePage() {
         <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>You&apos;re all set!</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, maxWidth: 280, margin: '0 auto' }}>
           {estimate.estimate_number} is signed for <strong>{fmtCAD(pricing?.total || 0)}</strong>.
-          A copy has been sent to your email. {profile?.company_name || 'The contractor'} will be in touch shortly to confirm next steps.
+          A copy has been sent to your email. {profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
         </div>
       </div>
     </div>
