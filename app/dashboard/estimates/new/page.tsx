@@ -501,9 +501,11 @@ function NewEstimateForm() {
               </div>
             </div>
           </div>
-          <div style={{ fontSize: 13, color: '#94A3B8' }}>
-            {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
-          </div>
+          {step > 1 && subtotal > 0 && (
+            <div style={{ fontSize: 13, color: '#94A3B8' }}>
+              {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
+            </div>
+          )}
         </div>
 
         <div className="dash-bg screen-enter">
@@ -717,9 +719,11 @@ function NewEstimateForm() {
             </div>
           </div>
         </div>
-        <div style={{ fontSize: 13, color: '#94A3B8' }}>
-          {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
-        </div>
+        {step > 1 && subtotal > 0 && (
+          <div style={{ fontSize: 13, color: '#94A3B8' }}>
+            {openings.length} opening{openings.length !== 1 ? 's' : ''} · {fmtCAD(total)}
+          </div>
+        )}
       </div>
 
       <div className="card screen-enter">
