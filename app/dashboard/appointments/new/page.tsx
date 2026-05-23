@@ -189,16 +189,12 @@ export default function NewAppointmentPage() {
 
         <div className="sl">When</div>
 
-        <div className="r2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
           <div className="f">
             <label>Date</label>
             <input type="date" lang="en" value={form.appointment_date}
+              style={{ width: '100%', boxSizing: 'border-box' }}
               onChange={e => set('appointment_date', e.target.value)} />
-            {form.appointment_date && (
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(form.appointment_date + 'T00:00:00'))}
-              </div>
-            )}
           </div>
           <div className="f">
             <label>Time</label>
