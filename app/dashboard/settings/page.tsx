@@ -674,11 +674,18 @@ Validity: This estimate is valid for 30 days from the date of issue.
 Changes: Any changes to the scope of work must be agreed upon in writing.
 Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
 
+const DEFAULT_CANCELLATION = 'Either party may cancel this contract with 72 hours written notice prior to the scheduled start date.'
+
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [terms, setTerms] = useState(DEFAULT_TERMS)
-  const [initialTerms, setInitialTerms] = useState(DEFAULT_TERMS)
-  const dirty = terms !== initialTerms
+  const [terms,              setTerms]              = useState(DEFAULT_TERMS)
+  const [initialTerms,       setInitialTerms]       = useState(DEFAULT_TERMS)
+  const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
+  const [depositRequired,    setDepositRequired]    = useState(true)
+  const [depositPercent,     setDepositPercent]     = useState(10)
+  const [paymentTerms,       setPaymentTerms]       = useState('Upon completion')
+  const [cancellationPolicy, setCancellationPolicy] = useState(DEFAULT_CANCELLATION)
+  const dirty = true
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
 
@@ -686,18 +693,29 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      supabase.from('profiles').select('contract_terms, signature_url').eq('id', data.user.id).single().then(({ data: prof }) => {
-        if ((prof as any)?.signature_url) setSignatureUrl((prof as any).signature_url)
+      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy').eq('id', data.user.id).single().then(({ data: prof }) => {
+        if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
-        setTerms(loaded)
-        setInitialTerms(loaded)
+        setTerms(loaded); setInitialTerms(loaded)
+        if ((prof as any)?.warranty_period)     setWarrantyPeriod((prof as any).warranty_period)
+        if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
+        if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
+        if ((prof as any)?.payment_terms)       setPaymentTerms((prof as any).payment_terms)
+        if ((prof as any)?.cancellation_policy) setCancellationPolicy((prof as any).cancellation_policy)
       })
     })
   }, [])
 
   async function saveContract() {
     if (!userId) return
-    const { error } = await supabase.from('profiles').update({ contract_terms: terms }).eq('id', userId)
+    const { error } = await supabase.from('profiles').update({
+      contract_terms:      terms,
+      warranty_period:     warrantyPeriod,
+      deposit_required:    depositRequired,
+      deposit_percent:     depositPercent,
+      payment_terms:       paymentTerms,
+      cancellation_policy: cancellationPolicy,
+    }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
     setInitialTerms(terms)
     flash('Saved')
@@ -737,6 +755,54 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
             </button>
           )}
         </Card>
+        <Card>
+          <SectionLabel>Contract Defaults</SectionLabel>
+
+          {/* Warranty period */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Warranty Period</div>
+            <select value={warrantyPeriod} onChange={e => setWarrantyPeriod(e.target.value)}
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+              {['1 year', '2 years', '5 years', '10 years'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+
+          {/* Deposit */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: depositRequired ? 10 : 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase' }}>Deposit</div>
+              <Toggle on={depositRequired} onChange={setDepositRequired} />
+            </div>
+            {depositRequired && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Deposit Amount</div>
+                <div style={{ position: 'relative', maxWidth: 160 }}>
+                  <input type="number" min={0} max={100} value={depositPercent} onChange={e => setDepositPercent(Number(e.target.value))}
+                    placeholder="10"
+                    style={{ width: '100%', padding: '10px 32px 10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
+                  <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#94A3B8', pointerEvents: 'none' }}>%</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Payment terms */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Payment Terms</div>
+            <select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+              {['Upon completion', '50% deposit / 50% on completion', 'Custom'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+
+          {/* Cancellation policy */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Cancellation Policy</div>
+            <textarea value={cancellationPolicy} onChange={e => setCancellationPolicy(e.target.value)} rows={3}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+        </Card>
+
         <Card>
           <SectionLabel>Contractor Signature</SectionLabel>
           <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
