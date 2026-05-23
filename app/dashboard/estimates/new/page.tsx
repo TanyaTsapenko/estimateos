@@ -636,7 +636,7 @@ function NewEstimateForm() {
                   </div>
                 ))}
                 <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                  <span>Subtotal ({tier.charAt(0).toUpperCase() + tier.slice(1)})</span>
+                  <span>Subtotal</span>
                   <span>{fmtCAD(subtotal)}</span>
                 </div>
                 {discountAmt > 0 && (
@@ -903,7 +903,7 @@ function NewEstimateForm() {
             )}
 
             <div style={{ fontSize: 11, color: 'var(--ash)', marginBottom: 16, lineHeight: 1.6 }}>
-              Valid for 30 days. Client will receive a link to view all three tiers, choose, and sign electronically.
+              Valid for 30 days. Client will receive a link to review and sign electronically.
             </div>
 
             <button onClick={saveEstimate} disabled={saving} style={{

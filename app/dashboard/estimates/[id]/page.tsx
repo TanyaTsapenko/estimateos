@@ -51,7 +51,7 @@ export default function EstimateDetailPage() {
   const [estimate,       setEstimate]       = useState<Estimate | null>(null)
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
-  const [profile,        setProfile]        = useState<{ contract_terms: string | null; company_name: string | null } | null>(null)
+  const [profile,        setProfile]        = useState<{ contract_terms: string | null; company_name: string | null; pricing_mode: string | null } | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -67,7 +67,7 @@ export default function EstimateDetailPage() {
       setEstimate(est)
       setOpenings(ops || [])
       if (est?.user_id) {
-        const { data: prof } = await supabase.from('profiles').select('contract_terms, company_name').eq('id', est.user_id).single()
+        const { data: prof } = await supabase.from('profiles').select('contract_terms, company_name, pricing_mode').eq('id', est.user_id).single()
         setProfile(prof)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
@@ -267,7 +267,7 @@ export default function EstimateDetailPage() {
           {/* ── LEFT COLUMN: tier + client in one card ── */}
           <div style={{ ...CARD, padding: 20 }}>
             {/* Tier */}
-            <div style={SL}>{tierLabel} Tier</div>
+            {profile?.pricing_mode === 'gbb' && <div style={SL}>{tierLabel} Tier</div>}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
               {fmtCAD(estimate.total)}
             </div>
@@ -463,7 +463,7 @@ export default function EstimateDetailPage() {
             <div style={{ fontSize: 13, color: '#2563EB', fontWeight: 500, marginBottom: profile?.contract_terms ? 8 : 20 }}>
               {estimate.client_email}
             </div>
-            {profile?.contract_terms && (
+            {profile?.contract_terms && profile.contract_terms !== 'тут компанія щось напише' && (
               <div style={{ fontSize: 12, color: '#B3BAC6', marginBottom: 20, lineHeight: 1.5 }}>
                 Terms &amp; conditions included for client review.
               </div>
