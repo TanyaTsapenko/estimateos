@@ -120,6 +120,7 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     supabase.from('profiles').select('pricing_mode').eq('id', user.id).single().then(({ data: prof }) => {
+      console.log('pricing_mode from DB:', (prof as any)?.pricing_mode)
       if (prof) setPricingMode((prof as any).pricing_mode || 'single')
     })
     const meta = user.user_metadata
