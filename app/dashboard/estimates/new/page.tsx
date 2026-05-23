@@ -283,13 +283,13 @@ function NewEstimateForm() {
       if (hasErrors(errs)) return
     }
     setError('')
-    const nextStep = (step === 2 && pricingMode !== 'gbb') ? 4 : step + 1
+    const nextStep = step === 2 ? 4 : step + 1
     setStep(nextStep)
     window.scrollTo(0, 0)
   }
   function back() {
     setError('')
-    const prevStep = (step === 4 && pricingMode !== 'gbb') ? 2 : step - 1
+    const prevStep = step === 4 ? 2 : step - 1
     setStep(prevStep)
     window.scrollTo(0, 0)
   }
@@ -806,7 +806,7 @@ function NewEstimateForm() {
           </>
         )}
 
-        {step === 3 && (
+        {step === 3 && pricingMode === 'gbb' && (
           <>
             <div className="info-box">
               Present all three options to your client — they choose. Most clients pick Better or Best.
