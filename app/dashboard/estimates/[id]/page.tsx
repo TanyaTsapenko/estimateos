@@ -237,9 +237,6 @@ export default function EstimateDetailPage() {
           <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', flexShrink: 0 }}>
             {estimate.estimate_number}
           </span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {estimate.client_name || 'Client'}
-          </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 16 }}>
           {estimate.status === 'draft' && (
@@ -265,7 +262,7 @@ export default function EstimateDetailPage() {
         <div className="est-3col">
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
-          <div style={{ ...CARD, padding: 20 }}>
+          <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
             {/* Tier */}
             {profile?.pricing_mode === 'gbb' && <div style={SL}>{tierLabel} Tier</div>}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
