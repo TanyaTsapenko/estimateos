@@ -8,6 +8,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 
 interface PriceRow { base: number; lab: number }
 interface CustomType { key: string; label: string; base: number; lab: number }
+interface GbbRow { good: number; better: number; best: number }
 
 const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
   Object.entries(OPENING_TYPES).map(([k, v]) => [k, { base: v.base, lab: v.lab }])
@@ -85,6 +86,8 @@ export default function PriceListPage() {
   const [deletedCustomKeys,setDeletedCustomKeys]= useState<string[]>([])
   const [expandedKey,      setExpandedKey]      = useState<string | null>(null)
   const [deletingCustom,   setDeletingCustom]   = useState<CustomType | null>(null)
+  const [pricingMode,      setPricingMode]      = useState<'single' | 'gbb'>('single')
+  const [gbbPrices,        setGbbPrices]        = useState<Record<string, GbbRow>>({})
 
   // Drag state — refs for use inside stable useEffect closures
   const [dragIndexState,   setDragIndexState]   = useState<number | null>(null)
@@ -140,7 +143,11 @@ export default function PriceListPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-      const { data } = await supabase.from('price_lists').select('*').eq('user_id', user.id)
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase.from('price_lists').select('*').eq('user_id', user.id),
+        supabase.from('profiles').select('pricing_mode').eq('id', user.id).single(),
+      ])
+      if ((prof as any)?.pricing_mode === 'gbb') setPricingMode('gbb')
       if (data && data.length > 0) {
         const loaded: Record<string, PriceRow> = { ...DEFAULT_PRICES }
         data.filter(r => r.opening_type !== '_sizes' && !r.custom_label).forEach(r => {
@@ -152,6 +159,11 @@ export default function PriceListPage() {
           key: r.opening_type, label: r.custom_label,
           base: r.base_price, lab: r.labour_price,
         })))
+        const gbb: Record<string, GbbRow> = {}
+        data.filter(r => r.opening_type !== '_sizes').forEach(r => {
+          gbb[r.opening_type] = { good: r.good_price || 0, better: r.better_price || 0, best: r.best_price || 0 }
+        })
+        setGbbPrices(gbb)
       }
       setLoading(false)
     }
@@ -180,12 +192,22 @@ export default function PriceListPage() {
       ...Object.entries(prices).map(([type, p]) => ({
         user_id: user.id, opening_type: type,
         base_price: p.base, labour_price: p.lab,
+        ...(pricingMode === 'gbb' ? {
+          good_price:   gbbPrices[type]?.good   || null,
+          better_price: gbbPrices[type]?.better || null,
+          best_price:   gbbPrices[type]?.best   || null,
+        } : {}),
         updated_at: new Date().toISOString(),
       })),
       ...customTypes.map(ct => ({
         user_id: user.id, opening_type: ct.key,
         base_price: ct.base, labour_price: ct.lab,
         custom_label: ct.label,
+        ...(pricingMode === 'gbb' ? {
+          good_price:   gbbPrices[ct.key]?.good   || null,
+          better_price: gbbPrices[ct.key]?.better || null,
+          best_price:   gbbPrices[ct.key]?.best   || null,
+        } : {}),
         updated_at: new Date().toISOString(),
       })),
     ]
@@ -199,6 +221,11 @@ export default function PriceListPage() {
   function setPrice(type: string, field: 'base' | 'lab', raw: string) {
     const val = parseFloat(raw.replace(',', '.')) || 0
     setPrices(p => ({ ...p, [type]: { ...p[type], [field]: val } }))
+  }
+
+  function setGbbPrice(type: string, tier: 'good' | 'better' | 'best', raw: string) {
+    const val = parseFloat(raw.replace(',', '.')) || 0
+    setGbbPrices(g => ({ ...g, [type]: { ...(g[type] || { good: 0, better: 0, best: 0 }), [tier]: val } }))
   }
 
   function setCustomPrice(key: string, field: 'base' | 'lab', raw: string) {
@@ -371,6 +398,41 @@ export default function PriceListPage() {
                           style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
                           Reset to default ({fmtCAD(def.base + def.lab)})
                         </button>
+                      )}
+                      {pricingMode === 'gbb' && (
+                        <div style={{ marginTop: 12, borderTop: '1px solid #E2E8F0', paddingTop: 12 }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#2045B8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em' }}>Tier Prices</div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {(['good', 'better', 'best'] as const).map(tier => {
+                              const gbb = gbbPrices[key] || { good: 0, better: 0, best: 0 }
+                              const isMiddle = tier === 'better'
+                              return (
+                                <div key={tier} style={{ flex: 1 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: isMiddle ? '#2045B8' : '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'center' }}>
+                                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
+                                  </div>
+                                  <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: isMiddle ? '#2045B8' : '#94A3B8' }}>$</span>
+                                    <input type="number" min="0" step="50"
+                                      value={gbb[tier] || ''}
+                                      placeholder="0"
+                                      onClick={e => e.stopPropagation()}
+                                      onChange={e => setGbbPrice(key, tier, e.target.value)}
+                                      style={{
+                                        ...inputStyle, paddingLeft: 20,
+                                        border: isMiddle ? '1.5px solid #2045B8' : '1.5px solid #E2E8F0',
+                                        background: isMiddle ? '#EEF2FF' : '#F8FAFC',
+                                        color: isMiddle ? '#2045B8' : '#0A1628',
+                                        fontWeight: isMiddle ? 700 : 400,
+                                        textAlign: 'center',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}

@@ -272,43 +272,36 @@ export default function GBBOnboardingPage() {
         <ProgressDots step={3} />
         <StepIcon>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
+            <line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/>
+            <circle cx="18" cy="6" r="3"/><circle cx="8" cy="12" r="3"/><circle cx="16" cy="18" r="3"/>
           </svg>
         </StepIcon>
-        <div style={{ fontSize: 24, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>Set your prices</div>
+        <div style={{ fontSize: 24, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>Almost there!</div>
         <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 20, lineHeight: 1.55 }}>
-          Add a price for each tier. This syncs with your Price List in Settings.
+          Good / Better / Best is ready to activate. Next step — add tier prices to your Price List.
         </div>
-        <HintBox text="Price the Better tier as your target — most clients will land there automatically." />
 
-        <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, overflow: 'hidden', marginBottom: 20 }}>
-          {/* Header row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 0, padding: '10px 14px', borderBottom: '1px solid #E8E8E8', background: '#FAFAFA' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#8892b0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Opening</div>
-            {[tier1, tier2, tier3].map((t, i) => (
-              <div key={i} style={{ fontSize: 10, fontWeight: 700, color: i === 1 ? '#2045B8' : '#8892b0', textTransform: 'uppercase', letterSpacing: '0.06em', textAlign: 'center' }}>{t}</div>
-            ))}
-          </div>
-          {priceRows.map((row, i, arr) => (
-            <div key={row.key} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 0, padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #E8E8E8' : undefined, alignItems: 'center' }}>
-              <div style={{ fontSize: 12, color: '#0A1628', fontWeight: 500 }}>{row.label}</div>
-              {(['good', 'better', 'best'] as const).map((tier) => (
-                <input key={tier} type="number" placeholder="—" value={row[tier]}
-                  onChange={e => setPrice(row.key, tier, e.target.value)}
-                  style={{
-                    width: '100%', border: tier === 'better' ? '1.5px solid #2045B8' : '1px solid #E8E8E8',
-                    borderRadius: 8, padding: '6px 6px', fontSize: 12, fontWeight: tier === 'better' ? 700 : 400,
-                    color: tier === 'better' ? '#2045B8' : '#0A1628',
-                    background: tier === 'better' ? '#EEF2FF' : '#fff',
-                    outline: 'none', textAlign: 'center', fontFamily: F, boxSizing: 'border-box',
-                  }} />
-              ))}
+        <div style={{ background: '#EEF2FF', borderRadius: 14, padding: 16, marginBottom: 24 }}>
+          {[
+            'Your existing prices become the Good tier by default',
+            'Add Better and Best prices in Price List → Settings',
+            'Clients will see all three options on every estimate',
+          ].map((text, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < 2 ? 12 : 0 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2045B8', flexShrink: 0, marginTop: 4 }} />
+              <span style={{ fontSize: 13, color: '#0A1628', lineHeight: 1.5 }}>{text}</span>
             </div>
           ))}
         </div>
 
-        <PrimaryBtn onClick={savePricesAndFinish} disabled={saving}>
-          {saving ? 'Saving…' : 'Save & finish →'}
+        <PrimaryBtn onClick={async () => {
+          if (!userId) return
+          setSaving(true)
+          await supabase.from('profiles').update({ pricing_mode: 'gbb' }).eq('id', userId)
+          setSaving(false)
+          router.push('/dashboard/price-list')
+        }} disabled={saving}>
+          {saving ? 'Activating…' : 'Activate & go to Price List →'}
         </PrimaryBtn>
         <GhostBtn onClick={() => setStep(2)}>← Back</GhostBtn>
       </div>
