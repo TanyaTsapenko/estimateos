@@ -156,6 +156,7 @@ function NewEstimateForm() {
 
   const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
   const [tier, setTier] = useState('better')
+  const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [profile, setProfile] = useState<{ province: string } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, { label: string; base: number; lab: number }>>({})
@@ -171,10 +172,13 @@ function NewEstimateForm() {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
       const [{ data: prof }, { data: priceRows }] = await Promise.all([
-        supabase.from('profiles').select('province').eq('id', user.id).single(),
+        supabase.from('profiles').select('province, pricing_mode').eq('id', user.id).single(),
         supabase.from('price_lists').select('*').eq('user_id', user.id),
       ])
-      if (prof) setProfile(prof)
+      if (prof) {
+        setProfile(prof)
+        setPricingMode((prof as any).pricing_mode === 'gbb' ? 'gbb' : 'single')
+      }
       if (editId) {
         const [{ data: est }, { data: ops }] = await Promise.all([
           supabase.from('estimates').select('*').eq('id', editId).single(),
@@ -278,9 +282,17 @@ function NewEstimateForm() {
       setClientErrors(errs)
       if (hasErrors(errs)) return
     }
-    setError(''); setStep(s => s + 1); window.scrollTo(0, 0)
+    setError('')
+    const nextStep = (step === 2 && pricingMode !== 'gbb') ? 4 : step + 1
+    setStep(nextStep)
+    window.scrollTo(0, 0)
   }
-  function back() { setError(''); setStep(s => s - 1); window.scrollTo(0, 0) }
+  function back() {
+    setError('')
+    const prevStep = (step === 4 && pricingMode !== 'gbb') ? 2 : step - 1
+    setStep(prevStep)
+    window.scrollTo(0, 0)
+  }
 
   async function saveEstimate() {
     const errs = validateClientFields()
