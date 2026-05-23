@@ -566,10 +566,8 @@ export default function DashboardPage() {
           {/* Discover */}
           {showDiscover && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 10 }}>
+              <div style={{ padding: '0 4px', marginBottom: 10 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Discover</div>
-                <button onClick={() => setShowDiscover(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', fontSize: 16, lineHeight: 1, padding: '2px 4px', fontFamily: 'inherit' }}>✕</button>
               </div>
               <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 0 16px', scrollbarWidth: 'none' } as React.CSSProperties}>
                 {/* GBB card */}
