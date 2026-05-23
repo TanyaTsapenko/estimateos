@@ -386,15 +386,10 @@ function EditScreen({
 
         {/* WHEN */}
         <div style={{ ...sectionHdr, paddingTop: 20 }}>When</div>
-        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label style={fieldLabel}>Date</label>
-            <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
-            {draft.appointment_date && (
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(draft.appointment_date + 'T00:00:00'))}
-              </div>
-            )}
+            <input type="date" lang="en" style={{ ...inp, width: '100%', boxSizing: 'border-box' }} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
           </div>
           <div>
             <label style={fieldLabel}>Time</label>
@@ -718,15 +713,10 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
 
         {/* WHEN */}
         <div style={{ ...secHdr, paddingTop: 20 }}>When</div>
-        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label style={fldLbl}>Date</label>
-            <input type="date" lang="en" style={inp} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
-            {draft.appointment_date && (
-              <div style={{ fontSize: 11, color: '#64748B', marginTop: 4 }}>
-                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(draft.appointment_date + 'T00:00:00'))}
-              </div>
-            )}
+            <input type="date" lang="en" style={{ ...inp, width: '100%', boxSizing: 'border-box' }} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
           </div>
           <div>
             <label style={fldLbl}>Time</label>
