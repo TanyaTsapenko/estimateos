@@ -836,7 +836,7 @@ function NewEstimateForm() {
 
         {step === 4 && (
           <>
-            <div className="sum-box">
+            <div className="sum-box" style={{ marginTop: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
                 {client.client_name} — {client.client_address || client.client_city || ''}
               </div>
