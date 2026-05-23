@@ -192,14 +192,13 @@ export default function NewAppointmentPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
           <div className="f">
             <label>Date</label>
-            <input type="date" lang="en" value={form.appointment_date}
-              style={{ width: '100%', boxSizing: 'border-box' }}
-              onChange={e => set('appointment_date', e.target.value)} />
+            <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
           <div className="f">
             <label>Time</label>
-            <input type="time" value={form.appointment_time}
-              onChange={e => set('appointment_time', e.target.value)} />
+            <input type="time" value={form.appointment_time} onChange={e => set('appointment_time', e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
 

@@ -386,14 +386,16 @@ function EditScreen({
 
         {/* WHEN */}
         <div style={{ ...sectionHdr, paddingTop: 20 }}>When</div>
-        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label style={fieldLabel}>Date</label>
-            <input type="date" lang="en" style={{ ...inp, width: '100%', boxSizing: 'border-box' }} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            <input type="date" lang="en" value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
           <div>
             <label style={fieldLabel}>Time</label>
-            <input type="time" style={inp} value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)} />
+            <input type="time" value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
 
@@ -713,14 +715,16 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
 
         {/* WHEN */}
         <div style={{ ...secHdr, paddingTop: 20 }}>When</div>
-        <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
           <div>
             <label style={fldLbl}>Date</label>
-            <input type="date" lang="en" style={{ ...inp, width: '100%', boxSizing: 'border-box' }} value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} />
+            <input type="date" lang="en" value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
           <div>
             <label style={fldLbl}>Time</label>
-            <input type="time" style={inp} value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)} />
+            <input type="time" value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
 
