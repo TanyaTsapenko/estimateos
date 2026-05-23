@@ -22,6 +22,7 @@ export default function NewAppointmentPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [allMembers, setAllMembers] = useState<TeamMember[]>([])
   const [errors, setErrors] = useState<ClientErrors>({})
 
   const today = new Date().toISOString().slice(0, 10)
@@ -46,16 +47,22 @@ export default function NewAppointmentPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      const { data: members } = await supabase
-        .from('team_members')
-        .select('id, first_name, last_name, email')
-        .eq('owner_id', user.id)
-      if (members && members.length > 0) {
-        setTeamMembers(members.map((m: any) => ({
-          id: m.id,
-          name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Team member',
-        })))
-      }
+      const [{ data: prof }, { data: members }] = await Promise.all([
+        supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single(),
+        supabase.from('team_members').select('id, first_name, last_name, email').eq('owner_id', user.id),
+      ])
+      const ownerName = prof
+        ? [( prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') || 'You'
+        : 'You'
+      const owner: TeamMember = { id: user.id, name: ownerName }
+      const extras: TeamMember[] = (members || []).map((m: any) => ({
+        id: m.id,
+        name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Team member',
+      }))
+      const all = [owner, ...extras]
+      setTeamMembers(extras)
+      setAllMembers(all)
+      set('assigned_to', ownerName)
     })
   }, [])
 
@@ -211,23 +218,21 @@ export default function NewAppointmentPage() {
             onChange={e => set('notes', e.target.value)} />
         </div></div>
 
-        {teamMembers.length > 0 && (
-          <div className="r1"><div className="f">
-            <label>Assigned To</label>
+        <div className="r1"><div className="f">
+          <label>Assigned To</label>
+          {allMembers.length >= 2 ? (
             <select value={form.assigned_to} onChange={e => set('assigned_to', e.target.value)}>
-              <option value="">Anyone / Unassigned</option>
-              {teamMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+              {allMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
             </select>
-          </div></div>
-        )}
-
-        {teamMembers.length === 0 && (
-          <div className="r1"><div className="f">
-            <label>Assigned To (optional)</label>
-            <input placeholder="Your name or team member" value={form.assigned_to}
-              onChange={e => set('assigned_to', e.target.value)} />
-          </div></div>
-        )}
+          ) : (
+            <input
+              value=""
+              disabled
+              placeholder="Only you on the team"
+              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+            />
+          )}
+        </div></div>
 
         <div style={{ height: 16 }} />
 
