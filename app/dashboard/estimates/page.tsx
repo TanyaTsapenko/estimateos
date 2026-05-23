@@ -12,7 +12,7 @@ interface Estimate {
   tier: string | null; created_at: string
 }
 
-const FILTERS = ['All', 'Draft', 'Sent', 'Signed', 'Invoiced']
+const FILTERS = ['All', 'Draft', 'Sent', 'Accepted', 'Invoiced']
 
 const SC: Record<string, { text: string; bg: string }> = {
   draft:    { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
@@ -64,7 +64,7 @@ export default function EstimatesPage() {
   }, [])
 
   const visible = estimates.filter(e => {
-    const matchFilter = filter === 'All' || e.status === filter.toLowerCase()
+    const matchFilter = filter === 'All' || (filter === 'Accepted' ? e.status === 'signed' : e.status === filter.toLowerCase())
     const matchSearch = !search ||
       (e.client_name || '').toLowerCase().includes(search.toLowerCase()) ||
       e.estimate_number.toLowerCase().includes(search.toLowerCase())
@@ -100,7 +100,7 @@ export default function EstimatesPage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} signed</span>
+          <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
           <BellButton />
           <button
             onClick={() => router.push('/dashboard/estimates/new')}
@@ -116,7 +116,7 @@ export default function EstimatesPage() {
         {/* Stats */}
         <div className="est-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           <StatBox label="Total value" value={fmtCAD(totalValue)} />
-          <StatBox label="Signed"      value={signedCount}        />
+          <StatBox label="Accepted"     value={signedCount}        />
           <StatBox label="Open"        value={openCount}          />
         </div>
 
@@ -236,7 +236,7 @@ export default function EstimatesPage() {
                         borderRadius: 4, padding: '2px 6px',
                         display: 'inline-block', marginTop: 2,
                       }}>
-                        {e.status.toUpperCase()}
+                        {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
                       </span>
                     </div>
                     <ChevronRight size={14} color="#CBD5E1" />
@@ -280,7 +280,7 @@ export default function EstimatesPage() {
                         borderRadius: 4, padding: '2px 6px',
                         display: 'inline-block', marginTop: 2,
                       }}>
-                        {e.status.toUpperCase()}
+                        {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
                       </span>
                     </div>
                     <ChevronRight size={14} color="#CBD5E1" />

@@ -907,7 +907,7 @@ function NewEstimateForm() {
             )}
 
             <div style={{ fontSize: 11, color: 'var(--ash)', marginBottom: 16, lineHeight: 1.6 }}>
-              Valid for 30 days. Client will receive a link to review and sign electronically.
+              Valid for 30 days. Send to client for review.
             </div>
 
             <button onClick={saveEstimate} disabled={saving} style={{

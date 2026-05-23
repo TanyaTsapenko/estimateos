@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, MessageSquare, PenLine, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, MessageSquare, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -252,7 +252,7 @@ export default function EstimateDetailPage() {
             background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)',
             borderRadius: 6, padding: '4px 10px',
           }}>
-            {estimate.status.toUpperCase()}
+            {estimate.status === 'signed' ? 'ACCEPTED' : estimate.status.toUpperCase()}
           </span>
         </div>
       </div>
@@ -366,10 +366,10 @@ export default function EstimateDetailPage() {
             {(isSigned || isInvoiced) ? (
               <div style={{ background: '#0F8A6B', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
-                  {isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
+                  {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
-                  {estimate.client_name || 'Client'} signed this estimate
+                  {estimate.client_name || 'Client'} accepted this estimate
                 </div>
                 <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -393,16 +393,16 @@ export default function EstimateDetailPage() {
                   </button>
                 )}
                 <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setShowEmailModal(true)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Mail size={13} /> Email client
+                  </button>
                   <button onClick={() => {
                     if (!estimate.client_phone) { showToast('No phone number on file'); return }
                     window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here's your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/sign/${estimate.id}`)
                   }}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <MessageSquare size={13} /> Text client
-                  </button>
-                  <button onClick={() => router.push(`/dashboard/estimates/${id}/sign`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <PenLine size={13} /> Sign now
                   </button>
                 </div>
               </div>
