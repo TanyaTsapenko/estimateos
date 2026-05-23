@@ -46,7 +46,7 @@ export default function ResetPasswordPage() {
   const handleSubmit = handleUpdate
 
   return (
-    <div style={{minHeight:'100vh', background:'#F4F4F2'}}>
+    <div style={{minHeight:'100vh', background:'#F4F4F2', display:'flex', flexDirection:'column'}}>
       <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px'}}>
         <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
         <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
@@ -61,7 +61,7 @@ export default function ResetPasswordPage() {
           <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>Your new password must be at least 8 characters.</p>
         </div>
       </div>
-      <div style={{padding:'22px 18px 28px'}}>
+      <div style={{padding:'22px 18px 28px', flex:1}}>
         <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>New Password</label>
         <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 characters"
           style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:12, boxSizing:'border-box'}} />

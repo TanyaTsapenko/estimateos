@@ -29,7 +29,7 @@ export default function CheckEmailPage() {
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#F4F4F2'}}>
+    <div style={{minHeight:'100vh', background:'#F4F4F2', display:'flex', flexDirection:'column'}}>
       <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px', textAlign:'center'}}>
         <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
         <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
@@ -44,7 +44,7 @@ export default function CheckEmailPage() {
           <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>We&apos;ve sent a reset link to your inbox.</p>
         </div>
       </div>
-      <div style={{padding:'22px 18px 28px', textAlign:'center'}}>
+      <div style={{padding:'22px 18px 28px', textAlign:'center', flex:1}}>
         <p style={{fontSize:17, fontWeight:700, color:'#0A0E1A', marginBottom:8, marginTop:8}}>Reset link sent!</p>
         <p style={{fontSize:13, color:'#8892b0', lineHeight:1.55, marginBottom:16}}>
           We sent a link to<br/><span style={{color:'#0A0E1A', fontWeight:600}}>{email || 'your email'}</span><br/>Check your inbox and follow the instructions.

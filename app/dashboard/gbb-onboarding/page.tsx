@@ -127,7 +127,7 @@ export default function GBBOnboardingPage() {
   if (step === 1) return (
     <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
       {/* Dark header */}
-      <div style={{ position: 'relative', overflow: 'hidden', padding: '36px 22px 30px' }}>
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '60px 22px 30px' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)' }} />
         <div style={{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: 'rgba(59,108,255,0.4)', top: -80, right: -60 }} />
         <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', background: 'rgba(217,119,6,0.2)', bottom: -50, left: -20 }} />
@@ -206,7 +206,7 @@ export default function GBBOnboardingPage() {
   // ── STEP 2 ────────────────────────────────────
   if (step === 2) return (
     <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
-      <div style={{ padding: '52px 18px 28px' }}>
+      <div style={{ padding: '60px 18px 28px' }}>
         <ProgressDots step={2} />
         <StepIcon>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -268,7 +268,7 @@ export default function GBBOnboardingPage() {
   // ── STEP 3 ────────────────────────────────────
   if (step === 3) return (
     <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
-      <div style={{ padding: '52px 18px 28px' }}>
+      <div style={{ padding: '60px 18px 28px' }}>
         <ProgressDots step={3} />
         <StepIcon>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -69,7 +69,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#F4F4F2'}}>
+    <div style={{minHeight:'100vh', background:'#F4F4F2', display:'flex', flexDirection:'column'}}>
       <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px'}}>
         <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
         <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
@@ -92,7 +92,7 @@ export default function RegisterPage() {
           <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>Takes 2 minutes · Free for 14 days</p>
         </div>
       </div>
-      <div style={{padding:'22px 18px 28px'}}>
+      <div style={{padding:'22px 18px 28px', flex:1}}>
         <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:16}}>
           <div>
             <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>First Name</label>
