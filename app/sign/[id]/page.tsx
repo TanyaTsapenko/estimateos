@@ -133,21 +133,33 @@ export default function PublicSignPage() {
   )
 
   if (done) return (
-    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>
-          Estimate<span style={{ color: '#2563EB' }}>OS</span>
+    <div style={{ minHeight: '100vh', background: '#F4F4F2', display: 'flex', flexDirection: 'column', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+      {/* Dark gradient header */}
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '44px 24px 28px' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)' }} />
+        <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top: -60, right: -50 }} />
+        <div style={{ position: 'absolute', width: 150, height: 150, borderRadius: '50%', background: 'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', bottom: -40, left: -20 }} />
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.09em', marginBottom: 18 }}>ALL DONE</div>
+          <div style={{ width: 50, height: 50, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 700, color: '#fff', marginBottom: 7, letterSpacing: -0.2 }}>Signed!</div>
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.55 }}>Your estimate has been signed.</div>
         </div>
       </div>
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', paddingBottom: 'calc(40px + env(safe-area-inset-bottom))' }}>
-        <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#0F8A6B', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-          <Check size={32} color="#fff" strokeWidth={2.5} />
-        </div>
-        <div style={{ fontSize: 24, fontWeight: 700, color: '#0A1628', marginBottom: 10, textAlign: 'center' }}>Signed!</div>
-        <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
-          {estimate.estimate_number} has been signed for <strong>{fmtCAD(estimate.total)}</strong>.
-          {estimate.client_email && ' A copy will be sent to your email.'}
-          {' '}{profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
+
+      {/* Content */}
+      <div style={{ padding: '22px 18px 32px', flex: 1 }}>
+        <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#2045B8', marginBottom: 4 }}>{estimate.estimate_number}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A0E1A', marginBottom: 8 }}>{fmtCAD(estimate.total)}</div>
+          <div style={{ fontSize: 13, color: '#8892b0', lineHeight: 1.55 }}>
+            {estimate.client_email && 'A copy has been sent to your email. '}
+            {profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
+          </div>
         </div>
       </div>
     </div>
