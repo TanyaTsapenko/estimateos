@@ -52,14 +52,6 @@ function DragHandle() {
   )
 }
 
-function TrashIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 7h16M9 7V4h6v3M6 7l1 13a2 2 0 002 2h6a2 2 0 002-2l1-13"/>
-      <path d="M10 11v6M14 11v6"/>
-    </svg>
-  )
-}
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8',
@@ -81,11 +73,13 @@ export default function PriceListPage() {
   const [saved,            setSaved]            = useState(false)
   const [error,            setError]            = useState('')
   const [loading,          setLoading]          = useState(true)
-  const [customTypes,      setCustomTypes]      = useState<CustomType[]>([])
-  const [newLabel,         setNewLabel]         = useState('')
-  const [deletedCustomKeys,setDeletedCustomKeys]= useState<string[]>([])
-  const [expandedKey,      setExpandedKey]      = useState<string | null>(null)
-  const [deletingCustom,   setDeletingCustom]   = useState<CustomType | null>(null)
+  const [customTypes,        setCustomTypes]        = useState<CustomType[]>([])
+  const [newLabel,           setNewLabel]           = useState('')
+  const [expandedKey,        setExpandedKey]        = useState<string | null>(null)
+  const [deletingItem,       setDeletingItem]       = useState<{ key: string; name: string; isCustom: boolean } | null>(null)
+  const [removedStandardKeys,setRemovedStandardKeys]= useState<string[]>([])
+  const [hoverDeleteKey,     setHoverDeleteKey]     = useState<string | null>(null)
+  const [userId,             setUserId]             = useState<string | null>(null)
   const [pricingMode,      setPricingMode]      = useState<'single' | 'gbb'>('single')
   const [gbbPrices,        setGbbPrices]        = useState<Record<string, GbbRow>>({})
 
@@ -143,6 +137,7 @@ export default function PriceListPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      setUserId(user.id)
       const [{ data }, { data: prof }] = await Promise.all([
         supabase.from('price_lists').select('*').eq('user_id', user.id),
         supabase.from('profiles').select('pricing_mode').eq('id', user.id).single(),
@@ -183,13 +178,8 @@ export default function PriceListPage() {
       return
     }
 
-    if (deletedCustomKeys.length > 0) {
-      await supabase.from('price_lists').delete().eq('user_id', user.id).in('opening_type', deletedCustomKeys)
-      setDeletedCustomKeys([])
-    }
-
     const rows = [
-      ...Object.entries(prices).map(([type, p]) => ({
+      ...Object.entries(prices).filter(([type]) => !removedStandardKeys.includes(type)).map(([type, p]) => ({
         user_id: user.id, opening_type: type,
         base_price: p.base, labour_price: p.lab,
         ...(pricingMode === 'gbb' ? {
@@ -263,19 +253,23 @@ export default function PriceListPage() {
   return (
     <>
     <ConfirmModal
-      open={!!deletingCustom}
+      open={!!deletingItem}
       icon="trash"
-      title={`Delete ${deletingCustom?.label ?? ''}?`}
+      title={`Delete ${deletingItem?.name ?? ''}?`}
       body="This cannot be undone."
       confirmLabel="Delete"
-      onConfirm={() => {
-        if (!deletingCustom) return
-        setDeletedCustomKeys(prev => [...prev, deletingCustom.key])
-        setCustomTypes(prev => prev.filter(t => t.key !== deletingCustom.key))
-        if (expandedKey === deletingCustom.key) setExpandedKey(null)
-        setDeletingCustom(null)
+      onConfirm={async () => {
+        if (!deletingItem || !userId) return
+        await supabase.from('price_lists').delete().eq('user_id', userId).eq('opening_type', deletingItem.key)
+        if (deletingItem.isCustom) {
+          setCustomTypes(prev => prev.filter(t => t.key !== deletingItem.key))
+        } else {
+          setRemovedStandardKeys(prev => [...prev, deletingItem.key])
+        }
+        if (expandedKey === deletingItem.key) setExpandedKey(null)
+        setDeletingItem(null)
       }}
-      onCancel={() => setDeletingCustom(null)}
+      onCancel={() => setDeletingItem(null)}
     />
 
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
@@ -328,7 +322,7 @@ export default function PriceListPage() {
           {/* ── STANDARD TYPES ── */}
           <div style={sectionLabel}>Opening Types</div>
           <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}>
-            {Object.entries(OPENING_TYPES).map(([key, def], idx, arr) => {
+            {Object.entries(OPENING_TYPES).filter(([key]) => !removedStandardKeys.includes(key)).map(([key, def], idx, arr) => {
               const p         = prices[key] || { base: def.base, lab: def.lab }
               const total     = p.base + p.lab
               const isCustom  = p.base !== def.base || p.lab !== def.lab
@@ -358,6 +352,16 @@ export default function PriceListPage() {
                       <div style={priceSub}>per opening</div>
                     </div>
                     <div style={{ fontSize: 11, color: '#CBD5E1', marginLeft: 2, transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>▶</div>
+                    <button
+                      onClick={e => { e.stopPropagation(); setDeletingItem({ key, name: def.name, isCustom: false }) }}
+                      onMouseEnter={() => setHoverDeleteKey(key)}
+                      onMouseLeave={() => setHoverDeleteKey(null)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hoverDeleteKey === key ? '#EF4444' : '#BFBFBF'} strokeWidth="2.5" strokeLinecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
                   </div>
 
                   {isExpanded && (
@@ -491,12 +495,16 @@ export default function PriceListPage() {
                         </div>
                       </div>
 
-                      {/* Trash */}
+                      {/* Delete */}
                       <button
-                        onClick={e => { e.stopPropagation(); setDeletingCustom(ct) }}
-                        style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', color: '#DC2626', cursor: 'pointer', flexShrink: 0, borderRadius: 8 }}
+                        onClick={e => { e.stopPropagation(); setDeletingItem({ key: ct.key, name: ct.label, isCustom: true }) }}
+                        onMouseEnter={() => setHoverDeleteKey(ct.key)}
+                        onMouseLeave={() => setHoverDeleteKey(null)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                       >
-                        <TrashIcon />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hoverDeleteKey === ct.key ? '#EF4444' : '#BFBFBF'} strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
                       </button>
 
                       {/* Chevron */}
