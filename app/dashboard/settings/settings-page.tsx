@@ -634,24 +634,39 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
+const DEFAULT_TERMS = 'This agreement is entered into between the contractor and the client named above. All materials and workmanship are guaranteed for the warranty period specified. The client agrees to provide reasonable access to the property. Payment is due as specified in this agreement. The contractor carries full liability insurance.'
+const DEFAULT_CANCELLATION = 'Either party may cancel this contract with 72 hours written notice prior to the scheduled start date.'
+
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [values, setValues] = useState({ intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', terms: 'All work to be completed in a professional manner...', requireSign: true, showLicence: false })
-  const [initial] = useState({ ...values })
+  const [values, setValues] = useState({ intro: 'Thank you for choosing {company_name}. This estimate is valid for 30 days.', requireSign: true, showLicence: false })
+  const [contractTerms,      setContractTerms]      = useState(DEFAULT_TERMS)
+  const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
+  const [depositRequired,    setDepositRequired]    = useState(true)
+  const [depositPercent,     setDepositPercent]     = useState(10)
+  const [paymentTerms,       setPaymentTerms]       = useState('Upon completion')
+  const [cancellationPolicy, setCancellationPolicy] = useState(DEFAULT_CANCELLATION)
+  const [saving,             setSaving]             = useState(false)
   const [contractPdfUrl, setContractPdfUrl] = useState<string | null>(null)
   const [contractFileName, setContractFileName] = useState<string | null>(null)
   const [contractFileSize, setContractFileSize] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const pdfInputRef = useRef<HTMLInputElement>(null)
-  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
+  const dirty = true
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('contract_pdf_url').eq('id', user.id).single()
+      const { data: prof } = await supabase.from('profiles').select('contract_pdf_url, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy').eq('id', user.id).single()
       if (prof?.contract_pdf_url) setContractPdfUrl(prof.contract_pdf_url)
+      if ((prof as any)?.contract_terms)      setContractTerms((prof as any).contract_terms)
+      if ((prof as any)?.warranty_period)     setWarrantyPeriod((prof as any).warranty_period)
+      if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
+      if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
+      if ((prof as any)?.payment_terms)       setPaymentTerms((prof as any).payment_terms)
+      if ((prof as any)?.cancellation_policy) setCancellationPolicy((prof as any).cancellation_policy)
     })
   }, [])
 
@@ -684,6 +699,21 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       setUploading(false)
       if (pdfInputRef.current) pdfInputRef.current.value = ''
     }
+  }
+
+  async function handleSave() {
+    if (!userId) return
+    setSaving(true)
+    await supabase.from('profiles').update({
+      contract_terms:      contractTerms,
+      warranty_period:     warrantyPeriod,
+      deposit_required:    depositRequired,
+      deposit_percent:     depositPercent,
+      payment_terms:       paymentTerms,
+      cancellation_policy: cancellationPolicy,
+    }).eq('id', userId)
+    setSaving(false)
+    flash('Contract saved')
   }
 
   async function handlePdfRemove() {
@@ -746,8 +776,57 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         </Card>
         <Card>
           <SectionLabel>Terms & conditions</SectionLabel>
-          <textarea value={values.terms} onChange={e => setValues(s => ({ ...s, terms: e.target.value }))} rows={6}
+          <textarea value={contractTerms} onChange={e => setContractTerms(e.target.value)} rows={6}
             style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+        </Card>
+
+        {/* ── CONTRACT DEFAULTS ── */}
+        <Card>
+          <SectionLabel>Contract Defaults</SectionLabel>
+
+          {/* Warranty period */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Warranty Period</div>
+            <select value={warrantyPeriod} onChange={e => setWarrantyPeriod(e.target.value)}
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+              {['1 year', '2 years', '5 years', '10 years'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+
+          {/* Deposit */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: depositRequired ? 10 : 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase' }}>Deposit</div>
+              <Toggle on={depositRequired} onChange={setDepositRequired} />
+            </div>
+            {depositRequired && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Deposit Amount</div>
+                <div style={{ position: 'relative', maxWidth: 160 }}>
+                  <input type="number" min={0} max={100} value={depositPercent} onChange={e => setDepositPercent(Number(e.target.value))}
+                    placeholder="10"
+                    style={{ width: '100%', padding: '10px 32px 10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
+                  <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#94A3B8', pointerEvents: 'none' }}>%</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Payment terms */}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Payment Terms</div>
+            <select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
+              {['Upon completion', '50% deposit / 50% on completion', 'Custom'].map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+
+          {/* Cancellation policy */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Cancellation Policy</div>
+            <textarea value={cancellationPolicy} onChange={e => setCancellationPolicy(e.target.value)} rows={3}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
         </Card>
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #EEF0F4' }}>
@@ -766,7 +845,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           </div>
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={() => flash('Contract saved')} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={true} onSave={handleSave} onDiscard={() => {}} />
     </div>
   )
 }
