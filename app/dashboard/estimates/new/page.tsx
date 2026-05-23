@@ -847,7 +847,7 @@ function NewEstimateForm() {
                 </div>
               ))}
               <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                <span>Subtotal ({tier.charAt(0).toUpperCase() + tier.slice(1)})</span>
+                <span>Subtotal</span>
                 <span>{fmtCAD(subtotal)}</span>
               </div>
               {discountAmt > 0 && (
