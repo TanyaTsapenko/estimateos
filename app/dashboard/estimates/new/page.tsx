@@ -920,9 +920,11 @@ function NewEstimateForm() {
       </div>
 
       <div className="nav">
-        {step > 1
-          ? <button className="btn-back" onClick={back}>← Back</button>
-          : <button className="btn-back" onClick={() => router.push('/dashboard/estimates')}>← Cancel</button>
+        {step === 1
+          ? <button className="btn-back" onClick={() => router.push('/dashboard/estimates')}>← Cancel</button>
+          : step < 4
+            ? <button className="btn-back" onClick={back}>← Back</button>
+            : <div />
         }
         {step < 4 && <button className="btn-next" onClick={next}>Continue →</button>}
       </div>
