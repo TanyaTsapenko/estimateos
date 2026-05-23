@@ -563,7 +563,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Discover */}
-          {showDiscover && pricingMode === 'single' && (
+          {showDiscover && pricingMode !== 'gbb' && (
             <div style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px', marginBottom: 10 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Discover</div>
