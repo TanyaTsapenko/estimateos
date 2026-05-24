@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, MessageSquare, FileDown, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, MessageSquare, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -414,6 +414,7 @@ export default function EstimateDetailPage() {
                 MORE ACTIONS
               </div>
               {[
+                { icon: <FileText size={15} color="#0A0E1A" />, label: 'Create Contract', onClick: () => router.push(`/dashboard/estimates/${id}/contract`), danger: false },
                 { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF', onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
                 { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: duplicateEstimate, danger: false },
                 { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: () => setDeleteOpen(true), danger: true },
