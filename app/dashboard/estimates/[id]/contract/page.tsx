@@ -143,7 +143,7 @@ export default function ContractPage() {
       </div>
 
       {/* BODY */}
-      <div style={{ padding: '16px 16px 120px', flex: 1, paddingBottom: 80 }}>
+      <div style={{ padding: '16px 16px 120px', flex: 1, paddingBottom: 160 }}>
 
         {/* PARTIES */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
@@ -277,7 +277,7 @@ export default function ContractPage() {
       </div>
 
       {/* BOTTOM ACTIONS */}
-      <div style={{ position: 'fixed', bottom: 60, left: 0, right: 0, background: '#F4F4F2', borderTop: '1px solid #E8E8E8', padding: '12px 16px 32px', display: 'flex', gap: 10, zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, background: '#F4F4F2', borderTop: '1px solid #E8E8E8', padding: '12px 16px 32px', display: 'flex', gap: 10, zIndex: 100 }}>
         <button onClick={() => alert('Coming in next update')}
           style={{ flex: 1, background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
           Send to client →
