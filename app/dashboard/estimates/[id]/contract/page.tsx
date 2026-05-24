@@ -127,10 +127,7 @@ export default function ContractPage() {
           ← Estimate
         </button>
         <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Contract</span>
-        <button onClick={() => alert('Coming in next update')}
-          style={{ background: '#2045B8', border: 'none', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
-          Send →
-        </button>
+        <div style={{ width: 70 }} />
       </div>
 
       {/* CONTRACT BAR */}
