@@ -274,23 +274,22 @@ export default function ContractPage() {
           </div>
         </div>
 
-      </div>
+        <div style={{ padding: '16px 0 40px', display: 'flex', gap: 10 }}>
+          <button onClick={() => alert('Coming in next update')}
+            style={{ flex: 1, background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
+            Send to client →
+          </button>
+          <button onClick={() => alert('Coming in next update')}
+            style={{ width: 52, height: 52, background: '#fff', border: '1px solid #E8E8E8', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#353A3E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </button>
+        </div>
 
-      {/* BOTTOM ACTIONS */}
-      <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, background: '#F4F4F2', borderTop: '1px solid #E8E8E8', padding: '12px 16px 32px', display: 'flex', gap: 10, zIndex: 100 }}>
-        <button onClick={() => alert('Coming in next update')}
-          style={{ flex: 1, background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
-          Send to client →
-        </button>
-        <button onClick={() => alert('Coming in next update')}
-          style={{ width: 52, height: 52, background: '#fff', border: '1px solid #E8E8E8', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#353A3E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="12" y1="18" x2="12" y2="12"/>
-            <line x1="9" y1="15" x2="15" y2="15"/>
-          </svg>
-        </button>
       </div>
 
     </div>
