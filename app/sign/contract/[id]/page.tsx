@@ -17,7 +17,7 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
-  company_name: string | null; phone: string | null; email: string | null
+  company_name: string | null; first_name: string | null; phone: string | null; email: string | null
   warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
   deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
 }
@@ -76,7 +76,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('company_name, email, phone, deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('company_name, first_name, email, phone, deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -154,6 +154,20 @@ export default function SignContractPage() {
         companyEmail: profile?.email || '',
         contractId: contractId,
         total: estimate?.total,
+      }),
+    })
+
+    await fetch('/api/notify-contractor-signed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contractorEmail: profile?.email || '',
+        contractorName: profile?.first_name || '',
+        clientName: estimate?.client_name || '',
+        companyName: profile?.company_name || 'Your Company',
+        total: estimate?.total || 0,
+        depositPercent: profile?.deposit_percent || 10,
+        contractId: contractId,
       }),
     })
 
