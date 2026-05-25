@@ -17,8 +17,9 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
-  company_name: string | null; phone: string | null
+  company_name: string | null; phone: string | null; email: string | null
   warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
+  deposit_percent: number | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -53,14 +54,17 @@ export default function SignContractPage() {
   const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const [contract,    setContract]    = useState<Contract | null>(null)
-  const [estimate,    setEstimate]    = useState<Estimate | null>(null)
-  const [openings,    setOpenings]    = useState<Opening[]>([])
-  const [profile,     setProfile]     = useState<Profile | null>(null)
-  const [loading,     setLoading]     = useState(true)
-  const [signing,     setSigning]     = useState(false)
-  const [isEmpty,     setIsEmpty]     = useState(true)
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [contract,      setContract]      = useState<Contract | null>(null)
+  const [estimate,      setEstimate]      = useState<Estimate | null>(null)
+  const [openings,      setOpenings]      = useState<Opening[]>([])
+  const [profile,       setProfile]       = useState<Profile | null>(null)
+  const [loading,       setLoading]       = useState(true)
+  const [signing,       setSigning]       = useState(false)
+  const [isEmpty,       setIsEmpty]       = useState(true)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [showDeposit,   setShowDeposit]   = useState(false)
+  const [depositPaid,   setDepositPaid]   = useState<string | null>(null)
+  const [showSuccess,   setShowSuccess]   = useState(false)
   const drawing = useRef(false)
 
   useEffect(() => {
@@ -72,7 +76,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('company_name, phone, warranty_period, payment_terms, cancellation_policy').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('company_name, phone, email, warranty_period, payment_terms, cancellation_policy, deposit_percent').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -153,7 +157,7 @@ export default function SignContractPage() {
     })
 
     setSigning(false)
-    setShowSuccess(true)
+    setShowDeposit(true)
   }
 
   async function handleDecline() {
@@ -162,7 +166,7 @@ export default function SignContractPage() {
     setContract(prev => prev ? { ...prev, status: 'declined' } : prev)
   }
 
-  // ── States ──────────────────────────────────────────────────────────────────
+  // ── Loading / not found ─────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, color: '#94A3B8' }}>
       Loading…
@@ -174,7 +178,7 @@ export default function SignContractPage() {
     </div>
   )
 
-  if (contract.status === 'signed' && !showSuccess) return (
+  if (contract.status === 'signed' && !showDeposit && !showSuccess) return (
     <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: 56, height: 56, background: '#EEF2FF', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -184,6 +188,7 @@ export default function SignContractPage() {
     </div>
   )
 
+  // ── Success ─────────────────────────────────────────────────────────────────
   if (showSuccess) return (
     <div style={{ minHeight: '100vh', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
       <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '48px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'max(48px, calc(env(safe-area-inset-top) + 32px))' }}>
@@ -201,6 +206,108 @@ export default function SignContractPage() {
     </div>
   )
 
+  // ── Collect Deposit ──────────────────────────────────────────────────────────
+  const depositPct = profile?.deposit_percent || 10
+  const depositAmt = Math.round((estimate?.total || 0) * depositPct / 100)
+
+  if (showDeposit) return (
+    <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
+
+      {/* Header */}
+      <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '32px 20px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'max(32px, calc(env(safe-area-inset-top) + 16px))' }}>
+        <div style={{ width: 52, height: 52, background: 'rgba(255,255,255,0.1)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Contract Signed!</div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Collect deposit to confirm the job</div>
+      </div>
+
+      <div style={{ padding: 16 }}>
+
+        {/* Deposit amount */}
+        <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', padding: 16, marginBottom: 16 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>DEPOSIT DUE</div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: '#2045B8', marginBottom: 4 }}>
+            CA${depositAmt.toLocaleString('en-CA')}
+          </div>
+          <div style={{ fontSize: 12, color: '#8892b0' }}>
+            {depositPct}% of CA${(estimate?.total || 0).toLocaleString('en-CA')}
+          </div>
+        </div>
+
+        {/* depositPaid confirmation */}
+        {depositPaid !== null ? (
+          <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', padding: 20, marginBottom: 16, textAlign: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#0A0E1A' }}>
+                {depositPaid === 'etransfer' ? 'e-Transfer details sent' : depositPaid === 'card' ? 'Payment link sent' : 'Cash/Cheque recorded'}
+              </span>
+            </div>
+            <button onClick={() => setShowSuccess(true)}
+              style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
+              Done →
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Interac e-Transfer */}
+            <button onClick={() => setDepositPaid('etransfer')}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 10, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
+              <div style={{ width: 40, height: 40, background: '#EEF2FF', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Interac e-Transfer</div>
+                <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {profile?.email || 'your contractor'}</div>
+              </div>
+              <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
+            </button>
+
+            {/* Credit Card / Apple Pay */}
+            <button onClick={() => setDepositPaid('card')}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 10, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
+              <div style={{ width: 40, height: 40, background: '#EEF2FF', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Credit Card / Apple Pay</div>
+                <div style={{ fontSize: 12, color: '#8892b0' }}>Tap to pay online</div>
+              </div>
+              <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
+            </button>
+
+            {/* Cash or Cheque */}
+            <button onClick={() => setDepositPaid('cash')}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 20, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
+              <div style={{ width: 40, height: 40, background: '#F0F0EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8892b0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>
+                </svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Cash or Cheque</div>
+                <div style={{ fontSize: 12, color: '#8892b0' }}>Mark as received manually</div>
+              </div>
+              <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
+            </button>
+
+            {/* Skip */}
+            <button onClick={() => setShowSuccess(true)}
+              style={{ display: 'block', width: '100%', background: 'none', border: 'none', fontSize: 13, color: '#8892b0', cursor: 'pointer', fontFamily: F, textAlign: 'center', padding: '8px 0' }}>
+              Skip for now →
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
+  // ── Main contract page ───────────────────────────────────────────────────────
   const conDisplayId = 'CON-' + contract.id.slice(0, 6).toUpperCase()
   const createdDate  = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(contract.created_at))
 
@@ -333,10 +440,32 @@ export default function SignContractPage() {
 
         {/* ACTIONS */}
         <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={handleSign} disabled={signing}
-            style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F, opacity: signing ? 0.7 : 1 }}>
+
+          {/* Agree checkbox */}
+          <div
+            onClick={() => setAgreedToTerms(!agreedToTerms)}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: '#fff', borderRadius: 12, border: agreedToTerms ? '1.5px solid #2045B8' : '1.5px solid #E8E8E8', marginBottom: 4, cursor: 'pointer' }}
+          >
+            <div style={{ width: 20, height: 20, borderRadius: 6, background: agreedToTerms ? '#2045B8' : '#fff', border: agreedToTerms ? 'none' : '1.5px solid #D0D5DD', flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {agreedToTerms && (
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="1.5 5 4 7.5 8.5 2.5" />
+                </svg>
+              )}
+            </div>
+            <p style={{ fontSize: 13, color: '#353A3E', lineHeight: 1.5, margin: 0 }}>
+              I have read and agree to the <span style={{ color: '#2045B8', fontWeight: 600 }}>Terms & Conditions</span> and authorize the work described in this contract.
+            </p>
+          </div>
+
+          <button
+            onClick={handleSign}
+            disabled={isEmpty || !agreedToTerms || signing}
+            style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', fontFamily: F, opacity: (isEmpty || !agreedToTerms || signing) ? 0.5 : 1, cursor: (isEmpty || !agreedToTerms) ? 'not-allowed' : 'pointer' }}
+          >
             {signing ? 'Signing…' : 'I Agree — Sign Contract'}
           </button>
+
           <button onClick={handleDecline}
             style={{ width: '100%', background: 'transparent', border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: F }}>
             Decline
