@@ -55,6 +55,7 @@ export default function SignContractPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    console.log('canvas useEffect fired, canvas:', canvasRef.current, 'loading:', loading)
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -105,7 +106,7 @@ export default function SignContractPage() {
       canvas.removeEventListener('touchmove', onTouchMove)
       canvas.removeEventListener('touchend', onTouchEnd)
     }
-  }, [])
+  }, [loading])
 
   const [contract,          setContract]          = useState<Contract | null>(null)
   const [estimate,          setEstimate]          = useState<Estimate | null>(null)
