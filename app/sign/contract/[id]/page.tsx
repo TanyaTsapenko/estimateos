@@ -55,6 +55,20 @@ export default function SignContractPage() {
   const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  const [contract,          setContract]          = useState<Contract | null>(null)
+  const [estimate,          setEstimate]          = useState<Estimate | null>(null)
+  const [openings,          setOpenings]          = useState<Opening[]>([])
+  const [profile,           setProfile]           = useState<Profile | null>(null)
+  const [loading,           setLoading]           = useState(true)
+  const [signing,           setSigning]           = useState(false)
+  const [isEmpty,           setIsEmpty]           = useState(true)
+  const [agreedToTerms,     setAgreedToTerms]     = useState(false)
+  const [showDeposit,       setShowDeposit]       = useState(false)
+  const [depositPaid,       setDepositPaid]       = useState<string | null>(null)
+  const [showSuccess,       setShowSuccess]       = useState(false)
+  const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
+  const drawing = useRef(false)
+
   useEffect(() => {
     console.log('canvas useEffect fired, canvas:', canvasRef.current, 'loading:', loading)
     const canvas = canvasRef.current
@@ -109,20 +123,6 @@ export default function SignContractPage() {
       canvas.removeEventListener('touchend', onTouchEnd)
     }
   }, [loading])
-
-  const [contract,          setContract]          = useState<Contract | null>(null)
-  const [estimate,          setEstimate]          = useState<Estimate | null>(null)
-  const [openings,          setOpenings]          = useState<Opening[]>([])
-  const [profile,           setProfile]           = useState<Profile | null>(null)
-  const [loading,           setLoading]           = useState(true)
-  const [signing,           setSigning]           = useState(false)
-  const [isEmpty,           setIsEmpty]           = useState(true)
-  const [agreedToTerms,     setAgreedToTerms]     = useState(false)
-  const [showDeposit,       setShowDeposit]       = useState(false)
-  const [depositPaid,       setDepositPaid]       = useState<string | null>(null)
-  const [showSuccess,       setShowSuccess]       = useState(false)
-  const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
-  const drawing = useRef(false)
 
   useEffect(() => {
     async function load() {
