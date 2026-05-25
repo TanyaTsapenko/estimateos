@@ -53,76 +53,23 @@ export default function SignContractPage() {
   const params = useParams()
   const contractId = Array.isArray(params?.id) ? params.id[0] : params?.id as string
   const supabase = createClient()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const [contract,          setContract]          = useState<Contract | null>(null)
-  const [estimate,          setEstimate]          = useState<Estimate | null>(null)
-  const [openings,          setOpenings]          = useState<Opening[]>([])
-  const [profile,           setProfile]           = useState<Profile | null>(null)
-  const [loading,           setLoading]           = useState(true)
-  const [signing,           setSigning]           = useState(false)
-  const [isEmpty,           setIsEmpty]           = useState(true)
-  const [agreedToTerms,     setAgreedToTerms]     = useState(false)
-  const [showDeposit,       setShowDeposit]       = useState(false)
-  const [depositPaid,       setDepositPaid]       = useState<string | null>(null)
-  const [showSuccess,       setShowSuccess]       = useState(false)
+  const svgRef = useRef<SVGSVGElement>(null)
+
+  const [contract,           setContract]           = useState<Contract | null>(null)
+  const [estimate,           setEstimate]           = useState<Estimate | null>(null)
+  const [openings,           setOpenings]           = useState<Opening[]>([])
+  const [profile,            setProfile]            = useState<Profile | null>(null)
+  const [loading,            setLoading]            = useState(true)
+  const [signing,            setSigning]            = useState(false)
+  const [paths,              setPaths]              = useState<string[]>([])
+  const [currentPath,        setCurrentPath]        = useState<string>('')
+  const [isDrawing,          setIsDrawing]          = useState(false)
+  const [agreedToTerms,      setAgreedToTerms]      = useState(false)
+  const [showDeposit,        setShowDeposit]        = useState(false)
+  const [depositPaid,        setDepositPaid]        = useState<string | null>(null)
+  const [showSuccess,        setShowSuccess]        = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
-  const drawing = useRef(false)
-
-  useEffect(() => {
-    console.log('canvas useEffect fired, canvas:', canvasRef.current, 'loading:', loading)
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    function getPos(canvas: HTMLCanvasElement, touch: Touch) {
-      const rect = canvas.getBoundingClientRect()
-      const scaleX = canvas.width / rect.width
-      const scaleY = canvas.height / rect.height
-      return {
-        x: (touch.clientX - rect.left) * scaleX,
-        y: (touch.clientY - rect.top) * scaleY,
-      }
-    }
-
-    function onTouchStart(e: TouchEvent) {
-      e.preventDefault()
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      const pos = getPos(canvas, e.touches[0])
-      ctx.beginPath()
-      ctx.moveTo(pos.x, pos.y)
-      drawing.current = true
-      setIsEmpty(false)
-    }
-
-    function onTouchMove(e: TouchEvent) {
-      e.preventDefault()
-      if (!drawing.current || !canvas) return
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      const pos = getPos(canvas, e.touches[0])
-      ctx.lineTo(pos.x, pos.y)
-      ctx.strokeStyle = '#0A0E1A'
-      ctx.lineWidth = 2.5
-      ctx.lineCap = 'round'
-      ctx.stroke()
-    }
-
-    function onTouchEnd() {
-      drawing.current = false
-    }
-
-    canvas.addEventListener('touchstart', onTouchStart, { passive: false })
-    canvas.addEventListener('touchmove', onTouchMove, { passive: false })
-    canvas.addEventListener('touchend', onTouchEnd)
-
-    return () => {
-      canvas.removeEventListener('touchstart', onTouchStart)
-      canvas.removeEventListener('touchmove', onTouchMove)
-      canvas.removeEventListener('touchend', onTouchEnd)
-    }
-  }, [loading])
 
   useEffect(() => {
     async function load() {
@@ -143,23 +90,42 @@ export default function SignContractPage() {
     load()
   }, [contractId])
 
-
-  function clearCanvas() {
-    const canvas = canvasRef.current; if (!canvas) return
-    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
-    setIsEmpty(true)
+  function getPoint(e: React.PointerEvent) {
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+    const rect = svg.getBoundingClientRect()
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * 600,
+      y: ((e.clientY - rect.top) / rect.height) * 200,
+    }
   }
 
   // ── Sign ────────────────────────────────────────────────────────────────────
   async function handleSign() {
-    if (isEmpty) { alert('Please sign before submitting'); return }
-    const canvas = canvasRef.current
-    if (!canvas || !contract) return
+    if (paths.length === 0) { alert('Please sign before submitting'); return }
+    if (!contract) return
     setSigning(true)
 
-    const signatureData = canvas.toDataURL('image/png')
+    const svgElement = svgRef.current
+    if (!svgElement) { setSigning(false); return }
+
+    const svgData = new XMLSerializer().serializeToString(svgElement)
+    const offscreen = document.createElement('canvas')
+    offscreen.width = 600
+    offscreen.height = 200
+    const ctx = offscreen.getContext('2d')
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        ctx?.drawImage(img, 0, 0)
+        offscreen.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
+      }
+      img.onerror = reject
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+    })
+
     const fileName = `contract-signatures/${contract.id}-client-${Date.now()}.png`
-    const blob = await (await fetch(signatureData)).blob()
     await supabase.storage.from('signatures').upload(fileName, blob)
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(fileName)
 
@@ -232,6 +198,7 @@ export default function SignContractPage() {
     </div>
   )
 
+  const isEmpty = paths.length === 0
   const depositPct = profile?.deposit_percent || 10
   const depositAmt = Math.round((estimate?.total || 0) * depositPct / 100)
   const conDisplayId = 'CON-' + contract.id.slice(0, 6).toUpperCase()
@@ -482,22 +449,43 @@ export default function SignContractPage() {
                   />
                 ) : (
                   <div className="no-print">
-                    <div style={{ position: 'relative', marginBottom: 4 }}>
-                      <canvas
-                        id="sig-canvas"
-                        ref={canvasRef}
-                        width={600}
-                        height={200}
-                        style={{ width: '100%', height: 100, border: '2px dashed #E0E0E0', borderRadius: 12, background: '#fff', display: 'block', touchAction: 'none' }}
-                      />
-                      {isEmpty && (
-                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                          <span style={{ fontSize: 12, color: '#C0C8D0' }}>Sign here with your finger</span>
-                        </div>
-                      )}
+                    <div style={{ position: 'relative', touchAction: 'none', userSelect: 'none', marginBottom: 4 }}>
+                      <svg
+                        ref={svgRef}
+                        viewBox="0 0 600 200"
+                        style={{ width: '100%', height: 120, border: '2px dashed #E0E0E0', borderRadius: 12, background: '#fff', display: 'block', cursor: 'crosshair' }}
+                        onPointerDown={(e) => {
+                          e.currentTarget.setPointerCapture(e.pointerId)
+                          const p = getPoint(e)
+                          setCurrentPath(`M ${p.x} ${p.y}`)
+                          setIsDrawing(true)
+                          setPaths(prev => prev.length === 0 ? prev : prev)
+                        }}
+                        onPointerMove={(e) => {
+                          if (!isDrawing) return
+                          const p = getPoint(e)
+                          setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
+                        }}
+                        onPointerUp={() => {
+                          if (currentPath) setPaths(prev => [...prev, currentPath])
+                          setCurrentPath('')
+                          setIsDrawing(false)
+                        }}
+                      >
+                        {paths.map((d, i) => (
+                          <path key={i} d={d} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        ))}
+                        {currentPath && (
+                          <path d={currentPath} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        )}
+                        {paths.length === 0 && !isDrawing && (
+                          <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here with your finger</text>
+                        )}
+                      </svg>
                     </div>
                     {!isEmpty && (
-                      <button onClick={clearCanvas}
+                      <button
+                        onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
                         style={{ background: 'none', border: 'none', fontSize: 11, color: '#8892b0', cursor: 'pointer', padding: 0, fontFamily: F, marginBottom: 4 }}>
                         Clear
                       </button>
