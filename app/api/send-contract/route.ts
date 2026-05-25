@@ -12,7 +12,7 @@ export async function POST(req: Request) {
 
   try {
     await resend.emails.send({
-      from: 'EstimateOS <contracts@estimateos.ca>',
+      from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
       to: clientEmail,
       subject: `Contract from ${companyName} — Ready to Sign`,
       html: `
