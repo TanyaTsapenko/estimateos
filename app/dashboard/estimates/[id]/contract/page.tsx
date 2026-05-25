@@ -111,6 +111,7 @@ export default function ContractPage() {
 
   async function handleSend() {
     if (!estimate?.client_email) { alert('No client email on this estimate'); return }
+    console.log('handleSend called', { id, profileId: profile?.id, clientEmail: estimate?.client_email })
     setSending(true)
     try {
       const { data: contract, error } = await supabase
@@ -126,6 +127,7 @@ export default function ContractPage() {
         .single()
 
       if (error || !contract) {
+        console.error('Contract insert error:', error)
         alert('Error creating contract: ' + error?.message)
         return
       }
@@ -144,8 +146,9 @@ export default function ContractPage() {
 
       alert('Contract sent to ' + estimate.client_email)
       router.push(`/dashboard/estimates/${id}`)
-    } catch (e) {
-      alert('Error: ' + e)
+    } catch (e: any) {
+      console.error('Contract error:', e)
+      alert('Error: ' + (e?.message || JSON.stringify(e)))
     } finally {
       setSending(false)
     }
