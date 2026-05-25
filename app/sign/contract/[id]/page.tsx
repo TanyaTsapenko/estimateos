@@ -54,6 +54,59 @@ export default function SignContractPage() {
   const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    function getPos(canvas: HTMLCanvasElement, touch: Touch) {
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
+      return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY,
+      }
+    }
+
+    function onTouchStart(e: TouchEvent) {
+      e.preventDefault()
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      const pos = getPos(canvas, e.touches[0])
+      ctx.beginPath()
+      ctx.moveTo(pos.x, pos.y)
+      drawing.current = true
+      setIsEmpty(false)
+    }
+
+    function onTouchMove(e: TouchEvent) {
+      e.preventDefault()
+      if (!drawing.current) return
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      const pos = getPos(canvas, e.touches[0])
+      ctx.lineTo(pos.x, pos.y)
+      ctx.strokeStyle = '#0A0E1A'
+      ctx.lineWidth = 2.5
+      ctx.lineCap = 'round'
+      ctx.stroke()
+    }
+
+    function onTouchEnd() {
+      drawing.current = false
+    }
+
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false })
+    canvas.addEventListener('touchend', onTouchEnd)
+
+    return () => {
+      canvas.removeEventListener('touchstart', onTouchStart)
+      canvas.removeEventListener('touchmove', onTouchMove)
+      canvas.removeEventListener('touchend', onTouchEnd)
+    }
+  }, [])
+
   const [contract,          setContract]          = useState<Contract | null>(null)
   const [estimate,          setEstimate]          = useState<Estimate | null>(null)
   const [openings,          setOpenings]          = useState<Opening[]>([])
@@ -91,38 +144,6 @@ export default function SignContractPage() {
   useEffect(() => {
     if (clientSignatureUrl) console.log('client sig:', clientSignatureUrl)
   }, [clientSignatureUrl])
-
-  // ── Canvas helpers ──────────────────────────────────────────────────────────
-  function getPos(canvas: HTMLCanvasElement, touch: Touch) {
-    const rect = canvas.getBoundingClientRect()
-    return {
-      x: (touch.clientX - rect.left) * (canvas.width / rect.width),
-      y: (touch.clientY - rect.top)  * (canvas.height / rect.height),
-    }
-  }
-
-  function handleTouchStart(e: React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault()
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d'); if (!ctx) return
-    const pos = getPos(canvas, e.touches[0] as unknown as Touch)
-    ctx.beginPath(); ctx.moveTo(pos.x, pos.y)
-    drawing.current = true; setIsEmpty(false)
-  }
-
-  function handleTouchMove(e: React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault()
-    if (!drawing.current) return
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d'); if (!ctx) return
-    const pos = getPos(canvas, e.touches[0] as unknown as Touch)
-    ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = '#0A0E1A'; ctx.lineWidth = 2.5
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round'
-    ctx.stroke()
-  }
-
-  function handleTouchEnd() { drawing.current = false }
 
   function clearCanvas() {
     const canvas = canvasRef.current; if (!canvas) return
@@ -468,9 +489,6 @@ export default function SignContractPage() {
                         ref={canvasRef}
                         width={600}
                         height={200}
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
                         style={{ width: '100%', height: 100, border: '2px dashed #E0E0E0', borderRadius: 12, background: '#fff', display: 'block', touchAction: 'none' }}
                       />
                       {isEmpty && (
