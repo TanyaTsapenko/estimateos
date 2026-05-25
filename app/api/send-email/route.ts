@@ -311,11 +311,15 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 `)
   }
 
-  const emailPayload = {
+  const emailPayload: any = {
     from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
     to: [est.client_email],
     subject,
     html,
+    ...(type === 'send' && estimateId ? {
+      tags: [{ name: 'estimate_id', value: estimateId }],
+      open_tracking: true,
+    } : {}),
   }
   console.log('RESEND PAYLOAD:', JSON.stringify({ from: emailPayload.from, to: emailPayload.to, subject: emailPayload.subject, htmlLength: html.length }))
 

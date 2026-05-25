@@ -24,15 +24,15 @@ interface Estimate {
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
-  sent_method: string | null; created_at: string; user_id: string
+  sent_method: string | null; created_at: string; user_id: string; opened_at: string | null
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: '#6b7280', sent: '#2563eb', signed: '#16a34a', declined: '#dc2626', invoiced: '#9333ea',
+  draft: '#6b7280', sent: '#2563eb', opened: '#d97706', signed: '#16a34a', declined: '#dc2626', invoiced: '#9333ea',
 }
 const STATUS_BG: Record<string, string> = {
-  draft: 'rgba(107,114,128,.1)', sent: 'rgba(37,99,235,.1)', signed: 'rgba(22,163,74,.1)',
-  declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
+  draft: 'rgba(107,114,128,.1)', sent: 'rgba(37,99,235,.1)', opened: 'rgba(217,119,6,.1)',
+  signed: 'rgba(22,163,74,.1)', declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
 }
 
 const SL: React.CSSProperties = {
@@ -277,6 +277,15 @@ export default function EstimateDetailPage() {
               style={{ border: '1px solid #2045B8', color: '#2045B8', borderRadius: 8, padding: '4px 12px', fontSize: 13, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               Edit
             </button>
+          )}
+          {estimate.opened_at && estimate.status === 'sent' && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+              color: STATUS_COLOR['opened'], background: STATUS_BG['opened'],
+              borderRadius: 6, padding: '4px 10px',
+            }}>
+              OPENED
+            </span>
           )}
           <span style={{
             fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
