@@ -51,7 +51,7 @@ export default function EstimateDetailPage() {
   const [estimate,       setEstimate]       = useState<Estimate | null>(null)
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
-  const [profile,        setProfile]        = useState<{ contract_terms: string | null; company_name: string | null; pricing_mode: string | null } | null>(null)
+  const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; pricing_mode: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
   const [loading,        setLoading]        = useState(true)
   const [sending,        setSending]        = useState(false)
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -67,7 +67,7 @@ export default function EstimateDetailPage() {
       setEstimate(est)
       setOpenings(ops || [])
       if (est?.user_id) {
-        const { data: prof } = await supabase.from('profiles').select('contract_terms, company_name, pricing_mode').eq('id', est.user_id).single()
+        const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, pricing_mode, email, phone, signature_url').eq('id', est.user_id).single()
         setProfile(prof)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
@@ -154,6 +154,38 @@ export default function EstimateDetailPage() {
       setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'link' } : p)
     }
     showToast('📋 Client link copied!')
+  }
+
+  async function handleSignOnSpot() {
+    if (!estimate || !profile) return
+    setLoading(true)
+    try {
+      const { data: contract, error } = await supabase
+        .from('contracts')
+        .insert({
+          estimate_id: id,
+          profile_id: profile.id,
+          status: 'signing',
+          contract_terms_snapshot: profile.contract_terms,
+          contractor_signature_url: profile.signature_url,
+          company_name: profile.company_name || '',
+          company_email: profile.email || '',
+          company_phone: profile.phone || '',
+        })
+        .select()
+        .single()
+
+      if (error || !contract) {
+        alert('Error: ' + error?.message)
+        return
+      }
+
+      router.push(`/sign/contract/${contract.id}`)
+    } catch (e: any) {
+      alert('Error: ' + e.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   // ── LOADING ──────────────────────────────────────────
@@ -378,34 +410,61 @@ export default function EstimateDetailPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ background: '#2563EB', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', marginBottom: 6 }}>
-                  READY TO SEND
+              <>
+                {/* БЛОК 1 — Send estimate */}
+                <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>
+                    SEND ESTIMATE
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 14 }}>
+                    Share with {estimate.client_name || 'client'} for review
+                  </div>
+                  {canEmail && (
+                    <button onClick={() => setShowEmailModal(true)} disabled={sending}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E8E8E8', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, opacity: sending ? 0.7 : 1 }}>
+                      {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+                      {sending ? 'Sending…' : 'Email client'}
+                    </button>
+                  )}
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => {
+                      if (!estimate.client_phone) { showToast('No phone number on file'); return }
+                      window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here's your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/sign/${estimate.id}`)
+                    }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: '#F5F6F8', color: '#0A1628', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <MessageSquare size={13} /> Text client
+                    </button>
+                    <button onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: '#F5F6F8', color: '#0A1628', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <FileDown size={13} /> Download PDF
+                    </button>
+                  </div>
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
-                  Send estimate to {estimate.client_name || 'client'}
+
+                {/* БЛОК 2 — Create contract */}
+                <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', borderRadius: 16, padding: 20, marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
+                    READY TO CLOSE?
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 14 }}>
+                    Create &amp; sign contract
+                  </div>
+                  <button onClick={handleSignOnSpot}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A0E1A', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0E1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                    Sign on the spot
+                  </button>
+                  <button onClick={() => router.push(`/dashboard/estimates/${id}/contract`)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    Send to client
+                  </button>
                 </div>
-                {canEmail && (
-                  <button onClick={() => setShowEmailModal(true)} disabled={sending}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#2563EB', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, opacity: sending ? 0.7 : 1 }}>
-                    {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
-                    {sending ? 'Sending…' : 'Email client'}
-                  </button>
-                )}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => setShowEmailModal(true)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Mail size={13} /> Email client
-                  </button>
-                  <button onClick={() => {
-                    if (!estimate.client_phone) { showToast('No phone number on file'); return }
-                    window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here's your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/sign/${estimate.id}`)
-                  }}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: 'rgba(255,255,255,.15)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <MessageSquare size={13} /> Text client
-                  </button>
-                </div>
-              </div>
+              </>
             )}
 
             {/* More actions card */}
