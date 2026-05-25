@@ -220,8 +220,16 @@ export default function SignContractPage() {
       <style>{`
         @media print {
           .no-print { display: none !important; }
-          body { background: #fff; }
+          body { background: #fff !important; margin: 0; padding: 0; }
           .contract-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          #contract-content {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          * { max-width: 100% !important; box-sizing: border-box !important; }
+          @page { margin: 15mm; size: A4; }
         }
       `}</style>
 
@@ -335,7 +343,7 @@ export default function SignContractPage() {
       )}
 
       {/* ── MAIN CONTRACT (always in DOM — prints cleanly) ── */}
-      <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
+      <div id="contract-content" style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
 
         {/* HEADER */}
         <div className="no-print" style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
@@ -364,7 +372,7 @@ export default function SignContractPage() {
 
           {/* SUMMARY */}
           <div style={{ ...cardStyle, padding: 16 }}>
-            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{profile?.company_name || '—'}</strong></div>
+            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{profile?.company_name || profile?.first_name || '—'}</strong></div>
             <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 16 }}>To: <strong style={{ color: '#0A0E1A' }}>{estimate.client_name || '—'}</strong></div>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
           </div>
@@ -423,7 +431,12 @@ export default function SignContractPage() {
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
                 {contract.contractor_signature_url ? (
-                  <img src={contract.contractor_signature_url} alt="Contractor signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                  <img
+                    src={contract.contractor_signature_url}
+                    crossOrigin="anonymous"
+                    style={{ height: 60, objectFit: 'contain', maxWidth: '100%', display: 'block', marginBottom: 4 }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
                 ) : (
                   <div style={{ height: 60, marginBottom: 4 }} />
                 )}
@@ -436,7 +449,12 @@ export default function SignContractPage() {
               <div>
                 <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
                 {clientSignatureUrl ? (
-                  <img src={clientSignatureUrl} alt="Client signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                  <img
+                    src={clientSignatureUrl}
+                    crossOrigin="anonymous"
+                    style={{ height: 60, objectFit: 'contain', maxWidth: '100%', display: 'block', marginBottom: 4 }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
                 ) : (
                   <div className="no-print">
                     <div style={{ position: 'relative', marginBottom: 4 }}>
