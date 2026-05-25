@@ -443,7 +443,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
   const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
   const [initial, setInitial] = useState({ ...values })
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = !!values.companyName && !!values.city && !!values.province
+  const valid = dirty && !!values.companyName
   const set = (k: string) => (v: string) => setValues(s => ({ ...s, [k]: v }))
   const [userId, setUserId] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
