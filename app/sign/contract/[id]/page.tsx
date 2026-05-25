@@ -95,7 +95,7 @@ export default function SignContractPage() {
     e.preventDefault()
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d'); if (!ctx) return
-    const pos = getPos(canvas, e.touches[0])
+    const pos = getPos(canvas, e.touches[0] as unknown as Touch)
     ctx.beginPath(); ctx.moveTo(pos.x, pos.y)
     drawing.current = true; setIsEmpty(false)
   }
@@ -105,7 +105,7 @@ export default function SignContractPage() {
     if (!drawing.current) return
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d'); if (!ctx) return
-    const pos = getPos(canvas, e.touches[0])
+    const pos = getPos(canvas, e.touches[0] as unknown as Touch)
     ctx.lineTo(pos.x, pos.y)
     ctx.strokeStyle = '#0A0E1A'; ctx.lineWidth = 2.5
     ctx.lineCap = 'round'; ctx.lineJoin = 'round'
