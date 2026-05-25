@@ -17,8 +17,8 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
-  company_name: string | null; warranty_period: string | null
-  payment_terms: string | null; cancellation_policy: string | null
+  company_name: string | null; phone: string | null
+  warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -72,7 +72,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('company_name, warranty_period, payment_terms, cancellation_policy').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('company_name, phone, warranty_period, payment_terms, cancellation_policy').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -138,6 +138,19 @@ export default function SignContractPage() {
       client_signature_url: urlData.publicUrl,
       signed_at: new Date().toISOString(),
     }).eq('id', contract.id)
+
+    await fetch('/api/send-contract-signed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientEmail: estimate?.client_email,
+        clientName: estimate?.client_name,
+        companyName: profile?.company_name || 'Your Contractor',
+        companyPhone: profile?.phone || '',
+        contractId: contractId,
+        total: estimate?.total,
+      }),
+    })
 
     setSigning(false)
     setShowSuccess(true)
