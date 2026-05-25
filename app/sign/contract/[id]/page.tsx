@@ -50,7 +50,8 @@ function CardHeader({ title }: { title: string }) {
 }
 
 export default function SignContractPage() {
-  const { id: contractId } = useParams<{ id: string }>()
+  const params = useParams()
+  const contractId = Array.isArray(params?.id) ? params.id[0] : params?.id as string
   const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
