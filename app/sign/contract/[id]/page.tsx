@@ -135,15 +135,11 @@ export default function SignContractPage() {
       if (est) setEstimate(est)
       setOpenings(ops || [])
       if (prof) setProfile(prof as Profile)
-      console.log('contract loaded:', con?.company_name, con?.company_email, con?.contractor_signature_url)
       setLoading(false)
     }
     load()
   }, [contractId])
 
-  useEffect(() => {
-    if (clientSignatureUrl) console.log('client sig:', clientSignatureUrl)
-  }, [clientSignatureUrl])
 
   function clearCanvas() {
     const canvas = canvasRef.current; if (!canvas) return
