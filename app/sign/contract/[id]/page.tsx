@@ -72,6 +72,7 @@ export default function SignContractPage() {
 
     function onTouchStart(e: TouchEvent) {
       e.preventDefault()
+      if (!canvas) return
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       const pos = getPos(canvas, e.touches[0])
@@ -83,7 +84,7 @@ export default function SignContractPage() {
 
     function onTouchMove(e: TouchEvent) {
       e.preventDefault()
-      if (!drawing.current) return
+      if (!drawing.current || !canvas) return
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       const pos = getPos(canvas, e.touches[0])
