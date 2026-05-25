@@ -82,10 +82,16 @@ export default function SignContractPage() {
       if (est) setEstimate(est)
       setOpenings(ops || [])
       if (prof) setProfile(prof as Profile)
+      console.log('profile loaded:', prof?.company_name, prof?.email)
+      console.log('contract loaded:', con?.contractor_signature_url)
       setLoading(false)
     }
     load()
   }, [contractId])
+
+  useEffect(() => {
+    if (clientSignatureUrl) console.log('client sig:', clientSignatureUrl)
+  }, [clientSignatureUrl])
 
   // ── Canvas helpers ──────────────────────────────────────────────────────────
   function getPos(canvas: HTMLCanvasElement, touch: Touch) {
