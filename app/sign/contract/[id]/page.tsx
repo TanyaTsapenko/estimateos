@@ -206,6 +206,7 @@ export default function SignContractPage() {
   // ── Success ─────────────────────────────────────────────────────────────────
   if (showSuccess) return (
     <div style={{ minHeight: '100vh', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
+      <style>{`@media print { .no-print { display: none !important; } body { background: #fff; } .contract-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
       <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '48px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'max(48px, calc(env(safe-area-inset-top) + 32px))' }}>
         <div style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.1)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -214,9 +215,21 @@ export default function SignContractPage() {
         <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Contract Signed!</div>
       </div>
       <div style={{ flex: 1, background: '#F4F4F2', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-        <div style={{ fontSize: 15, color: '#353A3E', lineHeight: 1.7, maxWidth: 320 }}>
+        <div style={{ fontSize: 15, color: '#353A3E', lineHeight: 1.7, maxWidth: 320, marginBottom: 24 }}>
           A copy will be sent to your email. <strong>{profile?.company_name || 'Your contractor'}</strong> will be in touch shortly.
         </div>
+        <button
+          onClick={() => window.print()}
+          className="no-print"
+          style={{ width: '100%', maxWidth: 320, background: '#fff', border: '1px solid #E8E8E8', borderRadius: 13, padding: 14, fontSize: 14, fontWeight: 600, color: '#353A3E', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#353A3E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="12" y1="18" x2="12" y2="12"/>
+            <line x1="9" y1="15" x2="15" y2="15"/>
+          </svg>
+          Save as PDF
+        </button>
       </div>
     </div>
   )
@@ -251,6 +264,7 @@ export default function SignContractPage() {
         </div>
 
         {/* depositPaid confirmation */}
+        <div className="no-print">
         {depositPaid !== null ? (
           <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', padding: 20, marginBottom: 16, textAlign: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
@@ -318,6 +332,7 @@ export default function SignContractPage() {
             </button>
           </>
         )}
+        </div>
       </div>
     </div>
   )
@@ -454,7 +469,7 @@ export default function SignContractPage() {
         </div>
 
         {/* ACTIONS */}
-        <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div className="no-print" style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           {/* Agree checkbox */}
           <div

@@ -7,6 +7,7 @@ export async function POST(req: Request) {
   const { contractorEmail, contractorName, clientName, companyName, total, depositPercent, contractId } = await req.json()
 
   const depositAmount = Math.round(total * depositPercent / 100)
+  const viewUrl = `https://estimateos-eta.vercel.app/sign/contract/${contractId}`
 
   await resend.emails.send({
     from: `EstimateOS <onboarding@resend.dev>`,
@@ -42,7 +43,9 @@ export async function POST(req: Request) {
         <p style="color: #8892b0; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
           The signed contract is saved in your EstimateOS dashboard. Log in to view details and track the deposit.
         </p>
-
+        <a href="${viewUrl}" style="display:inline-block;background:#2045B8;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;margin-bottom:20px">
+          View Signed Contract &rarr;
+        </a>
         <hr style="border: none; border-top: 1px solid #E8E8E8; margin: 24px 0;">
         <p style="color: #C0C8D0; font-size: 12px; text-align: center;">Sent via EstimateOS</p>
       </div>
