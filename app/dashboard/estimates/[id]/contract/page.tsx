@@ -9,6 +9,7 @@ interface Opening {
   width?: number; height_in?: string; colour?: string; glass?: string
 }
 interface Profile {
+  id: string
   company_name: string | null; phone: string | null
   street_address: string | null; city: string | null; province: string | null; postal_code: string | null
   licence_number: string | null; insurance_number: string | null
@@ -89,7 +90,7 @@ export default function ContractPage() {
       setEstimate(est)
       setOpenings(ops || [])
       const { data: prof } = await supabase.from('profiles').select(
-        'company_name, phone, street_address, city, province, postal_code, licence_number, insurance_number, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, signature_url, logo_url'
+        'id, company_name, phone, street_address, city, province, postal_code, licence_number, insurance_number, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, signature_url, logo_url'
       ).eq('id', est.user_id).single()
       if (prof) setProfile(prof as Profile)
       setLoading(false)
@@ -109,31 +110,45 @@ export default function ContractPage() {
   )
 
   async function handleSend() {
-    if (!estimate || !profile) return
-    if (!estimate.client_email) { alert('No client email on this estimate'); return }
+    if (!estimate?.client_email) { alert('No client email on this estimate'); return }
     setSending(true)
-    const { data: contract, error } = await supabase.from('contracts').insert({
-      estimate_id: id,
-      profile_id: estimate.user_id,
-      status: 'sent',
-      contract_terms_snapshot: profile.contract_terms,
-      contractor_signature_url: profile.signature_url,
-    }).select().single()
-    if (error || !contract) { alert('Error creating contract'); setSending(false); return }
-    await fetch('/api/send-contract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contractId: contract.id,
-        estimateId: id,
-        clientEmail: estimate.client_email,
-        clientName: estimate.client_name,
-        companyName: profile.company_name,
-      }),
-    })
-    setSending(false)
-    alert('Contract sent to ' + estimate.client_email)
-    router.push(`/dashboard/estimates/${id}`)
+    try {
+      const { data: contract, error } = await supabase
+        .from('contracts')
+        .insert({
+          estimate_id: id,
+          profile_id: profile?.id,
+          status: 'sent',
+          contract_terms_snapshot: profile?.contract_terms,
+          contractor_signature_url: profile?.signature_url,
+        })
+        .select()
+        .single()
+
+      if (error || !contract) {
+        alert('Error creating contract: ' + error?.message)
+        return
+      }
+
+      await fetch('/api/send-contract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: contract.id,
+          estimateId: id,
+          clientEmail: estimate.client_email,
+          clientName: estimate.client_name,
+          companyName: profile?.company_name || 'Your Contractor',
+        }),
+      })
+
+      alert('Contract sent to ' + estimate.client_email)
+      router.push(`/dashboard/estimates/${id}`)
+    } catch (e) {
+      alert('Error: ' + e)
+    } finally {
+      setSending(false)
+    }
   }
 
   const contractId = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
