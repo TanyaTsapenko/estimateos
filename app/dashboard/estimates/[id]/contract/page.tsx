@@ -10,7 +10,7 @@ interface Opening {
 }
 interface Profile {
   id: string
-  company_name: string | null; phone: string | null
+  company_name: string | null; phone: string | null; email: string | null
   street_address: string | null; city: string | null; province: string | null; postal_code: string | null
   licence_number: string | null; insurance_number: string | null
   contract_terms: string | null; warranty_period: string | null
@@ -90,7 +90,7 @@ export default function ContractPage() {
       setEstimate(est)
       setOpenings(ops || [])
       const { data: prof } = await supabase.from('profiles').select(
-        'id, company_name, phone, street_address, city, province, postal_code, licence_number, insurance_number, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, signature_url, logo_url'
+        'id, company_name, phone, email, street_address, city, province, postal_code, licence_number, insurance_number, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, signature_url, logo_url'
       ).eq('id', est.user_id).single()
       if (prof) setProfile(prof as Profile)
       setLoading(false)
@@ -121,6 +121,9 @@ export default function ContractPage() {
           status: 'sent',
           contract_terms_snapshot: profile?.contract_terms,
           contractor_signature_url: profile?.signature_url,
+          company_name: profile?.company_name || '',
+          company_email: profile?.email || '',
+          company_phone: profile?.phone || '',
         })
         .select()
         .single()

@@ -7,6 +7,7 @@ import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 interface Contract {
   id: string; estimate_id: string; profile_id: string; status: string
   contract_terms_snapshot: string | null; contractor_signature_url: string | null
+  company_name: string | null; company_email: string | null; company_phone: string | null
   signed_at: string | null; created_at: string
 }
 interface Estimate {
@@ -17,7 +18,6 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
-  company_name: string | null; first_name: string | null; phone: string | null; email: string | null
   warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
   deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
 }
@@ -77,13 +77,12 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('company_name, first_name, email, phone, deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
       if (prof) setProfile(prof as Profile)
-      console.log('profile loaded:', prof?.company_name, prof?.email)
-      console.log('contract loaded:', con?.contractor_signature_url)
+      console.log('contract loaded:', con?.company_name, con?.company_email, con?.contractor_signature_url)
       setLoading(false)
     }
     load()
@@ -158,9 +157,9 @@ export default function SignContractPage() {
       body: JSON.stringify({
         clientEmail: estimate?.client_email,
         clientName: estimate?.client_name,
-        companyName: profile?.company_name || 'Your Contractor',
-        companyPhone: profile?.phone || '',
-        companyEmail: profile?.email || '',
+        companyName: contract?.company_name || 'Your Contractor',
+        companyPhone: contract?.company_phone || '',
+        companyEmail: contract?.company_email || '',
         contractId: contractId,
         total: estimate?.total,
       }),
@@ -170,10 +169,10 @@ export default function SignContractPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contractorEmail: profile?.email || '',
-        contractorName: profile?.first_name || '',
+        contractorEmail: contract?.company_email || '',
+        contractorName: contract?.company_name || '',
         clientName: estimate?.client_name || '',
-        companyName: profile?.company_name || 'Your Company',
+        companyName: contract?.company_name || 'Your Company',
         total: estimate?.total || 0,
         depositPercent: profile?.deposit_percent || 10,
         contractId: contractId,
@@ -251,7 +250,7 @@ export default function SignContractPage() {
           </div>
           <div style={{ flex: 1, background: '#F4F4F2', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
             <div style={{ fontSize: 15, color: '#353A3E', lineHeight: 1.7, maxWidth: 320, marginBottom: 24 }}>
-              A copy will be sent to your email. <strong>{profile?.company_name || 'Your contractor'}</strong> will be in touch shortly.
+              A copy will be sent to your email. <strong>{contract?.company_name || 'Your contractor'}</strong> will be in touch shortly.
             </div>
             <button
               onClick={() => window.print()}
@@ -308,7 +307,7 @@ export default function SignContractPage() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Interac e-Transfer</div>
-                    <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {profile?.email || profile?.company_name || 'your contractor'}</div>
+                    <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {contract?.company_email || contract?.company_name || 'your contractor'}</div>
                   </div>
                   <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
                 </button>
@@ -378,7 +377,7 @@ export default function SignContractPage() {
 
           {/* SUMMARY */}
           <div style={{ ...cardStyle, padding: 16 }}>
-            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{profile?.company_name || profile?.first_name || '—'}</strong></div>
+            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{contract?.company_name || '—'}</strong></div>
             <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 16 }}>To: <strong style={{ color: '#0A0E1A' }}>{estimate.client_name || '—'}</strong></div>
             <div style={{ fontSize: 22, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
           </div>
@@ -447,7 +446,7 @@ export default function SignContractPage() {
                   <div style={{ height: 60, marginBottom: 4 }} />
                 )}
                 <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-                <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.company_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{contract?.company_name || '—'}</div>
                 <div style={{ fontSize: 11, color: '#8892b0' }}>{createdDate}</div>
               </div>
 
