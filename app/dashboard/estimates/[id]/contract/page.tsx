@@ -77,6 +77,7 @@ export default function ContractPage() {
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile,  setProfile]  = useState<Profile | null>(null)
   const [loading,  setLoading]  = useState(true)
+  const [sending,  setSending]  = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -106,6 +107,34 @@ export default function ContractPage() {
       Contract not found.
     </div>
   )
+
+  async function handleSend() {
+    if (!estimate || !profile) return
+    if (!estimate.client_email) { alert('No client email on this estimate'); return }
+    setSending(true)
+    const { data: contract, error } = await supabase.from('contracts').insert({
+      estimate_id: id,
+      profile_id: estimate.user_id,
+      status: 'sent',
+      contract_terms_snapshot: profile.contract_terms,
+      contractor_signature_url: profile.signature_url,
+    }).select().single()
+    if (error || !contract) { alert('Error creating contract'); setSending(false); return }
+    await fetch('/api/send-contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contractId: contract.id,
+        estimateId: id,
+        clientEmail: estimate.client_email,
+        clientName: estimate.client_name,
+        companyName: profile.company_name,
+      }),
+    })
+    setSending(false)
+    alert('Contract sent to ' + estimate.client_email)
+    router.push(`/dashboard/estimates/${id}`)
+  }
 
   const contractId = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
@@ -275,9 +304,9 @@ export default function ContractPage() {
         </div>
 
         <div style={{ padding: '16px 0 40px', display: 'flex', gap: 10 }}>
-          <button onClick={() => alert('Coming in next update')}
-            style={{ flex: 1, background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
-            Send to client →
+          <button onClick={handleSend} disabled={sending}
+            style={{ flex: 1, background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1 }}>
+            {sending ? 'Sending…' : 'Send to client →'}
           </button>
           <button onClick={() => alert('Coming in next update')}
             style={{ width: 52, height: 52, background: '#fff', border: '1px solid #E8E8E8', borderRadius: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
