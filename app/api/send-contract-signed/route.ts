@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: Request) {
-  const { clientEmail, clientName, companyName, companyPhone, contractId, total } = await req.json()
+  const { clientEmail, clientName, companyName, companyPhone, companyEmail, contractId, total } = await req.json()
 
   await resend.emails.send({
     from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         </div>
         <p style="color: #8892b0; font-size: 14px; line-height: 1.6;">
           ${companyName} will be in touch shortly to confirm your installation date.
-          ${companyPhone ? `You can reach them at <strong>${companyPhone}</strong>.` : ''}
+          ${companyEmail ? `You can reach them at <strong>${companyEmail}</strong>.` : companyPhone ? `You can reach them at <strong>${companyPhone}</strong>.` : ''}
         </p>
         <hr style="border: none; border-top: 1px solid #E8E8E8; margin: 24px 0;">
         <p style="color: #C0C8D0; font-size: 12px;">Sent via EstimateOS</p>

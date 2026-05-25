@@ -19,7 +19,7 @@ interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
   company_name: string | null; phone: string | null; email: string | null
   warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
-  deposit_percent: number | null
+  deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -76,7 +76,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('company_name, phone, email, warranty_period, payment_terms, cancellation_policy, deposit_percent').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('company_name, email, phone, deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -151,6 +151,7 @@ export default function SignContractPage() {
         clientName: estimate?.client_name,
         companyName: profile?.company_name || 'Your Contractor',
         companyPhone: profile?.phone || '',
+        companyEmail: profile?.email || '',
         contractId: contractId,
         total: estimate?.total,
       }),
@@ -261,7 +262,7 @@ export default function SignContractPage() {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Interac e-Transfer</div>
-                <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {profile?.email || 'your contractor'}</div>
+                <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {profile?.email || profile?.company_name || 'your contractor'}</div>
               </div>
               <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
             </button>
