@@ -52,11 +52,14 @@ export default function EstimateDetailPage() {
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; pricing_mode: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
-  const [loading,        setLoading]        = useState(true)
-  const [sending,        setSending]        = useState(false)
-  const [showEmailModal, setShowEmailModal] = useState(false)
-  const [deleteOpen,     setDeleteOpen]     = useState(false)
-  const [toast,          setToast]          = useState('')
+  const [loading,             setLoading]             = useState(true)
+  const [sending,             setSending]             = useState(false)
+  const [showEmailModal,      setShowEmailModal]      = useState(false)
+  const [deleteOpen,          setDeleteOpen]          = useState(false)
+  const [showDuplicateModal,  setShowDuplicateModal]  = useState(false)
+  const [duplicating,         setDuplicating]         = useState(false)
+  const [toast,               setToast]               = useState('')
+  const [dupToast,            setDupToast]            = useState<{ num: string; id: string } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -113,6 +116,8 @@ export default function EstimateDetailPage() {
   async function duplicateEstimate() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !estimate) return
+    setDuplicating(true)
+    setShowDuplicateModal(false)
 
     const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
     const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
@@ -134,15 +139,17 @@ export default function EstimateDetailPage() {
     }).select().single()
 
     if (newEst) {
-      const { data: openings } = await supabase.from('estimate_openings')
+      const { data: ops } = await supabase.from('estimate_openings')
         .select('*').eq('estimate_id', estimate.id)
-      if (openings?.length) {
+      if (ops?.length) {
         await supabase.from('estimate_openings').insert(
-          openings.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
+          ops.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
         )
       }
-      router.push(`/dashboard/estimates/${newEst.id}`)
+      setDupToast({ num, id: newEst.id })
+      setTimeout(() => setDupToast(null), 5000)
     }
+    setDuplicating(false)
   }
 
   async function copyLink() {
@@ -480,7 +487,7 @@ export default function EstimateDetailPage() {
                 MORE ACTIONS
               </div>
               {[
-                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: duplicateEstimate, danger: false },
+                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => setShowDuplicateModal(true), danger: false },
                 { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: () => setDeleteOpen(true), danger: true },
               ].map((item, i, arr) => (
                 <button
@@ -503,6 +510,61 @@ export default function EstimateDetailPage() {
 
       {/* ── TOAST ── */}
       <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
+
+      {/* ── DUPLICATE SUCCESS TOAST ── */}
+      {dupToast && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom))', left: '50%',
+          transform: 'translateX(-50%)', zIndex: 1100,
+          background: '#0A1628', color: '#fff', borderRadius: 12,
+          padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.25)', whiteSpace: 'nowrap',
+          fontFamily: 'inherit', fontSize: 13, fontWeight: 500,
+        }}>
+          <span>Duplicate created — <span style={{ fontFamily: 'ui-monospace, monospace', color: '#93C5FD' }}>{dupToast.num}</span></span>
+          <button
+            onClick={() => router.push(`/dashboard/estimates/${dupToast.id}`)}
+            style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '5px 11px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+            Open →
+          </button>
+        </div>
+      )}
+
+      {/* ── DUPLICATE MODAL ── */}
+      {showDuplicateModal && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
+          onClick={() => setShowDuplicateModal(false)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#EFF4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Copy size={22} color="#2563EB" strokeWidth={1.7} />
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', textAlign: 'center', marginBottom: 8 }}>
+              Duplicate estimate?
+            </div>
+            <div style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 1.55, marginBottom: 24 }}>
+              A copy will be created as a new Draft estimate. You can edit it before sending.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowDuplicateModal(false)}
+                style={{ flex: 1, height: 48, borderRadius: 12, background: '#fff', border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 600, cursor: 'pointer', color: '#374151', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button
+                onClick={duplicateEstimate}
+                disabled={duplicating}
+                style={{ flex: 1, height: 48, borderRadius: 12, background: '#3B6CFF', border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', color: '#fff', fontFamily: 'inherit', opacity: duplicating ? 0.7 : 1 }}>
+                {duplicating ? 'Duplicating…' : 'Duplicate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── EMAIL MODAL ── */}
       {showEmailModal && (
