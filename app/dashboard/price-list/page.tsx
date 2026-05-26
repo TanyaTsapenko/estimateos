@@ -358,7 +358,7 @@ export default function PriceListPage() {
                       onMouseLeave={() => setHoverDeleteKey(null)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hoverDeleteKey === key ? '#EF4444' : '#BFBFBF'} strokeWidth="2.5" strokeLinecap="round">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                     </button>
@@ -502,7 +502,7 @@ export default function PriceListPage() {
                         onMouseLeave={() => setHoverDeleteKey(null)}
                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={hoverDeleteKey === ct.key ? '#EF4444' : '#BFBFBF'} strokeWidth="2.5" strokeLinecap="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
                           <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                         </svg>
                       </button>
