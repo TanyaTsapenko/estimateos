@@ -406,11 +406,11 @@ export default function EstimateDetailPage() {
           </div>
 
           {/* ── RIGHT COLUMN ── */}
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 0' }}>
 
-            {/* Status action card */}
-            {(isSigned || isInvoiced) ? (
-              <div style={{ background: '#0F8A6B', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
+            {/* Signed / invoiced — keep existing green card */}
+            {(isSigned || isInvoiced) && (
+              <div style={{ background: '#0F8A6B', borderRadius: 16, padding: 20 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
@@ -423,72 +423,75 @@ export default function EstimateDetailPage() {
                   {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
                 </button>
               </div>
-            ) : (
+            )}
+
+            {/* Step cards — only when not signed/invoiced */}
+            {!isSigned && !isInvoiced && !isDeclined && (
               <>
-                {/* БЛОК 1 — Send estimate */}
-                <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 16, padding: 20, marginBottom: 12, marginTop: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>
-                    SEND ESTIMATE
+                {/* ── STEP 1: Send to client ── */}
+                <div style={{ background: '#fff', border: '1.5px solid #BFDBFE', borderRadius: 16, padding: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#2563EB', color: '#fff', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Send to client</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Share estimate for review</div>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 14 }}>
-                    Share with {estimate.client_name || 'client'} for review
-                  </div>
-                  {canEmail && (
-                    <button onClick={() => setShowEmailModal(true)} disabled={sending}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E8E8E8', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, opacity: sending ? 0.7 : 1 }}>
-                      {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
-                      {sending ? 'Sending…' : 'Email client'}
-                    </button>
-                  )}
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => {
-                      if (!estimate.client_phone) { showToast('No phone number on file'); return }
-                      window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here is your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/estimate/${estimate.id}`)
-                    }}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: '#F5F6F8', color: '#0A1628', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      <MessageSquare size={13} /> Text client
+                    <button
+                      onClick={canEmail ? () => setShowEmailModal(true) : () => showToast('⚠️ No client email on this estimate')}
+                      disabled={sending}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.7 : 1 }}>
+                      {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+                      {sending ? 'Sending…' : 'Email'}
                     </button>
-                    <button onClick={() => window.open(`/api/pdf?id=${id}`, '_blank')}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: '#F5F6F8', color: '#0A1628', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      <FileDown size={13} /> Download PDF
+                    <button
+                      onClick={() => {
+                        if (!estimate.client_phone) { showToast('No phone number on file'); return }
+                        window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here is your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/estimate/${estimate.id}`)
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      <MessageSquare size={14} /> SMS
                     </button>
                   </div>
                 </div>
 
-                {/* БЛОК 2 — Create contract */}
-                <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', borderRadius: 16, padding: 20, marginBottom: 12 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-                    READY TO CLOSE?
-                  </div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 14 }}>
-                    Create &amp; sign contract
+                {/* ── STEP 2: Close the deal ── */}
+                <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', borderRadius: 16, padding: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Close the deal</div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Sign contract with client</div>
+                    </div>
                   </div>
                   <button onClick={handleSignOnSpot}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A0E1A', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A0E1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0E1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
                     </svg>
                     Sign on the spot
                   </button>
                   <button onClick={() => router.push(`/dashboard/estimates/${id}/contract`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                     </svg>
-                    Send to client
+                    Send contract
                   </button>
                 </div>
               </>
             )}
 
-            {/* More actions card */}
+            {/* ── MORE ACTIONS ── */}
             <div style={{ ...CARD, overflow: 'hidden' }}>
               <div style={{ padding: '12px 16px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8' }}>
                 MORE ACTIONS
               </div>
               {[
-                { icon: <Copy size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => setShowDuplicateModal(true), danger: false },
-                { icon: <Trash2 size={15} color="#DC2626" />, label: 'Delete estimate', onClick: () => setDeleteOpen(true), danger: true },
+                { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF',      onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
+                { icon: <Copy     size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => setShowDuplicateModal(true),                 danger: false },
+                { icon: <Trash2   size={15} color="#DC2626" />, label: 'Delete estimate',    onClick: () => setDeleteOpen(true),                          danger: true  },
               ].map((item, i, arr) => (
                 <button
                   key={item.label}
