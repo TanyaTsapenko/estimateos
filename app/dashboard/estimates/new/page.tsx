@@ -280,13 +280,42 @@ function NewEstimateForm() {
   const [discountValue, setDiscountValue] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
+  const userIdRef = useRef<string | null>(null)
 
   const setCErr = (k: keyof ClientErrors, v: string | null) => setClientErrors(p => ({ ...p, [k]: v }))
   const clearCErr = (k: keyof ClientErrors) => setCErr(k, null)
 
+  function applyPriceRows(priceRows: any[] | null) {
+    if (!priceRows || priceRows.length === 0) return
+    const types: Record<string, { base: number; lab: number }> = {}
+    priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
+      types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
+    })
+    setCustomPrices({ types })
+    const customTypesMap: Record<string, { label: string; base: number; lab: number }> = {}
+    priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
+      customTypesMap[r.opening_type] = { label: r.custom_label, base: r.base_price, lab: r.labour_price }
+    })
+    setCustomOpeningTypes(customTypesMap)
+  }
+
+  useEffect(() => {
+    const handleVisibility = async () => {
+      if (document.visibilityState !== 'visible' || !userIdRef.current) return
+      const { data: priceRows } = await supabase
+        .from('price_lists')
+        .select('*')
+        .eq('user_id', userIdRef.current)
+      applyPriceRows(priceRows)
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [])
+
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
+      userIdRef.current = user.id
       const [{ data: prof }, { data: priceRows }] = await Promise.all([
         supabase.from('profiles').select('province, pricing_mode').eq('id', user.id).single(),
         supabase.from('price_lists').select('*').eq('user_id', user.id),
@@ -342,19 +371,7 @@ function NewEstimateForm() {
           }))
         }
       }
-      if (priceRows && priceRows.length > 0) {
-        const sizesRow = priceRows.find((r: any) => r.opening_type === '_sizes')
-        const types: Record<string, { base: number; lab: number }> = {}
-        priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
-          types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
-        })
-        setCustomPrices({ types })
-        const customTypesMap: Record<string, { label: string; base: number; lab: number }> = {}
-        priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
-          customTypesMap[r.opening_type] = { label: r.custom_label, base: r.base_price, lab: r.labour_price }
-        })
-        setCustomOpeningTypes(customTypesMap)
-      }
+      applyPriceRows(priceRows)
     })
   }, [])
 
