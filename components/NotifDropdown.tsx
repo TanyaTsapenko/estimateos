@@ -41,7 +41,8 @@ export default function NotifDropdown({ notifs, onClose, markAllRead, style }: P
   const router = useRouter()
   return (
     <div style={{
-      width: 'min(340px, calc(100vw - 32px))',
+      width: '100%',
+      maxWidth: 'min(340px, calc(100vw - 32px))',
       maxHeight: 'min(480px, calc(100vh - 120px))',
       overflowY: 'auto',
       background: '#fff', borderRadius: 14,

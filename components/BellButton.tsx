@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { Bell } from 'lucide-react'
 import { useNotifications } from '@/hooks/useNotifications'
 import NotifDropdown from './NotifDropdown'
@@ -8,6 +8,14 @@ import NotifDropdown from './NotifDropdown'
 export default function BellButton() {
   const { notifs, unread, open, setOpen, openPanel, markAllRead } = useNotifications()
   const ref = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -17,6 +25,10 @@ export default function BellButton() {
     document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
   }, [open, setOpen])
+
+  const dropdownPos: React.CSSProperties = isMobile
+    ? { position: 'fixed', top: 70, left: 16, right: 16, zIndex: 50 }
+    : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100 }
 
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
@@ -39,7 +51,7 @@ export default function BellButton() {
         )}
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100 }}>
+        <div style={dropdownPos}>
           <NotifDropdown notifs={notifs} onClose={() => setOpen(false)} markAllRead={markAllRead} />
         </div>
       )}
