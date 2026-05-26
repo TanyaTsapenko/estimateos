@@ -38,7 +38,7 @@
 html { background: #F5F6F8; }
 body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh; font-size: 14px; font-weight: 500; color: var(--jet); }
 
-.app { max-width: 390px; margin: 0 auto; min-height: 100vh; position: relative; }
+.app { width: 100%; min-height: 100vh; position: relative; }
 
 @media (min-width: 1024px) {
   .app { max-width: none; margin: 0; }
