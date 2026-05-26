@@ -8,7 +8,7 @@ export async function GET() {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url')
+    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager')
     .eq('id', user.id)
     .single()
 
@@ -22,6 +22,20 @@ export async function GET() {
   const paragraphs = contractText
     ? contractText.split(/\n\n+/).map((p: string) => p.trim()).filter(Boolean)
     : []
+
+  const p = prof as any
+  const completionTimeframe: string | null = p?.completion_timeframe || null
+  const paymentMethods: string[] = p?.payment_methods || []
+  const customerResponsibilities: string | null = p?.customer_responsibilities || null
+  const buyerRightToCancel: string | null = p?.buyer_right_to_cancel || null
+  const damageDisclaimer: string | null = p?.damage_disclaimer || null
+  const permitsResponsibility: string | null = p?.permits_responsibility || null
+  const projectManager: string | null = p?.project_manager || null
+
+  function clauseBlock(title: string, body: string | null): string {
+    if (!body) return ''
+    return `<div class="clause"><div class="clause-title">${title}</div><p>${body.replace(/\n/g, '<br>')}</p></div>`
+  }
 
   const html = `<!DOCTYPE html>
 <html>
@@ -48,6 +62,11 @@ export async function GET() {
   .body-section p{font-size:13px;color:#374151;line-height:1.8;margin-bottom:14px}
   .body-section p:last-child{margin-bottom:0}
   .empty-state{border:2px dashed #E0E0E0;border-radius:10px;padding:40px;text-align:center;color:#BFBFBF;font-size:13px}
+  .clause{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #F0F0F0}
+  .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .clause-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:6px}
+  .payment-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .payment-pill{background:#EEF2FF;color:#2045B8;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600}
   .sig-section{display:flex;gap:48px;margin-top:48px;padding-top:24px;border-top:2px solid #E0E0E0}
   .sig-box{flex:1}
   .sig-line{border-bottom:1px solid #1A1A1A;height:48px;margin-bottom:8px}
@@ -85,9 +104,21 @@ export async function GET() {
 
 <div class="body-section">
   ${paragraphs.length > 0
-    ? paragraphs.map((p: string) => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('\n  ')
+    ? paragraphs.map((pg: string) => `<p>${pg.replace(/\n/g, '<br>')}</p>`).join('\n  ')
     : `<div class="empty-state">No contract terms have been added yet.<br>Go to Company Profile → Contract to add your standard terms.</div>`}
 </div>
+
+${completionTimeframe || customerResponsibilities || buyerRightToCancel || damageDisclaimer || permitsResponsibility || paymentMethods.length > 0 || projectManager ? `
+<div class="divider"></div>
+<div class="body-section">
+  ${completionTimeframe ? `${clauseBlock('Completion Timeframe', completionTimeframe)}` : ''}
+  ${paymentMethods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
+  ${clauseBlock('Customer Responsibilities', customerResponsibilities)}
+  ${clauseBlock("Buyer's Right to Cancel", buyerRightToCancel)}
+  ${clauseBlock('Damage Disclaimer', damageDisclaimer)}
+  ${clauseBlock('Permits Responsibility', permitsResponsibility)}
+  ${projectManager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${projectManager}</p></div>` : ''}
+</div>` : ''}
 
 ${paragraphs.length > 0 ? `
 <div class="divider"></div>

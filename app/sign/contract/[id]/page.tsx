@@ -20,6 +20,9 @@ interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
   warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
   deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
+  completion_timeframe: string | null; payment_methods: string[] | null
+  customer_responsibilities: string | null; buyer_right_to_cancel: string | null
+  damage_disclaimer: string | null; permits_responsibility: string | null; project_manager: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -80,7 +83,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -443,6 +446,61 @@ export default function SignContractPage() {
               <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
             </div>
           </div>
+
+          {/* ADDITIONAL CLAUSES */}
+          {(profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.customer_responsibilities || profile?.buyer_right_to_cancel || profile?.damage_disclaimer || profile?.permits_responsibility || profile?.project_manager) && (
+            <div style={cardStyle}>
+              <CardHeader title="Contract Details" />
+              <div style={{ padding: '12px 16px' }}>
+                {profile?.completion_timeframe && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                  </div>
+                )}
+                {profile?.payment_methods && profile.payment_methods.length > 0 && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {profile.payment_methods.map((m: string) => (
+                        <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {profile?.customer_responsibilities && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.customer_responsibilities}</p>
+                  </div>
+                )}
+                {profile?.buyer_right_to_cancel && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Buyer's Right to Cancel</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.buyer_right_to_cancel}</p>
+                  </div>
+                )}
+                {profile?.damage_disclaimer && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Damage Disclaimer</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.damage_disclaimer}</p>
+                  </div>
+                )}
+                {profile?.permits_responsibility && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Permits Responsibility</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.permits_responsibility}</p>
+                  </div>
+                )}
+                {profile?.project_manager && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* SIGNATURES */}
           <div style={cardStyle}>
