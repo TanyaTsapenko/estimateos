@@ -44,7 +44,9 @@ export async function GET(request: NextRequest) {
   const validUntil = est.valid_until
     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
     : '30 days from issue'
-  const tierLabel = ((est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)) + ' Package'
+
+  const issuedDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.created_at))
+
   const signedDate = est.signed_at
     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.signed_at))
     : ''
@@ -66,8 +68,6 @@ export async function GET(request: NextRequest) {
     : est.status === 'sent' ? 'pill-sent' : 'pill-draft'
   const statusLabel = est.status.charAt(0).toUpperCase() + est.status.slice(1)
 
-  const windowSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="3" x2="12" y2="21"/></svg>`
-
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,10 +82,13 @@ export async function GET(request: NextRequest) {
 
   /* ── Header ── */
   .hdr{background:linear-gradient(135deg,#080E1C 0%,#0E1F3D 50%,#0C2847 100%);padding:28px 24px 48px}
-  .hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  .hdr-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:16px}
+  .hdr-company{display:flex;flex-direction:column;gap:4px}
+  .hdr-company-name{font-size:14px;font-weight:700;color:#fff}
+  .hdr-company-sub{font-size:11px;color:rgba(255,255,255,.5)}
   .logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.02em}
   .logo span{color:#2563EB}
-  .save-btn{background:#2563EB;border:none;border-radius:20px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit}
+  .save-btn{background:#2563EB;border:none;border-radius:20px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;flex-shrink:0}
   .hdr-kicker{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px}
   .hdr-client{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px;line-height:1.15}
   .pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -93,6 +96,7 @@ export async function GET(request: NextRequest) {
   .pill-sent{background:rgba(37,99,235,.25);border:1px solid rgba(59,130,246,.4);color:#93C5FD;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;display:inline-block}
   .pill-draft{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.55);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:4px 12px;display:inline-block}
   .pill-outline{border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.5);font-size:10px;font-weight:600;border-radius:20px;padding:4px 12px;display:inline-block}
+  .pill-num{background:rgba(37,99,235,.3);border:1px solid rgba(59,130,246,.5);color:#93C5FD;font-size:10px;font-weight:700;border-radius:20px;padding:4px 12px;display:inline-block;font-family:ui-monospace,monospace;letter-spacing:.05em}
 
   /* ── Body ── */
   .body{background:#F5F6F8;border-radius:24px 24px 0 0;margin-top:-24px;padding:20px 20px 40px;display:flex;flex-direction:column;gap:12px}
@@ -113,10 +117,7 @@ export async function GET(request: NextRequest) {
   .dkey{color:#94A3B8;flex-shrink:0}
   .dval{font-weight:600;color:#0A1628;text-align:right}
 
-  /* ── Openings card ── */
-  .svc-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .svc-title{font-size:13px;font-weight:700;color:#0A1628}
-  .svc-pkg{font-size:10px;font-weight:600;color:#2563EB;background:#EFF6FF;border-radius:6px;padding:2px 8px}
+  /* ── Openings ── */
   .op-row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #EEF0F4;gap:12px}
   .op-row:last-of-type{border-bottom:none}
   .op-name{font-size:13px;font-weight:600;color:#0A1628;margin-bottom:3px}
@@ -148,16 +149,22 @@ export async function GET(request: NextRequest) {
 <!-- ── HEADER ── -->
 <div class="hdr">
   <div class="hdr-top">
-    ${prof?.logo_url
-      ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block" alt="${prof?.company_name || 'Logo'}" />`
-      : `<div class="logo">Estimate<span>OS</span></div>`
-    }
+    <div class="hdr-company">
+      ${prof?.logo_url
+        ? `<img src="${prof.logo_url}" style="max-width:120px;max-height:40px;object-fit:contain;display:block;margin-bottom:6px" alt="${prof?.company_name || 'Logo'}" />`
+        : `<div class="logo">Estimate<span>OS</span></div>`
+      }
+      ${prof?.company_name ? `<div class="hdr-company-name">${prof.company_name}</div>` : ''}
+      ${(prof?.city || prof?.province) ? `<div class="hdr-company-sub">${[prof?.city, prof?.province].filter(Boolean).join(', ')}</div>` : ''}
+      ${prof?.phone ? `<div class="hdr-company-sub">${prof.phone}</div>` : ''}
+    </div>
     <button class="save-btn" onclick="window.print()">Save PDF</button>
   </div>
   <div class="hdr-kicker">Prepared for</div>
   <div class="hdr-client">${est.client_name || 'Client'}</div>
   <div class="pills">
     <span class="${statusPillClass}">${statusLabel}</span>
+    <span class="pill-num">${est.estimate_number}</span>
     <span class="pill-outline">Valid until ${validUntil}</span>
   </div>
 </div>
@@ -165,14 +172,34 @@ export async function GET(request: NextRequest) {
 <!-- ── BODY ── -->
 <div class="body">
 
-  <!-- Card 1: Price -->
+  <!-- Estimate meta row -->
+  <div class="card">
+    <div class="drow">
+      <span class="dkey">Estimate number</span>
+      <span class="dval" style="font-family:ui-monospace,monospace;color:#2563EB">${est.estimate_number}</span>
+    </div>
+    <div class="drow">
+      <span class="dkey">Date issued</span>
+      <span class="dval">${issuedDate}</span>
+    </div>
+    <div class="drow">
+      <span class="dkey">Valid until</span>
+      <span class="dval">${validUntil}</span>
+    </div>
+    <div class="drow">
+      <span class="dkey">Prepared by</span>
+      <span class="dval">${prof?.company_name || 'Contractor'}</span>
+    </div>
+  </div>
+
+  <!-- Price total -->
   <div class="card-blue">
     <div class="slbl">Estimate Total</div>
     <div class="price-value">${fmtCAD(est.total)}</div>
-    <div class="price-sub">inc. ${taxLabel} · Valid until ${validUntil}</div>
+    <div class="price-sub">inc. ${taxLabel}</div>
   </div>
 
-  <!-- Card 2: Client Details -->
+  <!-- Client Details -->
   ${clientDetailRows.length > 0 ? `
   <div class="card">
     <div class="slbl">Client Details</div>
@@ -183,12 +210,9 @@ export async function GET(request: NextRequest) {
     </div>`).join('')}
   </div>` : ''}
 
-  <!-- Card 3: Openings -->
+  <!-- Line items -->
   <div class="card">
-    <div class="svc-head">
-      ${windowSvg}
-      <span class="svc-title">Openings (${ops?.length || 0})</span>
-    </div>
+    <div class="slbl">Items (${ops?.length || 0})</div>
     ${(ops || []).map((op: any) => {
       const installLabel = op.install ? INSTALL_LABELS[op.install] || op.install : null
       const subParts = [
@@ -247,6 +271,12 @@ export async function GET(request: NextRequest) {
     <div style="font-size:13px;color:#475569;line-height:1.7;margin-top:4px">${contractIntro}</div>
   </div>` : ''}
 
+  ${est.scope_notes ? `
+  <div class="card">
+    <div class="slbl">Notes</div>
+    <div style="font-size:13px;color:#475569;line-height:1.7;white-space:pre-wrap;margin-top:4px">${est.scope_notes}</div>
+  </div>` : ''}
+
   ${contractTerms ? `
   <div class="card">
     <div class="slbl">Terms &amp; Conditions</div>
@@ -264,13 +294,13 @@ export async function GET(request: NextRequest) {
       </div>
       <div>
         <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">${prof?.company_name || 'Contractor'}</div>
-        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        ${(prof as any)?.signature_url ? `<img src="${(prof as any).signature_url}" style="max-height:40px;max-width:140px;object-fit:contain;display:block;margin-bottom:6px" alt="Contractor signature" />` : '<div style="height:1px;background:#0A1628;margin-bottom:6px"></div>'}
         <div style="font-size:10px;color:#94A3B8">${prof?.company_name || 'Contractor'} · Date</div>
       </div>
     </div>
   </div>` : ''}
 
-  <!-- Card 4: Signature (signed only) -->
+  <!-- Signed confirmation -->
   ${est.status === 'signed' ? `
   <div class="card-green">
     <div class="sig-circle">
@@ -284,13 +314,6 @@ export async function GET(request: NextRequest) {
   </div>` : ''}
 
 </div>
-
-${(prof as any)?.signature_url ? `
-<div style="margin-top:40px;padding-top:20px;border-top:1px solid #E2E8F0">
-  <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Authorized by</div>
-  <img src="${(prof as any).signature_url}" style="max-height:50px;max-width:180px;object-fit:contain" alt="Contractor signature" />
-  <div style="font-size:12px;color:#475569;margin-top:6px">${prof?.company_name || ''}</div>
-</div>` : ''}
 
 <div class="footer">Generated by EstimateOS · estimateos.ca${contractShowLicence ? ` · Lic. ${prof?.licence}` : ''}</div>
 

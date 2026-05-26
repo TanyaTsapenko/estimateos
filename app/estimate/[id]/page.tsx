@@ -1,616 +1,191 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, type Opening } from '@/lib/pricing'
-import ConfirmModal from '@/components/ConfirmModal'
+import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_province: string | null
-  status: string; tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
+  status: string; tier: string | null; subtotal: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
-  payment_method: string | null; scope_notes: string | null; valid_until: string | null; created_at: string
-  sent_method: string | null
+  scope_notes: string | null; valid_until: string | null
 }
+interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
-  logo_url: string | null; deposit_pct: number | null; contract_terms: string | null
+  logo_url: string | null; contract_terms: string | null
 }
-
-const DEFAULT_TERMS = `Payment: A deposit of 50% is due upon signing. The remaining balance is due upon completion of work.
-Cancellation: If cancelled after materials are ordered, the deposit is non-refundable.
-Warranty: All materials carry manufacturer warranty. Labour is warranted for 1 year.
-Validity: This estimate is valid for 30 days from the date of issue.
-Changes: Any changes to the scope of work must be agreed upon in writing.
-Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
-
-const TIERS = [
-  { key: 'good',   label: 'Good',   mult: 1.0, why: 'Standard materials & workmanship. 1-year labour warranty.', badge: '' },
-  { key: 'better', label: 'Better', mult: 1.2, why: 'Mid-grade product, enhanced energy efficiency, 5-year warranty.', badge: 'MOST POPULAR' },
-  { key: 'best',   label: 'Best',   mult: 1.4, why: 'Premium product with lifetime manufacturer warranty and priority service.', badge: 'BEST VALUE' },
-]
-
-const INSTALL_LABELS: Record<string, string> = { insert: 'Retrofit', retrofit: 'Retrofit', fullframe: 'Full Frame', stud_to_stud: 'Stud to Stud' }
-const FLOOR_LABELS: Record<string, string> = { first: '', second: '2nd floor', third: '3rd+ floor' }
-
-type Screen = 'view' | 'summary' | 'sign' | 'success' | 'declined' | 'already_signed'
 
 export default function ClientEstimatePage() {
   const { id } = useParams<{ id: string }>()
   const supabase = createClient()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [selectedTier, setSelectedTier] = useState('better')
-  const [screen, setScreen] = useState<Screen>('view')
-  const [hasSignature, setHasSignature] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [declineOpen, setDeclineOpen] = useState(false)
-  const isDrawing = useRef(false)
-  const lastPos = useRef({ x: 0, y: 0 })
+  const [docStatus, setDocStatus] = useState<'loading' | 'signed' | 'declined' | 'active'>('loading')
 
   useEffect(() => {
     async function load() {
       const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
       if (!est) return
-      if (est.status === 'signed') {
-        setEstimate(est); setScreen('already_signed')
-        const { data: prof } = await supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_terms').eq('id', (est as any).user_id).single()
-        setProfile(prof)
-        return
-      }
+      setEstimate(est)
+      if (est.status === 'signed') setDocStatus('signed')
+      else if (est.status === 'declined') setDocStatus('declined')
+      else setDocStatus('active')
+
       const [{ data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, deposit_pct, contract_terms').eq('id', (est as any).user_id).single(),
+        supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
+        supabase.from('profiles').select('company_name, city, province, logo_url, contract_terms').eq('id', (est as any).user_id).single(),
       ])
-      setEstimate(est); setSelectedTier(est.tier || 'better')
-      setOpenings(ops || []); setProfile(prof)
-      if (est.sent_method === 'email_estimate_contract') {
-        setScreen('summary')
-      } else if (est.sent_method === 'email_contract') {
-        setScreen('sign')
-      }
+      setOpenings(ops || [])
+      setProfile(prof)
     }
     load()
   }, [id])
 
-  // ── PRICING CALCULATIONS ──────────────────────
-  function calcPricing(tierKey: string) {
-    const mult = TIERS.find(t => t.key === tierKey)?.mult || 1.2
-    const [taxRate] = TAX_RATES[estimate?.client_province || 'AB'] || [0.05]
-    const rawSubtotal = openings.reduce((s, op) => s + opCost(op, mult), 0)
-    const discountAmt = !estimate ? 0
-      : estimate.discount_type === 'percent'
-        ? rawSubtotal * ((estimate.discount_value || 0) / 100)
-        : Math.min(estimate.discount_amount || 0, rawSubtotal)
-    const afterDiscount = rawSubtotal - discountAmt
-    const taxAmount = afterDiscount * taxRate
-    const total = afterDiscount + taxAmount
-    const depositPct = profile?.deposit_pct ?? 30
-    const deposit = Math.round(total * depositPct) / 100
-    const balance = Math.round((total - deposit) * 100) / 100
-    return { mult, rawSubtotal, discountAmt, afterDiscount, taxRate, taxAmount, total, depositPct, deposit, balance }
-  }
+  const fontFamily = '"Inter", system-ui, -apple-system, sans-serif'
 
-  const pricing = estimate ? calcPricing(selectedTier) : null
-  const [, taxLabel] = TAX_RATES[estimate?.client_province || 'AB'] || [0, 'Tax']
-
-  // ── CANVAS DRAWING ────────────────────────────
-  function getPos(e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) {
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    if ('touches' in e) {
-      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY }
-    }
-    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY }
-  }
-  function startDraw(e: React.MouseEvent | React.TouchEvent) {
-    const canvas = canvasRef.current; if (!canvas) return
-    isDrawing.current = true; lastPos.current = getPos(e, canvas); e.preventDefault()
-  }
-  function draw(e: React.MouseEvent | React.TouchEvent) {
-    if (!isDrawing.current) return
-    const canvas = canvasRef.current; if (!canvas) return
-    const ctx = canvas.getContext('2d'); if (!ctx) return
-    const pos = getPos(e, canvas)
-    ctx.beginPath(); ctx.moveTo(lastPos.current.x, lastPos.current.y); ctx.lineTo(pos.x, pos.y)
-    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke()
-    lastPos.current = pos; setHasSignature(true); e.preventDefault()
-  }
-  function endDraw() { isDrawing.current = false }
-  function clearCanvas() {
-    const canvas = canvasRef.current; if (!canvas) return
-    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
-    setHasSignature(false)
-  }
-
-  async function submitSignature() {
-    if (!hasSignature) { setError('Please sign above'); return }
-    const canvas = canvasRef.current; if (!canvas || !estimate) return
-    setSaving(true); setError('')
-    const dataUrl = canvas.toDataURL('image/png')
-    let sigUrl = dataUrl
-    try {
-      const blob = await (await fetch(dataUrl)).blob()
-      const sigPath = `${id}/client-sig-${Date.now()}.png`
-      const { error: upErr } = await supabase.storage.from('signatures').upload(sigPath, blob, { contentType: 'image/png' })
-      if (!upErr) sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
-    } catch {}
-
-    const { rawSubtotal, discountAmt, taxAmount, total } = calcPricing(selectedTier)
-
-    const { error: updateErr } = await supabase.from('estimates').update({
-      status: 'signed', signed_at: new Date().toISOString(),
-      client_signature_url: sigUrl, tier: selectedTier,
-      subtotal: Math.round(rawSubtotal * 100) / 100,
-      discount_amount: Math.round(discountAmt * 100) / 100,
-      tax_amount: Math.round(taxAmount * 100) / 100,
-      total: Math.round(total * 100) / 100,
-    }).eq('id', id)
-
-    if (updateErr) { setError(updateErr.message); setSaving(false); return }
-
-    await supabase.from('notifications').insert({
-      user_id: (estimate as any).user_id,
-      type:    'estimate_signed',
-      title:   'Estimate signed',
-      body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
-      read:    false,
-      link:    `/dashboard/estimates/${estimate.id}`,
-    })
-
-    await Promise.allSettled([
-      fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id, type: 'signed' }) }),
-      ...(estimate.sent_method !== 'email_contract' ? [fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })] : []),
-    ])
-    setScreen('success'); setSaving(false)
-  }
-
-  async function declineEstimate() {
-    await supabase.from('estimates').update({ status: 'declined' }).eq('id', id)
-    if (estimate) {
-      const clientName = estimate.client_name || 'Client'
-      await supabase.from('notifications').insert({
-        user_id: (estimate as any).user_id,
-        type:    'estimate_declined',
-        title:   'Estimate declined',
-        body:    `${clientName} declined ${estimate.estimate_number}`,
-        read:    false,
-        link:    `/dashboard/estimates/${estimate.id}`,
-      })
-    }
-    setScreen('declined')
-  }
-
-  if (!estimate) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--platinum)' }}>
-      <div style={{ fontSize: 13, color: 'var(--ash)' }}>Loading estimate...</div>
+  if (docStatus === 'loading' || !estimate) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily }}>
+      <div style={{ fontSize: 13, color: '#94A3B8' }}>Loading…</div>
     </div>
   )
 
-  // ── ALREADY SIGNED ────────────────────────────
-  if (screen === 'already_signed') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
-        <div className="h-title"><div className="h-eye">All done</div><div className="h-big">Already signed</div></div>
-      </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>{estimate.estimate_number} is signed</div>
-        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-          This estimate has already been signed. Contact {profile?.company_name || 'the contractor'} if you have questions.
-        </div>
+  if (docStatus === 'signed') return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily, padding: '0 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', marginBottom: 8 }}>Already signed</div>
+      <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
+        {estimate.estimate_number} has already been signed. Contact {profile?.company_name || 'the contractor'} if you have questions.
       </div>
     </div>
   )
 
-  // ── DECLINED ─────────────────────────────────
-  if (screen === 'declined') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
-        <div className="h-title"><div className="h-eye">Declined</div><div className="h-big">No problem.</div></div>
-      </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        <div style={{ fontSize: 52, marginBottom: 16 }}>👋</div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>Estimate declined</div>
-        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
-          We&apos;ve noted your response. Feel free to reach out to {profile?.company_name || 'us'} if you change your mind.
-        </div>
+  if (docStatus === 'declined') return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily, padding: '0 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', marginBottom: 8 }}>Estimate declined</div>
+      <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
+        Feel free to reach out to {profile?.company_name || 'us'} if you change your mind.
       </div>
     </div>
   )
 
-  // ── SUCCESS ───────────────────────────────────
-  if (screen === 'success') return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div>
-        <div className="h-title"><div className="h-eye">All done!</div><div className="h-big">Signed! 🎉</div></div>
-      </div>
-      <div className="card" style={{ textAlign: 'center', paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--jet)', marginBottom: 8 }}>You&apos;re all set!</div>
-        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, maxWidth: 280, margin: '0 auto' }}>
-          {estimate.estimate_number} is signed for <strong>{fmtCAD(pricing?.total || 0)}</strong>.
-          A copy has been sent to your email. {profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
-        </div>
-      </div>
-    </div>
-  )
+  const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
+  const tierLabel = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : null
+  const hasNotes = !!estimate.scope_notes
+  const hasTerms = !!profile?.contract_terms
 
-  if (!pricing) return null
+  return (
+    <div style={{ background: '#F5F6F8', minHeight: '100vh', fontFamily }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 48px' }}>
+        <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
 
-  // ── SIGN SCREEN ───────────────────────────────
-  if (screen === 'sign') return (
-    <>
-    <ConfirmModal
-      open={declineOpen}
-      icon="alert"
-      title="Decline this estimate?"
-      body="Are you sure you want to decline? The contractor will be notified."
-      confirmLabel="Decline"
-      onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
-      onCancel={() => setDeclineOpen(false)}
-    />
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
-        <div className="h-top">
-          <button onClick={() => setScreen('summary')}
-            style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            ←
-          </button>
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-        </div>
-        <div className="h-title">
-          <div className="h-eye">{estimate.estimate_number} · {estimate.sent_method === 'email_contract' ? profile?.company_name || 'Contractor' : selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1) + ' Package'}</div>
-          <div className="h-big">{estimate.sent_method === 'email_contract' ? 'Sign contract' : 'Sign to approve'}</div>
-          {estimate.sent_method !== 'email_contract' && <div className="h-sub">Total: {fmtCAD(pricing.total)} · Deposit: {fmtCAD(pricing.deposit)}</div>}
-        </div>
-      </div>
-      <div className="card" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        {error && <div className="error-msg">{error}</div>}
-
-        {estimate.sent_method !== 'email_contract' && (
-          <>
-            {/* Mini summary on sign screen */}
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 12, padding: '12px 14px', marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                <span style={{ color: 'var(--ash)' }}>Package</span>
-                <span style={{ fontWeight: 700, color: 'var(--jet)', textTransform: 'capitalize' }}>{selectedTier}</span>
+          {/* Company info */}
+          <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #EEF0F4' }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} alt={profile.company_name || ''} style={{ height: 40, maxWidth: 160, objectFit: 'contain', marginBottom: 12, display: 'block' }} />
+            )}
+            <div style={{ fontSize: 16, fontWeight: 800, color: '#0A1628' }}>{profile?.company_name || 'Contractor'}</div>
+            {(profile?.city || profile?.province) && (
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
+                {[profile?.city, profile?.province].filter(Boolean).join(', ')}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                <span style={{ color: 'var(--ash)' }}>Total (inc. {taxLabel})</span>
-                <span style={{ fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(pricing.total)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}>
-                <span style={{ color: 'var(--ash)' }}>Deposit due today ({pricing.depositPct}%)</span>
-                <span style={{ fontWeight: 700, color: '#2563eb' }}>{fmtCAD(pricing.deposit)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-                <span style={{ color: 'var(--ash)' }}>Balance on delivery</span>
-                <span style={{ fontWeight: 700, color: 'var(--jet)' }}>{fmtCAD(pricing.balance)}</span>
-              </div>
-            </div>
-            <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.7, marginBottom: 14, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10 }}>
-              By signing, you approve the <strong>{selectedTier}</strong> package for <strong>{fmtCAD(pricing.total)}</strong> including {taxLabel}. A deposit of <strong>{fmtCAD(pricing.deposit)}</strong> ({pricing.depositPct}%) is due upon signing.
-            </div>
-          </>
-        )}
-        {estimate.sent_method === 'email_contract' && (
-          <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.7, marginBottom: 14, padding: '10px 12px', background: 'rgba(59,108,255,.04)', border: '1px solid rgba(59,108,255,.12)', borderRadius: 10 }}>
-            By signing, you acknowledge that you have read and agree to the contract terms and conditions presented by <strong>{profile?.company_name || 'the contractor'}</strong>.
+            )}
           </div>
-        )}
 
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 6 }}>Your signature</div>
-        <div className="sig-wrap" style={{ marginBottom: 14 }}>
-          <canvas ref={canvasRef} width={354} height={140} className="sig-canvas"
-            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
-            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
-          {!hasSignature && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 12, color: '#C8C8C8', pointerEvents: 'none', textAlign: 'center' }}>
-              Sign here with your finger
+          {/* Estimate number + client */}
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid #EEF0F4', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>Estimate</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>{estimate.estimate_number}</div>
+              {estimate.client_name && (
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{estimate.client_name}</div>
+              )}
+              {tierLabel && (
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{tierLabel} Package</div>
+              )}
+            </div>
+            {estimate.valid_until && (
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 3 }}>Valid until</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{estimate.valid_until}</div>
+              </div>
+            )}
+          </div>
+
+          {/* Line items */}
+          {openings.length > 0 && (
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #EEF0F4' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 12 }}>
+                Items ({openings.length})
+              </div>
+              {openings.map((op, idx) => (
+                <div key={op.id} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                  padding: '10px 0', borderBottom: idx < openings.length - 1 ? '1px solid #EEF0F4' : 'none',
+                }}>
+                  <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>
+                      {OPENING_TYPES[op.type]?.name || op.type}
+                      {op.qty > 1 && <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}> × {op.qty}</span>}
+                    </div>
+                    {op.room && (
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{op.room}</div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>
+                    {fmtCAD(op.total_cost)}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-          <button className="sig-clear" onClick={clearCanvas}>Clear</button>
-        </div>
-        <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}>
-          {saving ? '⏳ Processing...' : estimate.sent_method === 'email_contract' ? '✅ I Agree — Sign Contract' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
-        </button>
-        <button onClick={() => setDeclineOpen(true)}
-          style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 8 }}>
-          {estimate.sent_method === 'email_contract' ? 'Decline' : 'Decline this estimate'}
-        </button>
-      </div>
-    </div>
-    </>
-  )
 
-  // ── SUMMARY SCREEN ────────────────────────────
-  if (screen === 'summary') {
-    const tierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
-    return (
-      <>
-      <ConfirmModal
-        open={declineOpen}
-        icon="alert"
-        title="Decline this estimate?"
-        body="Are you sure you want to decline? The contractor will be notified."
-        confirmLabel="Decline"
-        onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
-        onCancel={() => setDeclineOpen(false)}
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
-          <div className="h-top">
-            {estimate.sent_method !== 'email_estimate_contract' && (
-              <button onClick={() => setScreen('view')}
-                style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                ←
-              </button>
-            )}
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-          </div>
-          <div className="h-title">
-            <div className="h-eye">{estimate.estimate_number} · {tierLabel} Package</div>
-            <div className="h-big">Order Summary</div>
-            <div className="h-sub">{estimate.sent_method === 'email_estimate_contract' ? 'Review and sign below' : 'Review before signing'}</div>
-          </div>
-        </div>
-
-        <div className="card screen-enter" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-          {/* ── Line items ── */}
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 10, paddingBottom: 8, borderBottom: '1.5px solid var(--border-light)' }}>
-            Line items ({openings.length})
-          </div>
-
-          {openings.map((op, idx) => {
-            const price = opCost(op, pricing.mult)
-            const details = [
-              op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null,
-              INSTALL_LABELS[op.install] || op.install,
-              FLOOR_LABELS[op.floor] || null,
-              op.room || null,
-            ].filter(Boolean).join(' · ')
-            return (
-              <div key={op.id} style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                padding: '11px 0', borderBottom: idx < openings.length - 1 ? '1px solid var(--border-light)' : 'none',
-              }}>
-                <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--jet)', marginBottom: 3 }}>
-                    {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type}
-                    {op.qty > 1 && <span style={{ fontSize: 12, color: 'var(--ash)', fontWeight: 600 }}> × {op.qty}</span>}
-                  </div>
-                  {details && (
-                    <div style={{ fontSize: 11, color: 'var(--ash)', lineHeight: 1.5 }}>{details}</div>
-                  )}
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--jet)', flexShrink: 0, textAlign: 'right' }}>
-                  {fmtCAD(price)}
-                </div>
-              </div>
-            )
-          })}
-
-          {/* ── Pricing breakdown ── */}
-          <div style={{
-            background: '#F4F5F7', border: '1.5px solid #1A2744',
-            borderRadius: 14, padding: 16, marginTop: 16,
-          }}>
-            {/* Subtotal */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
-              <span>Subtotal ({tierLabel})</span>
-              <span>{fmtCAD(pricing.rawSubtotal)}</span>
+          {/* Totals */}
+          <div style={{ padding: '16px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 8 }}>
+              <span>Subtotal</span>
+              <span>{fmtCAD(estimate.subtotal)}</span>
             </div>
-
-            {/* Discount */}
-            {pricing.discountAmt > 0 && (
+            {estimate.discount_amount > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 8 }}>
                 <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-                <span>−{fmtCAD(pricing.discountAmt)}</span>
+                <span>−{fmtCAD(estimate.discount_amount)}</span>
               </div>
             )}
-
-            {/* Tax */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#6b7280', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
               <span>{taxLabel}</span>
-              <span>{fmtCAD(pricing.taxAmount)}</span>
+              <span>{fmtCAD(estimate.tax_amount)}</span>
             </div>
-
-            {/* Total */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid #1A2744', paddingTop: 12, marginTop: 4 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--jet)' }}>Total</span>
-              <span style={{ fontSize: 26, fontWeight: 800, color: '#2045B8', letterSpacing: '-.02em' }}>{fmtCAD(pricing.total)}</span>
-            </div>
-
-            {/* Deposit & balance */}
-            <div style={{ borderTop: '1.5px dashed rgba(26,39,68,.25)', marginTop: 14, paddingTop: 14 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#1A2744' }}>
-                    Deposit due on signing
-                  </div>
-                  <div style={{ fontSize: 10, color: '#6b7280', marginTop: 1 }}>{pricing.depositPct}% of total</div>
-                </div>
-                <span style={{
-                  fontSize: 18, fontWeight: 800, color: '#2563eb',
-                  background: 'rgba(37,99,235,.1)', padding: '4px 12px', borderRadius: 8,
-                }}>
-                  {fmtCAD(pricing.deposit)}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>
-                    Balance on delivery
-                  </div>
-                  <div style={{ fontSize: 10, color: '#6b7280', marginTop: 1 }}>Due upon installation</div>
-                </div>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)' }}>
-                  {fmtCAD(pricing.balance)}
-                </span>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid #EEF0F4', paddingTop: 12 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>Total</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
             </div>
           </div>
 
-          {/* Payment method */}
-          {estimate.payment_method && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, fontSize: 12, color: 'var(--ash)' }}>
-              <span>💳</span>
-              <span>Payment method: <strong style={{ color: 'var(--jet)' }}>{estimate.payment_method}</strong></span>
+          {/* Scope notes */}
+          {hasNotes && (
+            <div style={{ padding: '16px 24px', borderBottom: hasTerms ? '1px solid #EEF0F4' : 'none' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Notes</div>
+              <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
             </div>
           )}
 
-          {/* Valid until */}
-          {estimate.valid_until && (
-            <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 8 }}>
-              ⏱ Estimate valid until {estimate.valid_until}
+          {/* Terms & Conditions */}
+          {hasTerms && (
+            <div style={{ padding: '16px 24px' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Terms &amp; Conditions</div>
+              <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{profile!.contract_terms}</div>
             </div>
           )}
 
-          {/* Terms & Conditions — only show if contractor has set custom terms */}
-          {profile?.contract_terms && (
-            <div style={{ marginTop: 20, marginBottom: 4 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginBottom: 8 }}>Terms &amp; Conditions</div>
-              <div style={{ background: 'var(--surface)', border: '1px solid var(--border-light)', borderRadius: 10, padding: '12px 14px', maxHeight: 150, overflowY: 'auto', fontSize: 11.5, color: '#475569', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>
-                {profile.contract_terms}
-              </div>
-            </div>
-          )}
-
-          {/* Signature pad */}
-          {error && <div className="error-msg" style={{ marginTop: 12 }}>{error}</div>}
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ash)', marginTop: 20, marginBottom: 6 }}>Your signature</div>
-          <div className="sig-wrap" style={{ marginBottom: 14 }}>
-            <canvas ref={canvasRef} width={354} height={140} className="sig-canvas"
-              onMouseDown={startDraw} onMouseMove={draw} onMouseUp={endDraw} onMouseLeave={endDraw}
-              onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={endDraw} />
-            {!hasSignature && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 12, color: '#C8C8C8', pointerEvents: 'none', textAlign: 'center' }}>
-                Sign here with your finger
-              </div>
-            )}
-            <button className="sig-clear" onClick={clearCanvas}>Clear</button>
-          </div>
-
-          <div style={{ marginTop: 4 }}>
-            <button className="gen-btn" onClick={submitSignature} disabled={saving || !hasSignature}
-              style={{ marginBottom: 10 }}>
-              {saving ? '⏳ Processing...' : `✅ I Agree — Approve ${fmtCAD(pricing.total)}`}
-            </button>
-            {estimate.sent_method !== 'email_estimate_contract' && (
-              <button onClick={() => setScreen('view')}
-                style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '10px 0', cursor: 'pointer' }}>
-                ← Change package
-              </button>
-            )}
-            <button onClick={() => setDeclineOpen(true)}
-              style={{ width: '100%', background: 'transparent', border: 'none', color: '#dc262640', fontSize: 12, padding: '6px 0', cursor: 'pointer' }}>
-              Decline this estimate
-            </button>
-          </div>
-        </div>
-      </div>
-      </>
-    )
-  }
-
-  // ── MAIN VIEW (tier selection) ─────────────────
-  const viewTierLabel = selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)
-  return (
-    <>
-    <ConfirmModal
-      open={declineOpen}
-      icon="alert"
-      title="Decline this estimate?"
-      body="Are you sure you want to decline? The contractor will be notified."
-      confirmLabel="Decline"
-      onConfirm={() => { setDeclineOpen(false); declineEstimate() }}
-      onCancel={() => setDeclineOpen(false)}
-    />
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh" style={{ paddingTop: 'calc(20px + env(safe-area-inset-top))' }}>
-        <div className="h-top">
-          <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
-        </div>
-        <div className="h-title">
-          <div className="h-eye">{estimate.estimate_number} · {profile?.company_name || 'Contractor'}</div>
-          <div className="h-big">Your Estimate</div>
-          <div className="h-sub">Choose a package below and sign to approve</div>
-        </div>
-      </div>
-
-      <div className="card screen-enter" style={{ paddingTop: 'calc(60px + env(safe-area-inset-top))' }}>
-        <div className="sl" style={{ marginBottom: 12 }}>Choose your package</div>
-
-        <div className="tier-grid">
-          {TIERS.map(t => {
-            const p = calcPricing(t.key)
-            return (
-              <div key={t.key} className={`tier${selectedTier === t.key ? ' on' : ''}`}
-                onClick={() => setSelectedTier(t.key)}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span className="t-tag">{t.label}</span>
-                  {t.badge && <span className="t-badge">{t.badge}</span>}
-                </div>
-                <div className="t-price">{fmtCAD(p.total)}</div>
-                <div className="t-sub">inc. {taxLabel}</div>
-                <div className="t-why">{t.why}</div>
-              </div>
-            )
-          })}
         </div>
 
-        {openings.length > 0 && (
-          <>
-            <div className="sl" style={{ marginTop: 4 }}>What&apos;s included</div>
-            {openings.map(op => (
-              <div key={op.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-light)' }}>
-                <div style={{ fontSize: 13, color: 'var(--jet)' }}>
-                  {OPENING_TYPES[op.type]?.icon} {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
-                  {op.room ? <span style={{ fontSize: 10, color: 'var(--ash)', marginLeft: 6 }}>{op.room}</span> : null}
-                </div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)' }}>
-                  {fmtCAD(opCost(op, pricing.mult))}
-                </div>
-              </div>
-            ))}
-          </>
-        )}
-
-        <div className="sum-box" style={{ marginTop: 12 }}>
-          <div className="sum-row"><span>Subtotal ({viewTierLabel})</span><span>{fmtCAD(pricing.rawSubtotal)}</span></div>
-          {pricing.discountAmt > 0 && (
-            <div className="sum-row" style={{ color: '#16a34a' }}>
-              <span>Discount</span><span>−{fmtCAD(pricing.discountAmt)}</span>
-            </div>
-          )}
-          <div className="sum-row"><span>{taxLabel}</span><span>{fmtCAD(pricing.taxAmount)}</span></div>
-          <div className="sum-total">
-            <span className="sum-total-l">Total</span>
-            <span className="sum-total-v">{fmtCAD(pricing.total)}</span>
-          </div>
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: 11, color: '#94A3B8' }}>
+          Powered by EstimateOS
         </div>
-
-        {estimate.valid_until && (
-          <div style={{ fontSize: 11, color: 'var(--ash)', textAlign: 'center', marginBottom: 16 }}>
-            Valid until {estimate.valid_until}
-          </div>
-        )}
-
-        <button className="gen-btn" onClick={() => setScreen('summary')}>
-          Continue to {viewTierLabel} — {fmtCAD(pricing.total)} →
-        </button>
-
-        <button onClick={() => setDeclineOpen(true)}
-          style={{ width: '100%', background: 'transparent', border: 'none', color: '#6b7280', fontSize: 12, padding: '12px 0', cursor: 'pointer', marginTop: 4 }}>
-          Decline this estimate
-        </button>
       </div>
     </div>
-    </>
   )
 }
