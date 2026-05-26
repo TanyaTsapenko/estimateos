@@ -375,6 +375,17 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
+function formatCanadianPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '').slice(0, 10)
+  if (digits.length === 0) return ''
+  if (digits.length <= 3) return `(${digits}`
+  if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+function isValidCanadianPhone(phone: string): boolean {
+  return phone === '' || phone.replace(/\D/g, '').length === 10
+}
+
 function CompanySection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
@@ -483,46 +494,45 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
         {/* Logo card */}
         <Card>
           <SectionLabel>Logo</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-            <div style={{
-              width: 80, height: 80, borderRadius: 12, border: '1px solid #E2E5EA',
-              overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', background: logoUrl ? '#fff' : '#F5F6F8',
-            }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
+            <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+            <div
+              onClick={() => !uploading && fileInputRef.current?.click()}
+              style={{
+                width: 80, height: 80, borderRadius: 16, flexShrink: 0,
+                border: logoUrl ? '1px solid #E2E5EA' : '2px dashed #E5E7EB',
+                overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                background: logoUrl ? '#fff' : '#FAFBFC',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.7 : 1,
+              }}
+            >
               {logoUrl
                 ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                : <span style={{ fontSize: 22, fontWeight: 700, color: '#94A3B8' }}>{initials}</span>
+                : <>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 5 }}>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>Upload logo</span>
+                  </>
               }
             </div>
             <div>
-              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 10 }}>
-                {logoUrl ? 'Logo uploaded' : 'No logo uploaded yet'}
+              <div style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>
+                {uploading ? 'Uploading…' : logoUrl ? 'Tap to change logo' : 'PNG, JPG or SVG · Max 2 MB'}
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleUpload} />
+              {logoUrl && (
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
+                  onClick={handleRemove}
                   style={{
-                    padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none',
-                    borderRadius: 10, fontSize: 13, fontWeight: 600, fontFamily: 'inherit',
-                    cursor: uploading ? 'not-allowed' : 'pointer', opacity: uploading ? 0.7 : 1,
+                    padding: '6px 12px', background: '#fff', color: '#DC2626',
+                    border: '1px solid rgba(220,38,38,0.2)', borderRadius: 8,
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                   }}>
-                  {uploading ? 'Uploading...' : 'Upload logo'}
+                  Remove
                 </button>
-                {logoUrl && (
-                  <button
-                    onClick={handleRemove}
-                    style={{
-                      padding: '8px 14px', background: '#fff', color: '#DC2626',
-                      border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10,
-                      fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                    }}>
-                    Remove
-                  </button>
-                )}
-              </div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>PNG, JPG or SVG · Max 2 MB</div>
+              )}
             </div>
           </div>
         </Card>
@@ -531,7 +541,13 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
           <SectionLabel>Business details</SectionLabel>
           <Field label="Company name" value={values.companyName} onChange={set('companyName')} required />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Field label="Phone" value={values.phone} onChange={set('phone')} placeholder="+1 (555) 000-0000" />
+            <Field
+              label="Phone"
+              value={values.phone}
+              onChange={v => setValues(s => ({ ...s, phone: formatCanadianPhone(v) }))}
+              placeholder="(403) 555-0123"
+              error={!isValidCanadianPhone(values.phone) ? 'Please enter a valid Canadian phone number' : undefined}
+            />
             <Field label="Website" value={values.website} onChange={set('website')} placeholder="https://" />
           </div>
         </Card>
@@ -547,8 +563,8 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
         <Card>
           <SectionLabel>Business credentials</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Field label="Licence #" value={values.licence} onChange={set('licence')} />
-            <Field label="Insurance #" value={values.insurance} onChange={set('insurance')} />
+            <Field label="Licence #" value={values.licence} onChange={set('licence')} placeholder="e.g. AB-123456" />
+            <Field label="Insurance # (optional)" value={values.insurance} onChange={set('insurance')} placeholder="e.g. Policy #INS-789012 · Intact Insurance" />
           </div>
         </Card>
         <Card>
