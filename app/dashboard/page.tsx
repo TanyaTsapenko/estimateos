@@ -83,6 +83,79 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
   )
 }
 
+function GBBCard({ onClick, cardStyle }: { onClick: () => void; cardStyle?: React.CSSProperties }) {
+  return (
+    <div style={{
+      borderRadius: 20, background: 'linear-gradient(135deg, #2855e0 0%, #1a3fc4 100%)',
+      padding: 20, position: 'relative', overflow: 'hidden', ...cardStyle,
+    }}>
+      {/* Glow blobs */}
+      <div style={{ position: 'absolute', width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle, rgba(100,150,255,0.45) 0%, transparent 70%)', top: -100, right: -80, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -30, pointerEvents: 'none' }} />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Top row: tag + NEW badge */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.06em' }}>Pricing Play · 01</span>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 99, padding: '3px 9px', fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: '0.1em' }}>NEW</div>
+        </div>
+
+        {/* Big number + label */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div style={{ fontSize: 34, fontWeight: 900, color: '#fff', letterSpacing: '-1.5px', lineHeight: 1 }}>+ CA$ 420</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.45 }}>avg ticket /<br/>per signed job</div>
+        </div>
+
+        {/* Description */}
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.55, marginBottom: 16 }}>
+          Close more jobs by offering Good · Better · Best on every estimate.
+        </div>
+
+        {/* GBB preview box */}
+        <div style={{ background: 'rgba(0,0,0,0.22)', borderRadius: 12, padding: '16px 10px 10px', marginBottom: 16, position: 'relative' }}>
+          {/* Floating badge above Better */}
+          <div style={{ position: 'absolute', top: -11, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,0.22)', borderRadius: 99, padding: '3px 10px', fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>↓ 68% PICK</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 4px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5 }}>Good</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>CA$2.8k</div>
+            </div>
+            <div style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 8, padding: '8px 4px' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#fff', marginBottom: 5 }}>Better</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>CA$3.6k</div>
+            </div>
+            <div style={{ flex: 1, textAlign: 'center', background: 'rgba(255,255,255,0.07)', borderRadius: 8, padding: '8px 4px' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5 }}>Best</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>CA$4.4k</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onClick}
+            style={{ flex: 1, background: '#fff', border: 'none', borderRadius: 10, padding: '10px 12px', fontSize: 13, fontWeight: 700, color: '#1a3fc4', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center' }}>
+            Try on next estimate →
+          </button>
+          <button onClick={onClick}
+            style={{ width: 42, height: 42, flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function apptPillStyle(status: string): React.CSSProperties {
   if (status === 'IN PROGRESS') return {
     background: 'rgba(37,99,235,.28)', border: '1px solid rgba(255,255,255,.4)', color: '#fff',
@@ -535,29 +608,7 @@ export default function DashboardPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.5px', marginBottom: 14 }}>Discover</div>
                 <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-                  <div style={{ minWidth: 'calc(100vw - 48px)', maxWidth: 360, flexShrink: 0, borderRadius: 20, overflow: 'hidden', background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 50%, #1535a0 100%)', padding: '22px 20px 20px', position: 'relative' }}>
-                    <div style={{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.5) 0%, transparent 70%)', top: -80, right: -70, pointerEvents: 'none' }} />
-                    <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', bottom: -30, left: 20, pointerEvents: 'none' }} />
-                    <div style={{ position: 'relative', zIndex: 1 }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', marginBottom: 14 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>+CA$420 avg ticket</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                        {(['Good', 'Better', 'Best'] as const).map(t => (
-                          <div key={t} style={t === 'Better'
-                            ? { background: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#2045B8', fontWeight: 700, flex: 1, textAlign: 'center' }
-                            : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600, flex: 1, textAlign: 'center' }
-                          }>{t}</div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>68% of clients pick mid or top tier</div>
-                      <button onClick={() => router.push('/dashboard/gbb-onboarding')}
-                        style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
-                        Try on next estimate →
-                      </button>
-                    </div>
-                  </div>
+                  <GBBCard onClick={() => router.push('/dashboard/gbb-onboarding')} cardStyle={{ minWidth: 'calc(100vw - 48px)', maxWidth: 380, flexShrink: 0 }} />
                 </div>
               </section>
             )}
@@ -640,29 +691,7 @@ export default function DashboardPage() {
                   <div style={{ fontSize: 18, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.4px' }}>Discover</div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-                  <div style={{ width: 280, flexShrink: 0, borderRadius: 20, overflow: 'hidden', background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 50%, #1535a0 100%)', padding: '20px 18px 18px', position: 'relative' }}>
-                    <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.5) 0%, transparent 70%)', top: -80, right: -60, pointerEvents: 'none' }} />
-                    <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', bottom: -30, left: 20, pointerEvents: 'none' }} />
-                    <div style={{ position: 'relative', zIndex: 1 }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', marginBottom: 14 }}>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>+CA$420 avg ticket</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                        {(['Good', 'Better', 'Best'] as const).map(t => (
-                          <div key={t} style={t === 'Better'
-                            ? { background: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#2045B8', fontWeight: 700, flex: 1, textAlign: 'center' }
-                            : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600, flex: 1, textAlign: 'center' }
-                          }>{t}</div>
-                        ))}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 14 }}>68% of clients pick mid or top tier</div>
-                      <button onClick={() => router.push('/dashboard/gbb-onboarding')}
-                        style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
-                        Try on next estimate →
-                      </button>
-                    </div>
-                  </div>
+                  <GBBCard onClick={() => router.push('/dashboard/gbb-onboarding')} cardStyle={{ width: 320, flexShrink: 0 }} />
                 </div>
               </div>
             )}
