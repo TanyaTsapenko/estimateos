@@ -737,7 +737,7 @@ function NewEstimateForm() {
         )}
       </div>
 
-      <div className="card screen-enter">
+      <div className="card screen-enter" style={{ paddingTop: 42 }}>
         {error && <div className="error-msg">{error}</div>}
 
         {step === 1 && (
