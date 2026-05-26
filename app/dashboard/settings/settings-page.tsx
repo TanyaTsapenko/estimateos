@@ -23,7 +23,7 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     title: 'BUSINESS',
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',    desc: 'Logo, address, defaults' },
-      { id: 'team',     icon: 'team',     label: 'Team',       desc: '5 members · 1 invite' },
+      { id: 'team',     icon: 'team',     label: 'Team',       desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
     ],
@@ -31,7 +31,7 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
   {
     title: 'BILLING',
     items: [
-      { id: 'billing',  icon: 'card',    label: 'Plan & billing', desc: 'Pro · CA$24/mo' },
+      { id: 'billing',  icon: 'card',    label: 'Plan & billing', desc: 'Manage your subscription' },
       { id: 'invoices', icon: 'invoice', label: 'Invoices',       desc: 'Subscription history' },
     ],
   },
@@ -211,10 +211,38 @@ function Toast({ text }: { text: string }) {
 // ── SECTIONS ─────────────────────────────────────
 
 function ProfileSection({ flash }: { flash: (m: string) => void }) {
-  const [values, setValues] = useState({ firstName: 'Tanya', lastName: 'Slavina', email: 'tanya@estimare.ca', phone: '' })
-  const [initial] = useState({ ...values })
-  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = !!values.firstName && !!values.lastName && !!values.email
+  const supabase = createClient()
+  const empty = { firstName: '', lastName: '', email: '', phone: '' }
+  const [values, setValues] = useState(empty)
+  const [initial, setInitial] = useState(empty)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const { data: prof } = await supabase.from('profiles').select('first_name, last_name, email, phone').eq('id', user.id).single()
+      const loaded = {
+        firstName: (prof as any)?.first_name || '',
+        lastName:  (prof as any)?.last_name  || '',
+        email:     (prof as any)?.email      || user.email || '',
+        phone:     (prof as any)?.phone      || '',
+      }
+      setValues(loaded)
+      setInitial(loaded)
+      setLoaded(true)
+    })
+  }, [])
+
+  const dirty = loaded && JSON.stringify(values) !== JSON.stringify(initial)
+  const valid = !!values.firstName && !!values.email
+
+  async function handleSave() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('profiles').update({ first_name: values.firstName, last_name: values.lastName, phone: values.phone }).eq('id', user.id)
+    setInitial({ ...values })
+    flash('Profile saved')
+  }
 
   return (
     <div>
@@ -242,7 +270,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
           <Field label="Phone" value={values.phone} onChange={v => setValues(s => ({ ...s, phone: v }))} placeholder="+1 (555) 000-0000" />
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={valid} onSave={() => flash('Profile saved')} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={valid} onSave={handleSave} onDiscard={() => setValues({ ...initial })} />
     </div>
   )
 }
@@ -275,21 +303,14 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
         </Card>
         <Card>
           <SectionLabel>Active sessions</SectionLabel>
-          {[{ device: 'MacBook Pro · Chrome', location: 'Calgary, AB', lastActive: 'Now', current: true }].map((s, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {s.device} {s.current && <Pill tone="blue">THIS DEVICE</Pill>}
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{s.location} · {s.lastActive}</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', display: 'flex', alignItems: 'center', gap: 8 }}>
+                Current session <Pill tone="blue">THIS DEVICE</Pill>
               </div>
-              {!s.current && (
-                <button style={{ fontSize: 12, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-                  Sign out
-                </button>
-              )}
+              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Active now</div>
             </div>
-          ))}
+          </div>
         </Card>
       </div>
       <SaveBar dirty={dirty} valid={valid} onSave={() => { setValues({ current: '', next: '', confirm: '' }); flash('Password updated') }} onDiscard={() => setValues({ current: '', next: '', confirm: '' })} />
@@ -555,81 +576,22 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
 }
 
 function TeamSection({ flash }: { flash: (m: string) => void }) {
-  const [members] = useState([
-    { id: '1', name: 'Tanya Slavina', email: 'tanya@estimare.ca', role: 'Owner', current: true },
-    { id: '2', name: 'Alex K.', email: 'alex@estimare.ca', role: 'Estimator', current: false },
-  ])
-  const [showInvite, setShowInvite] = useState(false)
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('Estimator')
-
+  const router = useRouter()
   return (
     <div>
-      <SectionHeader kicker="BUSINESS" title="Team"
-        action={
-          <button onClick={() => setShowInvite(true)} style={{
-            padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none',
-            borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}>
-            <SIcon name="plus" size={14} /> Invite member
+      <SectionHeader kicker="BUSINESS" title="Team" subtitle="Manage your team members and pending invitations." />
+      <Card>
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <div style={{ fontSize: 14, color: '#64748B', marginBottom: 16 }}>
+            View and manage your team on the dedicated Team page.
+          </div>
+          <button
+            onClick={() => router.push('/dashboard/team')}
+            style={{ padding: '10px 24px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Go to Team →
           </button>
-        }
-      />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          {[{ label: 'Members', value: '2', icon: 'team' as IconName }, { label: 'Pending invites', value: '1', icon: 'mail' as IconName }, { label: 'Seats used', value: '2 / 5', icon: 'user' as IconName }].map(s => (
-            <Card key={s.label} padding={18}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(37,99,235,0.1)', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <SIcon name={s.icon} size={14} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>{s.value}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>{s.label}</div>
-                </div>
-              </div>
-            </Card>
-          ))}
         </div>
-        <Card>
-          <SectionLabel>Members</SectionLabel>
-          {members.map((m, i) => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {m.name[0]}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{m.name}</div>
-                <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
-              </div>
-              {m.current ? (
-                <Pill tone="blue">{m.role}</Pill>
-              ) : (
-                <select defaultValue={m.role} style={{ padding: '6px 10px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#475569', background: '#fff', cursor: 'pointer' }}>
-                  <option>Owner</option><option>Admin</option><option>Estimator</option><option>Viewer</option>
-                </select>
-              )}
-            </div>
-          ))}
-        </Card>
-        {showInvite && (
-          <Card>
-            <SectionLabel>Invite member</SectionLabel>
-            <Field label="Email address" value={inviteEmail} onChange={setInviteEmail} type="email" placeholder="colleague@company.com" />
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>Role</label>
-              <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
-                <option>Admin</option><option>Estimator</option><option>Viewer</option>
-              </select>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowInvite(false); flash('Invite sent') }} style={{ padding: '9px 20px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Send invite</button>
-              <button onClick={() => setShowInvite(false)} style={{ padding: '9px 16px', background: '#fff', color: '#475569', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-            </div>
-          </Card>
-        )}
-      </div>
+      </Card>
     </div>
   )
 }
@@ -914,85 +876,23 @@ function BillingSection({ flash }: { flash: (m: string) => void }) {
   return (
     <div>
       <SectionHeader kicker="BILLING" title="Plan & billing" subtitle="Manage your subscription and payment method." />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Pro Plan</div>
-                <Pill tone="blue">ACTIVE</Pill>
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B' }}>CA$149/mo · Renews Jun 1, 2026</div>
-            </div>
-            <button style={{ padding: '8px 16px', border: '1px solid #E2E5EA', borderRadius: 10, background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Change plan
-            </button>
-          </div>
-          <div style={{ borderTop: '1px solid #EEF0F4', paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            {[{ label: 'Estimates this month', value: '12' }, { label: 'Team seats', value: '2 / 5' }, { label: 'Storage', value: '0.4 GB / 10 GB' }].map(s => (
-              <div key={s.label}>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{s.value}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <SectionLabel>Payment method</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 26, background: '#1A1A2E', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 10, color: '#fff', fontWeight: 700 }}>VISA</span>
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>•••• •••• •••• 4242</div>
-                <div style={{ fontSize: 12, color: '#94A3B8' }}>Expires 12/27</div>
-              </div>
-            </div>
-            <button style={{ padding: '7px 14px', border: '1px solid #E2E5EA', borderRadius: 10, background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Update
-            </button>
-          </div>
-        </Card>
-        <Card>
-          <div style={{ padding: '14px 16px', background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(180,83,9,0.15)', borderRadius: 10 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#B45309', marginBottom: 4 }}>Cancel plan</div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 12 }}>You'll lose access to all Pro features at the end of your billing period.</div>
-            <button style={{ padding: '8px 16px', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Cancel plan
-            </button>
-          </div>
-        </Card>
-      </div>
+      <Card>
+        <div style={{ textAlign: 'center', padding: '24px 0', color: '#64748B', fontSize: 14 }}>
+          Billing management is not yet available in-app. Contact support to change your plan or update your payment method.
+        </div>
+      </Card>
     </div>
   )
 }
 
 function InvoicesSection() {
-  const invoices = [
-    { id: 'INV-2026-05', date: 'May 1, 2026', amount: 'CA$149.00', status: 'paid' },
-    { id: 'INV-2026-04', date: 'Apr 1, 2026', amount: 'CA$149.00', status: 'paid' },
-    { id: 'INV-2026-03', date: 'Mar 1, 2026', amount: 'CA$149.00', status: 'paid' },
-  ]
   return (
     <div>
       <SectionHeader kicker="BILLING" title="Invoices" subtitle="Your subscription billing history." />
-      <Card padding={0}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 80px 40px' }}>
-          {['INVOICE', 'DATE', 'AMOUNT', 'STATUS', ''].map(h => (
-            <div key={h} style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', borderBottom: '1px solid #EEF0F4' }}>{h}</div>
-          ))}
-          {invoices.map((inv, i) => (
-            <>
-              <div key={`id${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#2563EB' }}>{inv.id}</div>
-              <div key={`d${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, color: '#475569' }}>{inv.date}</div>
-              <div key={`a${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{inv.amount}</div>
-              <div key={`s${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none' }}><Pill tone="green">{inv.status}</Pill></div>
-              <div key={`dl${inv.id}`} style={{ padding: '12px 16px', borderBottom: i < invoices.length - 1 ? '1px solid #EEF0F4' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', padding: 0, display: 'flex' }}><SIcon name="download" size={14} /></button>
-              </div>
-            </>
-          ))}
+      <Card>
+        <div style={{ textAlign: 'center', padding: '24px 0' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No billing history yet</div>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>Your subscription invoices will appear here.</div>
         </div>
       </Card>
     </div>
@@ -1021,6 +921,8 @@ export default function SettingsPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
+  const [userName, setUserName] = useState('')
+  const [userInitial, setUserInitial] = useState('?')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1032,8 +934,11 @@ export default function SettingsPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      const { data: prof } = await supabase.from('profiles').select('company_name').eq('id', user.id).single()
+      const { data: prof } = await supabase.from('profiles').select('company_name, first_name, last_name').eq('id', user.id).single()
       if (prof?.company_name) setCompanyName(prof.company_name)
+      const name = [(prof as any)?.first_name, (prof as any)?.last_name].filter(Boolean).join(' ') || user.email || ''
+      setUserName(name)
+      setUserInitial(name[0]?.toUpperCase() || '?')
     })
   }, [])
 
@@ -1129,10 +1034,10 @@ export default function SettingsPage() {
           ))}
         </div>
         <div style={{ padding: 14, borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: '#2563EB', color: '#fff', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>T</div>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: '#2563EB', color: '#fff', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{userInitial}</div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Tanya Slavina</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Owner · Pro</div>
+            <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{userName || '—'}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>Owner</div>
           </div>
         </div>
       </div>
