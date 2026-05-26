@@ -676,6 +676,13 @@ Liability: Contractor is not responsible for pre-existing damage discovered duri
 
 const DEFAULT_CANCELLATION = 'Either party may cancel this contract with 72 hours written notice prior to the scheduled start date.'
 
+const DEFAULT_COMPLETION_TIMEFRAME = '10-16 weeks from the date of signed contract'
+const DEFAULT_CUSTOMER_RESPONSIBILITIES = 'Prior to installation: Customer must provide clear access (minimum 3 feet) to all window and door openings, remove blinds, curtains, and furniture near work areas. Customer is responsible for covering personal belongings from dust.'
+const DEFAULT_BUYER_RIGHT_TO_CANCEL = 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel.'
+const DEFAULT_DAMAGE_DISCLAIMER = 'The Company is not liable for incidental damage to exterior materials such as stucco, siding, or plaster that may occur as a result of installation.'
+const DEFAULT_PERMITS_RESPONSIBILITY = 'The Customer is solely responsible for obtaining any required construction permits and ensuring compliance with local building codes.'
+const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-transfer', 'Cheque', 'Financing']
+
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [terms,              setTerms]              = useState(DEFAULT_TERMS)
@@ -684,7 +691,14 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [depositRequired,    setDepositRequired]    = useState(true)
   const [depositPercent,     setDepositPercent]     = useState(10)
   const [paymentTerms,       setPaymentTerms]       = useState('Upon completion')
-  const [cancellationPolicy, setCancellationPolicy] = useState(DEFAULT_CANCELLATION)
+  const [cancellationPolicy,       setCancellationPolicy]       = useState(DEFAULT_CANCELLATION)
+  const [projectManager,           setProjectManager]           = useState('')
+  const [completionTimeframe,      setCompletionTimeframe]      = useState(DEFAULT_COMPLETION_TIMEFRAME)
+  const [paymentMethods,           setPaymentMethods]           = useState<string[]>(['E-transfer', 'Cheque'])
+  const [customerResponsibilities, setCustomerResponsibilities] = useState(DEFAULT_CUSTOMER_RESPONSIBILITIES)
+  const [buyerRightToCancel,       setBuyerRightToCancel]       = useState(DEFAULT_BUYER_RIGHT_TO_CANCEL)
+  const [damageDisclaimer,         setDamageDisclaimer]         = useState(DEFAULT_DAMAGE_DISCLAIMER)
+  const [permitsResponsibility,    setPermitsResponsibility]    = useState(DEFAULT_PERMITS_RESPONSIBILITY)
   const dirty = true
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
@@ -693,7 +707,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
       setUserId(data.user.id)
-      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy').eq('id', data.user.id).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', data.user.id).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
         setTerms(loaded); setInitialTerms(loaded)
@@ -702,6 +716,13 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
         if ((prof as any)?.payment_terms)       setPaymentTerms((prof as any).payment_terms)
         if ((prof as any)?.cancellation_policy) setCancellationPolicy((prof as any).cancellation_policy)
+        if ((prof as any)?.project_manager != null)    setProjectManager((prof as any).project_manager)
+        if ((prof as any)?.completion_timeframe)       setCompletionTimeframe((prof as any).completion_timeframe)
+        if ((prof as any)?.payment_methods?.length)    setPaymentMethods((prof as any).payment_methods)
+        if ((prof as any)?.customer_responsibilities)  setCustomerResponsibilities((prof as any).customer_responsibilities)
+        if ((prof as any)?.buyer_right_to_cancel)      setBuyerRightToCancel((prof as any).buyer_right_to_cancel)
+        if ((prof as any)?.damage_disclaimer)          setDamageDisclaimer((prof as any).damage_disclaimer)
+        if ((prof as any)?.permits_responsibility)     setPermitsResponsibility((prof as any).permits_responsibility)
       })
     })
   }, [])
@@ -709,12 +730,19 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   async function saveContract() {
     if (!userId) return
     const { error } = await supabase.from('profiles').update({
-      contract_terms:      terms,
-      warranty_period:     warrantyPeriod,
-      deposit_required:    depositRequired,
-      deposit_percent:     depositPercent,
-      payment_terms:       paymentTerms,
-      cancellation_policy: cancellationPolicy,
+      contract_terms:            terms,
+      warranty_period:           warrantyPeriod,
+      deposit_required:          depositRequired,
+      deposit_percent:           depositPercent,
+      payment_terms:             paymentTerms,
+      cancellation_policy:       cancellationPolicy,
+      project_manager:           projectManager,
+      completion_timeframe:      completionTimeframe,
+      payment_methods:           paymentMethods,
+      customer_responsibilities: customerResponsibilities,
+      buyer_right_to_cancel:     buyerRightToCancel,
+      damage_disclaimer:         damageDisclaimer,
+      permits_responsibility:    permitsResponsibility,
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
     setInitialTerms(terms)
@@ -799,6 +827,72 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Cancellation Policy</div>
             <textarea value={cancellationPolicy} onChange={e => setCancellationPolicy(e.target.value)} rows={3}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+        </Card>
+
+        <Card>
+          <SectionLabel>Additional Contract Details</SectionLabel>
+
+          {/* Project Manager */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Project Manager</div>
+            <input type="text" value={projectManager} onChange={e => setProjectManager(e.target.value)} placeholder="e.g. John Smith"
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Completion Timeframe */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Completion Timeframe</div>
+            <input type="text" value={completionTimeframe} onChange={e => setCompletionTimeframe(e.target.value)}
+              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Payment Methods */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 10 }}>Accepted Payment Methods</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {PAYMENT_METHOD_OPTIONS.map(method => {
+                const checked = paymentMethods.includes(method)
+                return (
+                  <label key={method} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 999, border: `1.5px solid ${checked ? '#2563EB' : '#E2E5EA'}`, background: checked ? 'rgba(37,99,235,0.07)' : '#fff', cursor: 'pointer', userSelect: 'none' }}>
+                    <input type="checkbox" checked={checked} onChange={() => setPaymentMethods(prev => checked ? prev.filter(m => m !== method) : [...prev, method])} style={{ display: 'none' }} />
+                    <div style={{ width: 14, height: 14, borderRadius: 4, border: `1.5px solid ${checked ? '#2563EB' : '#CBD5E1'}`, background: checked ? '#2563EB' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: checked ? '#2563EB' : '#475569' }}>{method}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Customer Responsibilities */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Customer Responsibilities</div>
+            <textarea value={customerResponsibilities} onChange={e => setCustomerResponsibilities(e.target.value)} rows={4}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Buyer's Right to Cancel */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Buyer's Right to Cancel</div>
+            <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8 }}>Required by consumer protection law in most Canadian provinces.</p>
+            <textarea value={buyerRightToCancel} onChange={e => setBuyerRightToCancel(e.target.value)} rows={4}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Damage Disclaimer */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Damage Disclaimer</div>
+            <textarea value={damageDisclaimer} onChange={e => setDamageDisclaimer(e.target.value)} rows={3}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Permits Responsibility */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Permits Responsibility</div>
+            <textarea value={permitsResponsibility} onChange={e => setPermitsResponsibility(e.target.value)} rows={3}
               style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
           </div>
         </Card>
