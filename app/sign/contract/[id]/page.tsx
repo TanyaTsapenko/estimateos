@@ -227,30 +227,59 @@ export default function SignContractPage() {
 
       {/* ── SUCCESS overlay (fixed, hidden on print) ── */}
       {showSuccess && (
-        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#fff', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '48px 24px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'max(48px, calc(env(safe-area-inset-top) + 32px))' }}>
-            <div style={{ width: 64, height: 64, background: 'rgba(255,255,255,0.1)', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#fff', fontFamily: F, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+
+          {/* HERO */}
+          <div style={{
+            position: 'relative', overflow: 'hidden',
+            background: 'linear-gradient(160deg, #0A0E1A 0%, #1A2744 60%, #0f1f3d 100%)',
+            padding: 'max(64px, calc(env(safe-area-inset-top) + 48px)) 24px 48px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+          }}>
+            {/* Radial glow */}
+            <div style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+            {/* Check — outer ring → inner circle → icon */}
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(22,163,74,0.15)', border: '1.5px solid rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22, position: 'relative', zIndex: 1 }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 24px rgba(22,163,74,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              </div>
             </div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>ALL DONE</div>
-            <div style={{ fontSize: 26, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Contract Signed!</div>
+
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 10, position: 'relative', zIndex: 1 }}>ALL DONE</div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: 10, position: 'relative', zIndex: 1 }}>Contract Signed!</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 280, position: 'relative', zIndex: 1 }}>
+              A copy has been sent to <span style={{ color: 'rgba(255,255,255,0.8)' }}>{estimate.client_email || estimate.client_name || 'the client'}</span>
+            </div>
           </div>
-          <div style={{ flex: 1, background: '#F4F4F2', padding: '32px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <div style={{ fontSize: 15, color: '#353A3E', lineHeight: 1.7, maxWidth: 320, marginBottom: 24 }}>
-              A copy will be sent to your email. <strong>{contract?.company_name || 'Your contractor'}</strong> will be in touch shortly.
-            </div>
-            <button
-              onClick={() => window.print()}
-              style={{ width: '100%', maxWidth: 320, background: '#fff', border: '1px solid #E8E8E8', borderRadius: 13, padding: 14, fontSize: 14, fontWeight: 600, color: '#353A3E', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#353A3E" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="12" y1="18" x2="12" y2="12"/>
-                <line x1="9" y1="15" x2="15" y2="15"/>
-              </svg>
+
+          {/* DETAILS CARD */}
+          <div style={{ margin: '16px 16px 0', background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
+            {([
+              { label: 'Contract', value: conDisplayId,                      color: '#1A1A1A' },
+              { label: 'Client',   value: estimate.client_name || '—',       color: '#1A1A1A' },
+              { label: 'Amount',   value: fmtCAD(estimate.total),             color: '#3B6CFF' },
+              { label: 'Status',   value: '✓ Signed',                        color: '#16A34A' },
+            ] as { label: string; value: string; color: string }[]).map((row, i, arr) => (
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', borderBottom: i < arr.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
+                <span style={{ fontSize: 13, color: '#6B7280' }}>{row.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: row.color }}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* ACTIONS */}
+          <div style={{ padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={() => window.print()}
+              style={{ width: '100%', background: '#3B6CFF', border: 'none', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
               Save as PDF
             </button>
+            <button onClick={() => { window.location.href = '/dashboard' }}
+              style={{ width: '100%', background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 600, color: '#1A1A1A', cursor: 'pointer', fontFamily: F }}>
+              Back to dashboard
+            </button>
           </div>
+
         </div>
       )}
 
