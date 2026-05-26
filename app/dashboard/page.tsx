@@ -440,12 +440,12 @@ export default function DashboardPage() {
           <div style={{ padding: '16px 16px 0', display: 'flex', gap: 8, position: 'relative', zIndex: 1 }}>
             {signaturesNeeded > 0 && (
               <button onClick={() => router.push('/dashboard/estimates')}
-                style={{ flex: 1, padding: '10px 14px', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.35)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.35)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
                 {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
               </button>
             )}
             <button onClick={() => router.push('/dashboard/appointments')}
-              style={{ padding: '10px 22px', borderRadius: 99, border: 'none', background: '#fff', color: '#2045B8', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+              style={{ padding: '10px 22px', borderRadius: 12, border: 'none', background: '#fff', color: '#2045B8', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
               <Calendar size={13} strokeWidth={2} />
               Open schedule
             </button>
@@ -607,8 +607,8 @@ export default function DashboardPage() {
               <section>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.5px', marginBottom: 14 }}>Discover</div>
-                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
-                  <GBBCard onClick={() => router.push('/dashboard/gbb-onboarding')} cardStyle={{ minWidth: 'calc(100vw - 48px)', maxWidth: 380, flexShrink: 0 }} />
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <GBBCard onClick={() => router.push('/dashboard/gbb-onboarding')} cardStyle={{ width: '100%' }} />
                 </div>
               </section>
             )}
