@@ -106,9 +106,6 @@ export default function SignPage() {
 
         {/* Hand to client */}
         <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--border-light)', marginTop: 8 }}>
-          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 }}>
-            Hand the phone to <strong>{estimate.client_name || 'your client'}</strong> to sign below.
-          </div>
           <button
             onClick={() => router.push(`/sign/${id}`)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '14px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>

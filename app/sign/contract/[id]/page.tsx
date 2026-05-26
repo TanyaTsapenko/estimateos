@@ -362,17 +362,6 @@ export default function SignContractPage() {
         {/* BODY */}
         <div style={{ padding: 16 }}>
 
-          {/* SIGN ON THE SPOT BANNER */}
-          {contract.status === 'signing' && (
-            <div className="no-print" style={{ background: '#EEF2FF', color: '#2045B8', padding: '12px 16px', borderRadius: 10, marginBottom: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M18 11V6a2 2 0 00-2-2v0a2 2 0 00-2 2v0"/><path d="M14 10V4a2 2 0 00-2-2v0a2 2 0 00-2 2v2"/><path d="M10 10.5V6a2 2 0 00-2-2v0a2 2 0 00-2 2v8"/><path d="M18 8a2 2 0 114 0v6a8 8 0 01-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 012.83-2.82L7 15"/>
-              </svg>
-              <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.4 }}>
-                Hand the phone to {estimate?.client_name || 'your client'} to sign below
-              </span>
-            </div>
-          )}
 
           {/* SUMMARY */}
           <div style={{ ...cardStyle, padding: 16 }}>
