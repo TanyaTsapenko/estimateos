@@ -135,6 +135,7 @@ export default function PriceListPage() {
           base_price:   base,
           labour_price: lab,
           category,
+          type:         'custom',
           updated_at:   new Date().toISOString(),
         })
       if (e) { setError(e.message); setModalSaving(false); return }
