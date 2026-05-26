@@ -25,8 +25,8 @@ export default function NewAppointmentPage() {
   const [allMembers, setAllMembers] = useState<TeamMember[]>([])
   const [errors, setErrors] = useState<ClientErrors>({})
 
-  const _now = new Date()
-  const today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+  const now   = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
   const [form, setForm] = useState({
     client_name: '',
@@ -40,6 +40,9 @@ export default function NewAppointmentPage() {
     assigned_to: '',
     status: 'scheduled',
   })
+
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const minTime = form.appointment_date === today ? currentTime : ''
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
   const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
@@ -77,6 +80,8 @@ export default function NewAppointmentPage() {
     setErrors(newErrors)
     if (hasErrors(newErrors)) return
     if (!form.appointment_date) return setError('Date is required')
+    const apptDateTime = new Date(`${form.appointment_date}T${form.appointment_time || '00:00'}`)
+    if (apptDateTime < new Date()) return setError('Cannot schedule an appointment in the past.')
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -193,12 +198,12 @@ export default function NewAppointmentPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
           <div className="f">
             <label>Date</label>
-            <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+            <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
           <div className="f">
             <label>Time</label>
-            <input type="time" value={form.appointment_time} onChange={e => set('appointment_time', e.target.value)}
+            <input type="time" min={minTime} value={form.appointment_time} onChange={e => set('appointment_time', e.target.value)}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
