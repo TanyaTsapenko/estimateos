@@ -4,29 +4,18 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
-import { Square, LayoutGrid, Home, Minus, Image, DoorOpen, PanelRight, BookOpen, Shield, DoorClosed } from 'lucide-react'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
 
-const OPENING_ICONS: Record<string, React.ReactNode> = {
-  window_dh:  <Square    size={16} strokeWidth={1.5} color="#2563EB" />,
-  window_cas: <LayoutGrid size={16} strokeWidth={1.5} color="#2563EB" />,
-  window_bay: <Home      size={16} strokeWidth={1.5} color="#2563EB" />,
-  window_sl:  <Minus     size={16} strokeWidth={1.5} color="#2563EB" />,
-  window_fix: <Image     size={16} strokeWidth={1.5} color="#2563EB" />,
-  door_entry: <DoorOpen  size={16} strokeWidth={1.5} color="#6B7280" />,
-  door_patio: <PanelRight size={16} strokeWidth={1.5} color="#6B7280" />,
-  door_french:<BookOpen  size={16} strokeWidth={1.5} color="#6B7280" />,
-  door_storm: <Shield    size={16} strokeWidth={1.5} color="#6B7280" />,
-  door_int:   <DoorClosed size={16} strokeWidth={1.5} color="#6B7280" />,
-}
+type CustomOpeningType = { label: string; base: number; lab: number; category?: string }
 
-function OpeningTypeSelect({ value, onChange, customOpeningTypes }: {
+function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }: {
   value: string
   onChange: (v: string) => void
-  customOpeningTypes?: Record<string, { label: string; base: number; lab: number }>
+  customOpeningTypes?: Record<string, CustomOpeningType>
+  customPrices?: CustomPrices
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -38,7 +27,30 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes }: {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
-  const customEntries = customOpeningTypes ? Object.entries(customOpeningTypes) : []
+
+  // Build a flat list of all items, grouped by category
+  const allItems: Array<{ key: string; name: string; price: number; category: string }> = []
+  Object.entries(OPENING_TYPES).forEach(([k, v]) => {
+    const cat = k.startsWith('window_') ? 'Windows' : k.startsWith('door_') ? 'Doors' : 'Other'
+    const dbPrice = customPrices?.types?.[k]
+    const price = dbPrice ? dbPrice.base + dbPrice.lab : v.base + v.lab
+    allItems.push({ key: k, name: v.name, price, category: cat })
+  })
+  if (customOpeningTypes) {
+    Object.entries(customOpeningTypes).forEach(([k, v]) => {
+      if (!allItems.find(i => i.key === k)) {
+        allItems.push({ key: k, name: v.label, price: v.base + v.lab, category: v.category || 'Other' })
+      }
+    })
+  }
+  const grouped = allItems.reduce<Record<string, typeof allItems>>((acc, item) => {
+    if (!acc[item.category]) acc[item.category] = []
+    acc[item.category].push(item)
+    return acc
+  }, {})
+
+  const selectedName = OPENING_TYPES[value]?.name || customOpeningTypes?.[value]?.label || value
+
   return (
     <div ref={ref} style={{ position: 'relative' }}>
       <button
@@ -51,57 +63,53 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes }: {
           fontSize: 13, color: 'var(--jet)', textAlign: 'left',
         }}
       >
-        {OPENING_ICONS[value] || <span style={{ fontSize: 14, width: 16, display: 'inline-block', textAlign: 'center' }}>⬜</span>}
-        <span style={{ flex: 1 }}>{OPENING_TYPES[value]?.name || customOpeningTypes?.[value]?.label || value}</span>
+        <span style={{ flex: 1 }}>{selectedName}</span>
         <span style={{ fontSize: 10, color: '#94A3B8' }}>▾</span>
       </button>
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
           background: '#fff', border: '1.5px solid var(--border)', borderRadius: 10,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, overflow: 'hidden',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4,
+          maxHeight: 340, overflowY: 'auto',
         }}>
-          {Object.entries(OPENING_TYPES).map(([k, v]) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => { onChange(k); setOpen(false) }}
-              style={{
-                width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 12px', border: 'none',
-                background: k === value ? 'rgba(37,99,235,.07)' : '#fff',
-                cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
-                color: 'var(--jet)', textAlign: 'left',
-              }}
-            >
-              {OPENING_ICONS[k]}
-              {v.name}
-            </button>
-          ))}
-          {customEntries.length > 0 && (
-            <>
-              <div style={{ padding: '6px 12px 4px', fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '.06em', textTransform: 'uppercase', borderTop: '1px solid #F1F5F9' }}>
-                Custom
+          {Object.entries(grouped).map(([category, catItems]) => (
+            <div key={category}>
+              {/* Category divider */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 12px', background: '#F8FAFC',
+                borderTop: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9',
+              }}>
+                <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+                  {category}
+                </span>
+                <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
               </div>
-              {customEntries.map(([k, v]) => (
+              {catItems.map(item => (
                 <button
-                  key={k}
+                  key={item.key}
                   type="button"
-                  onClick={() => { onChange(k); setOpen(false) }}
+                  onClick={() => { onChange(item.key); setOpen(false) }}
                   style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    width: '100%', display: 'flex', alignItems: 'center',
                     padding: '10px 12px', border: 'none',
-                    background: k === value ? 'rgba(37,99,235,.07)' : '#fff',
+                    background: item.key === value ? 'rgba(37,99,235,.07)' : '#fff',
                     cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
-                    color: 'var(--jet)', textAlign: 'left',
+                    color: 'var(--jet)', textAlign: 'left', gap: 8,
                   }}
                 >
-                  <span style={{ fontSize: 14, width: 16, display: 'inline-block', textAlign: 'center' }}>⬜</span>
-                  {v.label}
+                  {item.key === value
+                    ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>
+                    : <div style={{ width: 14, flexShrink: 0 }} />
+                  }
+                  <span style={{ flex: 1 }}>{item.name}</span>
+                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, flexShrink: 0 }}>{fmtCAD(item.price)}</span>
                 </button>
               ))}
-            </>
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -128,7 +136,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
 interface OpeningCardProps {
   op: Opening
   idx: number
-  customOpeningTypes: Record<string, { label: string; base: number; lab: number }>
+  customOpeningTypes: Record<string, CustomOpeningType>
   customPrices: CustomPrices | undefined
   openingsCount: number
   removeOpening: (id: string) => void
@@ -160,7 +168,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
 
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Type</label>
-          <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} /></div>
+          <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} customPrices={customPrices} /></div>
         <div className="f"><label>Qty</label>
           <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
             {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
@@ -275,7 +283,7 @@ function NewEstimateForm() {
   const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [profile, setProfile] = useState<{ province: string } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
-  const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, { label: string; base: number; lab: number }>>({})
+  const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -292,9 +300,14 @@ function NewEstimateForm() {
       types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
     })
     setCustomPrices({ types })
-    const customTypesMap: Record<string, { label: string; base: number; lab: number }> = {}
+    const customTypesMap: Record<string, CustomOpeningType> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
-      customTypesMap[r.opening_type] = { label: r.custom_label, base: r.base_price, lab: r.labour_price }
+      customTypesMap[r.opening_type] = {
+        label:    r.custom_label,
+        base:     r.base_price,
+        lab:      r.labour_price,
+        category: r.category || 'Other',
+      }
     })
     setCustomOpeningTypes(customTypesMap)
   }
@@ -318,7 +331,7 @@ function NewEstimateForm() {
       userIdRef.current = user.id
       const [{ data: prof }, { data: priceRows }] = await Promise.all([
         supabase.from('profiles').select('province, pricing_mode').eq('id', user.id).single(),
-        supabase.from('price_lists').select('*').eq('user_id', user.id),
+        supabase.from('price_lists').select('*').eq('user_id', user.id).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
       ])
       if (prof) {
         setProfile(prof)

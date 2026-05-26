@@ -1,585 +1,411 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
-import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { fmtCAD } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 
-interface PriceRow { base: number; lab: number }
-interface CustomType { key: string; label: string; base: number; lab: number }
-interface GbbRow { good: number; better: number; best: number }
-
-const DEFAULT_PRICES: Record<string, PriceRow> = Object.fromEntries(
-  Object.entries(OPENING_TYPES).map(([k, v]) => [k, { base: v.base, lab: v.lab }])
-)
-
-function OpeningIcon({ typeKey }: { typeKey: string }) {
-  const isWindow = typeKey.startsWith('window_')
-  const isDoor   = typeKey.startsWith('door_')
-  return (
-    <div style={{ width: 40, height: 40, borderRadius: 10, flexShrink: 0, background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      {isWindow ? (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
-          <rect x="2" y="2" width="16" height="16" rx="1.5"/>
-          <line x1="10" y1="2" x2="10" y2="18"/>
-          <line x1="2" y1="10" x2="18" y2="10"/>
-        </svg>
-      ) : isDoor ? (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
-          <rect x="3" y="1" width="14" height="18" rx="1.5"/>
-          <circle cx="14" cy="10.5" r="1.2" fill="#2045B8" stroke="none"/>
-        </svg>
-      ) : (
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#2045B8" strokeWidth="1.5" strokeLinecap="round">
-          <rect x="2" y="2" width="16" height="16" rx="1.5"/>
-        </svg>
-      )}
-    </div>
-  )
+interface PriceItem {
+  key: string
+  label: string
+  base: number
+  lab: number
+  category: string
 }
 
-function DragHandle() {
-  return (
-    <svg width="12" height="18" viewBox="0 0 12 18" fill="none" style={{ flexShrink: 0 }}>
-      <circle cx="3" cy="3"  r="1.5" fill="#CBD5E1"/>
-      <circle cx="9" cy="3"  r="1.5" fill="#CBD5E1"/>
-      <circle cx="3" cy="9"  r="1.5" fill="#CBD5E1"/>
-      <circle cx="9" cy="9"  r="1.5" fill="#CBD5E1"/>
-      <circle cx="3" cy="15" r="1.5" fill="#CBD5E1"/>
-      <circle cx="9" cy="15" r="1.5" fill="#CBD5E1"/>
-    </svg>
-  )
-}
-
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8',
-  textTransform: 'uppercase', marginBottom: 8, marginTop: 20,
-}
+const PRESET_CATEGORIES = ['Windows', 'Doors', 'Other']
+const F = '"Inter", system-ui, -apple-system, sans-serif'
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box', background: '#F8FAFC', border: '1.5px solid #E2E8F0',
-  borderRadius: 8, padding: '8px 10px', fontSize: 14, color: '#0A1628',
-  fontFamily: 'inherit', outline: 'none', minWidth: 0,
+  width: '100%', boxSizing: 'border-box', padding: '11px 13px',
+  border: '1.5px solid #E2E5EA', borderRadius: 10, fontSize: 14,
+  fontFamily: F, color: '#0A1628', outline: 'none',
 }
 
 export default function PriceListPage() {
   const router   = useRouter()
   const supabase = createClient()
 
-  const [prices,           setPrices]           = useState<Record<string, PriceRow>>(DEFAULT_PRICES)
-  const [saving,           setSaving]           = useState(false)
-  const [saved,            setSaved]            = useState(false)
-  const [error,            setError]            = useState('')
-  const [loading,          setLoading]          = useState(true)
-  const [customTypes,        setCustomTypes]        = useState<CustomType[]>([])
-  const [newLabel,           setNewLabel]           = useState('')
-  const [expandedKey,        setExpandedKey]        = useState<string | null>(null)
-  const [deletingItem,       setDeletingItem]       = useState<{ key: string; name: string; isCustom: boolean } | null>(null)
-  const [removedStandardKeys,setRemovedStandardKeys]= useState<string[]>([])
-  const [hoverDeleteKey,     setHoverDeleteKey]     = useState<string | null>(null)
-  const [userId,             setUserId]             = useState<string | null>(null)
-  const [pricingMode,      setPricingMode]      = useState<'single' | 'gbb'>('single')
-  const [gbbPrices,        setGbbPrices]        = useState<Record<string, GbbRow>>({})
+  const [items,        setItems]        = useState<PriceItem[]>([])
+  const [loading,      setLoading]      = useState(true)
+  const [userId,       setUserId]       = useState<string | null>(null)
+  const [error,        setError]        = useState('')
+  const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null)
 
-  // Drag state — refs for use inside stable useEffect closures
-  const [dragIndexState,   setDragIndexState]   = useState<number | null>(null)
-  const [dragOverState,    setDragOverState]    = useState<number | null>(null)
-  const dragIndexRef = useRef<number | null>(null)
-  const dragOverRef  = useRef<number | null>(null)
-  const itemRefs     = useRef<(HTMLDivElement | null)[]>([])
-
-  function setDragIndex(v: number | null) { dragIndexRef.current = v; setDragIndexState(v) }
-  function setDragOver(v: number | null)  { dragOverRef.current  = v; setDragOverState(v) }
-
-  function getOverIndex(clientY: number): number {
-    for (let i = 0; i < itemRefs.current.length; i++) {
-      const el = itemRefs.current[i]
-      if (!el) continue
-      const rect = el.getBoundingClientRect()
-      if (clientY < rect.top + rect.height / 2) return i
-    }
-    return Math.max(0, itemRefs.current.filter(Boolean).length - 1)
-  }
-
-  useEffect(() => {
-    function onMove(e: PointerEvent) {
-      if (dragIndexRef.current === null) return
-      e.preventDefault()
-      const over = getOverIndex(e.clientY)
-      if (over !== dragOverRef.current) setDragOver(over)
-    }
-    function onUp() {
-      if (dragIndexRef.current === null) return
-      const from = dragIndexRef.current
-      const to   = dragOverRef.current
-      if (to !== null && to !== from) {
-        setCustomTypes(prev => {
-          const arr = [...prev]
-          const [item] = arr.splice(from, 1)
-          arr.splice(to, 0, item)
-          return arr
-        })
-      }
-      setDragIndex(null)
-      setDragOver(null)
-    }
-    window.addEventListener('pointermove', onMove, { passive: false })
-    window.addEventListener('pointerup',   onUp)
-    return () => {
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerup',   onUp)
-    }
-  }, [])
+  // Modal
+  const [showModal,          setShowModal]          = useState(false)
+  const [editingItem,        setEditingItem]        = useState<PriceItem | null>(null)
+  const [modalName,          setModalName]          = useState('')
+  const [modalBase,          setModalBase]          = useState('')
+  const [modalLab,           setModalLab]           = useState('')
+  const [modalCategory,      setModalCategory]      = useState('Windows')
+  const [modalCustomCategory,setModalCustomCategory] = useState('')
+  const [modalSaving,        setModalSaving]        = useState(false)
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
       setUserId(user.id)
-      const [{ data }, { data: prof }] = await Promise.all([
-        supabase.from('price_lists').select('*').eq('user_id', user.id),
-        supabase.from('profiles').select('pricing_mode').eq('id', user.id).single(),
-      ])
-      if ((prof as any)?.pricing_mode === 'gbb') setPricingMode('gbb')
-      if (data && data.length > 0) {
-        const loaded: Record<string, PriceRow> = { ...DEFAULT_PRICES }
-        data.filter(r => r.opening_type !== '_sizes' && !r.custom_label).forEach(r => {
-          loaded[r.opening_type] = { base: r.base_price, lab: r.labour_price }
-        })
-        setPrices(loaded)
-        const customRows = data.filter(r => r.opening_type !== '_sizes' && r.custom_label)
-        setCustomTypes(customRows.map(r => ({
-          key: r.opening_type, label: r.custom_label,
-          base: r.base_price, lab: r.labour_price,
+      const { data } = await supabase
+        .from('price_lists')
+        .select('*')
+        .eq('user_id', user.id)
+        .neq('opening_type', '_sizes')
+        .order('category', { ascending: true, nullsFirst: false })
+        .order('custom_label', { ascending: true, nullsFirst: false })
+      if (data) {
+        setItems(data.map(r => ({
+          key:      r.opening_type,
+          label:    r.custom_label || r.opening_type,
+          base:     r.base_price   || 0,
+          lab:      r.labour_price || 0,
+          category: r.category     || 'Other',
         })))
-        const gbb: Record<string, GbbRow> = {}
-        data.filter(r => r.opening_type !== '_sizes').forEach(r => {
-          gbb[r.opening_type] = { good: r.good_price || 0, better: r.better_price || 0, best: r.best_price || 0 }
-        })
-        setGbbPrices(gbb)
       }
       setLoading(false)
     }
     load()
   }, [])
 
-  async function save() {
-    setSaving(true); setError(''); setSaved(false)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setSaving(false); return }
+  function openAddModal(defaultCategory = 'Windows') {
+    setEditingItem(null)
+    setModalName('')
+    setModalBase('')
+    setModalLab('')
+    const isPreset = PRESET_CATEGORIES.includes(defaultCategory)
+    setModalCategory(isPreset ? defaultCategory : 'new')
+    setModalCustomCategory(isPreset ? '' : defaultCategory)
+    setError('')
+    setShowModal(true)
+  }
 
-    const zeroCustom = customTypes.find(ct => ct.base + ct.lab === 0)
-    if (zeroCustom) {
-      setError(`Please enter a price for "${zeroCustom.label}"`)
-      setExpandedKey(zeroCustom.key)
-      setSaving(false)
-      return
+  function openEditModal(item: PriceItem) {
+    setEditingItem(item)
+    setModalName(item.label)
+    setModalBase(item.base ? String(item.base) : '')
+    setModalLab(item.lab ? String(item.lab) : '')
+    const isPreset = PRESET_CATEGORIES.includes(item.category)
+    setModalCategory(isPreset ? item.category : 'new')
+    setModalCustomCategory(isPreset ? '' : item.category)
+    setError('')
+    setShowModal(true)
+  }
+
+  async function saveModal() {
+    if (!modalName.trim() || !userId) return
+    const category = modalCategory === 'new'
+      ? (modalCustomCategory.trim() || 'Other')
+      : modalCategory
+    const base = parseFloat(modalBase) || 0
+    const lab  = parseFloat(modalLab)  || 0
+    setModalSaving(true)
+    setError('')
+
+    if (editingItem) {
+      const { error: e } = await supabase
+        .from('price_lists')
+        .update({
+          custom_label: modalName.trim(),
+          base_price:   base,
+          labour_price: lab,
+          category,
+          updated_at:   new Date().toISOString(),
+        })
+        .eq('user_id', userId)
+        .eq('opening_type', editingItem.key)
+      if (e) { setError(e.message); setModalSaving(false); return }
+      setItems(prev =>
+        prev.map(it => it.key === editingItem.key
+          ? { ...it, label: modalName.trim(), base, lab, category }
+          : it
+        ).sort((a, b) =>
+          a.category.localeCompare(b.category) || a.label.localeCompare(b.label)
+        )
+      )
+    } else {
+      const key = 'custom_' + Date.now()
+      const { error: e } = await supabase
+        .from('price_lists')
+        .insert({
+          user_id:      userId,
+          opening_type: key,
+          custom_label: modalName.trim(),
+          base_price:   base,
+          labour_price: lab,
+          category,
+          updated_at:   new Date().toISOString(),
+        })
+      if (e) { setError(e.message); setModalSaving(false); return }
+      setItems(prev =>
+        [...prev, { key, label: modalName.trim(), base, lab, category }]
+          .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label))
+      )
     }
 
-    const rows = [
-      ...Object.entries(prices).filter(([type]) => !removedStandardKeys.includes(type)).map(([type, p]) => ({
-        user_id: user.id, opening_type: type,
-        base_price: p.base, labour_price: p.lab,
-        ...(pricingMode === 'gbb' ? {
-          good_price:   gbbPrices[type]?.good   || null,
-          better_price: gbbPrices[type]?.better || null,
-          best_price:   gbbPrices[type]?.best   || null,
-        } : {}),
-        updated_at: new Date().toISOString(),
-      })),
-      ...customTypes.map(ct => ({
-        user_id: user.id, opening_type: ct.key,
-        base_price: ct.base, labour_price: ct.lab,
-        custom_label: ct.label,
-        ...(pricingMode === 'gbb' ? {
-          good_price:   gbbPrices[ct.key]?.good   || null,
-          better_price: gbbPrices[ct.key]?.better || null,
-          best_price:   gbbPrices[ct.key]?.best   || null,
-        } : {}),
-        updated_at: new Date().toISOString(),
-      })),
-    ]
-
-    const { error: e } = await supabase.from('price_lists').upsert(rows, { onConflict: 'user_id,opening_type' })
-    if (e) { setError(e.message); setSaving(false); return }
-    setSaved(true); setSaving(false)
-    setTimeout(() => setSaved(false), 2500)
+    setModalSaving(false)
+    setShowModal(false)
   }
 
-  function setPrice(type: string, field: 'base' | 'lab', raw: string) {
-    const val = parseFloat(raw.replace(',', '.')) || 0
-    setPrices(p => ({ ...p, [type]: { ...p[type], [field]: val } }))
+  async function deleteItem(item: PriceItem) {
+    if (!userId) return
+    await supabase.from('price_lists').delete().eq('user_id', userId).eq('opening_type', item.key)
+    setItems(prev => prev.filter(i => i.key !== item.key))
+    setDeletingItem(null)
   }
 
-  function setGbbPrice(type: string, tier: 'good' | 'better' | 'best', raw: string) {
-    const val = parseFloat(raw.replace(',', '.')) || 0
-    setGbbPrices(g => ({ ...g, [type]: { ...(g[type] || { good: 0, better: 0, best: 0 }), [tier]: val } }))
-  }
+  const grouped = items.reduce<Record<string, PriceItem[]>>((acc, item) => {
+    const cat = item.category || 'Other'
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(item)
+    return acc
+  }, {})
 
-  function setCustomPrice(key: string, field: 'base' | 'lab', raw: string) {
-    const val = parseFloat(raw.replace(',', '.')) || 0
-    setCustomTypes(prev => prev.map(ct => ct.key === key ? { ...ct, [field]: val } : ct))
-  }
-
-  function toggleExpand(key: string) {
-    setExpandedKey(prev => prev === key ? null : key)
-  }
-
-  function addCustomType() {
-    if (!newLabel.trim()) return
-    const key = 'custom_' + Date.now()
-    setCustomTypes(prev => [...prev, { key, label: newLabel.trim(), base: 0, lab: 0 }])
-    setExpandedKey(key)
-    setNewLabel('')
-  }
-
-  function onHandlePointerDown(e: React.PointerEvent, index: number) {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragIndex(index)
-    setDragOver(index)
-  }
-
-  // ── Price display helpers ──
-  const priceNum: React.CSSProperties = {
-    fontSize: 15, fontWeight: 600, color: '#0B1220', lineHeight: 1,
-  }
-  const priceSub: React.CSSProperties = {
-    fontSize: 10, color: '#94A3B8', marginTop: 2,
-  }
+  const hasItems = Object.keys(grouped).length > 0
 
   return (
     <>
-    <ConfirmModal
-      open={!!deletingItem}
-      icon="trash"
-      title={`Delete ${deletingItem?.name ?? ''}?`}
-      body="This cannot be undone."
-      confirmLabel="Delete"
-      onConfirm={async () => {
-        if (!deletingItem || !userId) return
-        await supabase.from('price_lists').delete().eq('user_id', userId).eq('opening_type', deletingItem.key)
-        if (deletingItem.isCustom) {
-          setCustomTypes(prev => prev.filter(t => t.key !== deletingItem.key))
-        } else {
-          setRemovedStandardKeys(prev => [...prev, deletingItem.key])
-        }
-        if (expandedKey === deletingItem.key) setExpandedKey(null)
-        setDeletingItem(null)
-      }}
-      onCancel={() => setDeletingItem(null)}
-    />
+      <ConfirmModal
+        open={!!deletingItem}
+        icon="trash"
+        title={`Delete ${deletingItem?.label ?? ''}?`}
+        body="This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => deletingItem && deleteItem(deletingItem)}
+        onCancel={() => setDeletingItem(null)}
+      />
 
-    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+      {/* ── ADD / EDIT MODAL ── */}
+      {showModal && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}
+          style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.4)', fontFamily: F }}
+        >
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>{editingItem ? 'Edit Item' : 'Add Item'}</div>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer', padding: 4, lineHeight: 1 }}>✕</button>
+            </div>
 
-      {/* ── TOPBAR ── */}
-      <div style={{
-        background: '#fff', borderBottom: '1px solid #EEF0F4',
-        padding: '16px 20px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button onClick={() => router.push('/dashboard/settings')} style={{
-            width: 32, height: 32, background: '#F5F6F8', border: 'none',
-            borderRadius: 8, cursor: 'pointer', fontSize: 16, color: '#64748B',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>←</button>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
+            {error && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#DC2626', marginBottom: 12 }}>{error}</div>
+            )}
+
+            {/* Item Name */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Item Name</div>
+              <input
+                autoFocus
+                value={modalName}
+                onChange={e => setModalName(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveModal() }}
+                placeholder="e.g. Casement Window"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Prices */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Materials ($)</div>
+                <input
+                  type="number" min="0" step="10"
+                  value={modalBase}
+                  onChange={e => setModalBase(e.target.value)}
+                  placeholder="0"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Labour ($)</div>
+                <input
+                  type="number" min="0" step="10"
+                  value={modalLab}
+                  onChange={e => setModalLab(e.target.value)}
+                  placeholder="0"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* Category chips */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Category</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {[...PRESET_CATEGORIES, 'new'].map(cat => {
+                  const active = modalCategory === cat
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setModalCategory(cat)}
+                      style={{
+                        padding: '8px 16px', borderRadius: 20, fontSize: 13, fontWeight: 600,
+                        border: `1.5px solid ${active ? '#2563EB' : '#E2E5EA'}`,
+                        background: active ? 'rgba(37,99,235,0.08)' : '#fff',
+                        color: active ? '#2563EB' : '#64748B',
+                        cursor: 'pointer', fontFamily: F,
+                      }}
+                    >
+                      {cat === 'new' ? '+ New' : cat}
+                    </button>
+                  )
+                })}
+              </div>
+              {modalCategory === 'new' && (
+                <input
+                  autoFocus
+                  value={modalCustomCategory}
+                  onChange={e => setModalCustomCategory(e.target.value)}
+                  placeholder="e.g. Skylights"
+                  style={{ ...inputStyle, marginTop: 10, border: '1.5px solid #2563EB' }}
+                />
+              )}
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ flex: 1, padding: 13, background: '#F5F6F8', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: F }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveModal}
+                disabled={!modalName.trim() || modalSaving}
+                style={{
+                  flex: 2, padding: 13, border: 'none', borderRadius: 12,
+                  fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: F,
+                  background: !modalName.trim() ? '#CBD5E1' : '#2563EB',
+                  cursor: !modalName.trim() || modalSaving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {modalSaving ? 'Saving…' : 'Save Item'}
+              </button>
+            </div>
           </div>
         </div>
-        <button onClick={save} disabled={saving} style={{
-          padding: '8px 16px', borderRadius: 10, border: 'none',
-          background: saved ? '#059669' : saving ? '#CBD5E1' : '#2563EB',
-          color: '#fff', fontSize: 13, fontWeight: 600,
-          cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-          transition: 'background .2s',
+      )}
+
+      <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
+
+        {/* ── TOPBAR ── */}
+        <div style={{
+          background: '#fff', borderBottom: '1px solid #EEF0F4',
+          padding: '16px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0,
+          paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
+          zIndex: 10,
         }}>
-          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
-        </button>
-      </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => router.push('/dashboard/settings')} style={{
+              width: 32, height: 32, background: '#F5F6F8', border: 'none',
+              borderRadius: 8, cursor: 'pointer', fontSize: 16, color: '#64748B',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>←</button>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
+            </div>
+          </div>
+          {hasItems && (
+            <button
+              onClick={() => openAddModal()}
+              style={{ padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
+            >
+              + Add Item
+            </button>
+          )}
+        </div>
 
-      {/* ── BODY ── */}
-      <div style={{ padding: '16px 16px 100px' }}>
+        {/* ── BODY ── */}
+        <div style={{ padding: '8px 16px 100px' }}>
 
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8', fontSize: 13 }}>Loading…</div>
-        )}
+          {loading && (
+            <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8', fontSize: 13 }}>Loading…</div>
+          )}
 
-        {!loading && <>
-          {error && (
-            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 12 }}>
-              {error}
+          {!loading && !hasItems && (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>No items yet</div>
+              <div style={{ fontSize: 13, color: '#64748B', marginBottom: 24, lineHeight: 1.6 }}>
+                Add the windows, doors, and other products you install. They'll appear in your estimate form.
+              </div>
+              <button
+                onClick={() => openAddModal()}
+                style={{ padding: '12px 28px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
+              >
+                + Add First Item
+              </button>
             </div>
           )}
 
-          {/* ── STANDARD TYPES ── */}
-          <div style={sectionLabel}>Opening Types</div>
-          <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}>
-            {Object.entries(OPENING_TYPES).filter(([key]) => !removedStandardKeys.includes(key)).map(([key, def], idx, arr) => {
-              const p         = prices[key] || { base: def.base, lab: def.lab }
-              const total     = p.base + p.lab
-              const isCustom  = p.base !== def.base || p.lab !== def.lab
-              const isExpanded = expandedKey === key
-              const isLast    = idx === arr.length - 1
-              return (
-                <div key={key}>
+          {!loading && hasItems && Object.entries(grouped).map(([category, catItems]) => (
+            <div key={category} style={{ marginBottom: 4 }}>
+              {/* Section header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 2px 8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 3, height: 14, background: '#2563EB', borderRadius: 2, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8' }}>
+                    {category}
+                  </span>
+                </div>
+                <button
+                  onClick={() => openAddModal(category)}
+                  style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '4px 0' }}
+                >
+                  + Add item
+                </button>
+              </div>
+
+              {/* Items card */}
+              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
+                {catItems.map((item, i) => (
                   <div
-                    onClick={() => toggleExpand(key)}
+                    key={item.key}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '12px 16px',
-                      borderBottom: (!isExpanded && !isLast) ? '1px solid rgba(10,22,40,0.05)' : 'none',
-                      cursor: 'pointer',
-                      background: isExpanded ? '#F8FAFF' : 'transparent',
+                      display: 'flex', alignItems: 'center',
+                      padding: '13px 16px',
+                      borderBottom: i < catItems.length - 1 ? '1px solid #EEF0F4' : 'none',
                     }}
                   >
-                    <OpeningIcon typeKey={key} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{def.name}</div>
-                      {isCustom && (
-                        <div style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', letterSpacing: '.06em', textTransform: 'uppercase' }}>Custom</div>
-                      )}
-                    </div>
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={priceNum}>{fmtCAD(total)}</div>
-                      <div style={priceSub}>per opening</div>
-                    </div>
-                    <div style={{ fontSize: 11, color: '#CBD5E1', marginLeft: 2, transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none' }}>▶</div>
-                    <button
-                      onClick={e => { e.stopPropagation(); setDeletingItem({ key, name: def.name, isCustom: false }) }}
-                      onMouseEnter={() => setHoverDeleteKey(key)}
-                      onMouseLeave={() => setHoverDeleteKey(null)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                    <div
+                      onClick={() => openEditModal(item)}
+                      style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
                     >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.label}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginRight: 14, flexShrink: 0 }}>
+                      {fmtCAD(item.base + item.lab)}
+                    </div>
+                    <button
+                      onClick={() => setDeletingItem(item)}
+                      style={{
+                        background: 'rgba(220,38,38,0.08)', border: 'none', borderRadius: 8,
+                        width: 32, height: 32, display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                     </button>
                   </div>
-
-                  {isExpanded && (
-                    <div style={{
-                      padding: '12px 16px 16px',
-                      borderBottom: !isLast ? '1px solid rgba(10,22,40,0.05)' : 'none',
-                      background: '#F8FAFF',
-                    }}>
-                      <div style={{ display: 'flex', gap: 10, marginBottom: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Materials</div>
-                          <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                            <input type="number" min="0" step="50"
-                              value={p.base}
-                              onClick={e => e.stopPropagation()}
-                              onChange={e => setPrice(key, 'base', e.target.value)}
-                              style={{ ...inputStyle, paddingLeft: 22 }}
-                            />
-                          </div>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Labour</div>
-                          <div style={{ position: 'relative' }}>
-                            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                            <input type="number" min="0" step="50"
-                              value={p.lab}
-                              onClick={e => e.stopPropagation()}
-                              onChange={e => setPrice(key, 'lab', e.target.value)}
-                              style={{ ...inputStyle, paddingLeft: 22 }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      {isCustom && (
-                        <button
-                          onClick={e => { e.stopPropagation(); setPrices(prev => ({ ...prev, [key]: { base: def.base, lab: def.lab } })) }}
-                          style={{ background: 'none', border: 'none', color: '#94A3B8', fontSize: 11, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-                          Reset to default ({fmtCAD(def.base + def.lab)})
-                        </button>
-                      )}
-                      {pricingMode === 'gbb' && (
-                        <div style={{ marginTop: 12, borderTop: '1px solid #E2E8F0', paddingTop: 12 }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#2045B8', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '.06em' }}>Tier Prices</div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            {(['good', 'better', 'best'] as const).map(tier => {
-                              const gbb = gbbPrices[key] || { good: 0, better: 0, best: 0 }
-                              const isMiddle = tier === 'better'
-                              return (
-                                <div key={tier} style={{ flex: 1 }}>
-                                  <div style={{ fontSize: 10, fontWeight: 700, color: isMiddle ? '#2045B8' : '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em', textAlign: 'center' }}>
-                                    {tier.charAt(0).toUpperCase() + tier.slice(1)}
-                                  </div>
-                                  <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: isMiddle ? '#2045B8' : '#94A3B8' }}>$</span>
-                                    <input type="number" min="0" step="50"
-                                      value={gbb[tier] || ''}
-                                      placeholder="0"
-                                      onClick={e => e.stopPropagation()}
-                                      onChange={e => setGbbPrice(key, tier, e.target.value)}
-                                      style={{
-                                        ...inputStyle, paddingLeft: 20,
-                                        border: isMiddle ? '1.5px solid #2045B8' : '1.5px solid #E2E8F0',
-                                        background: isMiddle ? '#EEF2FF' : '#F8FAFC',
-                                        color: isMiddle ? '#2045B8' : '#0A1628',
-                                        fontWeight: isMiddle ? 700 : 400,
-                                        textAlign: 'center',
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          {/* ── CUSTOM TYPES ── */}
-          <div style={sectionLabel}>Custom Types</div>
-          {customTypes.length > 0 && (
-            <div
-              style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden', marginBottom: 4 }}
-            >
-              {customTypes.map((ct, i) => {
-                const isExpanded   = expandedKey === ct.key
-                const isLast       = i === customTypes.length - 1
-                const isDragging   = dragIndexState === i
-                const isDropTarget = dragOverState !== null && dragOverState === i && dragIndexState !== null && dragIndexState !== i
-
-                return (
-                  <div
-                    key={ct.key}
-                    ref={el => { itemRefs.current[i] = el }}
-                    style={{
-                      borderTop: isDropTarget ? '2px solid #2563EB' : undefined,
-                      opacity: isDragging ? 0.45 : 1,
-                      transition: 'opacity 150ms',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '12px 14px 12px 10px',
-                        borderBottom: (!isExpanded && !isLast) ? '1px solid rgba(10,22,40,0.05)' : 'none',
-                        background: isExpanded ? '#F8FAFF' : 'transparent',
-                      }}
-                    >
-                      {/* Drag handle */}
-                      <div
-                        onPointerDown={e => onHandlePointerDown(e, i)}
-                        style={{ padding: '6px 4px', cursor: 'grab', touchAction: 'none', flexShrink: 0, display: 'flex', alignItems: 'center' }}
-                      >
-                        <DragHandle />
-                      </div>
-
-                      {/* Tap area to expand */}
-                      <div onClick={() => toggleExpand(ct.key)} style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, cursor: 'pointer' }}>
-                        <OpeningIcon typeKey={ct.key} />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{ct.label}</div>
-                        </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={priceNum}>{fmtCAD(ct.base + ct.lab)}</div>
-                          <div style={priceSub}>per opening</div>
-                        </div>
-                      </div>
-
-                      {/* Delete */}
-                      <button
-                        onClick={e => { e.stopPropagation(); setDeletingItem({ key: ct.key, name: ct.label, isCustom: true }) }}
-                        onMouseEnter={() => setHoverDeleteKey(ct.key)}
-                        onMouseLeave={() => setHoverDeleteKey(null)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 2px', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
-                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                      </button>
-
-                      {/* Chevron */}
-                      <div
-                        onClick={() => toggleExpand(ct.key)}
-                        style={{ fontSize: 11, color: '#CBD5E1', transition: 'transform .2s', transform: isExpanded ? 'rotate(90deg)' : 'none', cursor: 'pointer', flexShrink: 0 }}
-                      >▶</div>
-                    </div>
-
-                    {isExpanded && (
-                      <div style={{
-                        padding: '12px 16px 16px',
-                        borderBottom: !isLast ? '1px solid rgba(10,22,40,0.05)' : 'none',
-                        background: '#F8FAFF',
-                      }}>
-                        {ct.base + ct.lab === 0 && (
-                          <div style={{ fontSize: 12, color: '#DC2626', marginBottom: 8, fontWeight: 500 }}>
-                            Please enter a price
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', gap: 10 }}>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Materials</div>
-                            <div style={{ position: 'relative' }}>
-                              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                              <input type="number" min="0" step="50"
-                                value={ct.base || ''}
-                                placeholder="0"
-                                onClick={e => e.stopPropagation()}
-                                onChange={e => setCustomPrice(ct.key, 'base', e.target.value)}
-                                style={{ ...inputStyle, paddingLeft: 22, borderColor: ct.base + ct.lab === 0 ? '#FECACA' : undefined }}
-                              />
-                            </div>
-                          </div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.06em' }}>Labour</div>
-                            <div style={{ position: 'relative' }}>
-                              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: '#94A3B8' }}>$</span>
-                              <input type="number" min="0" step="50"
-                                value={ct.lab || ''}
-                                placeholder="0"
-                                onClick={e => e.stopPropagation()}
-                                onChange={e => setCustomPrice(ct.key, 'lab', e.target.value)}
-                                style={{ ...inputStyle, paddingLeft: 22, borderColor: ct.base + ct.lab === 0 ? '#FECACA' : undefined }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          )}
+          ))}
 
-          {/* Add custom type */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <input
-              placeholder="e.g. Skylight, Garden Window…"
-              value={newLabel}
-              onChange={e => setNewLabel(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') addCustomType() }}
-              style={{ flex: 1, padding: '10px 12px', border: '1.5px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-            />
-            <button
-              onClick={addCustomType}
-              style={{ padding: '10px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
-            >+ Add</button>
-          </div>
-        </>}
+        </div>
+
+        <BottomNav />
       </div>
-
-      <BottomNav />
-    </div>
     </>
   )
 }
