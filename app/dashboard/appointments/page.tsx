@@ -386,13 +386,13 @@ function EditScreen({
 
         {/* WHEN */}
         <div style={{ ...sectionHdr, paddingTop: 20 }}>When</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <label style={fieldLabel}>Date</label>
             <input type="date" lang="en" value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <label style={fieldLabel}>Time</label>
             <input type="time" value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
