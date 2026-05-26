@@ -22,9 +22,29 @@ export async function GET(request: NextRequest) {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_pct, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url')
+    .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_pct, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url, contractor_signature_url')
     .eq('id', est.user_id)
     .single()
+
+  const { data: contract } = await supabase
+    .from('contracts')
+    .select('contractor_signature_url, client_signature_url')
+    .eq('estimate_id', id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const contractorSigUrl: string | null =
+    contract?.contractor_signature_url ||
+    (prof as any)?.contractor_signature_url ||
+    (prof as any)?.signature_url ||
+    null
+
+  const clientSigUrl: string | null =
+    contract?.client_signature_url ||
+    (est.client_signature_url && !est.client_signature_url.startsWith('data:')
+      ? est.client_signature_url : null) ||
+    null
 
   const contractIntro = (prof as any)?.contract_intro
     ? ((prof as any).contract_intro as string)
@@ -288,29 +308,38 @@ export async function GET(request: NextRequest) {
     <div class="slbl">Signature Required</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:12px">
       <div>
-        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">Client</div>
-        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:8px">Client</div>
+        <div style="height:1px;background:#0A1628;margin-bottom:6px;margin-top:${clientSigUrl ? '0' : '52px'}"></div>
         <div style="font-size:10px;color:#94A3B8">${est.client_name || 'Client'} · Date</div>
       </div>
       <div>
-        <div style="font-size:10px;color:#94A3B8;margin-bottom:24px">${prof?.company_name || 'Contractor'}</div>
-        ${(prof as any)?.signature_url ? `<img src="${(prof as any).signature_url}" style="max-height:40px;max-width:140px;object-fit:contain;display:block;margin-bottom:6px" alt="Contractor signature" />` : '<div style="height:1px;background:#0A1628;margin-bottom:6px"></div>'}
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:8px">${prof?.company_name || 'Contractor'}</div>
+        ${contractorSigUrl ? `<img src="${contractorSigUrl}" style="height:60px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px" alt="Contractor signature" />` : '<div style="height:52px;margin-bottom:6px"></div>'}
+        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
         <div style="font-size:10px;color:#94A3B8">${prof?.company_name || 'Contractor'} · Date</div>
       </div>
     </div>
   </div>` : ''}
 
-  <!-- Signed confirmation -->
+  <!-- Signed — show both signatures -->
   ${est.status === 'signed' ? `
-  <div class="card-green">
-    <div class="sig-circle">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <div class="card" style="border:1.5px solid #BBF7D0">
+    <div class="slbl" style="color:#059669">Signed &amp; Accepted</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:4px">
+      <div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:8px">Client</div>
+        ${clientSigUrl ? `<img src="${clientSigUrl}" style="height:60px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px" alt="Client signature" />` : '<div style="height:52px;margin-bottom:6px"></div>'}
+        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        <div style="font-size:11px;font-weight:600;color:#0A1628">${est.client_name || 'Client'}</div>
+        <div style="font-size:10px;color:#94A3B8;margin-top:2px">${signedDate}${signedTime ? ` · ${signedTime}` : ''}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94A3B8;margin-bottom:8px">${prof?.company_name || 'Contractor'}</div>
+        ${contractorSigUrl ? `<img src="${contractorSigUrl}" style="height:60px;max-width:200px;object-fit:contain;display:block;margin-bottom:6px" alt="Contractor signature" />` : '<div style="height:52px;margin-bottom:6px"></div>'}
+        <div style="height:1px;background:#0A1628;margin-bottom:6px"></div>
+        <div style="font-size:11px;font-weight:600;color:#0A1628">${prof?.company_name || 'Contractor'}</div>
+      </div>
     </div>
-    <div class="sig-name">Signed by ${est.client_name || 'Client'}</div>
-    <div class="sig-date">${signedDate}${signedTime ? ` at ${signedTime}` : ''}</div>
-    ${est.client_signature_url && !est.client_signature_url.startsWith('data:')
-      ? `<img src="${est.client_signature_url}" class="sig-img" alt="Signature" />`
-      : ''}
   </div>` : ''}
 
 </div>
