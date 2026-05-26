@@ -111,7 +111,6 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes }: {
 interface ClientInfo {
   client_name: string; client_email: string; client_phone: string
   client_address: string; client_city: string; client_province: string
-  scope_notes: string
 }
 
 const TIERS = [
@@ -269,7 +268,6 @@ function NewEstimateForm() {
     client_phone: '',
     client_address: searchParams.get('client_address') || '',
     client_city: '', client_province: 'AB',
-    scope_notes: '',
   })
 
   const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
@@ -310,7 +308,6 @@ function NewEstimateForm() {
             client_address:  est.client_address || '',
             client_city:     est.client_city || '',
             client_province: est.client_province || 'AB',
-            scope_notes:     est.scope_notes || '',
           })
           setTier(est.tier || 'better')
           setPaymentMethod(est.payment_method || '')
@@ -342,7 +339,6 @@ function NewEstimateForm() {
             ...(appt.client_phone   && { client_phone:   appt.client_phone }),
             ...(appt.client_email   && { client_email:   appt.client_email }),
             ...(appt.client_address && { client_address: appt.client_address }),
-            ...(appt.notes && !p.scope_notes && { scope_notes: appt.notes }),
           }))
         }
       }
@@ -583,14 +579,6 @@ function NewEstimateForm() {
                     ))}
                   </select></div>
               </div>
-              <div className="r1"><div className="f">
-                <label>Scope of Work</label>
-                <textarea placeholder="Replace 3 bedroom windows, 1 patio door..." rows={3}
-                  value={client.scope_notes}
-                  style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 14, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical' }}
-                  onChange={e => setClient(p => ({ ...p, scope_notes: e.target.value }))} />
-              </div></div>
-
               <div className="sl" style={{ marginTop: 20 }}>Tier</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                 {TIERS.map(t => (
@@ -800,13 +788,6 @@ function NewEstimateForm() {
                   ))}
                 </select></div>
             </div>
-            <div className="r1"><div className="f">
-              <label>Scope of Work</label>
-              <textarea placeholder="Replace 3 bedroom windows, 1 patio door..." rows={3}
-                value={client.scope_notes}
-                style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '12px 14px', fontFamily: 'inherit', fontSize: 14, color: 'var(--jet)', outline: 'none', width: '100%', resize: 'vertical' }}
-                onChange={e => setClient(p => ({ ...p, scope_notes: e.target.value }))} />
-            </div></div>
           </>
         )}
 
@@ -912,12 +893,6 @@ function NewEstimateForm() {
                 ))}
               </div>
             </div>
-
-            {client.scope_notes && (
-              <div className="info-box" style={{ marginBottom: 14 }}>
-                <strong>Scope:</strong> {client.scope_notes}
-              </div>
-            )}
 
             <div style={{ fontSize: 11, color: 'var(--ash)', marginBottom: 16, lineHeight: 1.6 }}>
               Valid for 30 days. Send to client for review.
