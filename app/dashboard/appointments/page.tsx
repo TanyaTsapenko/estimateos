@@ -313,7 +313,7 @@ function EditScreen({
       position: 'fixed', inset: 0, zIndex: 200, background: T.bg,
       transform: open ? 'translateY(0)' : 'translateY(100%)',
       transition: 'transform 320ms cubic-bezier(.32,.72,0,1)',
-      display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
       fontFamily: '-apple-system, "SF Pro Text", system-ui, sans-serif',
       WebkitFontSmoothing: 'antialiased',
     }}>
@@ -332,7 +332,7 @@ function EditScreen({
       </div>
 
       {/* Scrollable form */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '18px 16px 24px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '18px 16px 24px' }}>
         {/* CLIENT */}
         <div style={sectionHdr}>Client</div>
         <div style={sectionCard}>
@@ -386,7 +386,7 @@ function EditScreen({
 
         {/* WHEN */}
         <div style={{ ...sectionHdr, paddingTop: 20 }}>When</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <div>
             <label style={fieldLabel}>Date</label>
             <input type="date" lang="en" value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)}
