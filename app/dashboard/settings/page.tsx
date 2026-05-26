@@ -702,6 +702,10 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const dirty = true
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [redrawMode, setRedrawMode] = useState(false)
+  const [hasStrokes, setHasStrokes] = useState(false)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -749,19 +753,80 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     flash('Saved')
   }
 
-  async function handleSignatureUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !userId) return
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']
-    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG or WebP allowed'); return }
-    if (file.size > 2 * 1024 * 1024) { flash('File must be under 2 MB'); return }
+  useEffect(() => {
+    if (!redrawMode && signatureUrl) return
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    setHasStrokes(false)
+  }, [redrawMode, signatureUrl])
+
+  function getSigPos(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current!
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    if ('touches' in e) {
+      const t = e.touches[0]
+      return { x: (t.clientX - rect.left) * scaleX, y: (t.clientY - rect.top) * scaleY }
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY }
+  }
+
+  function startDraw(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault()
+    const ctx = canvasRef.current?.getContext('2d')
+    if (!ctx) return
+    const { x, y } = getSigPos(e)
+    ctx.beginPath()
+    ctx.moveTo(x, y)
+    setIsDrawing(true)
+    setHasStrokes(true)
+  }
+
+  function onDraw(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault()
+    if (!isDrawing) return
+    const ctx = canvasRef.current?.getContext('2d')
+    if (!ctx) return
+    const { x, y } = getSigPos(e)
+    ctx.lineTo(x, y)
+    ctx.strokeStyle = '#0A1628'
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.stroke()
+  }
+
+  function stopDraw() { setIsDrawing(false) }
+
+  function clearCanvas() {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    setHasStrokes(false)
+  }
+
+  async function saveSignatureCanvas() {
+    const canvas = canvasRef.current
+    if (!canvas || !userId) return
+    const dataUrl = canvas.toDataURL('image/png')
+    const res = await fetch(dataUrl)
+    const blob = await res.blob()
     const path = `${userId}/signature.png`
-    const { error } = await supabase.storage.from('signatures').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { flash('Upload failed'); return }
+    const { error } = await supabase.storage.from('signatures').upload(path, blob, { upsert: true, contentType: 'image/png' })
+    if (error) { flash('Save failed'); return }
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path)
     const url = urlData.publicUrl + '?t=' + Date.now()
     await supabase.from('profiles').update({ signature_url: url }).eq('id', userId)
     setSignatureUrl(url)
+    setRedrawMode(false)
     flash('Signature saved')
   }
 
@@ -902,38 +967,61 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
             Appears on all estimate PDFs sent to clients.
           </p>
-          <div style={{
-            background: '#F8FAFC', border: '1px dashed #E2E8F0',
-            borderRadius: 12, padding: 16, minHeight: 80,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            marginBottom: 12,
-          }}>
-            {signatureUrl
-              ? <img src={signatureUrl} alt="Signature" style={{ maxHeight: 60, maxWidth: '100%', objectFit: 'contain' }} />
-              : <span style={{ fontSize: 13, color: '#CBD5E1' }}>No signature uploaded</span>
-            }
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <label style={{
-              flex: 1, textAlign: 'center', padding: '10px',
-              background: '#2563EB', color: '#fff', borderRadius: 8,
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'block',
-            }}>
-              {signatureUrl ? 'Change signature' : 'Upload signature'}
-              <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={handleSignatureUpload} />
-            </label>
-            {signatureUrl && (
-              <button onClick={async () => {
-                if (!userId) return
-                await supabase.from('profiles').update({ signature_url: null }).eq('id', userId)
-                setSignatureUrl(null)
-                flash('Signature removed')
-              }} style={{
-                padding: '10px 16px', background: '#FEF2F2', border: '1px solid #FECACA',
-                color: '#DC2626', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit',
-              }}>Remove</button>
-            )}
-          </div>
+
+          {signatureUrl && !redrawMode ? (
+            <>
+              <div style={{
+                background: '#F8FAFC', border: '1px solid #E5E7EB',
+                borderRadius: 12, padding: 16, minHeight: 80,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 12,
+              }}>
+                <img src={signatureUrl} alt="Signature" style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain' }} />
+              </div>
+              <button
+                onClick={() => setRedrawMode(true)}
+                style={{ width: '100%', padding: '10px', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Redraw
+              </button>
+            </>
+          ) : (
+            <>
+              <canvas
+                ref={canvasRef}
+                width={800}
+                height={160}
+                onMouseDown={startDraw}
+                onMouseMove={onDraw}
+                onMouseUp={stopDraw}
+                onMouseLeave={stopDraw}
+                onTouchStart={startDraw}
+                onTouchMove={onDraw}
+                onTouchEnd={stopDraw}
+                style={{
+                  width: '100%', height: 160, display: 'block',
+                  border: '1.5px solid #E5E7EB', borderRadius: 12,
+                  background: '#fff', cursor: 'crosshair', touchAction: 'none',
+                  marginBottom: 12,
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={clearCanvas}
+                  style={{ flex: 1, padding: '10px', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={saveSignatureCanvas}
+                  disabled={!hasStrokes}
+                  style={{ flex: 2, padding: '10px', background: hasStrokes ? '#2563EB' : '#93aef5', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, color: '#fff', cursor: hasStrokes ? 'pointer' : 'default', fontFamily: 'inherit' }}
+                >
+                  Save Signature
+                </button>
+              </div>
+            </>
+          )}
         </Card>
       </div>
       <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => setTerms(initialTerms)} />
