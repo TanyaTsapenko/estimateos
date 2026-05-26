@@ -393,7 +393,14 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
+  const [editingSig, setEditingSig] = useState(false)
+  const [hasSig, setHasSig] = useState(false)
+  const [savingSig, setSavingSig] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const sigCanvasRef = useRef<HTMLCanvasElement>(null)
+  const sigDrawing = useRef(false)
+  const sigLast = useRef({ x: 0, y: 0 })
 
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = !!values.companyName && !!values.city && !!values.province
@@ -403,9 +410,10 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('company_name, phone, website, city, province, postal, licence, insurance, deposit_pct, logo_url').eq('id', user.id).single()
+      const { data: prof } = await supabase.from('profiles').select('company_name, phone, website, city, province, postal, licence, insurance, deposit_pct, logo_url, contractor_signature_url').eq('id', user.id).single()
       if (!prof) return
       if (prof.logo_url) setLogoUrl(prof.logo_url)
+      if ((prof as any).contractor_signature_url) setSignatureUrl((prof as any).contractor_signature_url)
       const loaded = {
         companyName: (prof as any).company_name || '',
         phone: (prof as any).phone || '',
@@ -484,6 +492,53 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
     flash('Logo removed')
   }
 
+  function getSigPos(e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    if ('touches' in e) {
+      return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY }
+    }
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY }
+  }
+  function startSigDraw(e: React.MouseEvent | React.TouchEvent) {
+    const canvas = sigCanvasRef.current; if (!canvas) return
+    sigDrawing.current = true; sigLast.current = getSigPos(e, canvas); e.preventDefault()
+  }
+  function drawSig(e: React.MouseEvent | React.TouchEvent) {
+    if (!sigDrawing.current) return
+    const canvas = sigCanvasRef.current; if (!canvas) return
+    const ctx = canvas.getContext('2d'); if (!ctx) return
+    const pos = getSigPos(e, canvas)
+    ctx.beginPath(); ctx.moveTo(sigLast.current.x, sigLast.current.y); ctx.lineTo(pos.x, pos.y)
+    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.stroke()
+    sigLast.current = pos; setHasSig(true); e.preventDefault()
+  }
+  function endSigDraw() { sigDrawing.current = false }
+  function clearSigCanvas() {
+    const canvas = sigCanvasRef.current; if (!canvas) return
+    canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    setHasSig(false)
+  }
+  async function handleSaveSig() {
+    const canvas = sigCanvasRef.current
+    if (!canvas || !hasSig || !userId) return
+    setSavingSig(true)
+    const dataUrl = canvas.toDataURL('image/png')
+    let sigUrl = dataUrl
+    try {
+      const blob = await (await fetch(dataUrl)).blob()
+      const path = `${userId}/contractor-sig.png`
+      const { error: upErr } = await supabase.storage.from('signatures').upload(path, blob, { upsert: true, contentType: 'image/png' })
+      if (!upErr) sigUrl = supabase.storage.from('signatures').getPublicUrl(path).data.publicUrl + '?t=' + Date.now()
+    } catch {}
+    await supabase.from('profiles').update({ contractor_signature_url: sigUrl }).eq('id', userId)
+    setSignatureUrl(sigUrl)
+    setEditingSig(false)
+    setSavingSig(false)
+    flash('Signature saved')
+  }
+
   const initials = values.companyName.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'CO'
 
   return (
@@ -535,6 +590,56 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
               )}
             </div>
           </div>
+        </Card>
+
+        {/* Signature card */}
+        <Card>
+          <SectionLabel>Contractor Signature</SectionLabel>
+          {signatureUrl && !editingSig ? (
+            <div>
+              <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 12, padding: 12, background: '#FAFBFC', marginBottom: 10 }}>
+                <img src={signatureUrl} alt="Contractor signature" style={{ maxHeight: 100, maxWidth: '100%', display: 'block', objectFit: 'contain' }} />
+              </div>
+              <button
+                onClick={() => { setEditingSig(true); setHasSig(false) }}
+                style={{ padding: '8px 16px', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#0A1628' }}>
+                Edit
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div style={{ position: 'relative', width: '100%', height: 160, marginBottom: 12 }}>
+                <canvas
+                  ref={sigCanvasRef}
+                  width={700} height={160}
+                  style={{ width: '100%', height: '100%', borderRadius: 12, border: '1.5px solid #E5E7EB', background: '#fff', display: 'block', touchAction: 'none', cursor: 'crosshair' }}
+                  onMouseDown={startSigDraw} onMouseMove={drawSig} onMouseUp={endSigDraw} onMouseLeave={endSigDraw}
+                  onTouchStart={startSigDraw} onTouchMove={drawSig} onTouchEnd={endSigDraw}
+                />
+                {!hasSig && (
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 13, color: '#D1D5DB', pointerEvents: 'none' }}>
+                    Sign here
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <button onClick={clearSigCanvas}
+                  style={{ padding: '9px 20px', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#475569' }}>
+                  Clear
+                </button>
+                <button onClick={handleSaveSig} disabled={!hasSig || savingSig}
+                  style={{ padding: '9px 20px', background: hasSig && !savingSig ? '#2563EB' : '#E2E5EA', color: hasSig && !savingSig ? '#fff' : '#94A3B8', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: hasSig && !savingSig ? 'pointer' : 'not-allowed', fontFamily: 'inherit', boxShadow: hasSig && !savingSig ? '0 4px 12px -4px rgba(37,99,235,0.5)' : 'none' }}>
+                  {savingSig ? 'Saving…' : 'Save Signature'}
+                </button>
+                {editingSig && (
+                  <button onClick={() => { setEditingSig(false); clearSigCanvas() }}
+                    style={{ padding: '9px 20px', background: '#fff', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#64748B', marginLeft: 'auto' }}>
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card>
