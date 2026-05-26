@@ -7,7 +7,7 @@ import { Check } from 'lucide-react'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
-  user_id: string; total: number; status: string; scope_notes: string | null; valid_until: string | null
+  user_id: string; total: number; status: string; valid_until: string | null
 }
 interface Profile { company_name: string | null; contract_terms: string | null }
 

@@ -19,7 +19,7 @@ const INSTALL_LABELS: Record<string, string> = {
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
   client_phone: string | null; client_address: string | null; client_city: string | null
-  client_province: string | null; scope_notes: string | null; status: string
+  client_province: string | null; status: string
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
@@ -131,7 +131,6 @@ export default function EstimateDetailPage() {
       tax_rate: estimate.tax_rate,
       tax_amount: estimate.tax_amount,
       total: estimate.total,
-      scope_notes: estimate.scope_notes,
     }).select().single()
 
     if (newEst) {
@@ -367,15 +366,6 @@ export default function EstimateDetailPage() {
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
               </div>
             ))}
-
-            {/* Scope notes — internal only, hide after signing */}
-            {estimate.scope_notes && ['draft', 'sent'].includes(estimate.status) && (
-              <>
-                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
-                <div style={SL}>Scope of Work</div>
-                <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
-              </>
-            )}
 
             {/* Divider before price */}
             <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />

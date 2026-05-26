@@ -247,12 +247,6 @@ export async function GET(request: NextRequest) {
     <div style="font-size:13px;color:#475569;line-height:1.7;margin-top:4px">${contractIntro}</div>
   </div>` : ''}
 
-  ${est.scope_notes ? `
-  <div class="card">
-    <div class="slbl">Scope of Work</div>
-    <div style="font-size:13px;color:#475569;line-height:1.7;margin-top:4px">${est.scope_notes}</div>
-  </div>` : ''}
-
   ${contractTerms ? `
   <div class="card">
     <div class="slbl">Terms &amp; Conditions</div>

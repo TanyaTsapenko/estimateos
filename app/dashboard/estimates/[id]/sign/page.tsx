@@ -10,7 +10,6 @@ interface Estimate {
   id: string; estimate_number: string; client_name: string | null
   client_province: string | null; tier: string | null
   subtotal: number; tax_amount: number; total: number; valid_until: string | null
-  scope_notes: string | null
 }
 interface Profile { company_name: string | null; contract_terms: string | null }
 
@@ -99,10 +98,6 @@ export default function SignPage() {
             <span className="sum-total-v">{fmtCAD(estimate.total)}</span>
           </div>
         </div>
-
-        {estimate.scope_notes && (
-          <div className="info-box" style={{ marginBottom: 14 }}><strong>Scope: </strong>{estimate.scope_notes}</div>
-        )}
 
         {/* Contract terms preview */}
         <div className="contract-box">
