@@ -126,6 +126,124 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
 }
 
+interface OpeningCardProps {
+  op: Opening
+  idx: number
+  customOpeningTypes: Record<string, { label: string; base: number; lab: number }>
+  customPrices: CustomPrices | undefined
+  openingsCount: number
+  removeOpening: (id: string) => void
+  updateOpening: (id: string, k: keyof Opening, v: string | number) => void
+}
+
+function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
+  return (
+    <div className="op-card">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="op-badge">{idx + 1}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>
+            {OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || 'Opening'}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
+            {fmtCAD(opCost(op, 1.0, customPrices))}
+          </div>
+          {openingsCount > 1 && (
+            <button onClick={() => removeOpening(op.id)}
+              style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#dc2626', cursor: 'pointer' }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="r2" style={{ marginBottom: 8 }}>
+        <div className="f"><label>Type</label>
+          <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} /></div>
+        <div className="f"><label>Qty</label>
+          <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
+            {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+          </select></div>
+      </div>
+
+      <div className="r2" style={{ marginBottom: 8 }}>
+        <div className="f"><label>Width</label>
+          <div style={{ position: 'relative' }}>
+            <input type="number" min="0" step="0.5" placeholder="32"
+              value={op.width_in || ''}
+              onChange={e => updateOpening(op.id, 'width_in', e.target.value ? parseFloat(e.target.value) : 0)}
+              style={{ paddingRight: 28 }} />
+            <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
+          </div></div>
+        <div className="f"><label>Height</label>
+          <div style={{ position: 'relative' }}>
+            <input type="number" min="0" step="0.5" placeholder="48"
+              value={op.height_in || ''}
+              onChange={e => updateOpening(op.id, 'height_in', e.target.value ? parseFloat(e.target.value) : 0)}
+              style={{ paddingRight: 28 }} />
+            <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
+          </div></div>
+      </div>
+
+      <div className="r2" style={{ marginBottom: 8 }}>
+        <div className="f"><label>Shape</label>
+          <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)}>
+            <option value="rect">Rectangle</option>
+            <option value="arch">Arch (+30%)</option>
+            <option value="custom">Custom (+50%)</option>
+          </select></div>
+        <div className="f"><label>Colour</label>
+          <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
+            <option value="white">White</option>
+            <option value="black">Black (+$80)</option>
+            <option value="grey">Grey (+$80)</option>
+            <option value="custom">Custom (+$150)</option>
+          </select></div>
+      </div>
+
+      <div className="r2" style={{ marginBottom: 8 }}>
+        <div className="f"><label>Glass</label>
+          <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
+            <option value="clear">Clear</option>
+            <option value="lowe">Low-E (+$60)</option>
+            <option value="frosted">Frosted (+$90)</option>
+            <option value="tinted">Tinted (+$70)</option>
+            <option value="tempered">Tempered (+$110)</option>
+          </select></div>
+        <div className="f"><label>Frame</label>
+          <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
+            <option value="none">Good condition</option>
+            <option value="repair">Needs repair (+$120)</option>
+            <option value="rotted">Rotted (+$280)</option>
+          </select></div>
+      </div>
+
+      <div className="r1" style={{ marginBottom: 8 }}>
+        <div className="f"><label>Installation</label>
+          <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
+            <option value="retrofit">Retrofit</option>
+            <option value="fullframe">Full Frame (+$200)</option>
+            <option value="stud_to_stud">Stud to Stud (+$350)</option>
+          </select></div>
+      </div>
+
+      <div className="r2">
+        <div className="f"><label>Floor</label>
+          <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
+            <option value="first">Ground floor</option>
+            <option value="second">2nd floor (+$80)</option>
+            <option value="third">3rd+ floor (+$180)</option>
+          </select></div>
+        <div className="f"><label>Room (optional)</label>
+          <input placeholder="Living room" value={op.room}
+            onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
+      </div>
+    </div>
+  )
+}
+
 function NewEstimateForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -363,115 +481,6 @@ function NewEstimateForm() {
     router.push(`/dashboard/estimates/${savedId}`)
   }
 
-  // ── SHARED OPENING CARD ──────────────────────
-  function OpeningCard({ op, idx }: { op: Opening; idx: number }) {
-    return (
-      <div className="op-card">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="op-badge">{idx + 1}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>
-              {OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || 'Opening'}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
-              {fmtCAD(opCost(op, 1.0, customPrices))}
-            </div>
-            {openings.length > 1 && (
-              <button onClick={() => removeOpening(op.id)}
-                style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#dc2626', cursor: 'pointer' }}>
-                ✕
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Type</label>
-            <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} /></div>
-          <div className="f"><label>Qty</label>
-            <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
-              {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
-            </select></div>
-        </div>
-
-        <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Width</label>
-            <div style={{ position: 'relative' }}>
-              <input type="number" min="0" step="0.5" placeholder="32"
-                value={op.width_in || ''}
-                onChange={e => updateOpening(op.id, 'width_in', e.target.value ? parseFloat(e.target.value) : 0)}
-                style={{ paddingRight: 28 }} />
-              <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
-            </div></div>
-          <div className="f"><label>Height</label>
-            <div style={{ position: 'relative' }}>
-              <input type="number" min="0" step="0.5" placeholder="48"
-                value={op.height_in || ''}
-                onChange={e => updateOpening(op.id, 'height_in', e.target.value ? parseFloat(e.target.value) : 0)}
-                style={{ paddingRight: 28 }} />
-              <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
-            </div></div>
-        </div>
-
-        <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Shape</label>
-            <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)}>
-              <option value="rect">Rectangle</option>
-              <option value="arch">Arch (+30%)</option>
-              <option value="custom">Custom (+50%)</option>
-            </select></div>
-          <div className="f"><label>Colour</label>
-            <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
-              <option value="white">White</option>
-              <option value="black">Black (+$80)</option>
-              <option value="grey">Grey (+$80)</option>
-              <option value="custom">Custom (+$150)</option>
-            </select></div>
-        </div>
-
-        <div className="r2" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Glass</label>
-            <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
-              <option value="clear">Clear</option>
-              <option value="lowe">Low-E (+$60)</option>
-              <option value="frosted">Frosted (+$90)</option>
-              <option value="tinted">Tinted (+$70)</option>
-              <option value="tempered">Tempered (+$110)</option>
-            </select></div>
-          <div className="f"><label>Frame</label>
-            <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
-              <option value="none">Good condition</option>
-              <option value="repair">Needs repair (+$120)</option>
-              <option value="rotted">Rotted (+$280)</option>
-            </select></div>
-        </div>
-
-        <div className="r1" style={{ marginBottom: 8 }}>
-          <div className="f"><label>Installation</label>
-            <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
-              <option value="retrofit">Retrofit</option>
-              <option value="fullframe">Full Frame (+$200)</option>
-              <option value="stud_to_stud">Stud to Stud (+$350)</option>
-            </select></div>
-        </div>
-
-        <div className="r2">
-          <div className="f"><label>Floor</label>
-            <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
-              <option value="first">Ground floor</option>
-              <option value="second">2nd floor (+$80)</option>
-              <option value="third">3rd+ floor (+$180)</option>
-            </select></div>
-          <div className="f"><label>Room (optional)</label>
-            <input placeholder="Living room" value={op.room}
-              onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
-        </div>
-      </div>
-    )
-  }
-
   // ── DESKTOP TWO-COL FORM ─────────────────────
   if (isDesktop) {
     return (
@@ -672,7 +681,9 @@ function NewEstimateForm() {
               <div className="info-box">Add each window or door. Quantities and options affect the price.</div>
               <div className="op-cards-grid">
                 {openings.map((op, idx) => (
-                  <OpeningCard key={op.id} op={op} idx={idx} />
+                  <OpeningCard key={op.id} op={op} idx={idx}
+                    customOpeningTypes={customOpeningTypes} customPrices={customPrices}
+                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />
                 ))}
               </div>
               <button onClick={addOpening}
@@ -802,7 +813,9 @@ function NewEstimateForm() {
         {step === 2 && (
           <>
             <div className="info-box">Add each window or door as a separate opening. Quantities and options affect the price.</div>
-            {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx} />)}
+            {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx}
+              customOpeningTypes={customOpeningTypes} customPrices={customPrices}
+              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />)}
             <button onClick={addOpening}
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>
               + Add another opening
