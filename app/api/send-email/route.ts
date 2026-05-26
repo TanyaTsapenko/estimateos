@@ -213,7 +213,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
           <tr><td style="padding:16px">
             <div style="${slbl}">Estimate Total</div>
             <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(est.total)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">inc. ${taxLabel} &middot; ${tierLabel} Package</div>
+            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">inc. ${taxLabel}</div>
           </td></tr>
         </table>
 
@@ -272,7 +272,6 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 
   // ── SEND (estimate to client) ─────────────────────────────────────────────────
   } else if (type === 'send') {
-    const tierLabel = (est.tier || 'better').toUpperCase()
     subject = `Your estimate from ${companyName} — ${est.estimate_number}`
 
     html = outerWrap(`
@@ -287,21 +286,21 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
           <tr><td style="padding:16px">
             <div style="${slbl}">Estimate Total</div>
             <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(est.total)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">inc. ${taxLabel} &middot; ${tierLabel} Package &middot; Valid until ${est.valid_until || '30 days'}</div>
+            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">inc. ${taxLabel} &middot; Valid until ${est.valid_until || '30 days'}</div>
           </td></tr>
         </table>
 
         <!-- Message -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            <strong style="color:#0A1628">${companyName}</strong> has prepared an estimate for your project. Review the details, choose a package, and sign online &mdash; it takes less than a minute.
+            <strong style="color:#0A1628">${companyName}</strong> has prepared an estimate for your project. Review your estimate details below.
           </td></tr>
         </table>
 
         <!-- CTA -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
           <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View &amp; Sign Estimate &rarr;</a>
+            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
           </td></tr>
         </table>
 
