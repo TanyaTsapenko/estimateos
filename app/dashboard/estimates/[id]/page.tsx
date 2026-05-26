@@ -443,7 +443,7 @@ export default function EstimateDetailPage() {
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => {
                       if (!estimate.client_phone) { showToast('No phone number on file'); return }
-                      window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here's your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/sign/${estimate.id}`)
+                      window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here is your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/estimate/${estimate.id}`)
                     }}
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '9px 0', background: '#F5F6F8', color: '#0A1628', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                       <MessageSquare size={13} /> Text client
