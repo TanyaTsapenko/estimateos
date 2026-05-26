@@ -53,7 +53,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
   const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
   const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
   return (
-    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 12, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', flex: 1, overflow: 'hidden', minWidth: 0 }}>
+    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', flex: 1, overflow: 'hidden', minWidth: 150 }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
           width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -91,13 +91,6 @@ function apptPillStyle(status: string): React.CSSProperties {
     background: 'rgba(217,119,6,.3)', border: '1px solid rgba(217,119,6,.55)', color: '#FCD34D',
   }
   return { background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.8)' }
-}
-
-function mobilePillStyle(status: string): React.CSSProperties {
-  if (status === 'IN PROGRESS') return { background: 'rgba(37,99,235,0.1)', color: '#2563EB' }
-  if (status === 'AWAITING SIGN') return { background: 'rgba(217,119,6,0.1)', color: '#D97706' }
-  if (status === 'DONE') return { background: 'rgba(5,150,105,0.1)', color: '#059669' }
-  return { background: '#F3F4F6', color: '#6B7280' }
 }
 
 function getTodayStr() {
@@ -248,199 +241,216 @@ export default function DashboardPage() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-      background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', minHeight: '100vh',
+      background: '#F4F4F2', fontFamily: '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif', minHeight: '100vh',
     }}>
 
-      {/* Top bar */}
-      <header style={{
-        background: '#fff', borderBottom: '1px solid rgba(10,22,40,0.06)',
-        padding: '16px 28px', display: 'flex', alignItems: 'center', gap: 14,
-        position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10,
-      }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>WELCOME BACK</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
-            <span className="db-greeting-name" style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
-            <span className="db-greeting-sep" style={{ color: '#CBD5E1' }}>·</span>
-            <span className="db-greeting-date" style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
-          </div>
-        </div>
-        <BellButton />
-
-        <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
-          display: 'flex', alignItems: 'center', gap: 6, background: '#2563EB',
-          color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
-          fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          boxShadow: '0 6px 16px -6px rgba(37,99,235,0.5)',
+      {/* ── DESKTOP HEADER ── */}
+      {!isMobile && (
+        <header style={{
+          background: '#fff', borderBottom: '1px solid rgba(10,22,40,0.06)',
+          padding: '16px 28px', display: 'flex', alignItems: 'center', gap: 14,
+          position: 'sticky', top: 0, zIndex: 10,
         }}>
-          <Plus size={14} strokeWidth={1.7} />
-          New estimate
-        </button>
-      </header>
-
-      {/* Body */}
-      <main className="db-main-body" style={{ padding: '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
-
-        {/* ── MOBILE HERO ── */}
-        {isMobile && (
-          <div className="db-hero" style={{ borderRadius: 16, padding: 20, marginBottom: 18, background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)', color: '#fff' }}>
-            {/* Row 1: date + done count */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
-                YOUR DAY · {todayStr.toUpperCase()}
-              </div>
-              {appointments.length > 0 && (
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>
-                  {doneCount} / {appointments.length} done
-                </div>
-              )}
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>WELCOME BACK</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+              <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
+              <span style={{ color: '#CBD5E1' }}>·</span>
+              <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
             </div>
+          </div>
+          <BellButton />
+          <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
+            display: 'flex', alignItems: 'center', gap: 6, background: '#2045B8',
+            color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
+            fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            boxShadow: '0 6px 16px -6px rgba(32,69,184,0.5)',
+          }}>
+            <Plus size={14} strokeWidth={1.7} />
+            New estimate
+          </button>
+        </header>
+      )}
 
-            {/* NEXT card */}
+      {/* ── MOBILE GRADIENT HEADER + HERO ── */}
+      {isMobile && (
+        <div style={{
+          background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)',
+          position: 'relative', overflow: 'hidden', paddingBottom: 28,
+        }}>
+          {/* Glow blobs */}
+          <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.45) 0%, transparent 70%)', top: -130, right: -100, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
+
+          {/* Welcome row */}
+          <div style={{ padding: 'max(20px, calc(env(safe-area-inset-top) + 16px)) 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Welcome back</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
+            </div>
+            <BellButton />
+          </div>
+
+          {/* Day + done count */}
+          <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
+              YOUR DAY · {todayStr.toUpperCase()}
+            </div>
+            {appointments.length > 0 && (
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>
+                {doneCount}/{appointments.length} done
+              </div>
+            )}
+          </div>
+
+          {/* Next appointment card */}
+          <div style={{ margin: '14px 16px 0', position: 'relative', zIndex: 1 }}>
             {appointments.length === 0 ? (
-              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 16px', marginBottom: 14, textAlign: 'center' }}>
+              <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 16, padding: '20px 16px', textAlign: 'center' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>No visits today</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Tap + to add an appointment</div>
               </div>
             ) : nextAppt ? (
-              <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: '14px 16px', marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <div style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', display: 'inline-block', textTransform: 'uppercase', marginBottom: 8 }}>NEXT</span>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums' }}>{nextAppt.time}</div>
+                    <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums', letterSpacing: '-1.5px' }}>{nextAppt.time}</div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: nextAppt.address ? 8 : 0 }}>{nextAppt.client}</div>
                     {nextAppt.address && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                      <a href={`https://maps.apple.com/?q=${encodeURIComponent(nextAppt.address)}`} target="_blank" rel="noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 22s-7-7.5-7-12a7 7 0 1114 0c0 4.5-7 12-7 12z"/><circle cx="12" cy="10" r="2.5"/>
                         </svg>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nextAppt.address}</span>
-                      </div>
+                      </a>
                     )}
                   </div>
                   {nextAppt.phone ? (
                     <a href={`tel:${nextAppt.phone}`} onClick={e => e.stopPropagation()}
-                      style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>
                       </svg>
                     </a>
-                  ) : <div style={{ width: 40, flexShrink: 0 }} />}
+                  ) : <div style={{ width: 44, flexShrink: 0 }} />}
                 </div>
               </div>
             ) : (
-              <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 14, padding: '14px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 99, background: 'rgba(52,211,153,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderRadius: 16, padding: '16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: 'rgba(52,211,153,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>All visits complete for today!</div>
               </div>
             )}
-
-            {/* Other appointments list */}
-            {otherAppts.length > 0 && (
-              <div style={{ marginBottom: 14 }}>
-                {otherAppts.map(appt => {
-                  const isDone = appt.pillStatus === 'DONE'
-                  return (
-                    <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.08)', opacity: isDone ? 0.5 : 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>
-                        {appt.time}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>·</span>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {appt.client}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Bottom chips */}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {signaturesNeeded > 0 && (
-                <button onClick={() => router.push('/dashboard/estimates')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 99, border: 'none', background: 'rgba(0,0,0,0.30)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-                  ~ {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
-                </button>
-              )}
-              <button onClick={() => router.push('/dashboard/appointments')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 99, border: 'none', background: 'rgba(255,255,255,0.92)', color: '#2563EB', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-                <Calendar size={12} strokeWidth={2} />
-                Open schedule
-              </button>
-            </div>
           </div>
-        )}
 
-        {/* ── DESKTOP HERO ── */}
-        {!isMobile && (
-          <div className="db-hero" style={{ borderRadius: 16, padding: 22, marginBottom: 18, background: 'linear-gradient(135deg, #1E40AF 0%, #2563EB 60%, #3B82F6 100%)', color: '#fff' }}>
-            <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
-              <div style={{ flex: 1 }}>
-                <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', opacity: 0.7, textTransform: 'uppercase' }}>
-                  YOUR DAY · {todayStr.toUpperCase()}
-                </div>
-                {appointments.length === 0 ? (
-                  <>
-                    <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
-                      No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
-                    </div>
-                    <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
-                      {signaturesNeeded > 0 ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : 'Add your first appointment to get started.'}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div style={{ marginTop: 6 }}>
-                      <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
-                        {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
-                      </div>
-                      {signaturesNeeded > 0 && (
-                        <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
-                          {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
-                        </div>
-                      )}
-                    </div>
-                    <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                      {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.{signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18 }}>
-              {appointments.map(appt => (
-                <div key={appt.id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
+          {/* Other appointments */}
+          {otherAppts.length > 0 && (
+            <div style={{ margin: '10px 16px 0', position: 'relative', zIndex: 1 }}>
+              {otherAppts.map(appt => {
+                const isDone = appt.pillStatus === 'DONE'
+                return (
+                  <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.08)', opacity: isDone ? 0.5 : 1 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>{appt.time}</span>
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>·</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
-                  <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
-                  <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(appt.pillStatus) }}>{appt.pillStatus}</div>
-                  <button
-                    onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
-                    style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
-                    {appt.estimateId ? 'View EST →' : 'Start estimate'}
-                  </button>
-                </div>
-              ))}
-              <div className="db-appt-add" style={{ background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 90 }}
-                onClick={() => router.push('/dashboard/appointments/new')}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>+ add appointment</span>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div style={{ padding: '16px 16px 0', display: 'flex', gap: 8, position: 'relative', zIndex: 1 }}>
+            {signaturesNeeded > 0 && (
+              <button onClick={() => router.push('/dashboard/estimates')}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.35)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+              </button>
+            )}
+            <button onClick={() => router.push('/dashboard/appointments')}
+              style={{ padding: '10px 22px', borderRadius: 99, border: 'none', background: '#fff', color: '#2045B8', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Calendar size={13} strokeWidth={2} />
+              Open schedule
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── DESKTOP HERO ── */}
+      {!isMobile && (
+        <div className="db-hero" style={{ margin: '20px 28px 0', borderRadius: 16, padding: 22, background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.4) 0%, transparent 70%)', top: -180, right: -120, pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
+            <div style={{ flex: 1 }}>
+              <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
+                YOUR DAY · {todayStr.toUpperCase()}
               </div>
+              {appointments.length === 0 ? (
+                <>
+                  <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
+                    No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
+                  </div>
+                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
+                    {signaturesNeeded > 0 ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : 'Add your first appointment to get started.'}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ marginTop: 6 }}>
+                    <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
+                      {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
+                    </div>
+                    {signaturesNeeded > 0 && (
+                      <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
+                        {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+                      </div>
+                    )}
+                  </div>
+                  <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
+                    {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.{signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        )}
+          <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18, position: 'relative', zIndex: 1 }}>
+            {appointments.map(appt => (
+              <div key={appt.id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
+                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
+                <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(appt.pillStatus) }}>{appt.pillStatus}</div>
+                <button
+                  onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
+                  style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
+                  {appt.estimateId ? 'View EST →' : 'Start estimate'}
+                </button>
+              </div>
+            ))}
+            <div className="db-appt-add" style={{ background: 'rgba(255,255,255,0.06)', border: '1px dashed rgba(255,255,255,0.25)', borderRadius: 10, padding: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', minHeight: 90 }}
+              onClick={() => router.push('/dashboard/appointments/new')}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textAlign: 'center' }}>+ add appointment</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── BODY ── */}
+      <main className="db-main-body" style={{ padding: isMobile ? '16px 16px' : '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
 
         {/* KPI row */}
-        <div className="db-kpi-row" style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+        <div className="db-kpi-row" style={{ display: 'flex', gap: 10, marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
           <KpiCard
             label="REVENUE" period="This month"
             value={metrics?.revenueThisMonth ?? ''} delta={metrics?.revenueDelta ?? ''} deltaUp={metrics?.revenueUp ?? null}
-            accent="#2563EB" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics}
+            accent="#2045B8" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics}
           />
           <KpiCard
             label="IN PIPELINE" period="Open visits"
@@ -454,126 +464,212 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Two-column lower row */}
-        <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-
-          {/* Needs attention */}
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
-            <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
-              <div className="db-panel-title" style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Needs attention</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+        {/* ── MOBILE SECTIONS ── */}
+        {isMobile ? (
+          <>
+            {/* Needs Attention */}
+            <section style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Needs Attention</div>
+              <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>
                 {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
               </div>
-            </div>
-            {attention.length === 0 ? (
-              <div style={{ padding: '36px 16px', textAlign: 'center' }}>
-                <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                  <CheckCircle size={32} color="#10B981" strokeWidth={1.5} />
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
-                <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
-              </div>
-            ) : attention.map((item, i) => (
-              <div key={i} style={{
-                padding: '12px 16px', display: 'flex', gap: 11, alignItems: 'center',
-                borderBottom: i < attention.length - 1 ? '1px solid #EEF0F4' : undefined,
-              }}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
-              >
-                <div style={{
-                  width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-                  background: `${item.color}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <item.icon size={14} color={item.color} strokeWidth={1.7} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                    else if (item.actionType === 'reminder') router.push(`/dashboard/estimates/${item.id}`)
-                    else window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address || '')}`, '_blank')
-                  }}
-                  style={{
-                    padding: '5px 10px', fontSize: 11, fontWeight: 600, color: item.color,
-                    background: `${item.color}14`, border: 'none', borderRadius: 7, cursor: 'pointer',
-                    whiteSpace: 'nowrap', flexShrink: 0,
-                  }}
-                >{item.cta}</button>
-              </div>
-            ))}
-          </div>
-
-          {/* Recent activity */}
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
-            <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
-              <div className="db-panel-title" style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Recent activity</div>
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Live feed</div>
-            </div>
-            {activity.length === 0 ? (
-              <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                No activity yet. Send your first estimate to get started.
-              </div>
-            ) : activity.map((item, i) => (
-              <div key={i} style={{
-                padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center',
-                borderBottom: i < activity.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer',
-              }}
-                onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}
-                onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
-                onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}
-              >
-                <div style={{ width: 6, height: 6, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
-                <div style={{ flex: 1, fontSize: 12, color: '#475569' }}>
-                  <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
-                  {' '}{item.verb}{' '}
-                  <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2563EB' }}>{item.item}</span>
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
-              </div>
-            ))}
-          </div>
-
-          {/* Discover */}
-          {showDiscover && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ padding: '0 4px', marginBottom: 10 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Discover</div>
-              </div>
-              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 0 16px', scrollbarWidth: 'none' } as React.CSSProperties}>
-                {/* GBB card */}
-                <div style={{ width: 270, flexShrink: 0, borderRadius: 20, overflow: 'hidden', background: '#2045B8', padding: '20px 18px 18px', position: 'relative' }}>
-                  <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'rgba(59,108,255,0.5)', top: -80, right: -60 }} />
-                  <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', bottom: -30, left: 20 }} />
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', marginBottom: 0 }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>CLOSE MORE JOBS</span>
+              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+                {attention.length === 0 ? (
+                  <div style={{ padding: '28px 16px', textAlign: 'center' }}>
+                    <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+                      <CheckCircle size={28} color="#10B981" strokeWidth={1.5} />
                     </div>
-                    <div style={{ display: 'flex', gap: 6, marginTop: 14, marginBottom: 14 }}>
-                      {(['Good', 'Better', 'Best'] as const).map(t => (
-                        <div key={t} style={t === 'Better'
-                          ? { background: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#2045B8', fontWeight: 700, flex: 1, textAlign: 'center' }
-                          : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600, flex: 1, textAlign: 'center' }
-                        }>{t}</div>
-                      ))}
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 3 }}>All caught up!</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
+                  </div>
+                ) : attention.map((item, i) => (
+                  <div key={i} style={{ padding: '13px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < attention.length - 1 ? '1px solid #F1F5F9' : undefined }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, background: `${item.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <item.icon size={14} color={item.color} strokeWidth={1.7} />
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 14 }}>+$420 avg ticket · 68% pick mid or top</div>
-                    <button onClick={() => router.push('/dashboard/gbb-onboarding')}
-                      style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
-                      Learn more →
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
+                        else router.push(`/dashboard/estimates/${item.id}`)
+                      }}
+                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {item.cta}
                     </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Live Feed */}
+            <section style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Live Feed</div>
+              <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>Recent activity</div>
+              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+                {activity.length === 0 ? (
+                  <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+                    No activity yet. Send your first estimate to get started.
+                  </div>
+                ) : activity.map((item, i) => (
+                  <div key={i} style={{ padding: '11px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < activity.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
+                    onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}>
+                    <div style={{ width: 7, height: 7, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
+                    <div style={{ flex: 1, fontSize: 13, color: '#475569' }}>
+                      <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
+                      {' '}{item.verb}{' '}
+                      <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                    <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Discover */}
+            {showDiscover && (
+              <section>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.5px', marginBottom: 14 }}>Discover</div>
+                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+                  <div style={{ minWidth: 'calc(100vw - 48px)', maxWidth: 360, flexShrink: 0, borderRadius: 20, overflow: 'hidden', background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 50%, #1535a0 100%)', padding: '22px 20px 20px', position: 'relative' }}>
+                    <div style={{ position: 'absolute', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.5) 0%, transparent 70%)', top: -80, right: -70, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', bottom: -30, left: 20, pointerEvents: 'none' }} />
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', marginBottom: 14 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>+CA$420 avg ticket</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                        {(['Good', 'Better', 'Best'] as const).map(t => (
+                          <div key={t} style={t === 'Better'
+                            ? { background: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#2045B8', fontWeight: 700, flex: 1, textAlign: 'center' }
+                            : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600, flex: 1, textAlign: 'center' }
+                          }>{t}</div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>68% of clients pick mid or top tier</div>
+                      <button onClick={() => router.push('/dashboard/gbb-onboarding')}
+                        style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Try on next estimate →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
+        ) : (
+          /* ── DESKTOP TWO-COLUMN LOWER ROW ── */
+          <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+
+            {/* Needs attention */}
+            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+              <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
+                <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Needs Attention</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+                  {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
+                </div>
+              </div>
+              {attention.length === 0 ? (
+                <div style={{ padding: '36px 16px', textAlign: 'center' }}>
+                  <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
+                    <CheckCircle size={32} color="#10B981" strokeWidth={1.5} />
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
+                </div>
+              ) : attention.map((item, i) => (
+                <div key={i} style={{ padding: '12px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < attention.length - 1 ? '1px solid #EEF0F4' : undefined }}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: `${item.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <item.icon size={14} color={item.color} strokeWidth={1.7} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
+                      else router.push(`/dashboard/estimates/${item.id}`)
+                    }}
+                    style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {item.cta}
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Live Feed / Recent activity */}
+            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+              <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
+                <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Live Feed</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Recent activity</div>
+              </div>
+              {activity.length === 0 ? (
+                <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+                  No activity yet. Send your first estimate to get started.
+                </div>
+              ) : activity.map((item, i) => (
+                <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < activity.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
+                  onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+                  <div style={{ width: 7, height: 7, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
+                  <div style={{ flex: 1, fontSize: 12, color: '#475569' }}>
+                    <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
+                    {' '}{item.verb}{' '}
+                    <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                  <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                </div>
+              ))}
+            </div>
+
+            {/* Discover */}
+            {showDiscover && (
+              <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
+                <div style={{ padding: '0 4px', marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.4px' }}>Discover</div>
+                </div>
+                <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4, scrollbarWidth: 'none' } as React.CSSProperties}>
+                  <div style={{ width: 280, flexShrink: 0, borderRadius: 20, overflow: 'hidden', background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 50%, #1535a0 100%)', padding: '20px 18px 18px', position: 'relative' }}>
+                    <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.5) 0%, transparent 70%)', top: -80, right: -60, pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', bottom: -30, left: 20, pointerEvents: 'none' }} />
+                    <div style={{ position: 'relative', zIndex: 1 }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '4px 10px', marginBottom: 14 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.07em' }}>+CA$420 avg ticket</span>
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                        {(['Good', 'Better', 'Best'] as const).map(t => (
+                          <div key={t} style={t === 'Better'
+                            ? { background: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#2045B8', fontWeight: 700, flex: 1, textAlign: 'center' }
+                            : { background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 600, flex: 1, textAlign: 'center' }
+                          }>{t}</div>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 14 }}>68% of clients pick mid or top tier</div>
+                      <button onClick={() => router.push('/dashboard/gbb-onboarding')}
+                        style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: '#2045B8', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        Try on next estimate →
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-        </div>
+          </div>
+        )}
+
       </main>
     </div>
   )
