@@ -19,7 +19,7 @@ interface Metrics {
 }
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
-  id: string; actionType: 'reminder' | 'invoice' | 'directions'; address?: string
+  id: string; actionType: 'reminder' | 'invoice'; address?: string
 }
 interface ActivityItem {
   dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
@@ -189,31 +189,6 @@ export default function DashboardPage() {
       })
 
       const attItems: AttentionItem[] = []
-      // Upcoming visit → amber, directions
-      if (appts) {
-        const now = new Date()
-        const ninetyMinsLater = new Date(now.getTime() + 5400000)
-        const soonAppt = (appts as any[]).find((a: any) => {
-          if (!a.appointment_time) return false
-          const [h, m] = a.appointment_time.split(':').map(Number)
-          const t = new Date(); t.setHours(h, m, 0, 0)
-          return t >= now && t <= ninetyMinsLater
-        })
-        if (soonAppt) {
-          const [apptH, apptM] = soonAppt.appointment_time.split(':').map(Number)
-          const apptTime = new Date(); apptTime.setHours(apptH, apptM, 0, 0)
-          const minsUntil = Math.round((apptTime.getTime() - now.getTime()) / 60000)
-          const leaveTime = new Date(apptTime.getTime() - 30 * 60000)
-          const lh = leaveTime.getHours(), lm = leaveTime.getMinutes()
-          const leaveStr = `${lh % 12 || 12}:${String(lm).padStart(2,'0')} ${lh >= 12 ? 'PM' : 'AM'}`
-          attItems.push({
-            icon: Calendar, color: '#F59E0B',
-            title: `Visit in ${minsUntil} min — ${soonAppt.client_name}`,
-            desc: `Leave by ${leaveStr}`,
-            cta: 'Directions', id: soonAppt.id, actionType: 'directions', address: soonAppt.client_address || '',
-          })
-        }
-      }
       // Signed estimate → green, invoice
       if (estSigned?.length) {
         attItems.push({
