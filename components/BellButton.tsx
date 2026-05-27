@@ -6,7 +6,7 @@ import { useNotifications } from '@/hooks/useNotifications'
 import NotifDropdown from './NotifDropdown'
 
 export default function BellButton() {
-  const { notifs, unread, open, setOpen, openPanel, markAllRead } = useNotifications()
+  const { notifs, unread, open, setOpen, openPanel, markOneRead, markAllRead, clearAll } = useNotifications()
   const ref = useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -69,7 +69,7 @@ export default function BellButton() {
           position: 'fixed', top: 70, left: 16, right: 16, width: 'auto',
           zIndex: 999, maxHeight: '70vh', overflowY: 'auto', borderRadius: 20,
         }}>
-          <NotifDropdown notifs={notifs} onClose={() => setOpen(false)} markAllRead={markAllRead} />
+          <NotifDropdown notifs={notifs} onClose={() => setOpen(false)} markOneRead={markOneRead} markAllRead={markAllRead} clearAll={clearAll} />
         </div>
       )}
     </div>

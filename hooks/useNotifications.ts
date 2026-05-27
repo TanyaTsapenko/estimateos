@@ -23,38 +23,42 @@ export function useNotifications() {
         .select('id,type,title,body,read,created_at,link')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20)
+        .limit(30)
       if (data) setNotifs(data)
       supabase.channel('notifs-hook')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'notifications',
           filter: `user_id=eq.${user.id}`,
-        }, (payload) => setNotifs(prev => [payload.new as Notif, ...prev].slice(0, 20)))
+        }, (payload) => setNotifs(prev => [payload.new as Notif, ...prev].slice(0, 30)))
         .subscribe()
     }
     load()
     return () => { createClient().channel('notifs-hook').unsubscribe() }
   }, [])
 
+  function openPanel() { setOpen(true) }
+
+  async function markOneRead(id: string) {
+    const supabase = createClient()
+    await supabase.from('notifications').update({ read: true }).eq('id', id)
+    setNotifs(prev => prev.filter(n => n.id !== id))
+  }
+
   async function markAllRead() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
-    setNotifs(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifs(prev => prev.filter(n => n.read))
   }
 
-  async function openPanel() {
-    setOpen(true)
-    if (unread > 0) {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        await supabase.from('notifications').update({ read: true }).eq('user_id', user.id).eq('read', false)
-        setNotifs(prev => prev.map(n => ({ ...n, read: true })))
-      }
-    }
+  async function clearAll() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('notifications').delete().eq('user_id', user.id)
+    setNotifs([])
   }
 
-  return { notifs, unread, open, setOpen, openPanel, markAllRead }
+  return { notifs, unread, open, setOpen, openPanel, markOneRead, markAllRead, clearAll }
 }

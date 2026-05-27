@@ -32,13 +32,21 @@ function timeAgo(iso: string) {
 interface Props {
   notifs: Notif[]
   onClose: () => void
+  markOneRead: (id: string) => void
   markAllRead: () => void
-  /** CSS positioning for the panel box itself */
+  clearAll: () => void
   style?: React.CSSProperties
 }
 
-export default function NotifDropdown({ notifs, onClose, markAllRead, style }: Props) {
+export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRead, clearAll, style }: Props) {
   const router = useRouter()
+  const hasUnread = notifs.some(n => !n.read)
+
+  function handleNav(n: Notif) {
+    if (n.link) router.push(n.link)
+    onClose()
+  }
+
   return (
     <div style={{
       width: '100%',
@@ -53,7 +61,7 @@ export default function NotifDropdown({ notifs, onClose, markAllRead, style }: P
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: '#0B1220' }}>Notifications</span>
-        {notifs.some(n => !n.read) && (
+        {hasUnread && (
           <button onClick={markAllRead} style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
             Mark all as read
           </button>
@@ -64,28 +72,64 @@ export default function NotifDropdown({ notifs, onClose, markAllRead, style }: P
       {notifs.length === 0 ? (
         <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#8A94A6' }}>No notifications yet.</div>
       ) : notifs.map(n => (
-        <button
+        <div
           key={n.id}
-          onClick={() => { if (n.link) router.push(n.link); onClose() }}
           style={{
-            display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 16px',
+            display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
             background: n.read ? '#FAFAFA' : '#fff', borderBottom: '1px solid #EEF0F4',
-            width: '100%', textAlign: 'left', border: 'none', fontFamily: 'inherit',
-            cursor: n.link ? 'pointer' : 'default',
           }}
-          onMouseEnter={e => { if (n.link) (e.currentTarget as HTMLElement).style.background = '#F1F5FF' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = n.read ? '#FAFAFA' : '#fff' }}
         >
-          {!n.read && <div style={{ width: 6, height: 6, borderRadius: 999, background: '#2563EB', flexShrink: 0, marginTop: 6 }} />}
-          {n.read  && <div style={{ width: 6, flexShrink: 0 }} />}
-          {notifIcon(n.type)}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: n.read ? '#475467' : '#0B1220', lineHeight: 1.3 }}>{n.title}</div>
-            <div style={{ fontSize: 12, color: '#475467', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>
-            <div style={{ fontSize: 11, color: '#B3BAC6', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
+          {/* Unread dot */}
+          <div style={{ width: 6, flexShrink: 0 }}>
+            {!n.read && <div style={{ width: 6, height: 6, borderRadius: 999, background: '#2563EB' }} />}
           </div>
-        </button>
+
+          {/* Icon + text — clickable to navigate */}
+          <div
+            onClick={() => handleNav(n)}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0, cursor: n.link ? 'pointer' : 'default' }}
+            onMouseEnter={e => { if (n.link) (e.currentTarget as HTMLElement).style.opacity = '0.8' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          >
+            {notifIcon(n.type)}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: n.read ? '#475467' : '#0B1220', lineHeight: 1.3 }}>{n.title}</div>
+              <div style={{ fontSize: 12, color: '#475467', marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>
+              <div style={{ fontSize: 11, color: '#B3BAC6', marginTop: 4 }}>{timeAgo(n.created_at)}</div>
+            </div>
+          </div>
+
+          {/* × dismiss button */}
+          <button
+            onClick={e => { e.stopPropagation(); markOneRead(n.id) }}
+            title="Mark as read"
+            style={{
+              flexShrink: 0, width: 24, height: 24, borderRadius: 6,
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#B3BAC6', fontSize: 14, lineHeight: 1,
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#F1F5F9'; (e.currentTarget as HTMLElement).style.color = '#64748B' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#B3BAC6' }}
+          >
+            ×
+          </button>
+        </div>
       ))}
+
+      {/* Footer — Clear all */}
+      {notifs.length > 0 && (
+        <div style={{ padding: '10px 16px', borderTop: '1px solid #EEF0F4', display: 'flex', justifyContent: 'center' }}>
+          <button
+            onClick={clearAll}
+            style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', fontFamily: 'inherit' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#DC2626' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
     </div>
   )
 }
