@@ -3,8 +3,6 @@ import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 const ROLE_LABELS: Record<string, string> = {
   owner:      'Owner',
   estimator:  'Sales / Estimator',
@@ -14,6 +12,14 @@ const ROLE_LABELS: Record<string, string> = {
 
 export async function POST(request: NextRequest) {
   console.log('[team-invite] START')
+
+  const RESEND_KEY = process.env.RESEND_API_KEY
+  console.log('[team-invite] RESEND_API_KEY exists:', !!RESEND_KEY, 'prefix:', RESEND_KEY?.slice(0, 8))
+  if (!RESEND_KEY) {
+    console.error('[team-invite] RESEND_API_KEY is not set — cannot send email')
+    return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
+  }
+  const resend = new Resend(RESEND_KEY)
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -145,15 +151,15 @@ export async function POST(request: NextRequest) {
   })
 
   if (emailError) {
-    console.error('[team-invite] Resend error:', emailError)
-    // Invitation is saved — return success but surface the email warning
+    console.error('[team-invite] Resend error (full):', JSON.stringify(emailError))
     return NextResponse.json({
       success: true,
       invitation,
       emailWarning: emailError.message,
+      emailError: JSON.stringify(emailError),
     })
   }
 
-  console.log('[team-invite] email sent, id:', emailData?.id)
+  console.log('[team-invite] email sent OK, id:', emailData?.id)
   return NextResponse.json({ success: true, invitation })
 }
