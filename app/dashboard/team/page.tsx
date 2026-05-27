@@ -159,18 +159,6 @@ export default function TeamPage() {
     showToast('✅ Member removed')
   }
 
-  async function updateMemberRole(memberId: string, newRole: string) {
-    const prev = members.find(m => m.id === memberId)?.member_role ?? null
-    setMembers(ms => ms.map(m => m.id === memberId ? { ...m, member_role: newRole } : m))
-    const { error } = await supabase.from('profiles').update({ role: newRole, member_role: newRole }).eq('id', memberId)
-    if (error) {
-      setMembers(ms => ms.map(m => m.id === memberId ? { ...m, member_role: prev } : m))
-      showToast('⚠️ Failed to update role')
-    } else {
-      showToast('✅ Role updated')
-    }
-  }
-
   function toggleExpand(m: Member) {
     if (expandedMemberId === m.id) {
       setExpandedMemberId(null)
@@ -356,16 +344,9 @@ export default function TeamPage() {
                       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--jet)' }}>{name}</div>
                       <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 2 }}>{m.email}</div>
                     </div>
-                    <select
-                      value={m.member_role || 'estimator'}
-                      onChange={e => updateMemberRole(m.id, e.target.value)}
-                      style={{ padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 8, fontSize: 11, fontWeight: 600, color: 'var(--graphite)', background: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}
-                    >
-                      <option value="estimator">Estimator</option>
-                      <option value="manager">Manager</option>
-                      <option value="admin">Office Admin</option>
-                      <option value="owner">Owner</option>
-                    </select>
+                    <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.08)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>
+                      {ROLES.find(r => r.key === m.member_role)?.label || 'Estimator'}
+                    </span>
                   </div>
                   {/* Permissions expand/collapse */}
                   <button
