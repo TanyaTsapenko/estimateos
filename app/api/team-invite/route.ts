@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
 
   console.log('[team-invite] sending email to:', inviteeEmail)
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+    from: `EstimateOS <noreply@useapexscale.com>`,
     to:   [inviteeEmail],
     subject: `You're invited to join ${companyName} on EstimateOS`,
     html,

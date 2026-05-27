@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     try {
       await resend.emails.send({
-        from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+        from: `EstimateOS <noreply@useapexscale.com>`,
         to: [est.client_email],
         subject: `Deposit Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
         html,

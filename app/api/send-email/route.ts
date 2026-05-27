@@ -311,7 +311,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
   }
 
   const emailPayload: any = {
-    from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+    from: `EstimateOS <noreply@useapexscale.com>`,
     to: [est.client_email],
     subject,
     html,

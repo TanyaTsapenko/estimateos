@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const viewUrl = `https://estimateos-eta.vercel.app/sign/contract/${contractId}`
 
   await resend.emails.send({
-    from: `EstimateOS <onboarding@resend.dev>`,
+    from: `EstimateOS <noreply@useapexscale.com>`,
     to: contractorEmail,
     subject: `✓ ${clientName} signed the contract`,
     html: `

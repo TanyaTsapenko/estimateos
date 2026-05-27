@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { error } = await resend.emails.send({
-      from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+      from: `EstimateOS <noreply@useapexscale.com>`,
       to: [clientEmail],
       subject,
       html,
