@@ -30,13 +30,21 @@ export async function POST(request: NextRequest) {
   }
 
   const appRole = invite.role === 'owner' ? 'owner' : 'estimator'
+  console.log('[team-join] Setting role to', appRole, 'for user:', user.id)
 
-  const { error: profileErr } = await supabase
+  // Upsert so the row is created if it doesn't exist yet (e.g. user just registered via invite link)
+  const { error: profileErr } = await admin
     .from('profiles')
-    .update({ team_owner_id: invite.owner_id, member_role: invite.role, role: appRole })
-    .eq('id', user.id)
+    .upsert(
+      { id: user.id, team_owner_id: invite.owner_id, member_role: invite.role, role: appRole },
+      { onConflict: 'id' }
+    )
 
-  if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })
+  if (profileErr) {
+    console.error('[team-join] profile upsert error:', profileErr)
+    return NextResponse.json({ error: profileErr.message }, { status: 500 })
+  }
+  console.log('[team-join] profile updated — role:', appRole, 'team_owner_id:', invite.owner_id)
 
   await admin
     .from('team_invitations')
