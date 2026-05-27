@@ -40,11 +40,20 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
     if (input.length < 3) { setPredictions([]); setOpen(false); return }
     try {
       const res = await fetch(`/api/places?type=autocomplete&input=${encodeURIComponent(input)}`)
+      if (!res.ok) {
+        console.error('[AddressAutocomplete] /api/places returned', res.status, await res.text())
+        return
+      }
       const data = await res.json()
+      if (data.error) console.error('[AddressAutocomplete] API error:', data.error)
+      if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+        console.error('[AddressAutocomplete] Google status:', data.status, data.error_message)
+      }
       const list: Prediction[] = data.predictions || []
       setPredictions(list)
       setOpen(list.length > 0)
-    } catch {
+    } catch (e) {
+      console.error('[AddressAutocomplete] fetch error:', e)
       setPredictions([])
     }
   }
@@ -60,6 +69,12 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
     setPredictions([])
     try {
       const res = await fetch(`/api/places?type=details&place_id=${encodeURIComponent(p.place_id)}`)
+      if (!res.ok) {
+        console.error('[AddressAutocomplete] details returned', res.status)
+        onChange(p.structured_formatting.main_text)
+        onSelect({ street: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
+        return
+      }
       const data = await res.json()
       const comps: Array<{ types: string[]; long_name: string; short_name: string }> = data.result?.address_components || []
 
@@ -80,7 +95,8 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
       const street = [streetNumber, route].filter(Boolean).join(' ') || p.structured_formatting.main_text
       onChange(street)
       onSelect({ street, city, province, postalCode })
-    } catch {
+    } catch (e) {
+      console.error('[AddressAutocomplete] selectPlace error:', e)
       onChange(p.structured_formatting.main_text)
       onSelect({ street: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
     }
