@@ -138,6 +138,19 @@ export default function SignContractPage() {
       signed_at: new Date().toISOString(),
     }).eq('id', contract.id)
 
+    await supabase.from('estimates').update({
+      status: 'signed',
+      signed_at: new Date().toISOString(),
+    }).eq('id', contract.estimate_id)
+
+    await supabase.from('notifications').insert({
+      user_id: contract.profile_id,
+      type: 'estimate_signed',
+      title: 'Contract signed',
+      body: `${estimate?.client_name || 'Client'} signed the contract`,
+      link: `/dashboard/estimates/${contract.estimate_id}`,
+    })
+
     setClientSignatureUrl(urlData.publicUrl)
 
     await fetch('/api/send-contract-signed', {
