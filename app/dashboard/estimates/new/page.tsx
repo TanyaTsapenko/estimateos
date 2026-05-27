@@ -9,7 +9,8 @@ import { formatPhone, validateName, validatePhone, validateEmail, validateAddres
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
 
-type CustomOpeningType = { label: string; base: number; lab: number; category?: string }
+interface Tier { display_name: string; specs: string[]; pricing_type: 'fixed' | 'per_sqft'; price: number }
+type CustomOpeningType = { label: string; base: number; lab: number; category?: string; is_tiered?: boolean; tier_good?: Tier | null; tier_better?: Tier | null; tier_best?: Tier | null }
 
 function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }: {
   value: string
@@ -29,7 +30,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   }, [open])
 
   // Build a flat list of all items, grouped by category
-  const allItems: Array<{ key: string; name: string; price: number; category: string }> = []
+  const allItems: Array<{ key: string; name: string; price: number; category: string; is_tiered?: boolean }> = []
   Object.entries(OPENING_TYPES).forEach(([k, v]) => {
     const cat = k.startsWith('window_') ? 'Windows' : k.startsWith('door_') ? 'Doors' : 'Other'
     const dbPrice = customPrices?.types?.[k]
@@ -39,7 +40,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   if (customOpeningTypes) {
     Object.entries(customOpeningTypes).forEach(([k, v]) => {
       if (!allItems.find(i => i.key === k)) {
-        allItems.push({ key: k, name: v.label, price: v.base + v.lab, category: v.category || 'Other' })
+        allItems.push({ key: k, name: v.label, price: v.base + v.lab, category: v.category || 'Other', is_tiered: v.is_tiered })
       }
     })
   }
@@ -105,7 +106,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
                     : <div style={{ width: 14, flexShrink: 0 }} />
                   }
                   <span style={{ flex: 1 }}>{item.name}</span>
-                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, flexShrink: 0 }}>{fmtCAD(item.price)}</span>
+                  <span style={{ fontSize: 12, color: item.is_tiered ? '#3B6CFF' : '#64748B', fontWeight: 600, flexShrink: 0 }}>{item.is_tiered ? '3 Tiers' : fmtCAD(item.price)}</span>
                 </button>
               ))}
             </div>
@@ -126,6 +127,21 @@ const TIERS = [
   { key: 'better', label: 'Better', mult: 1.2, desc: 'Mid-grade product, 5-yr warranty',   badge: 'POPULAR' },
   { key: 'best',   label: 'Best',   mult: 1.4, desc: 'Premium product, lifetime warranty', badge: 'BEST VALUE' },
 ]
+
+function calcTierTotal(ops: Opening[], tierKey: 'good' | 'better' | 'best', customTypes: Record<string, CustomOpeningType>, customPrices: CustomPrices | undefined): number {
+  return ops.reduce((sum, op) => {
+    const item = customTypes[op.type]
+    if (item?.is_tiered) {
+      const t = tierKey === 'good' ? item.tier_good : tierKey === 'better' ? item.tier_better : item.tier_best
+      if (!t) return sum
+      const unit = t.pricing_type === 'per_sqft'
+        ? t.price * ((op.width_in || 0) / 12) * ((op.height_in || 0) / 12)
+        : t.price
+      return sum + unit * op.qty
+    }
+    return sum + opCost(op, 1.0, customPrices)
+  }, 0)
+}
 
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
@@ -154,8 +170,13 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
-            {fmtCAD(opCost(op, 1.0, customPrices))}
+          <div style={{ fontSize: 13, fontWeight: 700, color: customOpeningTypes[op.type]?.is_tiered ? '#3B6CFF' : 'var(--amber)' }}>
+            {customOpeningTypes[op.type]?.is_tiered ? (() => {
+              const t = customOpeningTypes[op.type]?.tier_better
+              if (!t) return '3 Tiers'
+              const unit = t.pricing_type === 'per_sqft' ? t.price * ((op.width_in||0)/12) * ((op.height_in||0)/12) : t.price
+              return fmtCAD(unit * op.qty)
+            })() : fmtCAD(opCost(op, 1.0, customPrices))}
           </div>
           {openingsCount > 1 && (
             <button onClick={() => removeOpening(op.id)}
@@ -174,6 +195,32 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
           </select></div>
       </div>
+
+      {customOpeningTypes[op.type]?.is_tiered && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
+          {(['good', 'better', 'best'] as const).map(tk => {
+            const TIER_COLORS: Record<string, string> = { good: '#64748B', better: '#3B6CFF', best: '#D97706' }
+            const TIER_LABELS: Record<string, string> = { good: 'Good', better: 'Better', best: 'Best' }
+            const item = customOpeningTypes[op.type]!
+            const t = tk === 'good' ? item.tier_good : tk === 'better' ? item.tier_better : item.tier_best
+            const color = TIER_COLORS[tk]
+            if (!t) return <div key={tk} />
+            const unit = t.pricing_type === 'per_sqft'
+              ? t.price * ((op.width_in || 0) / 12) * ((op.height_in || 0) / 12)
+              : t.price
+            return (
+              <div key={tk} style={{ border: `1.5px solid ${color}44`, background: `${color}08`, borderRadius: 8, padding: '8px 10px' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{TIER_LABELS[tk]}</div>
+                <div style={{ fontSize: 11, color: '#475569', fontWeight: 500, marginBottom: 3 }}>{t.display_name}</div>
+                {t.specs.slice(0, 2).map((s, i) => (
+                  <div key={i} style={{ fontSize: 9, color: '#94A3B8', lineHeight: 1.4 }}>• {s}</div>
+                ))}
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', marginTop: 5 }}>{fmtCAD(unit * op.qty)}</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
@@ -303,10 +350,14 @@ function NewEstimateForm() {
     const customTypesMap: Record<string, CustomOpeningType> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
       customTypesMap[r.opening_type] = {
-        label:    r.custom_label,
-        base:     r.base_price,
-        lab:      r.labour_price,
-        category: r.category || 'Other',
+        label:       r.custom_label,
+        base:        r.base_price,
+        lab:         r.labour_price,
+        category:    r.category    || 'Other',
+        is_tiered:   r.is_tiered   || false,
+        tier_good:   r.tier_good   || null,
+        tier_better: r.tier_better || null,
+        tier_best:   r.tier_best   || null,
       }
     })
     setCustomOpeningTypes(customTypesMap)
@@ -391,7 +442,13 @@ function NewEstimateForm() {
   const mult = TIERS.find(t => t.key === tier)?.mult || 1.2
   const province = client.client_province || profile?.province || 'AB'
   const [taxRate, taxLabel] = TAX_RATES[province] || [0.05, 'GST (5%)']
-  const subtotal = openings.reduce((s, op) => s + opCost(op, mult, customPrices), 0)
+  const hasAnyTieredItems = openings.some(op => !!customOpeningTypes[op.type]?.is_tiered)
+  const gbbGood   = hasAnyTieredItems ? calcTierTotal(openings, 'good',   customOpeningTypes, customPrices) : null
+  const gbbBetter = hasAnyTieredItems ? calcTierTotal(openings, 'better', customOpeningTypes, customPrices) : null
+  const gbbBest   = hasAnyTieredItems ? calcTierTotal(openings, 'best',   customOpeningTypes, customPrices) : null
+  const subtotal = hasAnyTieredItems
+    ? (gbbBetter ?? 0)
+    : openings.reduce((s, op) => s + opCost(op, mult, customPrices), 0)
   const discountAmt = discountValue
     ? discountType === 'percent'
       ? subtotal * (Math.min(parseFloat(discountValue) || 0, 100) / 100)
@@ -457,6 +514,13 @@ function NewEstimateForm() {
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
+      has_tiers:       hasAnyTieredItems,
+      subtotal_good:   gbbGood   !== null ? Math.round(gbbGood   * 100) / 100 : null,
+      subtotal_better: gbbBetter !== null ? Math.round(gbbBetter * 100) / 100 : null,
+      subtotal_best:   gbbBest   !== null ? Math.round(gbbBest   * 100) / 100 : null,
+      total_good:      gbbGood   !== null ? Math.round(gbbGood   * (1 + taxRate) * 100) / 100 : null,
+      total_better:    gbbBetter !== null ? Math.round(gbbBetter * (1 + taxRate) * 100) / 100 : null,
+      total_best:      gbbBest   !== null ? Math.round(gbbBest   * (1 + taxRate) * 100) / 100 : null,
     }
 
     let savedId: string
@@ -661,27 +725,50 @@ function NewEstimateForm() {
                 {openings.map(op => (
                   <div key={op.id} className="sum-row">
                     <span>{(OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type)} × {op.qty}</span>
-                    <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
+                    {customOpeningTypes[op.type]?.is_tiered
+                      ? <span style={{ fontSize: 11, fontWeight: 600, color: '#3B6CFF' }}>3 Tiers</span>
+                      : <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
+                    }
                   </div>
                 ))}
-                <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                  <span>Subtotal</span>
-                  <span>{fmtCAD(subtotal)}</span>
-                </div>
-                {discountAmt > 0 && (
-                  <div className="sum-row" style={{ color: '#16a34a' }}>
-                    <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
-                    <span>−{fmtCAD(discountAmt)}</span>
-                  </div>
+                {hasAnyTieredItems ? (
+                  <>
+                    <div className="sum-row" style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
+                      <span style={{ color: '#64748B' }}>Good total</span>
+                      <span>{fmtCAD((gbbGood || 0) * (1 + taxRate))}</span>
+                    </div>
+                    <div className="sum-row" style={{ fontWeight: 700, color: '#3B6CFF' }}>
+                      <span>Better total ★</span>
+                      <span>{fmtCAD((gbbBetter || 0) * (1 + taxRate))}</span>
+                    </div>
+                    <div className="sum-row" style={{ color: '#D97706' }}>
+                      <span>Best total</span>
+                      <span>{fmtCAD((gbbBest || 0) * (1 + taxRate))}</span>
+                    </div>
+                    <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>All totals include {taxLabel}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
+                      <span>Subtotal</span>
+                      <span>{fmtCAD(subtotal)}</span>
+                    </div>
+                    {discountAmt > 0 && (
+                      <div className="sum-row" style={{ color: '#16a34a' }}>
+                        <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
+                        <span>−{fmtCAD(discountAmt)}</span>
+                      </div>
+                    )}
+                    <div className="sum-row">
+                      <span>{taxLabel}</span>
+                      <span>{fmtCAD(taxAmount)}</span>
+                    </div>
+                    <div className="sum-total">
+                      <span className="sum-total-l">Total</span>
+                      <span className="sum-total-v">{fmtCAD(total)}</span>
+                    </div>
+                  </>
                 )}
-                <div className="sum-row">
-                  <span>{taxLabel}</span>
-                  <span>{fmtCAD(taxAmount)}</span>
-                </div>
-                <div className="sum-total">
-                  <span className="sum-total-l">Total</span>
-                  <span className="sum-total-v">{fmtCAD(total)}</span>
-                </div>
               </div>
 
               <button onClick={saveEstimate} disabled={saving} style={{
@@ -866,28 +953,51 @@ function NewEstimateForm() {
               </div>
               {openings.map(op => (
                 <div key={op.id} className="sum-row">
-                  <span>{OPENING_TYPES[op.type]?.name} × {op.qty}</span>
-                  <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
+                  <span>{OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type} × {op.qty}</span>
+                  {customOpeningTypes[op.type]?.is_tiered
+                    ? <span style={{ fontSize: 11, fontWeight: 600, color: '#3B6CFF' }}>3 Tiers</span>
+                    : <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
+                  }
                 </div>
               ))}
-              <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                <span>Subtotal</span>
-                <span>{fmtCAD(subtotal)}</span>
-              </div>
-              {discountAmt > 0 && (
-                <div className="sum-row" style={{ color: '#16a34a' }}>
-                  <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
-                  <span>−{fmtCAD(discountAmt)}</span>
-                </div>
+              {hasAnyTieredItems ? (
+                <>
+                  <div className="sum-row" style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
+                    <span style={{ color: '#64748B' }}>Good total</span>
+                    <span>{fmtCAD((gbbGood || 0) * (1 + taxRate))}</span>
+                  </div>
+                  <div className="sum-row" style={{ fontWeight: 700, color: '#3B6CFF' }}>
+                    <span>Better total ★</span>
+                    <span>{fmtCAD((gbbBetter || 0) * (1 + taxRate))}</span>
+                  </div>
+                  <div className="sum-row" style={{ color: '#D97706' }}>
+                    <span>Best total</span>
+                    <span>{fmtCAD((gbbBest || 0) * (1 + taxRate))}</span>
+                  </div>
+                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>All totals include {taxLabel}</div>
+                </>
+              ) : (
+                <>
+                  <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
+                    <span>Subtotal</span>
+                    <span>{fmtCAD(subtotal)}</span>
+                  </div>
+                  {discountAmt > 0 && (
+                    <div className="sum-row" style={{ color: '#16a34a' }}>
+                      <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
+                      <span>−{fmtCAD(discountAmt)}</span>
+                    </div>
+                  )}
+                  <div className="sum-row">
+                    <span>{taxLabel}</span>
+                    <span>{fmtCAD(taxAmount)}</span>
+                  </div>
+                  <div className="sum-total">
+                    <span className="sum-total-l">Total</span>
+                    <span className="sum-total-v">{fmtCAD(total)}</span>
+                  </div>
+                </>
               )}
-              <div className="sum-row">
-                <span>{taxLabel}</span>
-                <span>{fmtCAD(taxAmount)}</span>
-              </div>
-              <div className="sum-total">
-                <span className="sum-total-l">Total</span>
-                <span className="sum-total-v">{fmtCAD(total)}</span>
-              </div>
             </div>
 
             <div style={{ marginBottom: 14 }}>

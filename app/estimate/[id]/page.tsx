@@ -9,11 +9,32 @@ interface Estimate {
   status: string; tier: string | null; subtotal: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   scope_notes: string | null; valid_until: string | null
+  has_tiers: boolean | null
+  total_good: number | null; total_better: number | null; total_best: number | null
+  tax_rate: number | null
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
   logo_url: string | null; contract_terms: string | null
+}
+interface TierData {
+  display_name: string; specs: string[]; pricing_type: string; price: number
+}
+interface PriceListItem {
+  opening_type: string; is_tiered: boolean
+  tier_good: TierData | null; tier_better: TierData | null; tier_best: TierData | null
+}
+
+function aggregateSpecs(ops: Opening[], items: PriceListItem[], field: 'tier_good' | 'tier_better' | 'tier_best'): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  ops.forEach(op => {
+    const item = items.find(p => p.opening_type === op.type && p.is_tiered)
+    const tier = item?.[field]
+    tier?.specs?.forEach(s => { if (!seen.has(s)) { seen.add(s); out.push(s) } })
+  })
+  return out.slice(0, 5)
 }
 
 export default function ClientEstimatePage() {
@@ -22,6 +43,7 @@ export default function ClientEstimatePage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [priceListItems, setPriceListItems] = useState<PriceListItem[]>([])
   const [docStatus, setDocStatus] = useState<'loading' | 'signed' | 'declined' | 'active'>('loading')
 
   useEffect(() => {
@@ -39,6 +61,15 @@ export default function ClientEstimatePage() {
       ])
       setOpenings(ops || [])
       setProfile(prof)
+
+      if (est.has_tiers) {
+        const { data: pl } = await supabase
+          .from('price_lists')
+          .select('opening_type, is_tiered, tier_good, tier_better, tier_best')
+          .eq('user_id', (est as any).user_id)
+          .eq('is_tiered', true)
+        setPriceListItems((pl || []) as PriceListItem[])
+      }
     }
     load()
   }, [id])
@@ -75,6 +106,11 @@ export default function ClientEstimatePage() {
   const tierLabel = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : null
   const hasNotes = !!estimate.scope_notes
   const hasTerms = !!profile?.contract_terms
+  const showGBB = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
+
+  const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
+  const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
+  const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')
 
   return (
     <div style={{ background: '#F5F6F8', minHeight: '100vh', fontFamily }}>
@@ -102,7 +138,7 @@ export default function ClientEstimatePage() {
               {estimate.client_name && (
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{estimate.client_name}</div>
               )}
-              {tierLabel && (
+              {!showGBB && tierLabel && (
                 <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{tierLabel} Package</div>
               )}
             </div>
@@ -134,35 +170,83 @@ export default function ClientEstimatePage() {
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{op.room}</div>
                     )}
                   </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>
-                    {fmtCAD(op.total_cost)}
-                  </div>
+                  {!showGBB && (
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>
+                      {fmtCAD(op.total_cost)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
 
-          {/* Totals */}
-          <div style={{ padding: '16px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 8 }}>
-              <span>Subtotal</span>
-              <span>{fmtCAD(estimate.subtotal)}</span>
-            </div>
-            {estimate.discount_amount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 8 }}>
-                <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-                <span>−{fmtCAD(estimate.discount_amount)}</span>
+          {/* GBB 3-card view */}
+          {showGBB && (
+            <div style={{ padding: '20px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 14 }}>
+                Your Options
               </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
-              <span>{taxLabel}</span>
-              <span>{fmtCAD(estimate.tax_amount)}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+                {/* Good */}
+                <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: goodSpecs.length ? 8 : 0 }}>Good</div>
+                  {goodSpecs.map((s, i) => (
+                    <div key={i} style={{ fontSize: 12, color: '#64748B', marginBottom: 3 }}>• {s}</div>
+                  ))}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_good!)}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+                </div>
+
+                {/* Better — recommended */}
+                <div style={{ border: '2px solid #3B6CFF', borderRadius: 12, padding: '14px 16px', background: '#F5F8FF' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: betterSpecs.length ? 8 : 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: '#3B6CFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Better</div>
+                    <span style={{ fontSize: 10, fontWeight: 700, background: '#3B6CFF', color: '#fff', borderRadius: 20, padding: '2px 8px' }}>Recommended</span>
+                  </div>
+                  {betterSpecs.map((s, i) => (
+                    <div key={i} style={{ fontSize: 12, color: '#3B6CFF', marginBottom: 3 }}>• {s}</div>
+                  ))}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#3B6CFF', marginTop: 10 }}>{fmtCAD(estimate.total_better!)}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+                </div>
+
+                {/* Best */}
+                <div style={{ border: '1.5px solid #D97706', borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: bestSpecs.length ? 8 : 0 }}>Best</div>
+                  {bestSpecs.map((s, i) => (
+                    <div key={i} style={{ fontSize: 12, color: '#92400E', marginBottom: 3 }}>• {s}</div>
+                  ))}
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_best!)}</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+                </div>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid #EEF0F4', paddingTop: 12 }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>Total</span>
-              <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
+          )}
+
+          {/* Standard totals — only when not GBB */}
+          {!showGBB && (
+            <div style={{ padding: '16px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 8 }}>
+                <span>Subtotal</span>
+                <span>{fmtCAD(estimate.subtotal)}</span>
+              </div>
+              {estimate.discount_amount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 8 }}>
+                  <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+                  <span>−{fmtCAD(estimate.discount_amount)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
+                <span>{taxLabel}</span>
+                <span>{fmtCAD(estimate.tax_amount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid #EEF0F4', paddingTop: 12 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>Total</span>
+                <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Scope notes */}
           {hasNotes && (
