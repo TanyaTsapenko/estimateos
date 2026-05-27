@@ -25,35 +25,64 @@ interface Props {
 export default function AddressAutocomplete({ value, onChange, onSelect, placeholder, error, onBlur }: Props) {
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
+  const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
+    console.log('[Places] AddressAutocomplete mounted')
+  }, [])
+
+  // Close on outside click
+  useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false)
+      if (inputRef.current && !inputRef.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Recalculate dropdown position using fixed coords to escape overflow:hidden parents
+  function updateDropdownPosition() {
+    if (!inputRef.current) return
+    const rect = inputRef.current.getBoundingClientRect()
+    setDropdownStyle({
+      position: 'fixed',
+      top: rect.bottom + 4,
+      left: rect.left,
+      width: rect.width,
+      zIndex: 9999,
+      background: '#fff',
+      border: '1.5px solid #E5E7EB',
+      borderRadius: 10,
+      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+      overflow: 'hidden',
+    })
+  }
 
   async function fetchPredictions(input: string) {
     if (input.length < 3) { setPredictions([]); setOpen(false); return }
     try {
       const res = await fetch(`/api/places?type=autocomplete&input=${encodeURIComponent(input)}`)
       if (!res.ok) {
-        console.error('[AddressAutocomplete] /api/places returned', res.status, await res.text())
+        console.error('[Places] /api/places returned', res.status, await res.text())
         return
       }
       const data = await res.json()
-      if (data.error) console.error('[AddressAutocomplete] API error:', data.error)
+      if (data.error) console.error('[Places] API error:', data.error)
       if (data.status && data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-        console.error('[AddressAutocomplete] Google status:', data.status, data.error_message)
+        console.error('[Places] Google status:', data.status, data.error_message)
       }
       const list: Prediction[] = data.predictions || []
       setPredictions(list)
-      setOpen(list.length > 0)
+      if (list.length > 0) {
+        updateDropdownPosition()
+        setOpen(true)
+      } else {
+        setOpen(false)
+      }
     } catch (e) {
-      console.error('[AddressAutocomplete] fetch error:', e)
+      console.error('[Places] fetch error:', e)
       setPredictions([])
     }
   }
@@ -70,7 +99,7 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
     try {
       const res = await fetch(`/api/places?type=details&place_id=${encodeURIComponent(p.place_id)}`)
       if (!res.ok) {
-        console.error('[AddressAutocomplete] details returned', res.status)
+        console.error('[Places] details returned', res.status)
         onChange(p.structured_formatting.main_text)
         onSelect({ street: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
         return
@@ -96,15 +125,16 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
       onChange(street)
       onSelect({ street, city, province, postalCode })
     } catch (e) {
-      console.error('[AddressAutocomplete] selectPlace error:', e)
+      console.error('[Places] selectPlace error:', e)
       onChange(p.structured_formatting.main_text)
       onSelect({ street: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
     }
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <>
       <input
+        ref={inputRef}
         value={value}
         placeholder={placeholder}
         autoComplete="off"
@@ -124,11 +154,7 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
         }}
       />
       {open && predictions.length > 0 && (
-        <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-          background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 10,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4, overflow: 'hidden',
-        }}>
+        <div style={dropdownStyle}>
           {predictions.map(p => (
             <button
               key={p.place_id}
@@ -146,6 +172,6 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
           ))}
         </div>
       )}
-    </div>
+    </>
   )
 }
