@@ -587,6 +587,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
 
 function TeamSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
+  const [myId, setMyId] = useState('')
   const [members, setMembers] = useState<{ id: string; first_name: string | null; last_name: string | null; email: string | null; member_role: string | null }[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [showInvite, setShowInvite] = useState(false)
@@ -597,6 +598,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
+      setMyId(user.id)
       const [{ data: mems }, { data: invs }] = await Promise.all([
         supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', user.id),
         supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
@@ -605,6 +607,18 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
       setPendingCount(invs?.length ?? 0)
     })
   }, [])
+
+  async function updateMemberRole(memberId: string, newRole: string) {
+    const prev = members.find(m => m.id === memberId)?.member_role ?? null
+    setMembers(ms => ms.map(m => m.id === memberId ? { ...m, member_role: newRole } : m))
+    const { error } = await supabase.from('profiles').update({ role: newRole, member_role: newRole }).eq('id', memberId)
+    if (error) {
+      setMembers(ms => ms.map(m => m.id === memberId ? { ...m, member_role: prev } : m))
+      flash('Failed to update role')
+    } else {
+      flash('Role updated')
+    }
+  }
 
   async function sendInvite() {
     if (!inviteEmail.trim()) { flash('Enter an email address'); return }
@@ -682,7 +696,20 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{name}</div>
                     <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
                   </div>
-                  <Pill tone="blue">{ROLE_LABELS[m.member_role || ''] || m.member_role || 'Member'}</Pill>
+                  {m.id === myId ? (
+                    <Pill tone="blue">Owner</Pill>
+                  ) : (
+                    <select
+                      value={m.member_role || 'estimator'}
+                      onChange={e => updateMemberRole(m.id, e.target.value)}
+                      style={{ padding: '5px 8px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', background: '#fff', cursor: 'pointer' }}
+                    >
+                      <option value="estimator">Sales / Estimator</option>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Office Admin</option>
+                      <option value="owner">Owner</option>
+                    </select>
+                  )}
                 </div>
               )
             })}
