@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { useRole } from '@/lib/useRole'
 import ConfirmModal from '@/components/ConfirmModal'
+import { SIcon } from '@/components/SIcon'
 import { DEFAULT_ESTIMATOR_PERMISSIONS } from '@/lib/usePermissions'
 import type { Permissions } from '@/lib/usePermissions'
 
@@ -70,6 +71,7 @@ export default function TeamPage() {
   const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null)
   const [pendingPerms, setPendingPerms] = useState<Record<string, Permissions>>({})
   const [savingPerms, setSavingPerms] = useState<string | null>(null)
+  const [hoveredMemberId, setHoveredMemberId] = useState<string | null>(null)
 
   const [invEmail, setInvEmail] = useState('')
   const [invName, setInvName] = useState('')
@@ -159,7 +161,12 @@ export default function TeamPage() {
   }
 
   async function removeMember(memberId: string) {
-    await supabase.from('profiles').update({ team_owner_id: null, member_role: null }).eq('id', memberId)
+    const res = await fetch(`/api/team-members/${memberId}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}))
+      showToast('⚠️ ' + (json.error || 'Failed to remove member'))
+      return
+    }
     setMembers(p => p.filter(m => m.id !== memberId))
     showToast('✅ Member removed')
   }
@@ -366,10 +373,15 @@ export default function TeamPage() {
             </div>
 
             {members.map(m => {
-              const role = ROLES.find(r => r.key === m.member_role) || ROLES[0]
               const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Unknown'
+              const isHovered = hoveredMemberId === m.id
               return (
-                <div key={m.id} style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, border: '1px solid var(--border-light)' }}>
+                <div
+                  key={m.id}
+                  style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, border: '1px solid var(--border-light)' }}
+                  onMouseEnter={() => setHoveredMemberId(m.id)}
+                  onMouseLeave={() => setHoveredMemberId(null)}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                     <div style={{ width: 44, height: 44, borderRadius: '50%', background: avatarColor(name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                       {initials(m)}
@@ -381,6 +393,17 @@ export default function TeamPage() {
                     <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.08)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>
                       {ROLES.find(r => r.key === m.member_role)?.label || 'Estimator'}
                     </span>
+                    <button
+                      onClick={() => setRemovingMember(m)}
+                      title="Remove member"
+                      style={{
+                        flexShrink: 0, background: 'transparent', border: 'none', cursor: 'pointer',
+                        padding: 4, borderRadius: 6, color: isHovered ? '#dc2626' : 'transparent',
+                        transition: 'color 0.15s',
+                      }}
+                    >
+                      <SIcon name="trash" size={15} />
+                    </button>
                   </div>
                   {/* Permissions expand/collapse */}
                   <button
@@ -433,10 +456,6 @@ export default function TeamPage() {
                     </div>
                   )}
 
-                  <button onClick={() => setRemovingMember(m)}
-                    style={{ width: '100%', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.15)', borderRadius: 9, padding: '8px 0', fontSize: 11, fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}>
-                    Remove from team
-                  </button>
                 </div>
               )
             })}
