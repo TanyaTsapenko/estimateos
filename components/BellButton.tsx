@@ -55,21 +55,20 @@ export default function BellButton() {
         )}
       </button>
 
-      {/* Backdrop — closes panel when tapped anywhere outside */}
-      {open && isMobile && (
+      {/* Backdrop — closes panel on tap/click anywhere outside */}
+      {open && (
         <div
           onClick={() => setOpen(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 998 }}
         />
       )}
 
-      {/* Panel — fixed on mobile, absolute on desktop */}
+      {/* Panel — always fixed so it doesn't scroll with the page */}
       {open && (
-        <div style={
-          isMobile
-            ? { position: 'fixed', top: 80, left: 16, right: 16, zIndex: 999, maxHeight: 'calc(100vh - 120px)', overflow: 'hidden', borderRadius: 20 }
-            : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 100 }
-        }>
+        <div style={{
+          position: 'fixed', top: 70, left: 16, right: 16, width: 'auto',
+          zIndex: 999, maxHeight: '70vh', overflowY: 'auto', borderRadius: 20,
+        }}>
           <NotifDropdown notifs={notifs} onClose={() => setOpen(false)} markAllRead={markAllRead} />
         </div>
       )}

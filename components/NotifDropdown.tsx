@@ -42,14 +42,12 @@ export default function NotifDropdown({ notifs, onClose, markAllRead, style }: P
   return (
     <div style={{
       width: '100%',
-      maxWidth: 'min(340px, calc(100vw - 32px))',
-      maxHeight: 'min(480px, calc(100vh - 120px))',
-      overflowY: 'auto',
+      maxWidth: 440,
+      margin: '0 auto',
       background: '#fff', borderRadius: 14,
       border: '1px solid rgba(15,23,42,0.06)',
       boxShadow: '0 4px 24px rgba(15,23,42,0.12)',
       fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
-      zIndex: 100,
       ...style,
     }}>
       {/* Header */}
