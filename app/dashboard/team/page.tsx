@@ -74,6 +74,10 @@ export default function TeamPage() {
   const [invEmail, setInvEmail] = useState('')
   const [invName, setInvName] = useState('')
   const [invRole, setInvRole] = useState('estimator')
+  const [invPerms, setInvPerms] = useState({
+    estimates: true, schedule: true, clients: true,
+    price_list: false, reports: false, settings: false,
+  })
 
   useEffect(() => {
     async function load() {
@@ -110,12 +114,13 @@ export default function TeamPage() {
       const res = await fetch('/api/team-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteeEmail: invEmail.trim(), inviteeName: invName.trim() || null, role: invRole }),
+        body: JSON.stringify({ inviteeEmail: invEmail.trim(), inviteeName: invName.trim() || null, role: invRole, permissions: invPerms }),
       })
       const json = await res.json()
       if (!res.ok) { showToast('⚠️ ' + (json.error || 'Failed to send invite')); setSending(false); return }
       setInvitations(p => [json.invitation, ...p])
       setInvEmail(''); setInvName(''); setInvRole('estimator')
+      setInvPerms({ estimates: true, schedule: true, clients: true, price_list: false, reports: false, settings: false })
       setScreen('list')
       if (json.emailWarning) {
         showToast('⚠️ Invite saved but email failed: ' + json.emailWarning)
@@ -294,6 +299,35 @@ export default function TeamPage() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Permissions section */}
+            <div className="sl" style={{ marginTop: 4 }}>Permissions</div>
+            <div style={{ background: '#fff', border: '1px solid var(--border)', borderRadius: 12, padding: '4px 14px', marginBottom: 20 }}>
+              {[
+                { key: 'estimates',  label: 'Estimates',        desc: 'Create and send quotes to clients' },
+                { key: 'schedule',   label: 'Schedule',         desc: 'View and manage appointments' },
+                { key: 'clients',    label: 'Clients',          desc: 'Add, edit, and view client profiles' },
+                { key: 'price_list', label: 'Price List',       desc: 'View and edit product pricing' },
+                { key: 'reports',    label: 'Reports',          desc: 'Access sales and revenue reports' },
+                { key: 'settings',   label: 'Company Settings', desc: 'Manage branding, contracts, and billing' },
+              ].map(({ key, label, desc }, i, arr) => {
+                const val = invPerms[key as keyof typeof invPerms]
+                return (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < arr.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--jet)' }}>{label}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 1 }}>{desc}</div>
+                    </div>
+                    <div
+                      onClick={() => setInvPerms(p => ({ ...p, [key]: !p[key as keyof typeof p] }))}
+                      style={{ width: 38, height: 22, borderRadius: 11, flexShrink: 0, cursor: 'pointer', background: val ? '#2563EB' : 'rgba(53,58,62,.15)', position: 'relative', transition: 'background 0.2s' }}
+                    >
+                      <div style={{ position: 'absolute', top: 3, left: val ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
 
             <button className="gen-btn" onClick={sendInvite} disabled={sending}>

@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
   console.log('[team-invite] user:', user.id)
 
   const body = await request.json()
-  const { inviteeEmail, inviteeName, role, resendId } = body
-  console.log('[team-invite] payload:', { inviteeEmail, inviteeName, role, resendId })
+  const { inviteeEmail, inviteeName, role, resendId, permissions } = body
+  console.log('[team-invite] payload:', { inviteeEmail, inviteeName, role, resendId, permissions })
 
   if (!inviteeEmail) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       invitee_email: inviteeEmail,
       invitee_name:  inviteeName || null,
       role:          role || 'estimator',
+      permissions:   permissions || null,
     }).select().single()
 
     if (error) {
