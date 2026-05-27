@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
@@ -652,12 +653,21 @@ function NewEstimateForm() {
               </div>
               <div className="r1"><div className="f">
                 <label>Address</label>
-                <input
-                  placeholder="123 Maple St"
+                <AddressAutocomplete
                   value={client.client_address}
-                  style={clientErrors.client_address ? { border: estErrBorder } : undefined}
-                  onChange={e => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: e.target.value })) }}
+                  placeholder="123 Maple St"
+                  error={!!clientErrors.client_address}
+                  onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                   onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
+                  onSelect={({ address, city, province }) => {
+                    clearCErr('client_address')
+                    setClient(p => ({
+                      ...p,
+                      client_address: address,
+                      ...(city     && { client_city: city }),
+                      ...(province && TAX_RATES[province] && { client_province: province }),
+                    }))
+                  }}
                 />
                 {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
               </div></div>
@@ -884,12 +894,21 @@ function NewEstimateForm() {
             </div>
             <div className="r1"><div className="f">
               <label>Address</label>
-              <input
-                placeholder="123 Maple St"
+              <AddressAutocomplete
                 value={client.client_address}
-                style={clientErrors.client_address ? { border: estErrBorder } : undefined}
-                onChange={e => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: e.target.value })) }}
+                placeholder="123 Maple St"
+                error={!!clientErrors.client_address}
+                onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                 onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
+                onSelect={({ address, city, province }) => {
+                  clearCErr('client_address')
+                  setClient(p => ({
+                    ...p,
+                    client_address: address,
+                    ...(city     && { client_city: city }),
+                    ...(province && TAX_RATES[province] && { client_province: province }),
+                  }))
+                }}
               />
               {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
             </div></div>

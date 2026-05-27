@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
@@ -183,12 +184,13 @@ export default function NewAppointmentPage() {
 
         <div className="r1"><div className="f">
           <label>Address</label>
-          <input
-            placeholder="123 Maple St, Calgary, AB"
+          <AddressAutocomplete
             value={form.client_address}
-            style={errors.client_address ? { border: errBorder } : undefined}
-            onChange={e => { clearErr('client_address'); set('client_address', e.target.value) }}
+            placeholder="123 Maple St, Calgary, AB"
+            error={!!errors.client_address}
+            onChange={v => { clearErr('client_address'); set('client_address', v) }}
             onBlur={() => setErr('client_address', validateAddress(form.client_address))}
+            onSelect={({ address }) => { clearErr('client_address'); set('client_address', address) }}
           />
           {errors.client_address && <div style={errStyle}>{errors.client_address}</div>}
         </div></div>
