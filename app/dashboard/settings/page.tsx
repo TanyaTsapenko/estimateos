@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
-import { Camera } from 'lucide-react'
+import { Camera, ImagePlus } from 'lucide-react'
 import BellButton from '@/components/BellButton'
 
 // ── TYPES ────────────────────────────────────────
@@ -505,28 +505,25 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
           <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 10 }}>Company Logo</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 80, height: 80, borderRadius: 12,
-                background: '#F4F4F2', border: '1px solid #E2E8F0',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', flexShrink: 0,
+              <label style={{
+                width: 80, height: 80, borderRadius: 16, flexShrink: 0,
+                border: logoUrl ? '1px solid #E5E7EB' : '2px dashed #E5E7EB',
+                background: '#fff',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', cursor: logoUploading ? 'not-allowed' : 'pointer',
+                opacity: logoUploading ? 0.7 : 1,
               }}>
                 {logoUrl
-                  ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                  : <span style={{ fontSize: 28 }}>🏢</span>
+                  ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <>
+                      <ImagePlus size={24} color="#9CA3AF" strokeWidth={1.5} />
+                      <span style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Logo</span>
+                    </>
                 }
-              </div>
+                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={logoUploading} />
+              </label>
               <div>
-                <label style={{
-                  display: 'inline-block', padding: '8px 16px',
-                  background: '#2563EB', color: '#fff', borderRadius: 8,
-                  fontSize: 13, fontWeight: 600, cursor: logoUploading ? 'not-allowed' : 'pointer',
-                  opacity: logoUploading ? 0.7 : 1,
-                }}>
-                  {logoUploading ? 'Uploading...' : logoUrl ? 'Change logo' : 'Upload logo'}
-                  <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={logoUploading} />
-                </label>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>PNG, JPG, SVG or WebP · Max 5 MB</div>
+                <div style={{ fontSize: 11, color: '#94A3B8' }}>PNG, JPG, SVG or WebP · Max 5 MB</div>
                 {logoUrl && (
                   <button onClick={async () => {
                     if (!userId) return
