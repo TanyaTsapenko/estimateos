@@ -190,7 +190,7 @@ export default function NewAppointmentPage() {
             error={!!errors.client_address}
             onChange={v => { clearErr('client_address'); set('client_address', v) }}
             onBlur={() => setErr('client_address', validateAddress(form.client_address))}
-            onSelect={({ address }) => { clearErr('client_address'); set('client_address', address) }}
+            onSelect={({ street }) => { clearErr('client_address'); set('client_address', street) }}
           />
           {errors.client_address && <div style={errStyle}>{errors.client_address}</div>}
         </div></div>

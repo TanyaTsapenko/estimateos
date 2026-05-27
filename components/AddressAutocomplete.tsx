@@ -3,12 +3,11 @@ import { useState, useRef, useEffect } from 'react'
 
 interface Prediction {
   place_id: string
-  description: string
   structured_formatting: { main_text: string; secondary_text: string }
 }
 
-interface AddressResult {
-  address: string
+export interface AddressResult {
+  street: string
   city: string
   province: string
   postalCode: string
@@ -40,7 +39,7 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
   async function fetchPredictions(input: string) {
     if (input.length < 3) { setPredictions([]); setOpen(false); return }
     try {
-      const res = await fetch(`/api/places/autocomplete?input=${encodeURIComponent(input)}`)
+      const res = await fetch(`/api/places?type=autocomplete&input=${encodeURIComponent(input)}`)
       const data = await res.json()
       const list: Prediction[] = data.predictions || []
       setPredictions(list)
@@ -53,14 +52,14 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
   function handleChange(v: string) {
     onChange(v)
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => fetchPredictions(v), 280)
+    timerRef.current = setTimeout(() => fetchPredictions(v), 300)
   }
 
   async function selectPlace(p: Prediction) {
     setOpen(false)
     setPredictions([])
     try {
-      const res = await fetch(`/api/places/details?place_id=${encodeURIComponent(p.place_id)}`)
+      const res = await fetch(`/api/places?type=details&place_id=${encodeURIComponent(p.place_id)}`)
       const data = await res.json()
       const comps: Array<{ types: string[]; long_name: string; short_name: string }> = data.result?.address_components || []
 
@@ -78,12 +77,12 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
         else if (c.types.includes('postal_code')) postalCode = c.long_name
       }
 
-      const address = [streetNumber, route].filter(Boolean).join(' ') || p.structured_formatting.main_text
-      onChange(address)
-      onSelect({ address, city, province, postalCode })
+      const street = [streetNumber, route].filter(Boolean).join(' ') || p.structured_formatting.main_text
+      onChange(street)
+      onSelect({ street, city, province, postalCode })
     } catch {
       onChange(p.structured_formatting.main_text)
-      onSelect({ address: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
+      onSelect({ street: p.structured_formatting.main_text, city: '', province: '', postalCode: '' })
     }
   }
 
@@ -92,10 +91,21 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
       <input
         value={value}
         placeholder={placeholder}
-        style={error ? { border: '1.5px solid #C0341A' } : undefined}
+        autoComplete="off"
         onChange={e => handleChange(e.target.value)}
         onBlur={onBlur}
-        autoComplete="off"
+        style={{
+          width: '100%',
+          border: error ? '1.5px solid #C0341A' : '1.5px solid #E5E7EB',
+          borderRadius: 10,
+          padding: '12px 14px',
+          fontSize: 15,
+          background: '#fff',
+          outline: 'none',
+          boxSizing: 'border-box',
+          fontFamily: 'inherit',
+          color: '#0A1628',
+        }}
       />
       {open && predictions.length > 0 && (
         <div style={{

@@ -659,11 +659,11 @@ function NewEstimateForm() {
                   error={!!clientErrors.client_address}
                   onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                   onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
-                  onSelect={({ address, city, province }) => {
+                  onSelect={({ street, city, province }) => {
                     clearCErr('client_address')
                     setClient(p => ({
                       ...p,
-                      client_address: address,
+                      client_address: street,
                       ...(city     && { client_city: city }),
                       ...(province && TAX_RATES[province] && { client_province: province }),
                     }))
@@ -900,11 +900,11 @@ function NewEstimateForm() {
                 error={!!clientErrors.client_address}
                 onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                 onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
-                onSelect={({ address, city, province }) => {
+                onSelect={({ street, city, province }) => {
                   clearCErr('client_address')
                   setClient(p => ({
                     ...p,
-                    client_address: address,
+                    client_address: street,
                     ...(city     && { client_city: city }),
                     ...(province && TAX_RATES[province] && { client_province: province }),
                   }))
