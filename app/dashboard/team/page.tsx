@@ -5,11 +5,24 @@ import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { useRole } from '@/lib/useRole'
 import ConfirmModal from '@/components/ConfirmModal'
+import { DEFAULT_ESTIMATOR_PERMISSIONS } from '@/lib/usePermissions'
+import type { Permissions } from '@/lib/usePermissions'
 
 interface Member {
   id: string; first_name: string | null; last_name: string | null
   email: string | null; member_role: string | null; created_at: string
+  permissions: Partial<Permissions> | null
 }
+
+const PERM_LABELS: { key: keyof Permissions; label: string; desc: string }[] = [
+  { key: 'estimates',  label: 'Estimates',         desc: 'Create & send estimates' },
+  { key: 'schedule',   label: 'Schedule',           desc: 'View & manage appointments' },
+  { key: 'clients',    label: 'Clients',            desc: 'View client list' },
+  { key: 'price_list', label: 'Price List',         desc: 'Edit prices & products' },
+  { key: 'reports',    label: 'Reports',            desc: 'View revenue & analytics' },
+  { key: 'settings',   label: 'Company Settings',   desc: 'Edit company info & contract' },
+]
+
 interface Invitation {
   id: string; invitee_email: string; invitee_name: string | null
   role: string; created_at: string; expires_at: string
@@ -54,6 +67,9 @@ export default function TeamPage() {
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState('')
   const [removingMember, setRemovingMember] = useState<Member | null>(null)
+  const [expandedMemberId, setExpandedMemberId] = useState<string | null>(null)
+  const [pendingPerms, setPendingPerms] = useState<Record<string, Permissions>>({})
+  const [savingPerms, setSavingPerms] = useState<string | null>(null)
 
   const [invEmail, setInvEmail] = useState('')
   const [invName, setInvName] = useState('')
@@ -67,7 +83,7 @@ export default function TeamPage() {
 
       const [{ data: prof }, { data: mems }, { data: invs }] = await Promise.all([
         supabase.from('profiles').select('company_name, plan, first_name, last_name').eq('id', user.id).single(),
-        supabase.from('profiles').select('id, first_name, last_name, email, member_role, created_at').eq('team_owner_id', user.id),
+        supabase.from('profiles').select('id, first_name, last_name, email, member_role, permissions, created_at').eq('team_owner_id', user.id),
         supabase.from('team_invitations').select('*').eq('owner_id', user.id).eq('status', 'pending').order('created_at', { ascending: false }),
       ])
 
@@ -152,6 +168,33 @@ export default function TeamPage() {
       showToast('⚠️ Failed to update role')
     } else {
       showToast('✅ Role updated')
+    }
+  }
+
+  function toggleExpand(m: Member) {
+    if (expandedMemberId === m.id) {
+      setExpandedMemberId(null)
+    } else {
+      setExpandedMemberId(m.id)
+      setPendingPerms(prev => ({
+        ...prev,
+        [m.id]: { ...DEFAULT_ESTIMATOR_PERMISSIONS, ...(m.permissions || {}) },
+      }))
+    }
+  }
+
+  async function savePermissions(memberId: string) {
+    const perms = pendingPerms[memberId]
+    if (!perms) return
+    setSavingPerms(memberId)
+    const { error } = await supabase.from('profiles').update({ permissions: perms }).eq('id', memberId)
+    setSavingPerms(null)
+    if (error) {
+      showToast('⚠️ Failed to save permissions')
+    } else {
+      setMembers(ms => ms.map(m => m.id === memberId ? { ...m, permissions: perms } : m))
+      setExpandedMemberId(null)
+      showToast('✅ Permissions saved')
     }
   }
 
@@ -324,33 +367,57 @@ export default function TeamPage() {
                       <option value="owner">Owner</option>
                     </select>
                   </div>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                    {m.member_role === 'estimator' && (
-                      <>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>Create estimates</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>E-signature</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(239,68,68,.06)', color: '#dc2626', padding: '3px 8px', borderRadius: 6, textDecoration: 'line-through', opacity: .6 }}>Billing</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(239,68,68,.06)', color: '#dc2626', padding: '3px 8px', borderRadius: 6, textDecoration: 'line-through', opacity: .6 }}>Team mgmt</span>
-                      </>
-                    )}
-                    {m.member_role === 'manager' && (
-                      <>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>View all estimates</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>Reports</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(239,68,68,.06)', color: '#dc2626', padding: '3px 8px', borderRadius: 6, textDecoration: 'line-through', opacity: .6 }}>Create estimates</span>
-                      </>
-                    )}
-                    {m.member_role === 'admin' && (
-                      <>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>Invoices</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>Client list</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(239,68,68,.06)', color: '#dc2626', padding: '3px 8px', borderRadius: 6, textDecoration: 'line-through', opacity: .6 }}>Estimates</span>
-                      </>
-                    )}
-                    {m.member_role === 'owner' && (
-                      <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(53,58,62,.06)', color: 'var(--graphite)', padding: '3px 8px', borderRadius: 6 }}>All access</span>
-                    )}
-                  </div>
+                  {/* Permissions expand/collapse */}
+                  <button
+                    onClick={() => toggleExpand(m)}
+                    style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 0', fontSize: 11, fontWeight: 600, color: 'var(--graphite)', cursor: 'pointer', marginBottom: 8 }}
+                  >
+                    {expandedMemberId === m.id ? '▲ Hide permissions' : '▼ Manage permissions'}
+                  </button>
+
+                  {expandedMemberId === m.id && (
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                      {PERM_LABELS.map(p => {
+                        const val = pendingPerms[m.id]?.[p.key] ?? false
+                        return (
+                          <div
+                            key={p.key}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 0', borderBottom: '1px solid var(--border-light)' }}
+                          >
+                            <div>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)' }}>{p.label}</div>
+                              <div style={{ fontSize: 10, color: 'var(--ash)' }}>{p.desc}</div>
+                            </div>
+                            <div
+                              onClick={() => setPendingPerms(prev => ({
+                                ...prev,
+                                [m.id]: { ...prev[m.id], [p.key]: !val },
+                              }))}
+                              style={{
+                                width: 38, height: 22, borderRadius: 11, flexShrink: 0, cursor: 'pointer',
+                                background: val ? '#2563EB' : 'rgba(53,58,62,.15)',
+                                position: 'relative', transition: 'background 0.2s',
+                              }}
+                            >
+                              <div style={{
+                                position: 'absolute', top: 3, left: val ? 19 : 3,
+                                width: 16, height: 16, borderRadius: '50%', background: '#fff',
+                                transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                              }} />
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <button
+                        onClick={() => savePermissions(m.id)}
+                        disabled={savingPerms === m.id}
+                        style={{ width: '100%', marginTop: 10, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 9, padding: '9px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: savingPerms === m.id ? 0.6 : 1 }}
+                      >
+                        {savingPerms === m.id ? 'Saving…' : 'Save Permissions'}
+                      </button>
+                    </div>
+                  )}
+
                   <button onClick={() => setRemovingMember(m)}
                     style={{ width: '100%', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.15)', borderRadius: 9, padding: '8px 0', fontSize: 11, fontWeight: 600, color: '#dc2626', cursor: 'pointer' }}>
                     Remove from team

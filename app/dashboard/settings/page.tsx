@@ -7,9 +7,9 @@ import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus } from 'lucide-react'
 import BellButton from '@/components/BellButton'
 
+import { usePermissions } from '@/lib/usePermissions'
 // ── TYPES ────────────────────────────────────────
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
-const ESTIMATOR_HIDDEN: SectionId[] = ['company', 'team', 'contract', 'price']
 
 // ── NAV GROUPS ───────────────────────────────────
 const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: string; desc: string }[] }[] = [
@@ -1260,7 +1260,7 @@ export default function SettingsPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
-  const [role, setRole] = useState<string>('owner')
+  const { role, permissions, loading: permLoading } = usePermissions()
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1272,22 +1272,33 @@ export default function SettingsPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      const { data: prof } = await supabase.from('profiles').select('company_name, role').eq('id', user.id).single()
+      const { data: prof } = await supabase.from('profiles').select('company_name').eq('id', user.id).single()
       if (prof?.company_name) setCompanyName(prof.company_name)
-      if (prof?.role) setRole(prof.role)
     })
   }, [])
 
-  const isEstimator = role === 'estimator'
-  const visibleGroups = GROUPS.map(g => ({
+  // Build visible tab groups based on permissions
+  const visibleGroups = permLoading ? GROUPS : GROUPS.map(g => ({
     ...g,
-    items: g.items.filter(item => !isEstimator || !ESTIMATOR_HIDDEN.includes(item.id)),
+    items: g.items.filter(item => {
+      if (item.id === 'team' && role !== 'owner') return false
+      if ((item.id === 'company' || item.id === 'contract') && !permissions.settings) return false
+      if (item.id === 'price' && !permissions.price_list) return false
+      return true
+    }),
   })).filter(g => g.items.length > 0)
+
+  const hiddenIds: SectionId[] = (['company', 'contract', 'price', 'team'] as SectionId[]).filter(id => {
+    if (id === 'team' && role !== 'owner') return true
+    if ((id === 'company' || id === 'contract') && !permissions.settings) return true
+    if (id === 'price' && !permissions.price_list) return true
+    return false
+  })
 
   // If current section is restricted, fall back to profile
   useEffect(() => {
-    if (isEstimator && ESTIMATOR_HIDDEN.includes(active)) setActive('profile')
-  }, [isEstimator, active])
+    if (!permLoading && hiddenIds.includes(active)) setActive('profile')
+  }, [permLoading, active])
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000) }
   const ActiveSection = SECTIONS[active]
@@ -1371,7 +1382,7 @@ export default function SettingsPage() {
               </button>
             </div>
             <div style={{ padding: '20px 16px 100px' }}>
-              {isEstimator && (
+              {role === 'estimator' && (
                 <div style={{ marginBottom: 16, padding: '12px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, fontSize: 13, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   Contact your account owner to change company settings.
@@ -1465,7 +1476,7 @@ export default function SettingsPage() {
           {/* Content pane */}
           <div style={{ overflowY: 'auto', padding: '28px 36px 40px' }}>
             <div style={{ maxWidth: 760, margin: '0 auto' }}>
-              {isEstimator && (
+              {role === 'estimator' && (
                 <div style={{ marginBottom: 20, padding: '12px 16px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, fontSize: 13, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   Contact your account owner to change company settings.

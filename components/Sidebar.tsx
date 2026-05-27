@@ -1,27 +1,28 @@
 'use client'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { useRole } from '@/lib/useRole'
+import { usePermissions } from '@/lib/usePermissions'
+import type { Permissions } from '@/lib/usePermissions'
 import { useEffect, useState } from 'react'
 import { SIcon } from './SIcon'
 import { ChevronDown } from 'lucide-react'
 import type { IconName } from './SIcon'
 
-const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; ownerOnly: boolean }[] = [
-  { path: '/dashboard',              label: 'Dashboard',    icon: 'home',      exact: true,  ownerOnly: false },
-  { path: '/dashboard/estimates',    label: 'Estimates',    icon: 'contract',  exact: false, ownerOnly: false },
-  { path: '/dashboard/appointments', label: 'Appointments', icon: 'calendar',  exact: false, ownerOnly: false },
-  { path: '/dashboard/clients',      label: 'Clients',      icon: 'team',      exact: false, ownerOnly: false },
-  { path: '/dashboard/reports',      label: 'Reports',      icon: 'bar-chart', exact: false, ownerOnly: true  },
-  { path: '/dashboard/invoices',     label: 'Invoices',     icon: 'invoice',   exact: false, ownerOnly: true  },
-  { path: '/dashboard/settings',     label: 'Settings',     icon: 'settings2', exact: false, ownerOnly: true  },
+const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; permKey?: keyof Permissions; ownerOnly?: boolean }[] = [
+  { path: '/dashboard',              label: 'Dashboard',    icon: 'home',      exact: true  },
+  { path: '/dashboard/estimates',    label: 'Estimates',    icon: 'contract',  exact: false, permKey: 'estimates' },
+  { path: '/dashboard/appointments', label: 'Appointments', icon: 'calendar',  exact: false, permKey: 'schedule' },
+  { path: '/dashboard/clients',      label: 'Clients',      icon: 'team',      exact: false, permKey: 'clients' },
+  { path: '/dashboard/reports',      label: 'Reports',      icon: 'bar-chart', exact: false, permKey: 'reports' },
+  { path: '/dashboard/invoices',     label: 'Invoices',     icon: 'invoice',   exact: false, ownerOnly: true },
+  { path: '/dashboard/settings',     label: 'Settings',     icon: 'settings2', exact: false, permKey: 'settings' },
 ]
 
 export default function Sidebar() {
   const router   = useRouter()
   const path     = usePathname()
   const supabase = createClient()
-  const { role, loading } = useRole()
+  const { role, permissions, loading } = usePermissions()
   const [displayName, setDisplayName] = useState('')
   const [roleLabel, setRoleLabel] = useState('')
 
@@ -43,9 +44,11 @@ export default function Sidebar() {
     router.push('/auth')
   }
 
-  const items = !loading && role === 'estimator'
-    ? ALL_ITEMS.filter(i => !i.ownerOnly)
-    : ALL_ITEMS
+  const items = loading ? ALL_ITEMS : ALL_ITEMS.filter(i => {
+    if (i.ownerOnly && role !== 'owner') return false
+    if (i.permKey && !permissions[i.permKey]) return false
+    return true
+  })
 
   const parts = displayName.trim().split(/\s+/)
   const initials = parts.length >= 2

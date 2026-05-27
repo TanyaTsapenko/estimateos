@@ -1,24 +1,27 @@
 'use client'
 import { useRouter, usePathname } from 'next/navigation'
-import { useRole } from '@/lib/useRole'
+import { usePermissions } from '@/lib/usePermissions'
+import type { Permissions } from '@/lib/usePermissions'
 import { SIcon } from './SIcon'
 import type { IconName } from './SIcon'
 
-const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; ownerOnly: boolean }[] = [
-  { path: '/dashboard',              label: 'Home',     icon: 'home',     exact: true,  ownerOnly: false },
-  { path: '/dashboard/appointments', label: 'Schedule', icon: 'calendar', exact: false, ownerOnly: false },
-  { path: '/dashboard/estimates',    label: 'Estimates',icon: 'contract', exact: false, ownerOnly: false },
-  { path: '/dashboard/settings',     label: 'Settings', icon: 'settings', exact: false, ownerOnly: true  },
+const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; permKey?: keyof Permissions; ownerOnly?: boolean }[] = [
+  { path: '/dashboard',              label: 'Home',     icon: 'home',     exact: true  },
+  { path: '/dashboard/appointments', label: 'Schedule', icon: 'calendar', exact: false, permKey: 'schedule' },
+  { path: '/dashboard/estimates',    label: 'Estimates',icon: 'contract', exact: false, permKey: 'estimates' },
+  { path: '/dashboard/settings',     label: 'Settings', icon: 'settings', exact: false, permKey: 'settings' },
 ]
 
 export default function BottomNav() {
   const router = useRouter()
   const path   = usePathname()
-  const { role, loading } = useRole()
+  const { role, permissions, loading } = usePermissions()
 
-  const items = !loading && role === 'estimator'
-    ? ALL_ITEMS.filter(i => !i.ownerOnly)
-    : ALL_ITEMS
+  const items = loading ? ALL_ITEMS : ALL_ITEMS.filter(i => {
+    if (i.ownerOnly && role !== 'owner') return false
+    if (i.permKey && !permissions[i.permKey]) return false
+    return true
+  })
 
   return (
     <div className="bot-nav">
