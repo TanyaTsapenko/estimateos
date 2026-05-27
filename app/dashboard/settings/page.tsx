@@ -586,13 +586,54 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
 }
 
 function TeamSection({ flash }: { flash: (m: string) => void }) {
-  const [members] = useState([
-    { id: '1', name: 'Tanya Slavina', email: 'tanya@estimare.ca', role: 'Owner', current: true },
-    { id: '2', name: 'Alex K.', email: 'alex@estimare.ca', role: 'Estimator', current: false },
-  ])
+  const supabase = createClient()
+  const [members, setMembers] = useState<{ id: string; first_name: string | null; last_name: string | null; email: string | null; member_role: string | null }[]>([])
+  const [pendingCount, setPendingCount] = useState(0)
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole] = useState('Estimator')
+  const [inviteRole, setInviteRole] = useState('estimator')
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const [{ data: mems }, { data: invs }] = await Promise.all([
+        supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', user.id),
+        supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
+      ])
+      setMembers(mems || [])
+      setPendingCount(invs?.length ?? 0)
+    })
+  }, [])
+
+  async function sendInvite() {
+    if (!inviteEmail.trim()) { flash('Enter an email address'); return }
+    setSending(true)
+    console.log('[team-invite] Sending invite to:', inviteEmail.trim())
+    try {
+      const res = await fetch('/api/team-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole }),
+      })
+      const json = await res.json()
+      console.log('[team-invite] Response:', json)
+      if (!res.ok) { flash('Error: ' + (json.error || 'Failed to send invite')); setSending(false); return }
+      setPendingCount(p => p + 1)
+      setInviteEmail('')
+      setShowInvite(false)
+      if (json.emailWarning) {
+        flash('Invite saved but email failed: ' + json.emailWarning)
+      } else {
+        flash('Invite sent to ' + inviteEmail.trim())
+      }
+    } catch {
+      flash('Network error — please try again')
+    }
+    setSending(false)
+  }
+
+  const ROLE_LABELS: Record<string, string> = { owner: 'Owner', estimator: 'Sales / Estimator', manager: 'Manager', admin: 'Office Admin' }
 
   return (
     <div>
@@ -609,7 +650,11 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
       />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          {[{ label: 'Members', value: '2', icon: 'team' as IconName }, { label: 'Pending invites', value: '1', icon: 'mail' as IconName }, { label: 'Seats used', value: '2 / 5', icon: 'user' as IconName }].map(s => (
+          {[
+            { label: 'Members', value: String(members.length + 1), icon: 'team' as IconName },
+            { label: 'Pending invites', value: String(pendingCount), icon: 'mail' as IconName },
+            { label: 'Seats used', value: String(members.length + 1), icon: 'user' as IconName },
+          ].map(s => (
             <Card key={s.label} padding={18}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(37,99,235,0.1)', color: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -623,27 +668,26 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
             </Card>
           ))}
         </div>
-        <Card>
-          <SectionLabel>Members</SectionLabel>
-          {members.map((m, i) => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {m.name[0]}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{m.name}</div>
-                <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
-              </div>
-              {m.current ? (
-                <Pill tone="blue">{m.role}</Pill>
-              ) : (
-                <select defaultValue={m.role} style={{ padding: '6px 10px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#475569', background: '#fff', cursor: 'pointer' }}>
-                  <option>Owner</option><option>Admin</option><option>Estimator</option><option>Viewer</option>
-                </select>
-              )}
-            </div>
-          ))}
-        </Card>
+        {members.length > 0 && (
+          <Card>
+            <SectionLabel>Members</SectionLabel>
+            {members.map((m, i) => {
+              const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || '—'
+              return (
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {name[0]?.toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{name}</div>
+                    <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
+                  </div>
+                  <Pill tone="blue">{ROLE_LABELS[m.member_role || ''] || m.member_role || 'Member'}</Pill>
+                </div>
+              )
+            })}
+          </Card>
+        )}
         {showInvite && (
           <Card>
             <SectionLabel>Invite member</SectionLabel>
@@ -651,11 +695,16 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>Role</label>
               <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
-                <option>Admin</option><option>Estimator</option><option>Viewer</option>
+                <option value="estimator">Sales / Estimator</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Office Admin</option>
+                <option value="owner">Owner</option>
               </select>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => { setShowInvite(false); flash('Invite sent') }} style={{ padding: '9px 20px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Send invite</button>
+              <button onClick={sendInvite} disabled={sending} style={{ padding: '9px 20px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
+                {sending ? 'Sending…' : 'Send invite'}
+              </button>
               <button onClick={() => setShowInvite(false)} style={{ padding: '9px 16px', background: '#fff', color: '#475569', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
             </div>
           </Card>
