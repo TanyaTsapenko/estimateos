@@ -401,13 +401,21 @@ export default function DashboardPage() {
                     )}
                   </div>
                   {nextAppt.phone ? (
-                    <a href={`tel:${nextAppt.phone}`} onClick={e => e.stopPropagation()}
-                      style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,255,255,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, textDecoration: 'none' }}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>
-                      </svg>
-                    </a>
-                  ) : <div style={{ width: 44, flexShrink: 0 }} />}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+                      <a href={`tel:${nextAppt.phone}`} onClick={e => e.stopPropagation()}
+                        style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A16 16 0 013 6a2 2 0 012-2z"/>
+                        </svg>
+                      </a>
+                      <a href={`sms:${nextAppt.phone}`} onClick={e => e.stopPropagation()}
+                        style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                      </a>
+                    </div>
+                  ) : <div style={{ width: 40, flexShrink: 0 }} />}
                 </div>
               </div>
             ) : (
