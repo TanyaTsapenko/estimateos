@@ -13,11 +13,20 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('[team-invite] START')
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!user) {
+    console.log('[team-invite] Unauthorized — no user session')
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  console.log('[team-invite] user:', user.id)
 
-  const { inviteeEmail, inviteeName, role, resendId } = await request.json()
+  const body = await request.json()
+  const { inviteeEmail, inviteeName, role, resendId } = body
+  console.log('[team-invite] payload:', { inviteeEmail, inviteeName, role, resendId })
+
   if (!inviteeEmail) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
   const { data: prof } = await supabase
@@ -27,12 +36,19 @@ export async function POST(request: NextRequest) {
     .single()
 
   const companyName = prof?.company_name || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim() || 'Your team'
+  console.log('[team-invite] companyName:', companyName)
+
   const admin = createAdminClient()
 
   let invitation: { id: string; token: string; invitee_email: string; invitee_name: string | null; role: string } | null = null
 
   if (resendId) {
-    const { data } = await admin.from('team_invitations').select('*').eq('id', resendId).eq('owner_id', user.id).single()
+    console.log('[team-invite] resending existing invite:', resendId)
+    const { data, error } = await admin.from('team_invitations').select('*').eq('id', resendId).eq('owner_id', user.id).single()
+    if (error) {
+      console.error('[team-invite] fetch existing invite error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     invitation = data
   } else {
     const { data: existing } = await admin.from('team_invitations')
@@ -42,8 +58,12 @@ export async function POST(request: NextRequest) {
       .eq('status', 'pending')
       .single()
 
-    if (existing) return NextResponse.json({ error: 'A pending invite already exists for this email' }, { status: 409 })
+    if (existing) {
+      console.log('[team-invite] duplicate pending invite for:', inviteeEmail)
+      return NextResponse.json({ error: 'A pending invite already exists for this email' }, { status: 409 })
+    }
 
+    console.log('[team-invite] inserting new invitation')
     const { data, error } = await admin.from('team_invitations').insert({
       owner_id:      user.id,
       invitee_email: inviteeEmail,
@@ -51,15 +71,24 @@ export async function POST(request: NextRequest) {
       role:          role || 'estimator',
     }).select().single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[team-invite] insert error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
     invitation = data
+    console.log('[team-invite] invitation created, id:', invitation?.id, 'token:', invitation?.token)
   }
 
   if (!invitation) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
+  if (!invitation.token) {
+    console.error('[team-invite] invitation has no token — check DB default for team_invitations.token')
+    return NextResponse.json({ error: 'Invitation token missing' }, { status: 500 })
+  }
 
   const joinLink = `${request.nextUrl.origin}/team/join/${invitation.token}`
   const roleLabel = ROLE_LABELS[invitation.role] || invitation.role
   const toName = invitation.invitee_name || inviteeEmail.split('@')[0]
+  console.log('[team-invite] join link:', joinLink)
 
   const html = `<!DOCTYPE html>
 <html>
@@ -107,16 +136,24 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
-  try {
-    await resend.emails.send({
-      from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
-      to: [inviteeEmail],
-      subject: `You're invited to join ${companyName} on EstimateOS`,
-      html,
+  console.log('[team-invite] sending email to:', inviteeEmail)
+  const { data: emailData, error: emailError } = await resend.emails.send({
+    from: `${companyName} via EstimateOS <onboarding@resend.dev>`,
+    to:   [inviteeEmail],
+    subject: `You're invited to join ${companyName} on EstimateOS`,
+    html,
+  })
+
+  if (emailError) {
+    console.error('[team-invite] Resend error:', emailError)
+    // Invitation is saved — return success but surface the email warning
+    return NextResponse.json({
+      success: true,
+      invitation,
+      emailWarning: emailError.message,
     })
-  } catch {
-    // Email failure is non-fatal — invitation is already saved
   }
 
+  console.log('[team-invite] email sent, id:', emailData?.id)
   return NextResponse.json({ success: true, invitation })
 }

@@ -90,28 +90,45 @@ export default function TeamPage() {
   async function sendInvite() {
     if (!invEmail.trim()) { showToast('⚠️ Enter an email address'); return }
     setSending(true)
-    const res = await fetch('/api/team-invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inviteeEmail: invEmail.trim(), inviteeName: invName.trim() || null, role: invRole }),
-    })
-    const json = await res.json()
-    if (!res.ok) { showToast('⚠️ ' + (json.error || 'Failed')); setSending(false); return }
-    setInvitations(p => [json.invitation, ...p])
-    setInvEmail(''); setInvName(''); setInvRole('estimator')
-    setScreen('list')
-    showToast('📧 Invite sent to ' + invEmail.trim())
+    try {
+      const res = await fetch('/api/team-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteeEmail: invEmail.trim(), inviteeName: invName.trim() || null, role: invRole }),
+      })
+      const json = await res.json()
+      if (!res.ok) { showToast('⚠️ ' + (json.error || 'Failed to send invite')); setSending(false); return }
+      setInvitations(p => [json.invitation, ...p])
+      setInvEmail(''); setInvName(''); setInvRole('estimator')
+      setScreen('list')
+      if (json.emailWarning) {
+        showToast('⚠️ Invite saved but email failed: ' + json.emailWarning)
+      } else {
+        showToast('📧 Invite sent to ' + invEmail.trim())
+      }
+    } catch (e) {
+      showToast('⚠️ Network error — please try again')
+    }
     setSending(false)
   }
 
   async function resendInvite(inv: Invitation) {
-    const res = await fetch('/api/team-invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inviteeEmail: inv.invitee_email, inviteeName: inv.invitee_name, role: inv.role, resendId: inv.id }),
-    })
-    if (res.ok) showToast('📧 Invite resent to ' + inv.invitee_email)
-    else showToast('⚠️ Failed to resend')
+    try {
+      const res = await fetch('/api/team-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inviteeEmail: inv.invitee_email, inviteeName: inv.invitee_name, role: inv.role, resendId: inv.id }),
+      })
+      const json = await res.json()
+      if (!res.ok) { showToast('⚠️ ' + (json.error || 'Failed to resend')); return }
+      if (json.emailWarning) {
+        showToast('⚠️ Email failed: ' + json.emailWarning)
+      } else {
+        showToast('📧 Invite resent to ' + inv.invitee_email)
+      }
+    } catch {
+      showToast('⚠️ Network error — please try again')
+    }
   }
 
   async function cancelInvite(id: string) {
