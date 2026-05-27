@@ -225,10 +225,11 @@ export default function DashboardPage() {
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
-        supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).eq('status', 'signed'),
+        supabase.from('estimates').select('id,total,estimate_number,client_name').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
       ])
+      console.log('[dashboard] estSigned query result:', estSigned?.length, estSigned?.map((e: any) => ({ id: e.id, status: e.status, estimate_number: e.estimate_number })))
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
@@ -255,13 +256,15 @@ export default function DashboardPage() {
       })
 
       const attItems: AttentionItem[] = []
-      // Signed estimate → green, invoice
+      // Signed/accepted estimates with no invoice yet
       if (estSigned?.length) {
-        attItems.push({
-          icon: CheckIcon, color: '#059669',
-          title: `${estSigned[0].client_name} estimate signed`,
-          desc: `${estSigned[0].estimate_number} · Ready to invoice`,
-          cta: 'Send invoice', id: estSigned[0].id, actionType: 'invoice',
+        estSigned.forEach((e: any) => {
+          attItems.push({
+            icon: CheckIcon, color: '#059669',
+            title: `${e.client_name} estimate signed`,
+            desc: `${e.estimate_number} · Ready to invoice`,
+            cta: 'Send invoice', id: e.id, actionType: 'invoice',
+          })
         })
       }
       // Stale sent estimate → blue, reminder
