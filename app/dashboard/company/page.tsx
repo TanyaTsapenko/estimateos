@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 interface Profile {
   id: string; first_name: string | null; last_name: string | null
@@ -28,6 +29,7 @@ export default function CompanyProfilePage() {
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
+  const [citySearch, setCitySearch] = useState('')
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
 
@@ -38,6 +40,7 @@ export default function CompanyProfilePage() {
       const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
       setProfile(data)
       setForm(data || {})
+      setCitySearch(data?.city || '')
     }
     load()
   }, [])
@@ -240,7 +243,19 @@ export default function CompanyProfilePage() {
             </div>
             <div className="r2" style={{ marginBottom: 10 }}>
               <div className="f"><label>City</label>
-                <input placeholder="Calgary" value={form.city || ''} onChange={e => set('city', e.target.value)} /></div>
+                <AddressAutocomplete
+                  placeTypes="(cities)"
+                  value={citySearch}
+                  placeholder="Calgary"
+                  onChange={v => { setCitySearch(v); set('city', v) }}
+                  onSelect={({ city, province }) => {
+                    const c = city || citySearch
+                    setCitySearch(c)
+                    set('city', c)
+                    if (province) set('province', province)
+                  }}
+                />
+              </div>
               <div className="f"><label>Province</label>
                 <select value={form.province || 'AB'} onChange={e => set('province', e.target.value)}>
                   {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}

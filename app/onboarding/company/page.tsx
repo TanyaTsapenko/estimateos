@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 export default function CompanySetupPage() {
   const router = useRouter()
@@ -12,6 +13,7 @@ export default function CompanySetupPage() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [citySearch, setCitySearch] = useState('')
 
   function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })) }
 
@@ -54,7 +56,19 @@ export default function CompanySetupPage() {
         </div>
         <div className="r2">
           <div className="f"><label>City</label>
-            <input placeholder="Calgary" value={form.city} onChange={e => set('city', e.target.value)} /></div>
+            <AddressAutocomplete
+              placeTypes="(cities)"
+              value={citySearch}
+              placeholder="Calgary"
+              onChange={v => { setCitySearch(v); set('city', v) }}
+              onSelect={({ city, province }) => {
+                const c = city || citySearch
+                setCitySearch(c)
+                set('city', c)
+                if (province) set('province', province)
+              }}
+            />
+          </div>
           <div className="f"><label>Province</label>
             <select value={form.province} onChange={e => set('province', e.target.value)}>
               <option value="AB">AB — GST 5%</option>

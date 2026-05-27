@@ -20,9 +20,11 @@ interface Props {
   placeholder?: string
   error?: boolean
   onBlur?: () => void
+  /** Pass '(cities)' for city-only autocomplete, defaults to 'address' */
+  placeTypes?: string
 }
 
-export default function AddressAutocomplete({ value, onChange, onSelect, placeholder, error, onBlur }: Props) {
+export default function AddressAutocomplete({ value, onChange, onSelect, placeholder, error, onBlur, placeTypes = 'address' }: Props) {
   const [predictions, setPredictions] = useState<Prediction[]>([])
   const [open, setOpen] = useState(false)
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
@@ -63,7 +65,7 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
   async function fetchPredictions(input: string) {
     if (input.length < 3) { setPredictions([]); setOpen(false); return }
     try {
-      const res = await fetch(`/api/places?type=autocomplete&input=${encodeURIComponent(input)}`)
+      const res = await fetch(`/api/places?type=autocomplete&input=${encodeURIComponent(input)}&place_types=${encodeURIComponent(placeTypes)}`)
       if (!res.ok) {
         console.error('[Places] /api/places returned', res.status, await res.text())
         return

@@ -673,8 +673,17 @@ function NewEstimateForm() {
               </div></div>
               <div className="r2">
                 <div className="f"><label>City</label>
-                  <input placeholder="Calgary" value={client.client_city}
-                    onChange={e => setClient(p => ({ ...p, client_city: e.target.value }))} /></div>
+                  <AddressAutocomplete
+                    placeTypes="(cities)"
+                    value={client.client_city}
+                    placeholder="Calgary"
+                    onChange={v => setClient(p => ({ ...p, client_city: v }))}
+                    onSelect={({ city, province }) => setClient(p => ({
+                      ...p,
+                      client_city: city || p.client_city,
+                      ...(province ? { client_province: province } : {}),
+                    }))}
+                  /></div>
                 <div className="f"><label>Province</label>
                   <select value={client.client_province}
                     onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>
@@ -914,8 +923,17 @@ function NewEstimateForm() {
             </div></div>
             <div className="r2">
               <div className="f"><label>City</label>
-                <input placeholder="Calgary" value={client.client_city}
-                  onChange={e => setClient(p => ({ ...p, client_city: e.target.value }))} /></div>
+                <AddressAutocomplete
+                  placeTypes="(cities)"
+                  value={client.client_city}
+                  placeholder="Calgary"
+                  onChange={v => setClient(p => ({ ...p, client_city: v }))}
+                  onSelect={({ city, province }) => setClient(p => ({
+                    ...p,
+                    client_city: city || p.client_city,
+                    ...(province ? { client_province: province } : {}),
+                  }))}
+                /></div>
               <div className="f"><label>Province</label>
                 <select value={client.client_province}
                   onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>

@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
 
   if (type === 'autocomplete') {
     const input = searchParams.get('input') || ''
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&components=country:ca&key=${KEY}`
+    const placeTypes = searchParams.get('place_types') || 'address'
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&components=country:ca&types=${encodeURIComponent(placeTypes)}&key=${KEY}`
     const res = await fetch(url)
     const data = await res.json()
     console.log('[places] autocomplete status:', data.status, 'predictions:', data.predictions?.length ?? 0)
