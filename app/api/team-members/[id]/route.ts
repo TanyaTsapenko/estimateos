@@ -4,8 +4,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,7 +17,7 @@ export async function DELETE(
   const { data: member, error: fetchErr } = await admin
     .from('profiles')
     .select('id, team_owner_id')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (fetchErr || !member) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
@@ -25,7 +26,7 @@ export async function DELETE(
   const { error } = await admin
     .from('profiles')
     .update({ team_owner_id: null, member_role: null, role: null, permissions: null })
-    .eq('id', params.id)
+    .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
