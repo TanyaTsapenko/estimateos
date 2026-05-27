@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const KEY = process.env.GOOGLE_PLACES_API_KEY
-  console.log('[places] Google API key exists:', !!KEY)
+  console.log('[places] Google API key exists:', !!KEY, 'key prefix:', KEY?.slice(0, 8))
 
   if (!KEY) {
     console.error('[places] GOOGLE_PLACES_API_KEY is not set')
@@ -20,10 +20,13 @@ export async function GET(req: NextRequest) {
     const body: Record<string, unknown> = {
       input,
       includedRegionCodes: ['ca'],
+      languageCode: 'en',
     }
     if (placeTypes !== 'address') {
       body.includedPrimaryTypes = [placeTypes.replace(/[()]/g, '')]
     }
+
+    console.log('[places] autocomplete request body:', JSON.stringify(body))
 
     const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
       method: 'POST',
@@ -33,20 +36,33 @@ export async function GET(req: NextRequest) {
       },
       body: JSON.stringify(body),
     })
-    const data = await res.json()
-    console.log('[places] autocomplete suggestions:', data.suggestions?.length ?? 0)
+
+    const rawText = await res.text()
+    console.log('[places] autocomplete raw response status:', res.status)
+    console.log('[places] autocomplete raw response body:', rawText)
+
+    let data: Record<string, unknown>
+    try {
+      data = JSON.parse(rawText)
+    } catch {
+      console.error('[places] failed to parse response as JSON')
+      return NextResponse.json({ predictions: [] })
+    }
+
     if (!res.ok) {
       console.error('[places] autocomplete error:', data)
       return NextResponse.json({ predictions: [] })
     }
 
-    // Normalize to the shape the frontend expects
-    const predictions = (data.suggestions ?? []).map((s: {
+    const suggestions = (data.suggestions ?? []) as Array<{
       placePrediction: {
         placeId: string
         structuredFormat: { mainText: { text: string }; secondaryText: { text: string } }
       }
-    }) => ({
+    }>
+    console.log('[places] autocomplete suggestions count:', suggestions.length)
+
+    const predictions = suggestions.map(s => ({
       place_id: s.placePrediction.placeId,
       structured_formatting: {
         main_text: s.placePrediction.structuredFormat?.mainText?.text ?? '',
@@ -59,25 +75,37 @@ export async function GET(req: NextRequest) {
   if (type === 'details') {
     const placeId = searchParams.get('place_id') || ''
     const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`
+    console.log('[places] details url:', url)
+
     const res = await fetch(url, {
       headers: {
         'X-Goog-Api-Key': KEY,
         'X-Goog-FieldMask': 'addressComponents,formattedAddress',
       },
     })
-    const data = await res.json()
-    console.log('[places] details ok:', res.ok)
+
+    const rawText = await res.text()
+    console.log('[places] details raw response status:', res.status)
+    console.log('[places] details raw response body:', rawText)
+
+    let data: Record<string, unknown>
+    try {
+      data = JSON.parse(rawText)
+    } catch {
+      console.error('[places] failed to parse details response as JSON')
+      return NextResponse.json({ result: null }, { status: 502 })
+    }
+
     if (!res.ok) {
       console.error('[places] details error:', data)
       return NextResponse.json({ result: null }, { status: 502 })
     }
 
-    // Normalize to legacy shape the frontend expects: { result: { address_components } }
-    const address_components = (data.addressComponents ?? []).map((c: {
+    const address_components = (data.addressComponents as Array<{
       types: string[]
       longText: string
       shortText: string
-    }) => ({
+    }> ?? []).map(c => ({
       types: c.types,
       long_name: c.longText,
       short_name: c.shortText,
