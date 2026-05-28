@@ -11,7 +11,7 @@ export default function BellButton() {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth <= 430)
+    const check = () => setIsMobile(window.innerWidth <= 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
@@ -25,6 +25,15 @@ export default function BellButton() {
     document.addEventListener('mousedown', handle)
     return () => document.removeEventListener('mousedown', handle)
   }, [open, setOpen])
+
+  useEffect(() => {
+    if (open && isMobile) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open, isMobile])
 
   const btnStyle: React.CSSProperties = {
     width: 40, height: 40, borderRadius: 14,
@@ -50,8 +59,18 @@ export default function BellButton() {
 
       {open && (
         isMobile ? (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(0,0,0,0.3)' }} onClick={() => setOpen(false)}>
-            <div style={{ position: 'absolute', top: 60, left: 16, right: 16, borderRadius: 16, maxHeight: '70vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <>
+            <div
+              style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 9998 }}
+              onClick={() => setOpen(false)}
+            />
+            <div style={{
+              position: 'fixed', top: 60, left: 16, right: 16,
+              zIndex: 9999,
+              maxHeight: 'calc(100vh - 80px)',
+              overflowY: 'auto',
+              borderRadius: 16,
+            }}>
               <NotifDropdown
                 notifs={notifs}
                 onClose={() => setOpen(false)}
@@ -60,7 +79,7 @@ export default function BellButton() {
                 clearAll={clearAll}
               />
             </div>
-          </div>
+          </>
         ) : (
           <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 9999 }}>
             <NotifDropdown
