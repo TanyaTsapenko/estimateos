@@ -242,9 +242,18 @@ export default function TeamPage() {
             )}
             <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
           </div>
-          <div style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '4px 12px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.5)' }}>
-            {plan.charAt(0).toUpperCase() + plan.slice(1)} · {plan === 'team' ? '∞' : `${seatsUsed}/${seatLimit}`} seats
-          </div>
+          {screen === 'list' ? (
+            <button
+              onClick={() => setScreen('invite')}
+              style={{ background: 'var(--amber)', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}
+            >
+              + Invite
+            </button>
+          ) : (
+            <div style={{ background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8, padding: '4px 12px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,.5)' }}>
+              {plan.charAt(0).toUpperCase() + plan.slice(1)} · {plan === 'team' ? '∞' : `${seatsUsed}/${seatLimit}`} seats
+            </div>
+          )}
         </div>
         <div className="h-title">
           <div className="h-eye">{screen === 'invite' ? 'Team · Add Member' : 'Settings · Team'}</div>
@@ -496,24 +505,17 @@ export default function TeamPage() {
 
             {/* Add member */}
             <div className="sl">Add Member</div>
-            {canInvite ? (
-              <div onClick={() => setScreen('invite')}
-                style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, border: '2px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>+</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>Invite a team member</div>
-                  <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 2 }}>
-                    {plan === 'team' ? 'Unlimited seats' : `${seatsLeft} seat${seatsLeft !== 1 ? 's' : ''} remaining on ${plan} plan`}
-                  </div>
+            <div onClick={() => setScreen('invite')}
+              style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 8, border: '2px dashed var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>+</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>Invite a team member</div>
+                <div style={{ fontSize: 11, color: 'var(--ash)', marginTop: 2 }}>
+                  {plan === 'team' ? 'Unlimited seats' : `${seatsLeft} seat${seatsLeft !== 1 ? 's' : ''} remaining on ${plan} plan`}
                 </div>
-                <span style={{ color: 'var(--ash)', fontSize: 18 }}>›</span>
               </div>
-            ) : (
-              <div style={{ background: 'rgba(239,68,68,.04)', border: '1px solid rgba(239,68,68,.15)', borderRadius: 14, padding: 14, marginBottom: 8 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)', marginBottom: 4 }}>Seat limit reached</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>You've used all {seatLimit} seats on the {plan} plan. Upgrade to add more members.</div>
-              </div>
-            )}
+              <span style={{ color: 'var(--ash)', fontSize: 18 }}>›</span>
+            </div>
 
             {/* Upgrade promo */}
             {plan !== 'team' && (
