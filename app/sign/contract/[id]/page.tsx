@@ -156,33 +156,39 @@ export default function SignContractPage() {
 
     setClientSignatureUrl(result.signatureUrl)
 
-    await fetch('/api/send-contract-signed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clientEmail: estimate?.client_email,
-        clientName: estimate?.client_name,
-        companyName: contract?.company_name || 'Your Contractor',
-        companyPhone: contract?.company_phone || '',
-        companyEmail: contract?.company_email || '',
-        contractId: contractId,
-        total: estimate?.total,
+    await Promise.allSettled([
+      fetch('/api/send-contract-signed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientEmail: estimate?.client_email,
+          clientName: estimate?.client_name,
+          companyName: contract?.company_name || 'Your Contractor',
+          companyPhone: contract?.company_phone || '',
+          companyEmail: contract?.company_email || '',
+          contractId: contractId,
+          total: estimate?.total,
+        }),
       }),
-    })
-
-    await fetch('/api/notify-contractor-signed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contractorEmail: contract?.company_email || '',
-        contractorName: contract?.company_name || '',
-        clientName: estimate?.client_name || '',
-        companyName: contract?.company_name || 'Your Company',
-        total: estimate?.total || 0,
-        depositPercent: profile?.deposit_percent || 10,
-        contractId: contractId,
+      fetch('/api/notify-contractor-signed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractorEmail: contract?.company_email || '',
+          contractorName: contract?.company_name || '',
+          clientName: estimate?.client_name || '',
+          companyName: contract?.company_name || 'Your Company',
+          total: estimate?.total || 0,
+          depositPercent: profile?.deposit_percent || 10,
+          contractId: contractId,
+        }),
       }),
-    })
+      fetch('/api/deposit-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: contract.estimate_id }),
+      }),
+    ])
 
     setSigning(false)
     setShowDeposit(true)

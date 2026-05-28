@@ -152,7 +152,9 @@ export async function POST(request: NextRequest) {
         subject: `Deposit Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
         html,
       })
-    } catch {}
+    } catch (emailError) {
+      console.error('[deposit-invoice] Failed to send email:', emailError)
+    }
   }
 
   return NextResponse.json({ success: true, invoice })
