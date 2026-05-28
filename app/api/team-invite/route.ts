@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'A pending invite already exists for this email' }, { status: 409 })
     }
 
+    console.log('[team-invite] permissions to save:', JSON.stringify(permissions))
     console.log('[team-invite] inserting new invitation')
     const { data, error } = await admin.from('team_invitations').insert({
       owner_id:      user.id,
