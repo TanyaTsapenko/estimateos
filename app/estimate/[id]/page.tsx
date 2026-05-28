@@ -16,7 +16,7 @@ interface Estimate {
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
   company_name: string | null; city: string | null; province: string | null
-  logo_url: string | null; contract_terms: string | null
+  logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
 }
 interface TierData {
   display_name: string; specs: string[]; pricing_type: string; price: number
@@ -57,7 +57,7 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, contract_terms').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, city, province, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)
@@ -138,7 +138,7 @@ export default function ClientEstimatePage() {
               {estimate.client_name && (
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{estimate.client_name}</div>
               )}
-              {!showGBB && tierLabel && (
+              {!showGBB && tierLabel && profile?.pricing_mode === 'gbb' && (
                 <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{tierLabel} Package</div>
               )}
             </div>
