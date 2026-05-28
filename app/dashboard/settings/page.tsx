@@ -454,18 +454,22 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      const { data: prof } = await supabase.from('profiles').select('company_name, phone, city, province, logo_url, deposit_pct').eq('id', user.id).single()
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, deposit_pct, logo_url')
+        .eq('id', user.id)
+        .single()
       if (prof) {
         const loaded = {
           companyName: (prof as any).company_name || '',
           phone:       (prof as any).phone        || '',
-          website:     '',
-          addressLine: '',
+          website:     (prof as any).website      || '',
+          addressLine: (prof as any).address      || '',
           city:        (prof as any).city         || '',
           province:    (prof as any).province     || 'AB',
-          postal:      '',
-          licence:     '',
-          insurance:   '',
+          postal:      (prof as any).postal       || '',
+          licence:     (prof as any).licence      || '',
+          insurance:   (prof as any).insurance    || '',
           depositPct:  String((prof as any).deposit_pct ?? 10),
           currency:    'CAD',
         }
@@ -475,6 +479,25 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
       }
     })
   }, [])
+
+  async function saveCompany() {
+    if (!userId) return
+    const { error } = await supabase.from('profiles').update({
+      company_name: values.companyName,
+      phone:        values.phone        || null,
+      website:      values.website      || null,
+      address:      values.addressLine  || null,
+      city:         values.city         || null,
+      province:     values.province     || null,
+      postal:       values.postal       || null,
+      licence:      values.licence      || null,
+      insurance:    values.insurance    || null,
+      deposit_pct:  Number(values.depositPct) || 10,
+    }).eq('id', userId)
+    if (error) { flash('Error saving: ' + error.message); return }
+    setInitial({ ...values })
+    flash('Company saved')
+  }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -580,7 +603,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
           </div>
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={valid} onSave={() => flash('Company saved')} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={valid} onSave={saveCompany} onDiscard={() => setValues({ ...initial })} />
     </div>
   )
 }
