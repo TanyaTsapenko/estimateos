@@ -32,14 +32,8 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
   }
 
   return (
-    <div style={{
-      background: '#fff',
-      borderRadius: 16,
-      border: '1px solid #E8ECF2',
-      boxShadow: '0 8px 32px rgba(15,23,42,0.12)',
-      overflow: 'hidden',
-      fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
-    }}>
+    <div style={{ fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif' }}>
+
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -49,7 +43,11 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
         {hasUnread && (
           <button
             onClick={markAllRead}
-            style={{ fontSize: 11, fontWeight: 600, color: '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            style={{
+              fontSize: 11, fontWeight: 600, color: '#94A3B8',
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: 0, fontFamily: 'inherit',
+            }}
           >
             Mark all as read
           </button>
@@ -62,7 +60,7 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
           No notifications yet.
         </div>
       ) : (
-        <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+        <div>
           {notifs.map(n => (
             <div
               key={n.id}
@@ -70,17 +68,15 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '11px 16px',
                 borderBottom: '1px solid #F8FAFC',
-                background: '#fff',
               }}
             >
-              {/* Dot / placeholder */}
-              <div style={{ width: 7, flexShrink: 0, paddingTop: 5 }}>
-                {!n.read && (
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2563EB' }} />
-                )}
-              </div>
+              {/* Unread dot / spacer */}
+              {!n.read
+                ? <div style={{ width: 7, height: 7, background: '#2563EB', borderRadius: '50%', flexShrink: 0, marginTop: 5 }} />
+                : <div style={{ width: 7, flexShrink: 0 }} />
+              }
 
-              {/* Text */}
+              {/* Content */}
               <div
                 onClick={() => handleNav(n)}
                 style={{ flex: 1, minWidth: 0, cursor: n.link ? 'pointer' : 'default' }}
@@ -107,7 +103,7 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
                 </div>
               </div>
 
-              {/* × dismiss */}
+              {/* Dismiss */}
               <button
                 onClick={e => { e.stopPropagation(); markOneRead(n.id) }}
                 title="Dismiss"
@@ -138,6 +134,7 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
           View all notifications
         </button>
       </div>
+
     </div>
   )
 }
