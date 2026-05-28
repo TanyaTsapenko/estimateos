@@ -34,10 +34,6 @@ export default function BellButton() {
     cursor: 'pointer', position: 'relative',
   }
 
-  const dropdownStyle: React.CSSProperties = isMobile
-    ? { position: 'absolute', top: 'calc(100% + 8px)', right: -12, width: 'calc(100vw - 32px)', zIndex: 9999 }
-    : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 9999 }
-
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
       <button onClick={() => open ? setOpen(false) : openPanel()} style={btnStyle}>
@@ -53,15 +49,29 @@ export default function BellButton() {
       </button>
 
       {open && (
-        <div style={dropdownStyle}>
-          <NotifDropdown
-            notifs={notifs}
-            onClose={() => setOpen(false)}
-            markOneRead={markOneRead}
-            markAllRead={markAllRead}
-            clearAll={clearAll}
-          />
-        </div>
+        isMobile ? (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(0,0,0,0.3)' }} onClick={() => setOpen(false)}>
+            <div style={{ position: 'absolute', top: 60, left: 16, right: 16, borderRadius: 16, maxHeight: '70vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+              <NotifDropdown
+                notifs={notifs}
+                onClose={() => setOpen(false)}
+                markOneRead={markOneRead}
+                markAllRead={markAllRead}
+                clearAll={clearAll}
+              />
+            </div>
+          </div>
+        ) : (
+          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 9999 }}>
+            <NotifDropdown
+              notifs={notifs}
+              onClose={() => setOpen(false)}
+              markOneRead={markOneRead}
+              markAllRead={markAllRead}
+              clearAll={clearAll}
+            />
+          </div>
+        )
       )}
     </div>
   )
