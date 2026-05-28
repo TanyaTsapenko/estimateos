@@ -214,6 +214,8 @@ export default function TeamPage() {
     ? [removingMember.first_name, removingMember.last_name].filter(Boolean).join(' ') || removingMember.email || 'This member'
     : ''
 
+  console.log('screen:', screen)
+
   return (
     <>
     <ConfirmModal
