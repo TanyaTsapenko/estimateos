@@ -112,46 +112,49 @@ export default function SignContractPage() {
     const svgElement = svgRef.current
     if (!svgElement) { setSigning(false); return }
 
+    // Render SVG paths to a canvas PNG
     const svgData = new XMLSerializer().serializeToString(svgElement)
     const offscreen = document.createElement('canvas')
     offscreen.width = 600
     offscreen.height = 200
     const ctx = offscreen.getContext('2d')
 
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      const img = new Image()
-      img.onload = () => {
-        ctx?.drawImage(img, 0, 0)
-        offscreen.toBlob(b => b ? resolve(b) : reject(new Error('toBlob failed')), 'image/png')
-      }
-      img.onerror = reject
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+    let signatureBase64: string
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const img = new Image()
+        img.onload = () => {
+          ctx?.drawImage(img, 0, 0)
+          resolve()
+        }
+        img.onerror = reject
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+      })
+      signatureBase64 = offscreen.toDataURL('image/png')
+    } catch {
+      setSigning(false)
+      alert('Could not render signature. Please try again.')
+      return
+    }
+
+    // Upload + save via server route (uses service key to bypass RLS)
+    const res = await fetch('/api/sign-contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contractId: contract.id,
+        signatureBase64,
+        clientName: estimate?.client_name,
+      }),
     })
+    const result = await res.json()
+    if (!res.ok) {
+      setSigning(false)
+      alert('Signing failed: ' + (result.error || 'Unknown error'))
+      return
+    }
 
-    const fileName = `contract-signatures/${contract.id}-client-${Date.now()}.png`
-    await supabase.storage.from('signatures').upload(fileName, blob)
-    const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(fileName)
-
-    await supabase.from('contracts').update({
-      status: 'signed',
-      client_signature_url: urlData.publicUrl,
-      signed_at: new Date().toISOString(),
-    }).eq('id', contract.id)
-
-    await supabase.from('estimates').update({
-      status: 'signed',
-      signed_at: new Date().toISOString(),
-    }).eq('id', contract.estimate_id)
-
-    await supabase.from('notifications').insert({
-      user_id: contract.profile_id,
-      type: 'estimate_signed',
-      title: 'Contract signed',
-      body: `${estimate?.client_name || 'Client'} signed the contract`,
-      link: `/dashboard/estimates/${contract.estimate_id}`,
-    })
-
-    setClientSignatureUrl(urlData.publicUrl)
+    setClientSignatureUrl(result.signatureUrl)
 
     await fetch('/api/send-contract-signed', {
       method: 'POST',
