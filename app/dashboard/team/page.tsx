@@ -65,6 +65,9 @@ export default function TeamPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [screen, setScreen] = useState<'list' | 'invite'>('list')
+  useEffect(() => {
+    console.log('screen changed:', screen)
+  }, [screen])
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState('')
   const [removingMember, setRemovingMember] = useState<Member | null>(null)
