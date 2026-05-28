@@ -33,17 +33,18 @@ export default function CreateInvoicePage() {
       const d = new Date()
       d.setDate(d.getDate() + 14)
       setDueDate(d.toISOString().slice(0, 10))
-
-      if (dep && est) {
-        const remaining = est.total - dep.amount
-        setNotes(`Final invoice — project complete. ${fmtCAD(dep.amount)} deposit previously paid. Remaining balance: ${fmtCAD(remaining)}.`)
-      }
     }
     load()
   }, [id])
 
   const isFinal = !!depositInvoice
   const invoiceAmount = estimate ? (isFinal ? estimate.total - depositInvoice!.amount : estimate.total) : 0
+
+  function setNet(days: number) {
+    const d = new Date()
+    d.setDate(d.getDate() + days)
+    setDueDate(d.toISOString().slice(0, 10))
+  }
 
   async function createInvoice() {
     if (!estimate) return
@@ -120,81 +121,63 @@ export default function CreateInvoicePage() {
     display: 'block',
   }
 
-  return (
+  if (isFinal) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
       {/* TOPBAR */}
       <div style={{
         background: '#fff',
         borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
+        padding: '16px 20px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        gap: 12,
         position: 'sticky',
         top: 0,
         paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
         zIndex: 10,
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={() => router.push(`/dashboard/estimates/${id}`)}
-            style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
-            <ArrowLeft size={16} strokeWidth={2} />
-          </button>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 1 }}>
-              FROM {estimate.estimate_number}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>
-              {isFinal ? 'Final Invoice' : 'Create Invoice'}
-            </div>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
-          <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtCAD(estimate.total)} project total</div>
-        </div>
+        <button
+          onClick={() => router.push(`/dashboard/estimates/${id}`)}
+          style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
+          <ArrowLeft size={16} strokeWidth={2} />
+        </button>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628' }}>Send Final Invoice</div>
       </div>
 
       {/* BODY */}
-      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100 }}>
         {error && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
             {error}
           </div>
         )}
 
-        {/* Amount card */}
+        {/* Info card */}
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 }}>
-          {isFinal ? (
-            <>
-              <div style={labelStyle}>Invoice Breakdown</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 6 }}>
-                <span>Project total</span>
-                <span>{fmtCAD(estimate.total)}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>{estimate.client_email}</div>
+            </div>
+            <div style={{ height: 1, background: '#F1F3F7' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, letterSpacing: '.04em' }}>{estimate.estimate_number}</div>
+            </div>
+            <div style={{ height: 1, background: '#F1F3F7' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>Invoice Amount</div>
+                <div style={{ fontSize: 12, color: '#64748B' }}>Balance due after deposit</div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
-                <span>Deposit paid ({depositInvoice!.status === 'paid' ? 'paid' : 'pending'})</span>
-                <span>− {fmtCAD(depositInvoice!.amount)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #EEF0F4', paddingTop: 12 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#64748B' }}>Remaining balance</span>
-                <span style={{ fontSize: 32, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <div style={labelStyle}>Invoice Amount</div>
-              <div style={{ fontSize: 32, fontWeight: 700, color: '#2563EB', lineHeight: 1.1 }}>{fmtCAD(invoiceAmount)}</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>from signed estimate {estimate.estimate_number}</div>
-            </>
-          )}
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</div>
+            </div>
+          </div>
         </div>
 
         {/* Form card */}
-        <div style={{ background: '#fff', borderRadius: 12, padding: 20, overflow: 'hidden' }}>
-          <div style={{ marginBottom: 16, width: '100%' }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+          <div style={{ marginBottom: 20 }}>
             <label style={labelStyle}>Due Date *</label>
             <input
               type="date"
@@ -203,39 +186,42 @@ export default function CreateInvoicePage() {
               onChange={e => setDueDate(e.target.value)}
               style={inputStyle}
             />
-            {dueDate && (
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 5 }}>
-                {new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dueDate + 'T00:00:00'))}
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => setNet(14)}
+                style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid #E2E5EA', background: '#F8FAFC', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Net 14
+              </button>
+              <button
+                onClick={() => setNet(30)}
+                style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid #E2E5EA', background: '#F8FAFC', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Net 30
+              </button>
+              {dueDate && (
+                <div style={{ fontSize: 12, color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+                  {new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(dueDate + 'T00:00:00'))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
+          <div>
             <label style={labelStyle}>Notes (Optional)</label>
             <textarea
               rows={3}
               value={notes}
-              placeholder="Payment instructions, bank details, etc."
+              placeholder="Payment instructions, e.g. Send Interac to info@company.ca"
               onChange={e => setNotes(e.target.value)}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             />
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#F8FAFC', borderRadius: 8, padding: '10px 12px' }}>
-            <Info size={14} strokeWidth={1.8} color="#94A3B8" style={{ flexShrink: 0, marginTop: 1 }} />
-            <span style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5 }}>
-              {isFinal
-                ? 'This final invoice covers the remaining balance after the deposit. Estimate status updates to "Invoiced".'
-                : 'The estimate status will update to "Invoiced" automatically.'}
-            </span>
-          </div>
         </div>
 
         <button
-          onClick={() => isFinal ? setShowModal(true) : createInvoice()}
+          onClick={() => setShowModal(true)}
           disabled={saving}
-          style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 24, marginBottom: 32 }}>
-          {saving ? 'Creating...' : `Create ${isFinal ? 'Final ' : ''}Invoice`}
+          style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 8 }}>
+          {saving ? 'Sending...' : 'Send Final Invoice'}
         </button>
       </div>
 
@@ -273,6 +259,114 @@ export default function CreateInvoicePage() {
           </div>
         </div>
       )}
+    </div>
+  )
+
+  // Non-final invoice layout (no deposit exists)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
+
+      {/* TOPBAR */}
+      <div style={{
+        background: '#fff',
+        borderBottom: '1px solid #EEF0F4',
+        padding: '16px 28px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
+        zIndex: 10,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
+            <ArrowLeft size={16} strokeWidth={2} />
+          </button>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 1 }}>
+              FROM {estimate.estimate_number}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Create Invoice</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtCAD(estimate.total)} project total</div>
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflowY: 'auto' }}>
+        {error && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', color: '#DC2626', fontSize: 13, marginBottom: 16 }}>
+            {error}
+          </div>
+        )}
+
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 }}>
+          <div style={labelStyle}>Invoice Amount</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#2563EB', lineHeight: 1.1 }}>{fmtCAD(invoiceAmount)}</div>
+          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>from signed estimate {estimate.estimate_number}</div>
+        </div>
+
+        <div style={{ background: '#fff', borderRadius: 12, padding: 20, overflow: 'hidden' }}>
+          <div style={{ marginBottom: 16, width: '100%' }}>
+            <label style={labelStyle}>Due Date *</label>
+            <input
+              type="date"
+              lang="en"
+              value={dueDate}
+              onChange={e => setDueDate(e.target.value)}
+              style={inputStyle}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => setNet(14)}
+                style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid #E2E5EA', background: '#F8FAFC', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Net 14
+              </button>
+              <button
+                onClick={() => setNet(30)}
+                style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid #E2E5EA', background: '#F8FAFC', color: '#64748B', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Net 30
+              </button>
+              {dueDate && (
+                <div style={{ fontSize: 12, color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+                  {new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(dueDate + 'T00:00:00'))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Notes (Optional)</label>
+            <textarea
+              rows={3}
+              value={notes}
+              placeholder="Payment instructions, e.g. Send Interac to info@company.ca"
+              onChange={e => setNotes(e.target.value)}
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: '#F8FAFC', borderRadius: 8, padding: '10px 12px' }}>
+            <Info size={14} strokeWidth={1.8} color="#94A3B8" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span style={{ fontSize: 12, color: '#64748B', lineHeight: 1.5 }}>
+              The estimate status will update to &quot;Invoiced&quot; automatically.
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={createInvoice}
+          disabled={saving}
+          style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 24, marginBottom: 32 }}>
+          {saving ? 'Creating...' : 'Create Invoice'}
+        </button>
+      </div>
     </div>
   )
 }
