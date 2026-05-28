@@ -65,9 +65,6 @@ export default function TeamPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([])
   const [loading, setLoading] = useState(true)
   const [screen, setScreen] = useState<'list' | 'invite'>('list')
-  useEffect(() => {
-    console.log('screen changed:', screen)
-  }, [screen])
   const [sending, setSending] = useState(false)
   const [toast, setToast] = useState('')
   const [removingMember, setRemovingMember] = useState<Member | null>(null)
@@ -115,7 +112,6 @@ export default function TeamPage() {
   async function sendInvite() {
     if (!invEmail.trim()) { showToast('⚠️ Enter an email address'); return }
     setSending(true)
-    console.log('[invite] invPerms:', JSON.stringify(invPerms))
     try {
       const res = await fetch('/api/team-invite', {
         method: 'POST',
@@ -217,8 +213,6 @@ export default function TeamPage() {
   const removingMemberName = removingMember
     ? [removingMember.first_name, removingMember.last_name].filter(Boolean).join(' ') || removingMember.email || 'This member'
     : ''
-
-  console.log('screen:', screen)
 
   return (
     <>

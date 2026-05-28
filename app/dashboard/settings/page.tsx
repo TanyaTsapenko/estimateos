@@ -627,7 +627,6 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   async function sendInvite() {
     if (!inviteEmail.trim()) { flash('Enter an email address'); return }
     setSending(true)
-    console.log('[team-invite] Sending invite to:', inviteEmail.trim())
     try {
       const res = await fetch('/api/team-invite', {
         method: 'POST',
@@ -635,7 +634,6 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
         body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole, permissions: invitePerms }),
       })
       const json = await res.json()
-      console.log('[team-invite] Response:', json)
       if (!res.ok) { flash('Error: ' + (json.error || 'Failed to send invite')); setSending(false); return }
       setPendingCount(p => p + 1)
       setInviteEmail('')
