@@ -88,8 +88,8 @@ export default function Sidebar() {
         fontSize: 18, fontWeight: 700, letterSpacing: -0.3,
         display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
       }}>
-        {!collapsed && <span>Estimate<span style={{ color: '#3B82F6' }}>OS</span></span>}
-        {collapsed && <span style={{ color: '#3B82F6', fontSize: 16 }}>E</span>}
+        {!collapsed && <span>Apex<span style={{ color: '#3B82F6' }}>Scale</span></span>}
+        {collapsed && <span style={{ color: '#3B82F6', fontSize: 16 }}>A</span>}
       </div>
 
       {/* Nav */}

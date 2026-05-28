@@ -385,7 +385,7 @@ export default function SignContractPage() {
         {/* HEADER */}
         <div className="no-print" style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
           <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>
-            Estimate<span style={{ color: '#2045B8' }}>OS</span>
+            Apex<span style={{ color: '#2045B8' }}>Scale</span>
           </span>
           <span style={{ fontSize: 10, fontWeight: 700, color: '#2045B8', background: '#EEF2FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>
             {conDisplayId}

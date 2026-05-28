@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       <!-- HEADER -->
       <tr><td style="background-color:#080E1C;padding:28px 24px 52px">
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px">
-          <tr><td><span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">Estimate<span style="color:#2563EB">OS</span></span></td></tr>
+          <tr><td><span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">Apex<span style="color:#2563EB">Scale</span></span></td></tr>
         </table>
         <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;font-family:Arial,sans-serif">Invoice for</div>
         <div style="font-size:26px;font-weight:800;color:#ffffff;margin-bottom:14px;font-family:Arial,sans-serif;line-height:1.2">${est.client_name || 'Client'}</div>
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
 
       <!-- FOOTER -->
       <tr><td style="background:#ffffff;padding:14px 24px;text-align:center;font-size:11px;color:#9CA3AF;font-family:Arial,sans-serif">
-        Sent via EstimateOS &middot; ${companyName}
+        Sent via ApexScale &middot; ${companyName}
       </td></tr>
 
     </table>
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     try {
       await resend.emails.send({
-        from: `EstimateOS <noreply@useapexscale.com>`,
+        from: `ApexScale <noreply@useapexscale.com>`,
         to: [est.client_email],
         subject: `Deposit Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
         html,

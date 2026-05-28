@@ -168,7 +168,7 @@ export default function PublicSignPage() {
   if (declined) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Estimate<span style={{ color: '#2563EB' }}>OS</span></div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Apex<span style={{ color: '#2563EB' }}>Scale</span></div>
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>
@@ -184,7 +184,7 @@ export default function PublicSignPage() {
       {/* Logo header */}
       <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>
-          Estimate<span style={{ color: '#2563EB' }}>OS</span>
+          Apex<span style={{ color: '#2563EB' }}>Scale</span>
         </div>
         <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', background: 'rgba(37,99,235,.08)', border: '1px solid rgba(37,99,235,.2)', borderRadius: 6, padding: '4px 10px' }}>
           {estimate.estimate_number}

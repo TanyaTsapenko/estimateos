@@ -1228,7 +1228,7 @@ export default function SettingsPage() {
       {/* Left sidebar */}
       <div style={{ width: 232, background: '#0A1628', color: '#fff', display: 'flex', flexDirection: 'column', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ padding: '22px 22px 26px', fontSize: 18, fontWeight: 700, letterSpacing: -0.3 }}>
-          Estimate<span style={{ color: '#3B82F6' }}>OS</span>
+          Apex<span style={{ color: '#3B82F6' }}>Scale</span>
         </div>
         <div style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[

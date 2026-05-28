@@ -6,10 +6,10 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(req: Request) {
   const { clientEmail, clientName, companyName, companyPhone, companyEmail, contractId, total } = await req.json()
 
-  const viewUrl = `https://estimateos-eta.vercel.app/sign/contract/${contractId}`
+  const viewUrl = `https://apexscale-eta.vercel.app/sign/contract/${contractId}`
 
   await resend.emails.send({
-    from: `EstimateOS <noreply@useapexscale.com>`,
+    from: `ApexScale <noreply@useapexscale.com>`,
     to: clientEmail,
     subject: `Your signed contract from ${companyName}`,
     html: `
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           View Signed Contract &rarr;
         </a>
         <hr style="border: none; border-top: 1px solid #E8E8E8; margin: 24px 0;">
-        <p style="color: #C0C8D0; font-size: 12px;">Sent via EstimateOS</p>
+        <p style="color: #C0C8D0; font-size: 12px;">Sent via ApexScale</p>
       </div>
     `,
   })

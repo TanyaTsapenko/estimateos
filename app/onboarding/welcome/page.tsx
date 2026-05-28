@@ -43,7 +43,7 @@ export default function WelcomePage() {
             </svg>
           </div>
           <p style={{fontSize:26, fontWeight:700, color:'#fff', lineHeight:1.12, marginBottom:7, letterSpacing:-0.2}}>You&apos;re all set!</p>
-          <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>Your EstimateOS workspace is ready.<br/>Here&apos;s what you can do right away.</p>
+          <p style={{fontSize:13, color:'rgba(255,255,255,0.4)', lineHeight:1.55}}>Your ApexScale workspace is ready.<br/>Here&apos;s what you can do right away.</p>
         </div>
       </div>
       <div style={{padding:'22px 18px 28px'}}>

@@ -202,7 +202,7 @@ export default function TeamPage() {
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div></div></div>
+      <div className="gh"><div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div></div>
       <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
         <div style={{ color: 'var(--ash)', fontSize: 13 }}>Loading team…</div>
       </div>
@@ -240,7 +240,7 @@ export default function TeamPage() {
                 ←
               </button>
             )}
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+            <div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div>
           </div>
           {screen === 'list' ? (
             <button

@@ -12,13 +12,13 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'EstimateOS',
+  title: 'ApexScale',
   description: 'Estimate software for W&D contractors in Canada',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'EstimateOS',
+    title: 'ApexScale',
   },
 }
 
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="EstimateOS" />
+        <meta name="apple-mobile-web-app-title" content="ApexScale" />
         <meta name="theme-color" content="#0A0E1A" />
       </head>
       <body>

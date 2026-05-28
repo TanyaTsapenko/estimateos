@@ -8,12 +8,12 @@ export async function POST(req: Request) {
 
   if (!clientEmail) return NextResponse.json({ error: 'No client email' }, { status: 400 })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://estimateos-eta.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://apexscale-eta.vercel.app'
   const signUrl = `${appUrl}/sign/contract/${contractId}`
 
   try {
     await resend.emails.send({
-      from: `EstimateOS <noreply@useapexscale.com>`,
+      from: `ApexScale <noreply@useapexscale.com>`,
       to: clientEmail,
       subject: `Contract from ${companyName} — Ready to Sign`,
       html: `

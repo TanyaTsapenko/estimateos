@@ -155,7 +155,7 @@ export default function CompanyProfilePage() {
               style={{ width: 30, height: 30, background: 'rgba(255,255,255,.08)', borderRadius: 8, border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               ←
             </button>
-            <div className="logo-text">Estimate<span style={{ color: 'var(--amber)' }}>OS</span></div>
+            <div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div>
           </div>
           <div style={{ fontSize: 12, fontWeight: 700, color: completion === 100 ? '#4ade80' : '#3B6CFF' }}>
             {completion}% complete

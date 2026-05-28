@@ -17,7 +17,7 @@ export default function SplashPage() {
 
         <div style={{ position: 'relative', marginBottom: 28 }}>
           <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-            Estimate<span style={{ color: '#3B6CFF' }}>OS</span>
+            Apex<span style={{ color: '#3B6CFF' }}>Scale</span>
           </div>
         </div>
 

@@ -279,7 +279,7 @@ export default function ClientEstimatePage() {
         </a>
 
         <div style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#94A3B8' }}>
-          Powered by EstimateOS
+          Powered by ApexScale
         </div>
       </div>
     </div>
