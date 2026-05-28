@@ -8,7 +8,7 @@ export async function POST(req: Request) {
 
   if (!clientEmail) return NextResponse.json({ error: 'No client email' }, { status: 400 })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://apexscale-eta.vercel.app'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
   const signUrl = `${appUrl}/sign/contract/${contractId}`
 
   try {

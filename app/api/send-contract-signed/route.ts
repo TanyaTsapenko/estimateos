@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(req: Request) {
   const { clientEmail, clientName, companyName, companyPhone, companyEmail, contractId, total } = await req.json()
 
-  const viewUrl = `https://apexscale-eta.vercel.app/sign/contract/${contractId}`
+  const viewUrl = `https://useapexscale.com/sign/contract/${contractId}`
 
   await resend.emails.send({
     from: `${companyName} <noreply@useapexscale.com>`,

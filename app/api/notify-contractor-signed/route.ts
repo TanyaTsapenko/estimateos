@@ -7,7 +7,7 @@ export async function POST(req: Request) {
   const { contractorEmail, contractorName, clientName, companyName, total, depositPercent, contractId } = await req.json()
 
   const depositAmount = Math.round(total * depositPercent / 100)
-  const viewUrl = `https://apexscale-eta.vercel.app/sign/contract/${contractId}`
+  const viewUrl = `https://useapexscale.com/sign/contract/${contractId}`
 
   await resend.emails.send({
     from: `${companyName} <noreply@useapexscale.com>`,
