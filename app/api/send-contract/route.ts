@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 
   try {
     await resend.emails.send({
-      from: `ApexScale <noreply@useapexscale.com>`,
+      from: `${companyName} <noreply@useapexscale.com>`,
       to: clientEmail,
       subject: `Contract from ${companyName} — Ready to Sign`,
       html: `

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   const viewUrl = `https://apexscale-eta.vercel.app/sign/contract/${contractId}`
 
   await resend.emails.send({
-    from: `ApexScale <noreply@useapexscale.com>`,
+    from: `${companyName} <noreply@useapexscale.com>`,
     to: clientEmail,
     subject: `Your signed contract from ${companyName}`,
     html: `
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           View Signed Contract &rarr;
         </a>
         <hr style="border: none; border-top: 1px solid #E8E8E8; margin: 24px 0;">
-        <p style="color: #C0C8D0; font-size: 12px;">Sent via ApexScale</p>
+        <p style="color: #C0C8D0; font-size: 12px;">Powered by ApexScale</p>
       </div>
     `,
   })

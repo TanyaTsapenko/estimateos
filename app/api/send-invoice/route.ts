@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 <div style="max-width:520px;margin:0 auto;padding:28px 16px">
 
   <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Apex<span style="color:#3B6CFF">Scale</span></div>
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">${companyName}</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">${isFinal ? 'Final Invoice' : 'Invoice'}</div>
     <div style="font-size:13px;color:rgba(255,255,255,.5)">${inv.invoice_number} · ${companyName}</div>
   </div>
@@ -130,14 +130,14 @@ export async function POST(request: NextRequest) {
     </p>
   </div>
 
-  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Sent via ApexScale · ${companyName}</p>
+  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Powered by ApexScale</p>
 </div>
 </body>
 </html>`
 
   try {
     const { error } = await resend.emails.send({
-      from: `ApexScale <noreply@useapexscale.com>`,
+      from: `${companyName} <noreply@useapexscale.com>`,
       to: [clientEmail],
       subject,
       html,

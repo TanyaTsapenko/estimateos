@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 <div style="max-width:520px;margin:0 auto;padding:28px 16px">
 
   <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">Apex<span style="color:#3B6CFF">Scale</span></div>
+    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">${companyName}</div>
     <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">You're invited to join the team</div>
     <div style="font-size:13px;color:rgba(255,255,255,.5)">${companyName} · ${roleLabel}</div>
   </div>
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
   <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
     <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${toName},</p>
     <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
-      <strong style="color:#1A1A1A">${companyName}</strong> has invited you to join their workspace on ApexScale. Click below to create your account and get started.
+      <strong style="color:#1A1A1A">${companyName}</strong> has invited you to join their workspace. Click below to create your account and get started.
     </p>
 
     <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
@@ -139,16 +139,16 @@ export async function POST(request: NextRequest) {
     </p>
   </div>
 
-  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Sent via ApexScale · ${companyName}</p>
+  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Powered by ApexScale</p>
 </div>
 </body>
 </html>`
 
   console.log('[team-invite] sending email to:', inviteeEmail)
   const { data: emailData, error: emailError } = await resend.emails.send({
-    from: `ApexScale <noreply@useapexscale.com>`,
+    from: `${companyName} <noreply@useapexscale.com>`,
     to:   [inviteeEmail],
-    subject: `You're invited to join ${companyName} on ApexScale`,
+    subject: `You're invited to join ${companyName}`,
     html,
   })
 

@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   const clientLink = `${request.nextUrl.origin}/estimate/${estimateId}`
   const logoHtml = (prof as any)?.logo_url
     ? `<img src="${(prof as any).logo_url}" style="max-width:120px;max-height:40px;display:block" alt="${companyName}" />`
-    : `<span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">Apex<span style="color:#2563EB">Scale</span></span>`
+    : `<span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">${companyName}</span>`
 
   const hdrStyle = 'background-color:#080E1C;padding:28px 24px 52px'
   const bodyStyle = 'background-color:#F5F6F8;padding:20px'
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 ${inner}
       <!-- FOOTER -->
       <tr><td style="background:#ffffff;padding:14px 24px;text-align:center;font-size:11px;color:#9CA3AF;font-family:Arial,sans-serif">
-        Sent via ApexScale &middot; ${companyName}
+        Powered by ApexScale
       </td></tr>
     </table>
   </td></tr>
@@ -311,7 +311,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
   }
 
   const emailPayload: any = {
-    from: `ApexScale <noreply@useapexscale.com>`,
+    from: `${companyName} <noreply@useapexscale.com>`,
     to: [est.client_email],
     subject,
     html,
