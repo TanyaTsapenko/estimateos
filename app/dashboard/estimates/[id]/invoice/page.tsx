@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
-import { ArrowLeft, Info } from 'lucide-react'
+import { ArrowLeft, Info, Send } from 'lucide-react'
 
 interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string }
 interface DepositInvoice { id: string; amount: number; status: string }
@@ -19,6 +19,7 @@ export default function CreateInvoicePage() {
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -231,12 +232,47 @@ export default function CreateInvoicePage() {
         </div>
 
         <button
-          onClick={createInvoice}
+          onClick={() => isFinal ? setShowModal(true) : createInvoice()}
           disabled={saving}
           style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 24, marginBottom: 32 }}>
           {saving ? 'Creating...' : `Create ${isFinal ? 'Final ' : ''}Invoice`}
         </button>
       </div>
+
+      {showModal && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 16, padding: 24, maxWidth: 320, width: '100%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Send size={20} color="#2563EB" strokeWidth={2} />
+              </div>
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', textAlign: 'center', marginBottom: 10 }}>
+              Send Final Invoice?
+            </div>
+            <div style={{ fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>
+              This will send a final invoice of <strong style={{ color: '#0A1628' }}>{fmtCAD(invoiceAmount)}</strong> to {estimate.client_email}. This cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{ flex: 1, height: 44, borderRadius: 10, border: '1px solid #E2E5EA', background: '#fff', color: '#64748B', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowModal(false); createInvoice() }}
+                disabled={saving}
+                style={{ flex: 1, height: 44, borderRadius: 10, border: 'none', background: '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Send Invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
