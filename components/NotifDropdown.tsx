@@ -21,7 +21,7 @@ interface Props {
   clearAll: () => void
 }
 
-export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRead, clearAll }: Props) {
+export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRead }: Props) {
   const router = useRouter()
   const hasUnread = notifs.some(n => !n.read)
 
@@ -36,12 +36,15 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
       background: '#fff',
       borderRadius: 16,
       border: '1px solid #E8ECF2',
-      boxShadow: '0 8px 32px rgba(15,23,42,0.10)',
-      fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
+      boxShadow: '0 8px 32px rgba(15,23,42,0.12)',
       overflow: 'hidden',
+      fontFamily: '-apple-system, "SF Pro Text", "Inter", sans-serif',
     }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderBottom: '1px solid #F1F5F9' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '13px 16px', borderBottom: '1px solid #F1F3F7',
+      }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#0F172A' }}>Notifications</span>
         {hasUnread && (
           <button
@@ -64,33 +67,44 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
             <div
               key={n.id}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
+                display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '11px 16px',
                 borderBottom: '1px solid #F8FAFC',
-                background: n.read ? '#fff' : '#FAFBFF',
+                background: '#fff',
               }}
             >
-              {/* Unread dot / placeholder */}
-              <div style={{ width: 7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Dot / placeholder */}
+              <div style={{ width: 7, flexShrink: 0, paddingTop: 5 }}>
                 {!n.read && (
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2563EB' }} />
                 )}
               </div>
 
-              {/* Text — clickable */}
+              {/* Text */}
               <div
                 onClick={() => handleNav(n)}
                 style={{ flex: 1, minWidth: 0, cursor: n.link ? 'pointer' : 'default' }}
               >
-                <div style={{ fontSize: 12, fontWeight: n.read ? 500 : 600, color: n.read ? '#64748B' : '#0F172A', lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{
+                  fontSize: 12,
+                  fontWeight: n.read ? 500 : 600,
+                  color: n.read ? '#64748B' : '#0F172A',
+                  lineHeight: 1.35,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
                   {n.title}
                 </div>
                 {n.body && (
-                  <div style={{ fontSize: 11, color: '#64748B', marginTop: 2, lineHeight: 1.4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{
+                    fontSize: 11, color: '#64748B', marginTop: 2, lineHeight: 1.4,
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
                     {n.body}
                   </div>
                 )}
-                <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3 }}>{timeAgo(n.created_at)}</div>
+                <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3 }}>
+                  {timeAgo(n.created_at)}
+                </div>
               </div>
 
               {/* × dismiss */}
@@ -99,8 +113,8 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
                 title="Dismiss"
                 style={{
                   flexShrink: 0, background: 'transparent', border: 'none',
-                  cursor: 'pointer', color: '#CBD5E1', fontSize: 15, lineHeight: 1,
-                  padding: '2px 4px', fontFamily: 'inherit',
+                  cursor: 'pointer', color: '#CBD5E1', fontSize: 16, lineHeight: 1,
+                  padding: '1px 2px', fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#94A3B8' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#CBD5E1' }}
@@ -113,10 +127,13 @@ export default function NotifDropdown({ notifs, onClose, markOneRead, markAllRea
       )}
 
       {/* Footer */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #F1F5F9', textAlign: 'center' }}>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #F1F3F7', textAlign: 'center' }}>
         <button
           onClick={onClose}
-          style={{ fontSize: 11, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+          style={{
+            fontSize: 11, fontWeight: 600, color: '#2563EB',
+            background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+          }}
         >
           View all notifications
         </button>

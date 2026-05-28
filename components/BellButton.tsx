@@ -35,8 +35,8 @@ export default function BellButton() {
   }
 
   const dropdownStyle: React.CSSProperties = isMobile
-    ? { position: 'absolute', top: 'calc(100% + 8px)', right: -8, width: 'calc(100vw - 32px)', zIndex: 50 }
-    : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 50 }
+    ? { position: 'absolute', top: 'calc(100% + 8px)', right: -12, width: 'calc(100vw - 32px)', zIndex: 9999 }
+    : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 9999 }
 
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
