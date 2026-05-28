@@ -593,6 +593,10 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState('estimator')
+  const [invitePerms, setInvitePerms] = useState({
+    estimates: true, schedule: true, clients: true,
+    price_list: false, reports: false, settings: false,
+  })
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
@@ -628,7 +632,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
       const res = await fetch('/api/team-invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole }),
+        body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole, permissions: invitePerms }),
       })
       const json = await res.json()
       console.log('[team-invite] Response:', json)
@@ -727,6 +731,35 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                 <option value="admin">Office Admin</option>
                 <option value="owner">Owner</option>
               </select>
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Permissions</label>
+              <div style={{ border: '1px solid #E2E5EA', borderRadius: 10, overflow: 'hidden' }}>
+                {[
+                  { key: 'estimates',  label: 'Estimates',        desc: 'Create and send quotes to clients' },
+                  { key: 'schedule',   label: 'Schedule',         desc: 'View and manage appointments' },
+                  { key: 'clients',    label: 'Clients',          desc: 'Add, edit, and view client profiles' },
+                  { key: 'price_list', label: 'Price List',       desc: 'View and edit product pricing' },
+                  { key: 'reports',    label: 'Reports',          desc: 'Access sales and revenue reports' },
+                  { key: 'settings',   label: 'Company Settings', desc: 'Manage branding, contracts, and billing' },
+                ].map(({ key, label, desc }, i, arr) => {
+                  const val = invitePerms[key as keyof typeof invitePerms]
+                  return (
+                    <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #F1F3F5' : 'none', background: '#fff' }}>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{label}</div>
+                        <div style={{ fontSize: 11, color: '#64748b', marginTop: 1 }}>{desc}</div>
+                      </div>
+                      <div
+                        onClick={() => setInvitePerms(p => ({ ...p, [key]: !p[key as keyof typeof p] }))}
+                        style={{ width: 38, height: 22, borderRadius: 11, flexShrink: 0, cursor: 'pointer', background: val ? '#2563EB' : '#CBD5E1', position: 'relative', transition: 'background 0.2s' }}
+                      >
+                        <div style={{ position: 'absolute', top: 3, left: val ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={sendInvite} disabled={sending} style={{ padding: '9px 20px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.6 : 1 }}>
