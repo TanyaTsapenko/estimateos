@@ -11,7 +11,7 @@ export default function BellButton() {
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
+    const check = () => setIsMobile(window.innerWidth <= 430)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
@@ -26,20 +26,17 @@ export default function BellButton() {
     return () => document.removeEventListener('mousedown', handle)
   }, [open, setOpen])
 
-  const btnStyle: React.CSSProperties = isMobile
-    ? {
-        width: 40, height: 40, borderRadius: 14,
-        background: 'rgba(255,255,255,0.15)',
-        border: '1px solid rgba(255,255,255,0.2)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', position: 'relative',
-      }
-    : {
-        width: 40, height: 40, borderRadius: 14,
-        background: '#fff', border: '1px solid rgba(15,23,42,0.10)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        cursor: 'pointer', position: 'relative',
-      }
+  const btnStyle: React.CSSProperties = {
+    width: 40, height: 40, borderRadius: 14,
+    background: isMobile ? 'rgba(255,255,255,0.15)' : '#fff',
+    border: isMobile ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(15,23,42,0.10)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', position: 'relative',
+  }
+
+  const dropdownStyle: React.CSSProperties = isMobile
+    ? { position: 'absolute', top: 'calc(100% + 8px)', right: -8, width: 'calc(100vw - 32px)', zIndex: 50 }
+    : { position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: 296, zIndex: 50 }
 
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
@@ -55,21 +52,15 @@ export default function BellButton() {
         )}
       </button>
 
-      {/* Backdrop — closes panel on tap/click anywhere outside */}
       {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 998 }}
-        />
-      )}
-
-      {/* Panel — always fixed so it doesn't scroll with the page */}
-      {open && (
-        <div style={{
-          position: 'fixed', top: 70, left: 16, right: 16, width: 'auto',
-          zIndex: 999, maxHeight: '70vh', overflowY: 'auto', borderRadius: 20,
-        }}>
-          <NotifDropdown notifs={notifs} onClose={() => setOpen(false)} markOneRead={markOneRead} markAllRead={markAllRead} clearAll={clearAll} />
+        <div style={dropdownStyle}>
+          <NotifDropdown
+            notifs={notifs}
+            onClose={() => setOpen(false)}
+            markOneRead={markOneRead}
+            markAllRead={markAllRead}
+            clearAll={clearAll}
+          />
         </div>
       )}
     </div>
