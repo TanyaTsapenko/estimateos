@@ -112,6 +112,7 @@ export default function TeamPage() {
   async function sendInvite() {
     if (!invEmail.trim()) { showToast('⚠️ Enter an email address'); return }
     setSending(true)
+    console.log('[invite] invPerms:', JSON.stringify(invPerms))
     try {
       const res = await fetch('/api/team-invite', {
         method: 'POST',
