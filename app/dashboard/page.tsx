@@ -264,7 +264,7 @@ export default function DashboardPage() {
             icon: CheckIcon, color: '#059669',
             title: `${e.client_name} estimate signed`,
             desc: `${e.estimate_number} · Ready to invoice`,
-            cta: 'Send invoice', id: e.id, actionType: 'invoice',
+            cta: 'Send final invoice', id: e.id, actionType: 'invoice',
           })
         })
       }
