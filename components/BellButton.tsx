@@ -43,7 +43,7 @@ export default function BellButton() {
       {open && (
         <div style={{
           position: 'fixed', top: 70, right: 16,
-          width: 320, zIndex: 9999,
+          width: 320, zIndex: 99999,
           maxHeight: 480, overflowY: 'auto',
           background: '#fff',
           borderRadius: 16,
