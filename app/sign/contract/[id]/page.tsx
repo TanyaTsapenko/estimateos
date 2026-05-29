@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
+import { Download } from 'lucide-react'
 
 interface Contract {
   id: string; estimate_id: string; profile_id: string; status: string
@@ -386,9 +387,9 @@ export default function SignContractPage() {
             href={`/api/contract-pdf?contractId=${contract.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            style={{ display: 'block', width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textAlign: 'center', textDecoration: 'none', marginBottom: 24 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 24 }}
           >
-            ↓ Download Contract
+            <Download size={16} /> Download Contract
           </a>
 
         </div>
