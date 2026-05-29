@@ -264,6 +264,12 @@ function EditScreen({
   const ds  = toDesignStatus(currentAppt.status)
   const set = (k: keyof Appt) => (v: string) => setDraft(p => ({ ...p, [k]: v }))
 
+  const _now = new Date()
+  const _todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+  const minTime = draft.appointment_date === _todayStr
+    ? `${String(_now.getHours()).padStart(2, '0')}:${String(_now.getMinutes()).padStart(2, '0')}`
+    : undefined
+
   const inp: React.CSSProperties = {
     width: '100%', height: 44, padding: '0 14px', borderRadius: 10,
     border: `1px solid ${T.borderStrong}`, background: T.card, color: T.ink,
@@ -395,6 +401,7 @@ function EditScreen({
           <div style={{ flex: 1, minWidth: 0 }}>
             <label style={fieldLabel}>Time</label>
             <input type="time" value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)}
+              min={minTime}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
@@ -624,6 +631,13 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
     border: `1px solid ${T.borderStrong}`, background: T.card, color: T.ink,
     fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
   }
+
+  const _now2 = new Date()
+  const _todayStr2 = `${_now2.getFullYear()}-${String(_now2.getMonth() + 1).padStart(2, '0')}-${String(_now2.getDate()).padStart(2, '0')}`
+  const minTime = draft.appointment_date === _todayStr2
+    ? `${String(_now2.getHours()).padStart(2, '0')}:${String(_now2.getMinutes()).padStart(2, '0')}`
+    : undefined
+
   const chevSvg = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A94A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>")`
   const fldLbl: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase', marginBottom: 6, display: 'block' }
   const secHdr: React.CSSProperties = { fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: T.inkSoft, textTransform: 'uppercase', padding: '4px 4px 10px' }
@@ -724,6 +738,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
           <div>
             <label style={fldLbl}>Time</label>
             <input type="time" value={draft.appointment_time ?? ''} onChange={e => set('appointment_time')(e.target.value)}
+              min={minTime}
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
         </div>
