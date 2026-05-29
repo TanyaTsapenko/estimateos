@@ -11,11 +11,9 @@ interface Opening {
 interface Profile {
   id: string
   company_name: string | null; phone: string | null; email: string | null
-  street_address: string | null; city: string | null; province: string | null; postal_code: string | null
-  licence_number: string | null; insurance_number: string | null
-  contract_terms: string | null; warranty_period: string | null
-  deposit_required: boolean | null; deposit_percent: number | null
-  payment_terms: string | null; cancellation_policy: string | null
+  address: string | null; city: string | null; postal_code: string | null; website: string | null
+  licence_number: string | null
+  contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
 }
 interface Estimate {
@@ -91,9 +89,13 @@ export default function ContractPage() {
       if (!est) { setLoading(false); return }
       setEstimate(est)
       setOpenings(ops || [])
-      const { data: prof } = await supabase.from('profiles').select(
-        'id, company_name, phone, email, street_address, city, province, postal_code, licence_number, insurance_number, contract_terms, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, signature_url, logo_url'
-      ).eq('id', est.user_id).single()
+      const cleanUserId = est.user_id?.toString().trim().replace(/[^\x20-\x7E]/g, '')
+      console.log('[contract page] cleanUserId:', cleanUserId)
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent')
+        .eq('id', cleanUserId)
+        .single()
       if (prof) setProfile(prof as Profile)
       setLoading(false)
     }
