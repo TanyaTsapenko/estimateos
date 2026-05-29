@@ -20,15 +20,19 @@ export default function CreateInvoicePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [interacEmail, setInteracEmail] = useState('')
 
   useEffect(() => {
     async function load() {
-      const [{ data: est }, { data: dep }] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser()
+      const [{ data: est }, { data: dep }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single(),
+        user ? supabase.from('profiles').select('interac_email').eq('id', user.id).single() : Promise.resolve({ data: null }),
       ])
       setEstimate(est)
       setDepositInvoice(dep)
+      setInteracEmail((prof as any)?.interac_email || '')
 
       const d = new Date()
       d.setDate(d.getDate() + 14)
@@ -205,12 +209,32 @@ export default function CreateInvoicePage() {
             </div>
           </div>
 
+          {interacEmail && (
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Interac e-Transfer</label>
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #EEF0F4' }}>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>Send to</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{interacEmail}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #EEF0F4' }}>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>Message</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{estimate.estimate_number} balance</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+                  <span style={{ fontSize: 12, color: '#64748B' }}>Amount</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div>
             <label style={labelStyle}>Notes (Optional)</label>
             <textarea
               rows={3}
               value={notes}
-              placeholder="Payment instructions, e.g. Send Interac to info@company.ca"
+              placeholder="Additional notes for client (optional)"
               onChange={e => setNotes(e.target.value)}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             />
@@ -346,7 +370,7 @@ export default function CreateInvoicePage() {
             <textarea
               rows={3}
               value={notes}
-              placeholder="Payment instructions, e.g. Send Interac to info@company.ca"
+              placeholder="Additional notes for client (optional)"
               onChange={e => setNotes(e.target.value)}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             />
