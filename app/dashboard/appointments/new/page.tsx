@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import TimePickerDropdown from '@/components/TimePickerDropdown'
 
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
@@ -42,8 +43,6 @@ export default function NewAppointmentPage() {
     status: 'scheduled',
   })
 
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-  const minTime = form.appointment_date === today ? currentTime : ''
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }))
   const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
@@ -204,8 +203,11 @@ export default function NewAppointmentPage() {
           </div>
           <div className="f">
             <label>Time</label>
-            <input type="time" min={minTime} value={form.appointment_time} onChange={e => set('appointment_time', e.target.value)}
-              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+            <TimePickerDropdown
+              value={form.appointment_time}
+              date={form.appointment_date}
+              onChange={v => set('appointment_time', v)}
+            />
           </div>
         </div>
 
