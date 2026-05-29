@@ -87,6 +87,13 @@ export async function POST(request: NextRequest) {
       <!-- BODY -->
       <tr><td style="background-color:#F5F6F8;padding:20px">
 
+        <p style="font-size:15px;color:#0F172A;font-family:Arial,sans-serif;margin:0 0 16px">
+          Hi <strong>${est.client_name}</strong>,
+        </p>
+        <p style="font-size:13px;color:#64748B;font-family:Arial,sans-serif;line-height:1.6;margin:0 0 20px">
+          Thank you for signing your contract with <strong style="color:#0F172A">${companyName}</strong>. Please find your deposit invoice below.
+        </p>
+
         <!-- Amount Due -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
           <tr><td style="padding:16px">
