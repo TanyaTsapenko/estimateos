@@ -289,17 +289,14 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
         <!-- Info cards -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
           <tr>
-            <td width="48%" style="padding-right:8px">
-              <div style="background:#F5F6F8;border-radius:8px;padding:14px 16px">
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Estimate</div>
-                <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.estimate_number}</div>
-              </div>
+            <td width="48%" style="background:#F5F6F8;border-radius:8px;padding:12px 16px;margin-right:12px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Estimate</div>
+              <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.estimate_number}</div>
             </td>
-            <td width="48%" style="padding-left:8px">
-              <div style="background:#F5F6F8;border-radius:8px;padding:14px 16px">
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Valid Until</div>
-                <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.valid_until || '30 days'}</div>
-              </div>
+            <td width="8" style="min-width:12px"></td>
+            <td width="48%" style="background:#F5F6F8;border-radius:8px;padding:12px 16px">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Valid Until</div>
+              <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.valid_until ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : '30 days'}</div>
             </td>
           </tr>
         </table>
