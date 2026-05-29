@@ -289,12 +289,12 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
         <!-- Info cards -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
           <tr>
-            <td width="48%" style="background-color:#F5F6F8;border-radius:8px;padding:12px 16px;">
+            <td width="48%" style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;">
               <div style="font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-family:sans-serif;">Estimate</div>
               <div style="font-size:15px;font-weight:600;color:#111827;font-family:sans-serif;">${est.estimate_number}</div>
             </td>
             <td width="4%"></td>
-            <td width="48%" style="background-color:#F5F6F8;border-radius:8px;padding:12px 16px;">
+            <td width="48%" style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;">
               <div style="font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-family:sans-serif;">Valid until</div>
               <div style="font-size:15px;font-weight:600;color:#111827;font-family:sans-serif;">${est.valid_until ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : '30 days'}</div>
             </td>
