@@ -211,16 +211,107 @@ export default function SignContractPage() {
     </div>
   )
 
-  // Already signed (from DB, not current session)
-  if (contract.status === 'signed' && !clientSignatureUrl && !showDeposit && !showSuccess) return (
-    <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div style={{ width: 56, height: 56, background: '#EEF2FF', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
+  // Already signed — read-only view
+  if (contract.status === 'signed' && !clientSignatureUrl && !showDeposit && !showSuccess) {
+    const _conId = 'CON-' + contract.id.slice(0, 6).toUpperCase()
+    const _created = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(contract.created_at))
+    const _signed = contract.signed_at
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(contract.signed_at))
+      : '—'
+    return (
+      <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
+
+        {/* Header */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
+          <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>
+            Apex<span style={{ color: '#2045B8' }}>Scale</span>
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#F0FDF4', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>✓ Signed</span>
+        </div>
+
+        {/* Contract bar */}
+        <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{_conId}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>SIGNED</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{_signed}</div>
+          </div>
+        </div>
+
+        <div style={{ padding: 16 }}>
+
+          {/* Summary */}
+          <div style={{ ...cardStyle, padding: 16 }}>
+            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{contract.company_name || '—'}</strong></div>
+            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 16 }}>To: <strong style={{ color: '#0A0E1A' }}>{estimate.client_name || '—'}</strong></div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
+          </div>
+
+          {/* Scope of Work */}
+          <div style={cardStyle}>
+            <CardHeader title="Scope of Work" />
+            <div style={{ padding: '12px 16px' }}>
+              {openings.map((op, i) => (
+                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type} × {op.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
+                </div>
+              ))}
+              <div style={{ height: 1, background: '#F0F0F0', margin: '10px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
+                <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
+              </div>
+              {estimate.discount_amount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', marginBottom: 4 }}>
+                  <span>Discount</span><span>−{fmtCAD(estimate.discount_amount)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 10 }}>
+                <span>Tax</span><span>{fmtCAD(estimate.tax_amount)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Signatures */}
+          <div style={cardStyle}>
+            <CardHeader title="Signatures" />
+            <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
+                {contract.contractor_signature_url ? (
+                  <img src={contract.contractor_signature_url} crossOrigin="anonymous" style={{ height: 60, objectFit: 'contain', maxWidth: '100%', display: 'block', marginBottom: 4 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                ) : (
+                  <div style={{ height: 60, marginBottom: 4 }} />
+                )}
+                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{contract.company_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{_created}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
+                {(contract as any).client_signature_url ? (
+                  <img src={(contract as any).client_signature_url} crossOrigin="anonymous" style={{ height: 60, objectFit: 'contain', maxWidth: '100%', display: 'block', marginBottom: 4 }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                ) : (
+                  <div style={{ height: 60, marginBottom: 4 }} />
+                )}
+                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{estimate.client_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{_signed}</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#0A0E1A', marginBottom: 6 }}>Already signed</div>
-      <div style={{ fontSize: 14, color: '#8892b0', textAlign: 'center' }}>This contract has already been signed.</div>
-    </div>
-  )
+    )
+  }
 
   const isEmpty = paths.length === 0
   const depositPct = profile?.deposit_percent || 10

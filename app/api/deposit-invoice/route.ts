@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         <!-- CTA -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
           <tr><td align="center" style="padding:8px 0">
-            <a href="${estimateLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Estimate &rarr;</a>
+            <a href="${estimateLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Contract &rarr;</a>
           </td></tr>
         </table>
 
