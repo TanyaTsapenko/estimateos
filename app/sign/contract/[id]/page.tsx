@@ -426,48 +426,49 @@ export default function SignContractPage() {
 
       {/* ── SCREEN 1: Client-facing (immediately after signing) ── */}
       {showDeposit && !showSuccess && (
-        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#fff', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-          {/* Header */}
-          <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F3F7', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{contract.company_name || 'Your Contractor'}</span>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>{estimate.estimate_number}</span>
-          </div>
+        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
           {/* Content */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 24px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 24px' }}>
 
-            {/* Green check circle */}
-            <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#DCFCE7', border: '2px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-              <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-              </div>
+            {/* Green check circle — simple */}
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
             </div>
 
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#0A1628', marginBottom: 10, textAlign: 'center', letterSpacing: '-0.01em' }}>You're all signed!</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#0A1628', marginBottom: 8, textAlign: 'center', letterSpacing: '-0.01em' }}>You're all signed!</div>
             <div style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, textAlign: 'center', maxWidth: 300, marginBottom: 28 }}>
               Thank you, <strong style={{ color: '#0A1628' }}>{estimate.client_name}</strong>. Payment instructions have been sent to your email.
             </div>
 
-            {/* Email card */}
-            {estimate.client_email && (
-              <div style={{ width: '100%', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 2 }}>Email sent to</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_email}</div>
-                </div>
-              </div>
-            )}
-
-            {/* Deposit card (blue) */}
-            <div style={{ width: '100%', background: '#EFF6FF', borderRadius: 12, border: '1px solid #BFDBFE', padding: 16, marginBottom: 32 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#2563EB', marginBottom: 6 }}>Deposit Due</div>
+            {/* Combined card */}
+            <div style={{ width: '100%', background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
               <div style={{ fontSize: 28, fontWeight: 800, color: '#1D4ED8', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-              <div style={{ fontSize: 12, color: '#60A5FA' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+
+              <div style={{ height: 1, background: '#F1F5F9', marginBottom: 16 }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: estimate.client_email ? 10 : 0 }}>
+                <span style={{ fontSize: 12, color: '#94A3B8' }}>Status</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#16A34A' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
+                  SIGNED
+                </span>
+              </div>
+
+              {estimate.client_email && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: '#94A3B8' }}>Sent to</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{estimate.client_email}</span>
+                </div>
+              )}
             </div>
+
+            {/* Resend link */}
+            <button style={{ background: 'none', border: 'none', fontSize: 13, fontWeight: 600, color: '#2563EB', cursor: 'pointer', fontFamily: F, padding: '4px 0', marginBottom: 24 }}>
+              Resend confirmation email →
+            </button>
 
             {/* Done button */}
             <button
@@ -478,7 +479,7 @@ export default function SignContractPage() {
           </div>
 
           {/* Footer */}
-          <div style={{ textAlign: 'center', padding: '16px 20px', fontSize: 11, color: '#CBD5E1', borderTop: '1px solid #F1F3F7' }}>
+          <div style={{ textAlign: 'center', padding: '16px 20px', fontSize: 11, color: '#CBD5E1' }}>
             Powered by ApexScale · useapexscale.com
           </div>
         </div>
