@@ -554,14 +554,6 @@ export default function SignContractPage() {
       {/* ── MAIN CONTRACT (always in DOM — prints cleanly) ── */}
       <div id="contract-content" style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
 
-        {/* HEADER */}
-        <div className="no-print" style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-          <ApexScaleLogo theme="light" size={26} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#2045B8', background: '#EEF2FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>
-            {conDisplayId}
-          </span>
-        </div>
-
         {/* CONTRACT BAR */}
         <div className="contract-bar" style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
