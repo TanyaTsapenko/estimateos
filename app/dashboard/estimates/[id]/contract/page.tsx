@@ -15,6 +15,9 @@ interface Profile {
   licence_number: string | null
   contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
+  completion_timeframe: string | null; payment_methods: string[] | null
+  customer_responsibilities: string | null; buyer_right_to_cancel: string | null
+  damage_disclaimer: string | null; permits_responsibility: string | null; project_manager: string | null
 }
 interface Estimate {
   id: string; estimate_number: string; created_at: string
@@ -94,7 +97,7 @@ export default function ContractPage() {
       console.log('[contract page] sessionUserId:', sessionUserId)
       const { data: prof, error: profError } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent')
+        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager')
         .eq('id', sessionUserId)
         .single()
       console.log('[contract page] prof:', prof, 'error:', profError)
@@ -296,6 +299,61 @@ export default function ContractPage() {
             <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
           </div>
         </div>
+
+        {/* CONTRACT DETAILS */}
+        {(profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.customer_responsibilities || profile?.buyer_right_to_cancel || profile?.damage_disclaimer || profile?.permits_responsibility || profile?.project_manager) && (
+          <div style={cardStyle}>
+            <CardHeader icon={<DocumentIcon />} title="Contract Details" />
+            <div style={{ padding: '12px 16px' }}>
+              {profile?.completion_timeframe && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
+                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                </div>
+              )}
+              {profile?.payment_methods && profile.payment_methods.length > 0 && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {profile.payment_methods.map((m: string) => (
+                      <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile?.customer_responsibilities && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
+                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.customer_responsibilities}</p>
+                </div>
+              )}
+              {profile?.buyer_right_to_cancel && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Buyer's Right to Cancel</div>
+                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.buyer_right_to_cancel}</p>
+                </div>
+              )}
+              {profile?.damage_disclaimer && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Damage Disclaimer</div>
+                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.damage_disclaimer}</p>
+                </div>
+              )}
+              {profile?.permits_responsibility && (
+                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Permits Responsibility</div>
+                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.permits_responsibility}</p>
+                </div>
+              )}
+              {profile?.project_manager && (
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* SIGNATURES */}
         <div style={cardStyle}>
