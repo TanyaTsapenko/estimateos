@@ -295,9 +295,9 @@ export default function ContractPage() {
                 {profile.contract_terms}
               </p>
             )}
-            <CheckRow text={`Warranty: All materials and labour are warranted for ${profile?.warranty_period || '1 year'} from installation date.`} />
-            <CheckRow text={`Payment: ${profile?.payment_terms || 'Upon completion'}`} />
-            <CheckRow text={`Cancellation: ${profile?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}`} />
+            <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
+            <CheckRow text="Payment: Upon completion" />
+            <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
             <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
           </div>
         </div>
