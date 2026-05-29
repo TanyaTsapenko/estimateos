@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_pct, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url, contractor_signature_url')
+    .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_percent, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url, contractor_signature_url')
     .eq('id', est.user_id)
     .single()
 
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 
   const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
 
-  const depositPct: number = prof?.deposit_pct ?? 30
+  const depositPct: number = (prof as any)?.deposit_percent ?? 30
   const depositOnSigning = Math.round(est.total * depositPct / 100)
   const depositOnDelivery = est.total - depositOnSigning
 

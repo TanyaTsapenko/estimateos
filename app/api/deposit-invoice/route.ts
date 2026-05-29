@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_pct')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent')
     .eq('id', est.user_id).single()
 
-  const depositPct = prof?.deposit_pct ?? 30
+  const depositPct = (prof as any)?.deposit_percent ?? 30
   const depositAmount = Math.round(est.total * depositPct) / 100
 
   const dueDate = new Date()
