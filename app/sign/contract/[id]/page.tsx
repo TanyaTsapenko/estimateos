@@ -226,7 +226,17 @@ export default function SignContractPage() {
           <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>
             Apex<span style={{ color: '#2045B8' }}>Scale</span>
           </span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#F0FDF4', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>✓ Signed</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <a
+              href={`/api/contract-pdf?contractId=${contract.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '5px 11px', textDecoration: 'none', letterSpacing: '0.04em' }}
+            >
+              ↓ Download
+            </a>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#F0FDF4', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>✓ Signed</span>
+          </div>
         </div>
 
         {/* Contract bar */}
