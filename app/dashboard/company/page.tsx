@@ -10,7 +10,7 @@ interface Profile {
   company_name: string | null; phone: string | null; website: string | null
   city: string | null; province: string | null; licence: string | null
   insurance: string | null; logo_url: string | null; contract_terms: string | null
-  signature_url: string | null
+  signature_url: string | null; interac_email: string | null
 }
 
 type Section = 'info' | 'contract' | 'signature' | 'logo'
@@ -261,6 +261,11 @@ export default function CompanyProfilePage() {
                   {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
                 </select></div>
             </div>
+            <div className="r1" style={{ marginBottom: 10 }}><div className="f">
+              <label>Interac e-Transfer Email</label>
+              <input type="email" placeholder="payments@yourcompany.ca" value={form.interac_email || ''} onChange={e => set('interac_email', e.target.value)} />
+              <div style={{ fontSize: 10, color: 'var(--ash)', marginTop: 2 }}>Shown on deposit invoice emails sent to clients</div>
+            </div></div>
             <div className="r2" style={{ marginBottom: 10 }}>
               <div className="f"><label>Licence / Reg #</label>
                 <input placeholder="AB-G2-4821" value={form.licence || ''} onChange={e => set('licence', e.target.value)} />

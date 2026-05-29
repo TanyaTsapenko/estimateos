@@ -197,7 +197,8 @@ create policy "Users delete own invoices"
 alter table public.profiles
   add column if not exists team_owner_id uuid references public.profiles(id) on delete set null,
   add column if not exists member_role text,
-  add column if not exists deposit_pct numeric default 30;
+  add column if not exists deposit_pct numeric default 30,
+  add column if not exists interac_email text;
 
 create table if not exists public.team_invitations (
   id            uuid primary key default gen_random_uuid(),

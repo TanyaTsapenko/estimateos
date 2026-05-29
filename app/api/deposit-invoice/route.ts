@@ -19,14 +19,14 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, deposit_pct')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_pct')
     .eq('id', est.user_id).single()
 
   const depositPct = prof?.deposit_pct ?? 30
   const depositAmount = Math.round(est.total * depositPct) / 100
 
   const dueDate = new Date()
-  dueDate.setDate(dueDate.getDate() + 7)
+  dueDate.setDate(dueDate.getDate() + 14)
   const dueDateStr = dueDate.toISOString().slice(0, 10)
   const dueDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dueDateStr + 'T00:00:00'))
 
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
   const companyName = prof?.company_name
     || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim()
     || 'Contractor'
+  const interacEmail = (prof as any)?.interac_email || prof?.email || null
 
   const { data: invoice, error: invErr } = await admin.from('invoices').insert({
     estimate_id:    estimateId,
@@ -95,6 +96,18 @@ export async function POST(request: NextRequest) {
           </td></tr>
         </table>
 
+        ${interacEmail ? `<!-- Interac -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+          <tr><td style="background:#F8FAFC;border:1px solid #E8ECF2;border-radius:12px;padding:16px">
+            <p style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin:0 0 10px;font-family:Arial,sans-serif">Interac e-Transfer</p>
+            <table style="width:100%;font-size:13px;font-family:Arial,sans-serif">
+              <tr><td style="color:#64748B;padding:3px 0">Send to</td><td style="text-align:right;font-weight:600;color:#0F172A">${interacEmail}</td></tr>
+              <tr><td style="color:#64748B;padding:3px 0">Message</td><td style="text-align:right;font-weight:600;color:#0F172A">${est.estimate_number} deposit</td></tr>
+              <tr><td style="color:#64748B;padding:3px 0">Amount</td><td style="text-align:right;font-weight:700;color:#1D4ED8">${fmtCAD(depositAmount)}</td></tr>
+            </table>
+          </td></tr>
+        </table>` : ''}
+
         <!-- Invoice Details -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px">
@@ -119,7 +132,7 @@ export async function POST(request: NextRequest) {
         <!-- Message -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due within 7 days to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.
+            Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.
           </td></tr>
         </table>
 
