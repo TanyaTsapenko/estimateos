@@ -275,7 +275,7 @@ export default function ContractPage() {
               <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
             </div>
 
-            {profile?.deposit_required && depositAmt > 0 && (
+            {depositAmt > 0 && (
               <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                 <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
                   Deposit due upon signing ({profile.deposit_percent}%)
