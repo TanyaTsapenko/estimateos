@@ -278,7 +278,7 @@ export default function ContractPage() {
             {depositAmt > 0 && (
               <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                 <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
-                  Deposit due upon signing ({profile.deposit_percent}%)
+                  Deposit due upon signing ({profile?.deposit_percent}%)
                 </span>
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
               </div>
