@@ -86,6 +86,8 @@ export default function ContractPage() {
         supabase.from('estimates').select('*').eq('id', id).single(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
       ])
+      console.log('[contract page] est:', est)
+      console.log('[contract page] est.user_id:', est?.user_id)
       if (!est) { setLoading(false); return }
       setEstimate(est)
       setOpenings(ops || [])
