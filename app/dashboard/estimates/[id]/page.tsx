@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, MessageSquare, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -437,23 +437,13 @@ export default function EstimateDetailPage() {
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Share estimate for review</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      onClick={canEmail ? () => setShowEmailModal(true) : () => showToast('⚠️ No client email on this estimate')}
-                      disabled={sending}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.7 : 1 }}>
-                      {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
-                      {sending ? 'Sending…' : 'Email'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (!estimate.client_phone) { showToast('No phone number on file'); return }
-                        window.open(`sms:${estimate.client_phone}?body=Hi ${estimate.client_name}, here is your estimate from ${profile?.company_name || 'us'}: ${window.location.origin}/estimate/${estimate.id}`)
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: 1, padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      <MessageSquare size={14} /> SMS
-                    </button>
-                  </div>
+                  <button
+                    onClick={canEmail ? () => setShowEmailModal(true) : () => showToast('⚠️ No client email on this estimate')}
+                    disabled={sending}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.7 : 1 }}>
+                    {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
+                    {sending ? 'Sending…' : 'Email'}
+                  </button>
                 </div>
 
                 {/* ── STEP 2: Close the deal ── */}
