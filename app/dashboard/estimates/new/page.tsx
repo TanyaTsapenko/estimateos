@@ -334,7 +334,6 @@ function NewEstimateForm() {
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
-  const [paymentMethod, setPaymentMethod] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
   const userIdRef = useRef<string | null>(null)
 
@@ -404,7 +403,6 @@ function NewEstimateForm() {
             client_province: est.client_province || 'AB',
           })
           setTier(est.tier || 'better')
-          setPaymentMethod(est.payment_method || '')
           if (est.discount_type) {
             setDiscountType(est.discount_type as 'fixed' | 'percent')
             setDiscountValue(String(est.discount_value || ''))
@@ -511,7 +509,6 @@ function NewEstimateForm() {
       discount_type: discountAmt > 0 ? discountType : null,
       discount_value: discountAmt > 0 ? parseFloat(discountValue) : null,
       discount_amount: Math.round(discountAmt * 100) / 100,
-      payment_method: paymentMethod || null,
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
@@ -727,18 +724,6 @@ function NewEstimateForm() {
                     style={{ flex: 1, background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 14, color: 'var(--jet)', outline: 'none', fontFamily: 'inherit' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-                {['Cash', 'E-transfer', 'Cheque', 'Financing'].map(m => (
-                  <button key={m} onClick={() => setPaymentMethod(paymentMethod === m ? '' : m)}
-                    style={{ padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1.5px solid', cursor: 'pointer', fontFamily: 'inherit',
-                      borderColor: paymentMethod === m ? '#2045B8' : 'var(--border)',
-                      background: paymentMethod === m ? 'rgba(32,69,184,.1)' : 'var(--surface)',
-                      color: paymentMethod === m ? '#2045B8' : 'var(--ash)' }}>
-                    {m}
-                  </button>
-                ))}
-              </div>
-
               <div className="sl" style={{ marginTop: 4 }}>Summary</div>
               <div className="sum-box">
                 {openings.map(op => (
@@ -1053,21 +1038,6 @@ function NewEstimateForm() {
                 <input type="number" min="0" placeholder={discountType === 'fixed' ? '0.00' : '0'}
                   value={discountValue} onChange={e => setDiscountValue(e.target.value)}
                   style={{ flex: 1, background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 14, color: 'var(--jet)', outline: 'none', fontFamily: 'inherit' }} />
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 8 }}>Payment Method (optional)</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {['Cash', 'E-transfer', 'Cheque', 'Financing'].map(m => (
-                  <button key={m} onClick={() => setPaymentMethod(paymentMethod === m ? '' : m)}
-                    style={{ padding: '7px 16px', borderRadius: 20, fontSize: 12, fontWeight: 600, border: '1.5px solid', cursor: 'pointer', fontFamily: 'inherit',
-                      borderColor: paymentMethod === m ? '#2045B8' : 'var(--border)',
-                      background: paymentMethod === m ? 'rgba(32,69,184,.1)' : 'var(--surface)',
-                      color: paymentMethod === m ? '#2045B8' : 'var(--ash)' }}>
-                    {m}
-                  </button>
-                ))}
               </div>
             </div>
 
