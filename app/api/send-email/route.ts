@@ -30,9 +30,17 @@ export async function POST(request: NextRequest) {
     .trim()
     .replace(/[^\x20-\x7E]/g, '')
 
+  console.log('[send-email] est.user_id raw:', JSON.stringify(est.user_id))
+  console.log('[send-email] cleanUserId:', JSON.stringify(cleanUserId))
+
   const { data: profiles, error: profError } = await supabase
     .from('profiles')
     .select('*')
+
+  console.log('[send-email] profiles fetched:', profiles?.length ?? 0, 'error:', profError)
+  if (profiles && profiles.length > 0) {
+    console.log('[send-email] profile ids:', profiles.map((p: any) => p.id))
+  }
 
   if (profError) {
     console.error('Error fetching profiles:', profError)
@@ -47,6 +55,8 @@ export async function POST(request: NextRequest) {
       .replace(/[^\x20-\x7E]/g, '')
     return cleanProfileId === cleanUserId
   }) ?? null
+
+  console.log('[send-email] prof found:', !!prof, prof ? { id: prof.id, company_name: prof.company_name, phone: (prof as any).phone, email: (prof as any).email } : null)
 
   if (!prof) {
     console.error('Profile not found. cleanUserId:', JSON.stringify(cleanUserId))
