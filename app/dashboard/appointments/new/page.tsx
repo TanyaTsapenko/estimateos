@@ -82,7 +82,6 @@ export default function NewAppointmentPage() {
     if (hasErrors(newErrors)) return
     if (!form.appointment_date) return setError('Date is required')
     const apptDateTime = new Date(`${form.appointment_date}T${form.appointment_time || '00:00'}`)
-    if (apptDateTime < new Date()) return setError('Cannot schedule an appointment in the past.')
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
