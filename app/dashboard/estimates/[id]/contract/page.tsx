@@ -112,9 +112,10 @@ export default function ContractPage() {
   async function handleSend() {
     if (!estimate?.client_email) { alert('No client email on this estimate'); return }
     setSending(true)
-    console.log('[contracts insert] profile?.id =', profile?.id, '| estimate.user_id =', estimate?.user_id)
+    console.log('[handleSend] profile:', profile)
+    console.log('[handleSend] profile?.id:', profile?.id)
     const { data: { session } } = await supabase.auth.getSession()
-    console.log('[contract] session:', session?.user?.id)
+    console.log('[handleSend] session user:', session?.user?.id)
     try {
       const { data: contract, error } = await supabase
         .from('contracts')
