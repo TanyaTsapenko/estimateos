@@ -289,7 +289,7 @@ export default function CreateInvoicePage() {
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 1 }}>
               FROM {estimate.estimate_number}
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Create Invoice</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Send Final Invoice</div>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -364,7 +364,7 @@ export default function CreateInvoicePage() {
           onClick={createInvoice}
           disabled={saving}
           style={{ width: '100%', height: 52, borderRadius: 12, border: 'none', background: saving ? '#CBD5E1' : '#2563EB', color: '#fff', fontSize: 16, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', marginTop: 24, marginBottom: 32 }}>
-          {saving ? 'Creating...' : 'Create Invoice'}
+          {saving ? 'Sending...' : 'Send Final Invoice'}
         </button>
       </div>
     </div>
