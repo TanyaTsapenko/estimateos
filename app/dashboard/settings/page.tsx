@@ -441,7 +441,7 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
 
 function CompanySection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD' })
+  const [values, setValues] = useState({ companyName: '', phone: '', website: '', addressLine: '', city: '', province: 'AB', postal: '', licence: '', insurance: '', depositPct: '10', currency: 'CAD', interacEmail: '' })
   const [initial, setInitial] = useState({ ...values })
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = dirty && !!values.companyName
@@ -456,7 +456,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
       setUserId(user.id)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('company_name, phone, website, address, city, province, postal, licence, insurance, deposit_pct, logo_url')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, deposit_pct, logo_url, interac_email')
         .eq('id', user.id)
         .single()
       if (prof) {
@@ -472,6 +472,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
           insurance:   (prof as any).insurance    || '',
           depositPct:  String((prof as any).deposit_pct ?? 10),
           currency:    'CAD',
+          interacEmail: (prof as any).interac_email || '',
         }
         setValues(loaded)
         setInitial(loaded)
@@ -493,6 +494,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
       licence:      values.licence      || null,
       insurance:    values.insurance    || null,
       deposit_pct:  Number(values.depositPct) || 10,
+      interac_email: values.interacEmail || null,
     }).eq('id', userId)
     if (error) { flash('Error saving: ' + error.message); return }
     setInitial({ ...values })
@@ -586,6 +588,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
         </Card>
         <Card>
           <SectionLabel>Defaults</SectionLabel>
+          <Field label="Interac e-Transfer Email" value={values.interacEmail} onChange={set('interacEmail')} placeholder="payments@yourcompany.ca" hint="Shown on deposit invoice emails sent to clients" />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <Field label="Default deposit" value={values.depositPct} onChange={set('depositPct')} suffix="%" hint="Shown on every new estimate" />
             <div style={{ marginBottom: 16 }}>
