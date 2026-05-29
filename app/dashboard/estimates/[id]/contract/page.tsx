@@ -89,13 +89,15 @@ export default function ContractPage() {
       if (!est) { setLoading(false); return }
       setEstimate(est)
       setOpenings(ops || [])
-      const cleanUserId = est.user_id?.toString().trim().replace(/[^\x20-\x7E]/g, '')
-      console.log('[contract page] cleanUserId:', cleanUserId)
-      const { data: prof } = await supabase
+      const { data: { session } } = await supabase.auth.getSession()
+      const sessionUserId = session?.user?.id
+      console.log('[contract page] sessionUserId:', sessionUserId)
+      const { data: prof, error: profError } = await supabase
         .from('profiles')
         .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent')
-        .eq('id', cleanUserId)
+        .eq('id', sessionUserId)
         .single()
+      console.log('[contract page] prof:', prof, 'error:', profError)
       if (prof) setProfile(prof as Profile)
       setLoading(false)
     }
