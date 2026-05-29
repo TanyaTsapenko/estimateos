@@ -290,11 +290,6 @@ export default function ContractPage() {
         <div style={cardStyle}>
           <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
           <div style={{ padding: '14px 16px' }}>
-            {profile?.contract_terms && (
-              <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.65, marginBottom: 14, margin: '0 0 14px' }}>
-                {profile.contract_terms}
-              </p>
-            )}
             <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
             <CheckRow text="Payment: Upon completion" />
             <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
