@@ -210,7 +210,7 @@ export default function ContractPage() {
             <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{profile?.company_name || '—'}</div>
             <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
               {profile?.phone && <div>{profile.phone}</div>}
-              {profile?.city && profile?.province && <div>{profile.city}, {profile.province}</div>}
+              {profile?.city && <div>{profile.city}</div>}
             </div>
             {profile?.licence_number && (
               <div style={{ marginTop: 8 }}>
