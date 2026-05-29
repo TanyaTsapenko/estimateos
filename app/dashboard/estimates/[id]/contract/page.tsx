@@ -166,7 +166,7 @@ export default function ContractPage() {
 
   const contractId = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
-  const depositAmt = profile?.deposit_required && profile?.deposit_percent
+  const depositAmt = profile?.deposit_percent
     ? estimate.total * (profile.deposit_percent / 100)
     : 0
 
