@@ -155,6 +155,8 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('[deposit-invoice] Failed to send email:', emailError)
     }
+  } else {
+    console.error('[deposit-invoice] skipped email: no client_email for estimate', est.id)
   }
 
   return NextResponse.json({ success: true, invoice })
