@@ -1,0 +1,17 @@
+<svg width="240" height="64" viewBox="0 0 240 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lkBlade" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563EB"></stop>
+      <stop offset="1" stop-color="#1D4ED8"></stop>
+    </linearGradient>
+  </defs>
+  
+  <g transform="translate(0 0)">
+    <path d="M32 7 L10 50 Q8 54 13 54 L24 54 L32 36 Z" fill="#2563EB" opacity="0.4"></path>
+    <path d="M32 7 L54 50 Q56 54 51 54 L40 54 L32 36 Z" fill="url(#lkBlade)"></path>
+  </g>
+  
+  <text x="72" y="41" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="30" letter-spacing="-1" fill="#0B1220">
+    <tspan font-weight="700">Apex</tspan><tspan font-weight="300">Scale</tspan>
+  </text>
+</svg>

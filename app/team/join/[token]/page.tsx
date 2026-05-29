@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 interface Invite {
   id: string; invitee_email: string; invitee_name: string | null
@@ -101,7 +102,7 @@ export default function JoinPage() {
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="gh"><div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div></div>
+      <div className="gh"><div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div></div>
       <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
         <div style={{ color: 'var(--ash)', fontSize: 13 }}>Loading invite…</div>
       </div>
@@ -112,7 +113,7 @@ export default function JoinPage() {
   if (expired) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
-        <div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div>
+        <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
         <div className="h-title">
           <div className="h-eye">Team Invite</div>
           <div className="h-big">Link expired</div>
@@ -131,7 +132,7 @@ export default function JoinPage() {
   if (done) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
-        <div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div>
+        <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
         <div className="h-title">
           <div className="h-eye">You're in!</div>
           <div className="h-big">Welcome 🎉</div>
@@ -149,7 +150,7 @@ export default function JoinPage() {
   if (checkEmail) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
-        <div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div>
+        <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
         <div className="h-title">
           <div className="h-eye">Almost there</div>
           <div className="h-big">Check your email</div>
@@ -173,7 +174,7 @@ export default function JoinPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <div className="gh">
-        <div className="h-top"><div className="logo-text">Apex<span style={{ color: 'var(--amber)' }}>Scale</span></div></div>
+        <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
         <div className="h-title">
           <div className="h-eye">Team Invite</div>
           <div className="h-big">You're invited</div>

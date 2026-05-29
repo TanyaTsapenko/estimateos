@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 interface Contract {
   id: string; estimate_id: string; profile_id: string; status: string
@@ -223,9 +224,7 @@ export default function SignContractPage() {
 
         {/* Header */}
         <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>
-            Apex<span style={{ color: '#2045B8' }}>Scale</span>
-          </span>
+          <ApexScaleLogo theme="light" size={26} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <a
               href={`/api/contract-pdf?contractId=${contract.id}`}
@@ -487,7 +486,7 @@ export default function SignContractPage() {
 
           {/* Topbar */}
           <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-            <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>Apex<span style={{ color: '#2045B8' }}>Scale</span></span>
+            <ApexScaleLogo theme="light" size={26} />
             <span style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>{estimate.estimate_number}</span>
           </div>
 
@@ -543,9 +542,7 @@ export default function SignContractPage() {
 
         {/* HEADER */}
         <div className="no-print" style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>
-            Apex<span style={{ color: '#2045B8' }}>Scale</span>
-          </span>
+          <ApexScaleLogo theme="light" size={26} />
           <span style={{ fontSize: 10, fontWeight: 700, color: '#2045B8', background: '#EEF2FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>
             {conDisplayId}
           </span>

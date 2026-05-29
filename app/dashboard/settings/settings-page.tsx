@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
+import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 // ── TYPES ────────────────────────────────────────
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
@@ -1227,8 +1228,8 @@ export default function SettingsPage() {
 
       {/* Left sidebar */}
       <div style={{ width: 232, background: '#0A1628', color: '#fff', display: 'flex', flexDirection: 'column', flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ padding: '22px 22px 26px', fontSize: 18, fontWeight: 700, letterSpacing: -0.3 }}>
-          Apex<span style={{ color: '#3B82F6' }}>Scale</span>
+        <div style={{ padding: '22px 22px 26px' }}>
+          <ApexScaleLogo theme="dark" size={28} />
         </div>
         <div style={{ flex: 1, padding: '0 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[

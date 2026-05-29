@@ -1,6 +1,6 @@
 {
   "name": "ApexScale",
-  "short_name": "EOS",
+  "short_name": "ApexScale",
   "description": "Estimate software for W&D contractors in Canada",
   "version": "1.0.2",
   "start_url": "/dashboard",
@@ -9,6 +9,12 @@
   "theme_color": "#0A0E1A",
   "background_color": "#F4F4F2",
   "icons": [
+    {
+      "src": "/logo/apexscale-appicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",

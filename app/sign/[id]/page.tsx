@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { Check } from 'lucide-react'
+import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
@@ -168,7 +169,7 @@ export default function PublicSignPage() {
   if (declined) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
       <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Apex<span style={{ color: '#2563EB' }}>Scale</span></div>
+        <ApexScaleLogo theme="light" size={26} />
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
         <div style={{ fontSize: 14, color: '#64748B', textAlign: 'center', maxWidth: 300, lineHeight: 1.6 }}>

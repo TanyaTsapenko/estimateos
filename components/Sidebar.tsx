@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { SIcon } from './SIcon'
 import { ChevronDown } from 'lucide-react'
 import type { IconName } from './SIcon'
+import { ApexScaleLogo, ApexMark } from './ApexScaleLogo'
 
 const ALL_ITEMS: { path: string; label: string; icon: IconName; exact: boolean; permKey?: keyof Permissions; ownerOnly?: boolean }[] = [
   { path: '/dashboard',              label: 'Dashboard',    icon: 'home',      exact: true  },
@@ -88,8 +89,8 @@ export default function Sidebar() {
         fontSize: 18, fontWeight: 700, letterSpacing: -0.3,
         display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between',
       }}>
-        {!collapsed && <span>Apex<span style={{ color: '#3B82F6' }}>Scale</span></span>}
-        {collapsed && <span style={{ color: '#3B82F6', fontSize: 16 }}>A</span>}
+        {!collapsed && <ApexScaleLogo theme="dark" size={28} />}
+        {collapsed && <ApexMark theme="dark" size={24} />}
       </div>
 
       {/* Nav */}

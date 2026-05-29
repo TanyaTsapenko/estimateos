@@ -1,5 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
 const HDR = 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'
@@ -16,8 +17,8 @@ export default function SplashPage() {
         <div style={{ position: 'absolute', inset: 0, background: GLOW, pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', marginBottom: 28 }}>
-          <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>
-            Apex<span style={{ color: '#3B6CFF' }}>Scale</span>
+          <div>
+            <ApexScaleLogo theme="dark" size={36} />
           </div>
         </div>
 
