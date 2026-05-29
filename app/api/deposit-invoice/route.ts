@@ -53,7 +53,10 @@ export async function POST(request: NextRequest) {
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
 
   if (est.client_email) {
-    const estimateLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/estimate/${estimateId}`
+    const { data: con } = await admin.from('contracts').select('id').eq('estimate_id', estimateId).order('created_at', { ascending: false }).limit(1).maybeSingle()
+    const contractLink = con?.id
+      ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/sign/contract/${con.id}`
+      : `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/estimate/${estimateId}`
 
     const slbl = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94A3B8;margin-bottom:10px;font-family:Arial,sans-serif'
     const dkeyStyle = 'font-size:13px;color:#94A3B8;padding:7px 0;border-bottom:1px solid #EEF0F4;font-family:Arial,sans-serif'
@@ -146,7 +149,7 @@ export async function POST(request: NextRequest) {
         <!-- CTA -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
           <tr><td align="center" style="padding:8px 0">
-            <a href="${estimateLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Contract &rarr;</a>
+            <a href="${contractLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Contract &rarr;</a>
           </td></tr>
         </table>
 
