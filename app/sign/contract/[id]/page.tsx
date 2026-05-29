@@ -252,11 +252,25 @@ export default function SignContractPage() {
 
         <div style={{ padding: 16 }}>
 
-          {/* Summary */}
-          <div style={{ ...cardStyle, padding: 16 }}>
-            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 4 }}>From: <strong style={{ color: '#0A0E1A' }}>{contract.company_name || '—'}</strong></div>
-            <div style={{ fontSize: 13, color: '#8892b0', marginBottom: 16 }}>To: <strong style={{ color: '#0A0E1A' }}>{estimate.client_name || '—'}</strong></div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</div>
+          {/* Parties */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
+                {contract.company_phone && <div>{contract.company_phone}</div>}
+                {contract.company_email && <div>{contract.company_email}</div>}
+              </div>
+            </div>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
+                {estimate.client_phone && <div>{estimate.client_phone}</div>}
+                {estimate.client_email && <div>{estimate.client_email}</div>}
+                {estimate.client_address && <div>{estimate.client_address}</div>}
+              </div>
+            </div>
           </div>
 
           {/* Scope of Work */}
