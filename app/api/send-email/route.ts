@@ -273,6 +273,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
   // ── SEND (estimate to client) ─────────────────────────────────────────────────
   } else if (type === 'send') {
     subject = `Your estimate from ${companyName} — ${est.estimate_number}`
+    const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ')
 
     html = outerWrap(`
 ${hdrBlock('Prepared for', est.client_name || 'Client',
@@ -281,30 +282,36 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
       <!-- BODY -->
       <tr><td style="${bodyStyle}">
 
-        <!-- Estimate Total -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Estimate Total</div>
-            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(est.total)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">inc. ${taxLabel} &middot; Valid until ${est.valid_until || '30 days'}</div>
-          </td></tr>
-        </table>
+        <!-- Greeting -->
+        <p style="font-size:20px;font-weight:700;color:#0A1628;margin:0 0 8px;font-family:Arial,sans-serif">Hey ${est.client_name || 'there'}, your estimate is ready.</p>
+        <p style="font-size:14px;color:#64748B;margin:0 0 24px;font-family:Arial,sans-serif">We've prepared a custom estimate for your project${projectAddress ? ` at ${projectAddress}` : ''}. Click below to review your options.</p>
 
-        <!-- Message -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            <strong style="color:#0A1628">${companyName}</strong> has prepared an estimate for your project. Review your estimate details below.
-          </td></tr>
+        <!-- Info cards -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+          <tr>
+            <td width="48%" style="padding-right:8px">
+              <div style="background:#F5F6F8;border-radius:8px;padding:14px 16px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Estimate</div>
+                <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.estimate_number}</div>
+              </div>
+            </td>
+            <td width="48%" style="padding-left:8px">
+              <div style="background:#F5F6F8;border-radius:8px;padding:14px 16px">
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#94A3B8;font-family:Arial,sans-serif;margin-bottom:4px">Valid Until</div>
+                <div style="font-size:15px;font-weight:700;color:#0A1628;font-family:Arial,sans-serif">${est.valid_until || '30 days'}</div>
+              </div>
+            </td>
+          </tr>
         </table>
 
         <!-- CTA -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
           <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
+            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View estimate &rarr;</a>
           </td></tr>
         </table>
 
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
+        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}</p>
 
       </td></tr>
 `)
