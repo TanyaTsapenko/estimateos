@@ -222,22 +222,6 @@ export default function SignContractPage() {
     return (
       <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
 
-        {/* Header */}
-        <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10 }}>
-          <ApexScaleLogo theme="light" size={26} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a
-              href={`/api/contract-pdf?contractId=${contract.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '5px 11px', textDecoration: 'none', letterSpacing: '0.04em' }}
-            >
-              ↓ Download
-            </a>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#16A34A', background: '#F0FDF4', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>✓ Signed</span>
-          </div>
-        </div>
-
         {/* Contract bar */}
         <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -306,14 +290,9 @@ export default function SignContractPage() {
           <div style={cardStyle}>
             <CardHeader title="Terms & Conditions" />
             <div style={{ padding: '14px 16px' }}>
-              {contract.contract_terms_snapshot && (
-                <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.65, margin: '0 0 14px' }}>
-                  {contract.contract_terms_snapshot}
-                </p>
-              )}
-              <CheckRow text={`Warranty: All materials and labour are warranted for ${profile?.warranty_period || '1 year'} from installation date.`} />
-              <CheckRow text={`Payment: ${profile?.payment_terms || 'Upon completion'}`} />
-              <CheckRow text={`Cancellation: ${profile?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}`} />
+              <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
+              <CheckRow text="Payment: Upon completion" />
+              <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
               <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
             </div>
           </div>
@@ -401,6 +380,16 @@ export default function SignContractPage() {
               </div>
             </div>
           </div>
+
+          {/* Download button */}
+          <a
+            href={`/api/contract-pdf?contractId=${contract.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'block', width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textAlign: 'center', textDecoration: 'none', marginBottom: 24 }}
+          >
+            ↓ Download Contract
+          </a>
 
         </div>
       </div>
