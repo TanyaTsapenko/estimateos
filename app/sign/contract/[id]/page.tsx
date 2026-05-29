@@ -70,7 +70,6 @@ export default function SignContractPage() {
   const [isDrawing,          setIsDrawing]          = useState(false)
   const [agreedToTerms,      setAgreedToTerms]      = useState(false)
   const [showDeposit,        setShowDeposit]        = useState(false)
-  const [depositPaid,        setDepositPaid]        = useState<string | null>(null)
   const [showSuccess,        setShowSuccess]        = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
 
@@ -250,140 +249,119 @@ export default function SignContractPage() {
         }
       `}</style>
 
-      {/* ── SUCCESS overlay (fixed, hidden on print) ── */}
-      {showSuccess && (
-        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#fff', fontFamily: F, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+      {/* ── SCREEN 1: Client-facing (immediately after signing) ── */}
+      {showDeposit && !showSuccess && (
+        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#fff', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
-          {/* HERO */}
-          <div style={{
-            position: 'relative', overflow: 'hidden',
-            background: 'linear-gradient(160deg, #0A0E1A 0%, #1A2744 60%, #0f1f3d 100%)',
-            padding: 'max(64px, calc(env(safe-area-inset-top) + 48px)) 24px 48px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-          }}>
-            {/* Radial glow */}
-            <div style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: 360, height: 360, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          {/* Header */}
+          <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #F1F3F7', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{contract.company_name || 'Your Contractor'}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>{estimate.estimate_number}</span>
+          </div>
 
-            {/* Check — outer ring → inner circle → icon */}
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(22,163,74,0.15)', border: '1.5px solid rgba(22,163,74,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22, position: 'relative', zIndex: 1 }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 24px rgba(22,163,74,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+          {/* Content */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 24px' }}>
+
+            {/* Green check circle */}
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: '#DCFCE7', border: '2px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+              <div style={{ width: 50, height: 50, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
             </div>
 
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 10, position: 'relative', zIndex: 1 }}>ALL DONE</div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', marginBottom: 10, position: 'relative', zIndex: 1 }}>Contract Signed!</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: 280, position: 'relative', zIndex: 1 }}>
-              A copy has been sent to <span style={{ color: 'rgba(255,255,255,0.8)' }}>{estimate.client_email || estimate.client_name || 'the client'}</span>
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#0A1628', marginBottom: 10, textAlign: 'center', letterSpacing: '-0.01em' }}>You're all signed!</div>
+            <div style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, textAlign: 'center', maxWidth: 300, marginBottom: 28 }}>
+              Thank you, <strong style={{ color: '#0A1628' }}>{estimate.client_name}</strong>. Payment instructions have been sent to your email.
             </div>
-          </div>
 
-          {/* DETAILS CARD */}
-          <div style={{ margin: '16px 16px 0', background: '#fff', borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
-            {([
-              { label: 'Contract', value: conDisplayId,                      color: '#1A1A1A' },
-              { label: 'Client',   value: estimate.client_name || '—',       color: '#1A1A1A' },
-              { label: 'Amount',   value: fmtCAD(estimate.total),             color: '#3B6CFF' },
-              { label: 'Status',   value: '✓ Signed',                        color: '#16A34A' },
-            ] as { label: string; value: string; color: string }[]).map((row, i, arr) => (
-              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px', borderBottom: i < arr.length - 1 ? '1px solid #E5E7EB' : 'none' }}>
-                <span style={{ fontSize: 13, color: '#6B7280' }}>{row.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: row.color }}>{row.value}</span>
+            {/* Email card */}
+            {estimate.client_email && (
+              <div style={{ width: '100%', background: '#F8FAFC', borderRadius: 12, border: '1px solid #E2E8F0', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 2 }}>Email sent to</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_email}</div>
+                </div>
               </div>
-            ))}
+            )}
+
+            {/* Deposit card (blue) */}
+            <div style={{ width: '100%', background: '#EFF6FF', borderRadius: 12, border: '1px solid #BFDBFE', padding: 16, marginBottom: 32 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#2563EB', marginBottom: 6 }}>Deposit Due</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#1D4ED8', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+              <div style={{ fontSize: 12, color: '#60A5FA' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+            </div>
+
+            {/* Done button */}
+            <button
+              onClick={() => setShowSuccess(true)}
+              style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#94A3B8', cursor: 'pointer', fontFamily: F, padding: '10px 24px' }}>
+              Done
+            </button>
           </div>
 
-          {/* ACTIONS */}
-          <div style={{ padding: '16px 16px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={() => window.print()}
-              style={{ width: '100%', background: '#3B6CFF', border: 'none', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
-              Save as PDF
-            </button>
-            <button onClick={() => { window.location.href = '/dashboard' }}
-              style={{ width: '100%', background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 14, padding: 15, fontSize: 15, fontWeight: 600, color: '#1A1A1A', cursor: 'pointer', fontFamily: F }}>
-              Back to dashboard
-            </button>
+          {/* Footer */}
+          <div style={{ textAlign: 'center', padding: '16px 20px', fontSize: 11, color: '#CBD5E1', borderTop: '1px solid #F1F3F7' }}>
+            Powered by ApexScale · useapexscale.com
           </div>
-
         </div>
       )}
 
-      {/* ── DEPOSIT overlay (fixed, hidden on print) ── */}
-      {showDeposit && !showSuccess && (
-        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#F4F4F2', fontFamily: F, overflowY: 'auto' }}>
-          <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '32px 20px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'max(32px, calc(env(safe-area-inset-top) + 16px))' }}>
-            <div style={{ width: 52, height: 52, background: 'rgba(255,255,255,0.1)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
-            </div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Contract Signed!</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Collect deposit to confirm the job</div>
+      {/* ── SCREEN 2: Contractor-facing (after "Done") ── */}
+      {showSuccess && (
+        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+          {/* Topbar */}
+          <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.02em' }}>Apex<span style={{ color: '#2045B8' }}>Scale</span></span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>{estimate.estimate_number}</span>
           </div>
-          <div style={{ padding: 16 }}>
-            <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', padding: 16, marginBottom: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>DEPOSIT DUE</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#2045B8', marginBottom: 4 }}>CA${depositAmt.toLocaleString('en-CA')}</div>
-              <div style={{ fontSize: 12, color: '#8892b0' }}>{depositPct}% of CA${(estimate?.total || 0).toLocaleString('en-CA')}</div>
-            </div>
-            {depositPaid !== null ? (
-              <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', padding: 20, marginBottom: 16, textAlign: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#16a34a', flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#0A0E1A' }}>
-                    {depositPaid === 'etransfer' ? 'e-Transfer details sent' : depositPaid === 'card' ? 'Payment link sent' : 'Cash/Cheque recorded'}
-                  </span>
-                </div>
-                <button onClick={() => setShowSuccess(true)}
-                  style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
-                  Done →
-                </button>
+
+          {/* Body */}
+          <div style={{ flex: 1, padding: '20px 16px 40px' }}>
+
+            {/* Success card */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#DCFCE7', border: '1.5px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
-            ) : (
-              <>
-                <button onClick={() => setDepositPaid('etransfer')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 10, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
-                  <div style={{ width: 40, height: 40, background: '#EEF2FF', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 16l-4-4 4-4"/><path d="M17 8l4 4-4 4"/><line x1="3" y1="12" x2="21" y2="12"/>
-                    </svg>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>Contract Signed!</div>
+              <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>Client will receive payment instructions by email</div>
+            </div>
+
+            {/* Deposit card */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+            </div>
+
+            {/* What happens next */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 14 }}>What happens next</div>
+              {([
+                { icon: '✅', label: 'Contract signed',     status: 'Done',    bg: '#F0FDF4', color: '#16A34A' },
+                { icon: '✅', label: 'Payment email sent',  status: 'Sent',    bg: '#F0FDF4', color: '#16A34A' },
+                { icon: '⏳', label: 'Client pays deposit', status: 'Pending', bg: '#FFFBEB', color: '#D97706' },
+              ] as { icon: string; label: string; status: string; bg: string; color: string }[]).map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 2 ? '1px solid #F1F3F7' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 16 }}>{step.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>{step.label}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Interac e-Transfer</div>
-                    <div style={{ fontSize: 12, color: '#8892b0' }}>Send to: {contract?.company_email || contract?.company_name || 'your contractor'}</div>
-                  </div>
-                  <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
-                </button>
-                <button onClick={() => setDepositPaid('card')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 10, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
-                  <div style={{ width: 40, height: 40, background: '#EEF2FF', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                    </svg>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Credit Card / Apple Pay</div>
-                    <div style={{ fontSize: 12, color: '#8892b0' }}>Tap to pay online</div>
-                  </div>
-                  <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
-                </button>
-                <button onClick={() => setDepositPaid('cash')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#fff', border: '1.5px solid #E8E8E8', borderRadius: 14, padding: 16, width: '100%', marginBottom: 20, cursor: 'pointer', fontFamily: F, textAlign: 'left' }}>
-                  <div style={{ width: 40, height: 40, background: '#F0F0EE', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8892b0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>
-                    </svg>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A', marginBottom: 2 }}>Cash or Cheque</div>
-                    <div style={{ fontSize: 12, color: '#8892b0' }}>Mark as received manually</div>
-                  </div>
-                  <span style={{ fontSize: 18, color: '#CBD5E1' }}>›</span>
-                </button>
-                <button onClick={() => setShowSuccess(true)}
-                  style={{ display: 'block', width: '100%', background: 'none', border: 'none', fontSize: 13, color: '#8892b0', cursor: 'pointer', fontFamily: F, textAlign: 'center', padding: '8px 0' }}>
-                  Skip for now →
-                </button>
-              </>
-            )}
+                  <span style={{ fontSize: 11, fontWeight: 700, color: step.color, background: step.bg, borderRadius: 20, padding: '3px 10px' }}>{step.status}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Back to dashboard */}
+            <button
+              onClick={() => { window.location.href = '/dashboard' }}
+              style={{ width: '100%', height: 52, background: '#0A1628', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
+              Back to Dashboard
+            </button>
           </div>
         </div>
       )}
