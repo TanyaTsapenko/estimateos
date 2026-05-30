@@ -357,7 +357,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
         <a href="${estimateUrl}" style="display:block;padding:17px 0;font:800 15px/1 'Inter',Arial,sans-serif;color:#FFFFFF;">View estimate&nbsp;&nbsp;&rarr;</a>
       </td></tr></table>
     </td></tr>
-    <tr><td align="center" style="padding:14px 40px 34px;font:400 13px/1.5 'Inter',Arial,sans-serif;color:#94A0B4;">Questions? Contact ${prof?.company_name || ''}</td></tr>
+    <tr><td align="center" style="padding:14px 40px 34px;font:400 13px/1.5 'Inter',Arial,sans-serif;color:#94A0B4;">Questions? ${(prof as any)?.phone ? `<a href="tel:${(prof as any).phone}" style="color:#94A0B4;text-decoration:none;">Contact ${prof?.company_name || ''}</a>` : (prof as any)?.email ? `<a href="mailto:${(prof as any).email}" style="color:#94A0B4;text-decoration:none;">Contact ${prof?.company_name || ''}</a>` : `Contact ${prof?.company_name || ''}`}</td></tr>
 
     <!-- footer -->
     <tr><td style="border-top:1px solid #EEF1F6;padding:20px 40px;text-align:center;font:400 12px/1.5 'Inter',Arial,sans-serif;color:#94A0B4;">
