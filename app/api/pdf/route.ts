@@ -337,7 +337,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="${est.estimate_number}.html"`,
+      'Content-Disposition': `attachment; filename="${est.estimate_number}.html"`,
     },
   })
 }

@@ -271,9 +271,8 @@ export default function ClientEstimatePage() {
         </div>
 
         <a
-          href={`/api/pdf?id=${id}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={`/api/pdf?id=${id}&download=true`}
+          download
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: '14px 0', background: '#fff', color: '#2045B8', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
