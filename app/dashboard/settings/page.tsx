@@ -609,6 +609,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
 function TeamSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [myId, setMyId] = useState('')
+  const [ownerProfile, setOwnerProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null)
   const [members, setMembers] = useState<{ id: string; first_name: string | null; last_name: string | null; email: string | null; member_role: string | null }[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [showInvite, setShowInvite] = useState(false)
@@ -624,10 +625,12 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setMyId(user.id)
-      const [{ data: mems }, { data: invs }] = await Promise.all([
+      const [{ data: ownerProf }, { data: mems }, { data: invs }] = await Promise.all([
+        supabase.from('profiles').select('first_name, last_name, email').eq('id', user.id).single(),
         supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', user.id),
         supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
       ])
+      setOwnerProfile(ownerProf)
       setMembers(mems || [])
       setPendingCount(invs?.length ?? 0)
     })
@@ -705,39 +708,52 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
             </Card>
           ))}
         </div>
-        {members.length > 0 && (
-          <Card>
-            <SectionLabel>Members</SectionLabel>
-            {members.map((m, i) => {
-              const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || '—'
-              return (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {name[0]?.toUpperCase()}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{name}</div>
-                    <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
-                  </div>
-                  {m.id === myId ? (
-                    <Pill tone="blue">Owner</Pill>
-                  ) : (
-                    <select
-                      value={m.member_role || 'estimator'}
-                      onChange={e => updateMemberRole(m.id, e.target.value)}
-                      style={{ padding: '5px 8px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', background: '#fff', cursor: 'pointer' }}
-                    >
-                      <option value="estimator">Sales / Estimator</option>
-                      <option value="manager">Manager</option>
-                      <option value="admin">Office Admin</option>
-                      <option value="owner">Owner</option>
-                    </select>
-                  )}
+        <Card>
+          <SectionLabel>Members</SectionLabel>
+          {/* Owner row — always first */}
+          {(() => {
+            const ownerName = [ownerProfile?.first_name, ownerProfile?.last_name].filter(Boolean).join(' ') || ownerProfile?.email || '—'
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: members.length > 0 ? '1px solid #EEF0F4' : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#0A1628', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {ownerName[0]?.toUpperCase()}
                 </div>
-              )
-            })}
-          </Card>
-        )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{ownerName}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(37,99,235,0.1)', color: '#2563EB', padding: '2px 6px', borderRadius: 5 }}>YOU</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>{ownerProfile?.email}</div>
+                </div>
+                <Pill tone="blue">Owner</Pill>
+              </div>
+            )
+          })()}
+          {members.map((m, i) => {
+            const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || '—'
+            return (
+              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {name[0]?.toUpperCase()}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{name}</div>
+                  <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
+                </div>
+                <select
+                  value={m.member_role || 'estimator'}
+                  onChange={e => updateMemberRole(m.id, e.target.value)}
+                  style={{ padding: '5px 8px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', background: '#fff', cursor: 'pointer' }}
+                >
+                  <option value="estimator">Sales / Estimator</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Office Admin</option>
+                  <option value="owner">Owner</option>
+                </select>
+              </div>
+            )
+          })}
+        </Card>
         {showInvite && (
           <Card>
             <SectionLabel>Invite member</SectionLabel>
