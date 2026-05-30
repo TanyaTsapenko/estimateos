@@ -114,6 +114,15 @@ export default function ClientEstimatePage() {
 
   return (
     <div style={{ background: '#F5F6F8', minHeight: '100vh', fontFamily }}>
+      <style>{`
+        @media print {
+          @page { margin: 12mm; }
+          body { background: #fff !important; }
+          .no-print { display: none !important; }
+          div[style*="box-shadow"] { box-shadow: none !important; }
+          div[style*="border-radius: 16px"] { border-radius: 0 !important; }
+        }
+      `}</style>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 48px' }}>
         <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
 
@@ -270,18 +279,18 @@ export default function ClientEstimatePage() {
 
         </div>
 
-        <a
-          href={`/api/pdf?id=${id}&download=true`}
-          download
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: '14px 0', background: '#fff', color: '#2045B8', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', fontFamily }}
+        <button
+          className="no-print"
+          onClick={() => window.print()}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: '14px 0', background: '#fff', color: '#2045B8', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
           Download PDF
-        </a>
+        </button>
 
-        <div style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#94A3B8' }}>
+        <div className="no-print" style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#94A3B8' }}>
           Powered by ApexScale
         </div>
       </div>
