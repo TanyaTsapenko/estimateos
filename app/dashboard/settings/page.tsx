@@ -6,6 +6,7 @@ import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus } from 'lucide-react'
 import BellButton from '@/components/BellButton'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 import { usePermissions } from '@/lib/usePermissions'
 // ── TYPES ────────────────────────────────────────
@@ -570,7 +571,21 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
         </Card>
         <Card>
           <SectionLabel>Address</SectionLabel>
-          <Field label="Street address" value={values.addressLine} onChange={set('addressLine')} />
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>Street address</label>
+            <AddressAutocomplete
+              value={values.addressLine}
+              placeholder="123 Maple St"
+              onChange={v => setValues(p => ({ ...p, addressLine: v }))}
+              onSelect={({ street, city, province, postalCode }) => setValues(p => ({
+                ...p,
+                addressLine: street,
+                ...(city       ? { city }     : {}),
+                ...(province   ? { province } : {}),
+                ...(postalCode ? { postal: postalCode } : {}),
+              }))}
+            />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 12px' }}>
             <Field label="City" value={values.city} onChange={set('city')} required />
             <Field label="Province" value={values.province} onChange={set('province')} required />
