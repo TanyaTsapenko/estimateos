@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, city, province, phone, website, licence, insurance, logo_url, deposit_percent, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url, contractor_signature_url')
+    .select('company_name, address, city, province, postal_code, phone, email, website, licence, insurance, logo_url, deposit_percent, contract_intro, contract_terms, contract_require_sign, contract_show_licence, signature_url, contractor_signature_url')
     .eq('id', est.user_id)
     .single()
 
@@ -175,13 +175,15 @@ export async function GET(request: NextRequest) {
         : ''
       }
       ${prof?.company_name ? `<div class="hdr-company-name">${prof.company_name}</div>` : ''}
-      ${(prof?.city || prof?.province) ? `<div class="hdr-company-sub">${[prof?.city, prof?.province].filter(Boolean).join(', ')}</div>` : ''}
+      ${((prof as any)?.address || prof?.city) ? `<div class="hdr-company-sub">${[(prof as any)?.address, prof?.city, [(prof as any)?.postal_code, prof?.province].filter(Boolean).join(' ')].filter(Boolean).join(', ')}</div>` : ''}
       ${prof?.phone ? `<div class="hdr-company-sub">${prof.phone}</div>` : ''}
+      ${(prof as any)?.email && !(prof as any)?.phone ? `<div class="hdr-company-sub">${(prof as any).email}</div>` : ''}
     </div>
     <button class="save-btn" onclick="window.print()">Save PDF</button>
   </div>
   <div class="hdr-kicker">Prepared for</div>
   <div class="hdr-client">${est.client_name || 'Client'}</div>
+  ${est.client_address ? `<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:-8px;margin-bottom:10px">${est.client_address}</div>` : ''}
   <div class="pills">
     <span class="${statusPillClass}">${statusLabel}</span>
     <span class="pill-num">${est.estimate_number}</span>
