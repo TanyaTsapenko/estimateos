@@ -4,21 +4,23 @@ import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
-const T = {
-  blue: '#2563EB', blueDeep: '#1D4ED8', navy: '#0B1640',
-  blueSoft: '#EEF3FF', blueText: '#C7D2FE',
-  bg: '#F4F6FB', card: '#FFFFFF',
-  ink: '#0B1220', inkMid: '#475467', inkSoft: '#94A0B4',
-  hair: 'rgba(15,23,42,0.06)',
-}
-const SANS = '"Inter", -apple-system, "SF Pro Display", system-ui, sans-serif'
+const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
 const MONO = 'ui-monospace, "SF Mono", "JetBrains Mono", monospace'
+const BG   = '#F5F6F8'
+const BLUE = '#2563EB'
+const BLUE_SOFT   = '#EEF3FF'
+const BLUE_BORDER = '#BFDBFE'
+const INK     = '#0F172A'
+const INK_MID = '#475467'
+const INK_SOFT = '#94A3B8'
+const CARD: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: 16, border: '0.5px solid #E5E7EB' }
 
 interface Estimate {
-  id: string; estimate_number: string; client_name: string | null; client_address: string | null; client_province: string | null
+  id: string; estimate_number: string; client_name: string | null; client_address: string | null
+  client_city: string | null; client_province: string | null; client_email: string | null; client_phone: string | null
   status: string; tier: string | null; subtotal: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
-  scope_notes: string | null; valid_until: string | null
+  scope_notes: string | null; valid_until: string | null; created_at: string | null
   has_tiers: boolean | null
   total_good: number | null; total_better: number | null; total_best: number | null
   tax_rate: number | null
@@ -27,6 +29,7 @@ interface Opening { id: string; type: string; qty: number; total_cost: number; r
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
   phone: string | null; logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
+  deposit_percent: number | null
 }
 interface TierData { display_name: string; specs: string[]; pricing_type: string; price: number }
 interface PriceListItem {
@@ -49,6 +52,23 @@ function fmtDate(iso: string) {
   return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(iso + 'T00:00:00'))
 }
 
+function SLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: INK_SOFT, marginBottom: 12 }}>
+      {children}
+    </div>
+  )
+}
+
+function MRow({ label, value, mono, blue, last }: { label: string; value: string; mono?: boolean; blue?: boolean; last?: boolean }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: last ? 'none' : '1px solid #F1F5F9' }}>
+      <span style={{ fontSize: 13, color: INK_SOFT }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 600, color: blue ? BLUE : INK, fontFamily: mono ? MONO : SANS }}>{value}</span>
+    </div>
+  )
+}
+
 export default function ClientEstimatePage() {
   const { id } = useParams<{ id: string }>()
   const supabase = createClient()
@@ -69,7 +89,7 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)
@@ -91,239 +111,227 @@ export default function ClientEstimatePage() {
   }, [estimate])
 
   if (docStatus === 'loading' || !estimate) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.bg, fontFamily: SANS }}>
-      <div style={{ fontSize: 13, color: T.inkSoft }}>Loading…</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS }}>
+      <div style={{ fontSize: 13, color: INK_SOFT }}>Loading…</div>
     </div>
   )
 
   if (docStatus === 'signed') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.bg, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Already signed</div>
-      <div style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: INK, marginBottom: 8 }}>Already signed</div>
+      <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.6 }}>
         {estimate.estimate_number} has already been signed. Contact {profile?.company_name || 'the contractor'} if you have questions.
       </div>
     </div>
   )
 
   if (docStatus === 'declined') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.bg, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: T.ink, marginBottom: 8 }}>Estimate declined</div>
-      <div style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: INK, marginBottom: 8 }}>Estimate declined</div>
+      <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.6 }}>
         Feel free to reach out to {profile?.company_name || 'us'} if you change your mind.
       </div>
     </div>
   )
 
-  const estimateNumber = estimate.estimate_number
-  const clientName = estimate.client_name || ''
-
-  const handleDownload = async () => {
-    const element = document.getElementById('estimate-content')
-    if (!element) return
-
-    const prevWidth = element.style.width
-    const prevMaxWidth = element.style.maxWidth
-    const prevOverflow = element.style.overflow
-    element.style.width = '390px'
-    element.style.maxWidth = '390px'
-    element.style.overflow = 'visible'
-
-    const html2canvas = (await import('html2canvas')).default
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#F8F9FC',
-      windowWidth: 390,
-      width: 390,
-    })
-
-    element.style.width = prevWidth
-    element.style.maxWidth = prevMaxWidth
-    element.style.overflow = prevOverflow
-
-    const { default: jsPDF } = await import('jspdf')
-    const imgWidth = 595
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    const pdf = new jsPDF('p', 'pt', [imgWidth, imgHeight])
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight)
-    pdf.save(`${estimateNumber} — ${clientName}.pdf`)
-  }
-
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const showGBB = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
+  const showGBB    = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
   const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
   const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
   const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')
   const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
-  const companyLine = [profile?.company_name, profile?.phone].filter(Boolean).join(' · ')
+  const issuedDate  = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
+  const depositPct  = profile?.deposit_percent ?? 30
+  const depositAmt  = Math.round(estimate.total * depositPct / 100)
+  const balanceAmt  = estimate.total - depositAmt
+  const hasClientDetails = !!(estimate.client_email || estimate.client_phone || estimate.client_address)
 
   return (
-    <div className="page-wrap" style={{ background: T.bg, minHeight: '100vh', fontFamily: SANS, paddingBottom: 90 }}>
+    <div style={{ background: BG, minHeight: '100vh', fontFamily: SANS }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         @media print {
-          .download-btn { display: none !important; }
+          .print-hide { display: none !important; }
           @page { margin: 10mm; size: A4; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          body { background: #FFFFFF !important; }
-          .page-wrap { background: #FFFFFF !important; padding: 0 !important; }
-          .terms-block { background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: ${BG} !important; }
         }
       `}</style>
 
-      <div id="estimate-content" style={{ maxWidth: 520, margin: '0 auto' }}>
+      {/* ── TOP BAR ── */}
+      <div className="print-hide" style={{ position: 'sticky', top: 0, zIndex: 10, background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '13px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>{profile?.company_name || 'Estimate'}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: BLUE, fontFamily: MONO, background: BLUE_SOFT, padding: '4px 10px', borderRadius: 20 }}>
+          {estimate.estimate_number}
+        </span>
+      </div>
 
-        {/* ── HEADER ── */}
-        <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '26px 22px 22px' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>
-            Prepared for
-          </div>
-          <div style={{ fontSize: 30, fontWeight: 800, color: T.ink, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: estimate.client_address ? 6 : 14 }}>
+      {/* ── CARDS ── */}
+      <div id="estimate-content" style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 110px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* 1 — Client hero */}
+        <div style={CARD}>
+          <SLabel>Prepared for</SLabel>
+          <div style={{ fontSize: 24, fontWeight: 800, color: INK, letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: estimate.client_address ? 4 : 12 }}>
             {estimate.client_name || 'Client'}
           </div>
           {estimate.client_address && (
-            <div style={{ fontSize: 13, color: T.inkSoft, marginBottom: 14 }}>
-              {estimate.client_address}
-            </div>
+            <div style={{ fontSize: 13, color: INK_SOFT, marginBottom: 12 }}>{estimate.client_address}</div>
           )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            <span style={{ display: 'inline-block', padding: '5px 11px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: T.blueSoft, color: T.blue, fontFamily: MONO, letterSpacing: '0.04em' }}>
+            <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: BLUE_SOFT, color: BLUE, fontFamily: MONO }}>
               {estimate.estimate_number}
             </span>
-            {profile?.company_name && (
-              <span style={{ display: 'inline-block', padding: '5px 11px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: `1px solid ${T.hair}`, color: T.inkMid }}>
-                {profile.company_name}
-              </span>
-            )}
             {validUntil && (
-              <span style={{ display: 'inline-block', padding: '5px 11px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: `1px solid ${T.hair}`, color: T.inkMid }}>
+              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, border: '1px solid #E5E7EB', color: INK_SOFT }}>
                 Valid until {validUntil}
               </span>
             )}
           </div>
         </div>
 
-        {/* ── TOTAL BAND ── */}
-        <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', marginTop: 10, padding: '20px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 5 }}>
-              Estimate Total
-            </div>
-            {companyLine && (
-              <div style={{ fontSize: 13, color: T.inkMid }}>{companyLine}</div>
-            )}
+        {/* 2 — Total */}
+        <div style={{ ...CARD, border: `1.5px solid ${BLUE_BORDER}` }}>
+          <SLabel>Estimate Total</SLabel>
+          <div style={{ fontSize: 40, fontWeight: 800, color: BLUE, letterSpacing: '-0.03em', lineHeight: 1 }}>
+            {fmtCAD(estimate.total)}
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: 38, fontWeight: 800, color: T.blue, letterSpacing: '-0.03em', lineHeight: 1 }}>
-              {fmtCAD(estimate.total)}
-            </div>
-            <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 4 }}>inc. {taxLabel}</div>
-          </div>
+          <div style={{ fontSize: 12, color: INK_SOFT, marginTop: 6 }}>inc. {taxLabel}</div>
         </div>
 
-        {/* ── ITEMS ── */}
+        {/* 3 — Estimate meta */}
+        <div style={CARD}>
+          <SLabel>Estimate Details</SLabel>
+          <MRow label="Estimate number" value={estimate.estimate_number} mono blue />
+          {issuedDate  && <MRow label="Date issued"  value={issuedDate} />}
+          {validUntil  && <MRow label="Valid until"  value={validUntil} />}
+          {profile?.company_name && (
+            <MRow label="Prepared by" value={profile.company_name} last />
+          )}
+        </div>
+
+        {/* 4 — Client details */}
+        {hasClientDetails && (
+          <div style={CARD}>
+            <SLabel>Client Details</SLabel>
+            {estimate.client_name  && <MRow label="Name"    value={estimate.client_name} />}
+            {estimate.client_email && <MRow label="Email"   value={estimate.client_email} />}
+            {estimate.client_phone && <MRow label="Phone"   value={estimate.client_phone} />}
+            {estimate.client_address && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '9px 0' }}>
+                <span style={{ fontSize: 13, color: INK_SOFT, flexShrink: 0 }}>Address</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: INK, textAlign: 'right' }}>{estimate.client_address}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 5 — Items */}
         {openings.length > 0 && (
-          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '22px 22px 0', marginTop: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 14 }}>
-              Items ({openings.length})
-            </div>
+          <div style={CARD}>
+            <SLabel>Items ({openings.length})</SLabel>
             {openings.map((op, i) => (
-              <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, paddingBottom: 14, marginBottom: 14, borderBottom: i < openings.length - 1 ? `1px solid ${T.hair}` : 'none' }}>
+              <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: i < openings.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: T.ink }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: INK }}>
                     {OPENING_TYPES[op.type]?.name || op.type}
-                    {op.qty > 1 && <span style={{ fontSize: 13, color: T.inkSoft, fontWeight: 500 }}> × {op.qty}</span>}
+                    {op.qty > 1 && <span style={{ fontSize: 13, color: INK_SOFT, fontWeight: 400 }}> × {op.qty}</span>}
                   </div>
-                  {op.room && (
-                    <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 2 }}>{op.room}</div>
-                  )}
+                  {op.room && <div style={{ fontSize: 12, color: INK_SOFT, marginTop: 2 }}>{op.room}</div>}
                 </div>
                 {!showGBB && (
-                  <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, fontFamily: MONO, flexShrink: 0 }}>
-                    {fmtCAD(op.total_cost)}
-                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: INK, fontFamily: MONO, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
                 )}
               </div>
             ))}
 
-            {/* Totals footer */}
             {!showGBB && (
-              <div style={{ borderTop: `1px solid ${T.hair}`, padding: '16px 0 22px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: T.inkMid, marginBottom: 8 }}>
-                  <span>Subtotal</span>
-                  <span style={{ fontFamily: MONO }}>{fmtCAD(estimate.subtotal)}</span>
+              <div style={{ borderTop: '1.5px solid #E5E7EB', paddingTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 6 }}>
+                  <span>Subtotal</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.subtotal)}</span>
                 </div>
                 {estimate.discount_amount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>
                     <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
                     <span style={{ fontFamily: MONO }}>−{fmtCAD(estimate.discount_amount)}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: T.inkMid, marginBottom: 14 }}>
-                  <span>{taxLabel}</span>
-                  <span style={{ fontFamily: MONO }}>{fmtCAD(estimate.tax_amount)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 12 }}>
+                  <span>{taxLabel}</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.tax_amount)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: `1.5px solid ${T.ink}`, paddingTop: 12 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>Total</span>
-                  <span style={{ fontSize: 26, fontWeight: 800, color: T.blue, letterSpacing: '-0.02em', fontFamily: MONO }}>{fmtCAD(estimate.total)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: `1.5px solid ${INK}`, paddingTop: 10 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>Total</span>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: BLUE, fontFamily: MONO }}>{fmtCAD(estimate.total)}</span>
                 </div>
+              </div>
+            )}
+
+            {showGBB && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+                {([
+                  { label: 'Good',   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',      lc: INK_SOFT, pc: INK },
+                  { label: 'Better', specs: betterSpecs, price: estimate.total_better!, border: `2px solid ${BLUE}`,   bg: BLUE_SOFT,   lc: BLUE,     pc: BLUE, badge: 'Recommended' },
+                  { label: 'Best',   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',      lc: '#D97706', pc: INK },
+                ] as const).map(({ label, specs, price, border, bg, lc, pc, badge }) => (
+                  <div key={label} style={{ border, borderRadius: 12, padding: '14px 16px', background: bg }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: specs.length ? 8 : 0 }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: lc, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+                      {badge && <span style={{ fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff', borderRadius: 20, padding: '2px 8px' }}>{badge}</span>}
+                    </div>
+                    {specs.map((s, i) => <div key={i} style={{ fontSize: 12, color: lc, marginBottom: 3 }}>• {s}</div>)}
+                    <div style={{ fontSize: 22, fontWeight: 800, color: pc, marginTop: 10, fontFamily: MONO }}>{fmtCAD(price)}</div>
+                    <div style={{ fontSize: 11, color: INK_SOFT, marginTop: 2 }}>inc. {taxLabel}</div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
 
-        {/* ── GBB ── */}
-        {showGBB && (
-          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '22px', marginTop: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 14 }}>Your Options</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
-                { label: 'Good',   specs: goodSpecs,   price: estimate.total_good!,   style: { border: `1.5px solid ${T.hair}`, borderRadius: 12, padding: '14px 16px' }, labelColor: T.inkMid, priceColor: T.ink },
-                { label: 'Better', specs: betterSpecs, price: estimate.total_better!, style: { border: `2px solid ${T.blue}`, borderRadius: 12, padding: '14px 16px', background: T.blueSoft }, labelColor: T.blue, priceColor: T.blue, badge: 'Recommended' },
-                { label: 'Best',   specs: bestSpecs,   price: estimate.total_best!,   style: { border: '1.5px solid #D97706', borderRadius: 12, padding: '14px 16px' }, labelColor: '#D97706', priceColor: T.ink },
-              ].map(({ label, specs, price, style, labelColor, priceColor, badge }) => (
-                <div key={label} style={style}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: specs.length ? 8 : 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: labelColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</div>
-                    {badge && <span style={{ fontSize: 10, fontWeight: 700, background: T.blue, color: '#fff', borderRadius: 20, padding: '2px 8px' }}>{badge}</span>}
-                  </div>
-                  {specs.map((s, i) => <div key={i} style={{ fontSize: 12, color: labelColor, marginBottom: 3 }}>• {s}</div>)}
-                  <div style={{ fontSize: 22, fontWeight: 800, color: priceColor, marginTop: 10, fontFamily: MONO }}>{fmtCAD(price)}</div>
-                  <div style={{ fontSize: 11, color: T.inkSoft, marginTop: 2 }}>inc. {taxLabel}</div>
-                </div>
-              ))}
-            </div>
+        {/* 6 — Payment schedule */}
+        <div style={{ ...CARD, border: `1.5px solid ${BLUE_BORDER}` }}>
+          <SLabel><span style={{ color: BLUE }}>Payment Schedule</span></SLabel>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #F1F5F9' }}>
+            <span style={{ fontSize: 13, color: INK_SOFT }}>Deposit on signing ({depositPct}%)</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(depositAmt)}</span>
           </div>
-        )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0' }}>
+            <span style={{ fontSize: 13, color: INK_SOFT }}>Balance on completion</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, fontFamily: MONO }}>{fmtCAD(balanceAmt)}</span>
+          </div>
+        </div>
 
-        {/* ── NOTES ── */}
+        {/* 7 — Notes */}
         {estimate.scope_notes && (
-          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '20px 22px', marginTop: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>Notes</div>
-            <div style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
+          <div style={CARD}>
+            <SLabel>Notes</SLabel>
+            <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
           </div>
         )}
 
-        {/* ── TERMS ── */}
+        {/* 8 — Terms */}
         {profile?.contract_terms && (
-          <div className="terms-block" style={{ margin: '10px 0', background: '#ffffff', borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '16px 20px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>Terms &amp; Conditions</div>
-            <div style={{ fontSize: 12.5, color: T.inkMid, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
+          <div style={CARD}>
+            <SLabel>Terms &amp; Conditions</SLabel>
+            <div style={{ fontSize: 12.5, color: INK_SOFT, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
           </div>
         )}
+
+        {/* Footer */}
+        <div style={{ textAlign: 'center', fontSize: 11, color: INK_SOFT, padding: '4px 0 8px' }}>
+          Powered by ApexScale · useapexscale.com
+        </div>
 
       </div>
 
-      {/* ── STICKY DOWNLOAD BUTTON ── */}
-      <div
-        className="download-btn"
-        style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 24px', background: 'linear-gradient(to top, #F4F6FB 60%, transparent)' }}
-      >
-        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+      {/* ── DOWNLOAD BUTTON ── */}
+      <div className="print-hide" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 28px', background: `linear-gradient(to top, ${BG} 60%, transparent)` }}>
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <button
-            onClick={handleDownload}
-            style={{ width: '100%', height: 54, borderRadius: 14, background: T.blue, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 16px rgba(37,99,235,0.35)' }}
+            onClick={() => window.print()}
+            style={{ width: '100%', height: 54, borderRadius: 14, background: BLUE, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 20px rgba(37,99,235,0.28)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
