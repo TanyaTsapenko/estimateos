@@ -94,6 +94,7 @@ export default function TeamPage() {
         supabase.from('team_invitations').select('*').eq('owner_id', user.id).eq('status', 'pending').order('created_at', { ascending: false }),
       ])
 
+      console.log('[team] profile:', prof)
       setProfile(prof)
       setMembers(mems || [])
       setInvitations(invs || [])
