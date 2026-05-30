@@ -270,11 +270,11 @@ export default function ClientEstimatePage() {
 
             {showGBB && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                {([
-                  { label: 'Good',   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',      lc: INK_SOFT, pc: INK },
+                {[
+                  { label: 'Good',   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',      lc: INK_SOFT, pc: INK,  badge: undefined },
                   { label: 'Better', specs: betterSpecs, price: estimate.total_better!, border: `2px solid ${BLUE}`,   bg: BLUE_SOFT,   lc: BLUE,     pc: BLUE, badge: 'Recommended' },
-                  { label: 'Best',   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',      lc: '#D97706', pc: INK },
-                ] as const).map(({ label, specs, price, border, bg, lc, pc, badge }) => (
+                  { label: 'Best',   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',      lc: '#D97706', pc: INK,  badge: undefined },
+                ].map(({ label, specs, price, border, bg, lc, pc, badge }) => (
                   <div key={label} style={{ border, borderRadius: 12, padding: '14px 16px', background: bg }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: specs.length ? 8 : 0 }}>
                       <span style={{ fontSize: 11, fontWeight: 700, color: lc, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
