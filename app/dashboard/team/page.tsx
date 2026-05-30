@@ -267,7 +267,7 @@ export default function TeamPage() {
               <span style={{ fontSize: 16 }}>👥</span>
               <div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,.5)' }}>{plan.charAt(0).toUpperCase() + plan.slice(1)} Plan · {plan === 'team' ? 'Unlimited seats' : `${seatLimit} seats`}</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{members.length + 1} active · {invitations.length} pending</div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{members.length} member{members.length !== 1 ? 's' : ''} · {invitations.length} pending</div>
               </div>
             </div>
             {plan !== 'team' && (
