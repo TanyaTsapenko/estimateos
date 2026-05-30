@@ -209,19 +209,22 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [values, setValues] = useState({ firstName: '', lastName: '', email: '', phone: '' })
   const [initial, setInitial] = useState({ firstName: '', lastName: '', email: '', phone: '' })
-  const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = !!values.firstName && !!values.lastName && !!values.email
   const [userId, setUserId] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
-  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [savedAvatarUrl, setSavedAvatarUrl] = useState<string | null>(null)
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const fieldsDirty = JSON.stringify(values) !== JSON.stringify(initial)
+  const dirty = fieldsDirty || !!pendingAvatarFile
+  const valid = !!values.firstName && !!values.lastName && !!values.email
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       setUserId(user.id)
-      setValues(v => ({ ...v, email: user.email || '' }))
-      if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url)
+      if (user.user_metadata?.avatar_url) setSavedAvatarUrl(user.user_metadata.avatar_url)
       const { data: prof } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', user.id).single()
       if (prof) {
         const loaded = {
@@ -236,33 +239,58 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
     })
   }, [])
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  // Revoke object URL when it's no longer needed
+  useEffect(() => {
+    return () => { if (previewUrl) URL.revokeObjectURL(previewUrl) }
+  }, [previewUrl])
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || !userId) return
+    if (!file) return
     if (file.size > 5 * 1024 * 1024) { flash('Image must be under 5 MB'); return }
-    setAvatarUploading(true)
-    const path = `${userId}/avatar.jpg`
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { flash('Upload failed'); setAvatarUploading(false); return }
-    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
-    await supabase.auth.updateUser({ data: { avatar_url: url } })
-    setAvatarUrl(url)
-    setAvatarUploading(false)
-    flash('Avatar updated')
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(URL.createObjectURL(file))
+    setPendingAvatarFile(file)
+    // Reset input so same file can be reselected
+    e.target.value = ''
   }
 
   async function saveProfile() {
-    if (!userId) return
+    if (!userId || saving) return
+    setSaving(true)
+
+    if (pendingAvatarFile) {
+      const path = `${userId}/avatar.jpg`
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, pendingAvatarFile, { upsert: true, contentType: pendingAvatarFile.type })
+      if (upErr) { flash('Avatar upload failed'); setSaving(false); return }
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
+      const url = urlData.publicUrl + '?t=' + Date.now()
+      await supabase.auth.updateUser({ data: { avatar_url: url } })
+      setSavedAvatarUrl(url)
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+      setPendingAvatarFile(null)
+    }
+
     await supabase.from('profiles').update({
       first_name: values.firstName,
       last_name:  values.lastName,
       phone:      values.phone,
     }).eq('id', userId)
+
     setInitial({ ...values })
+    setSaving(false)
     flash('Profile saved')
   }
 
+  function handleDiscard() {
+    setValues({ ...initial })
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(null)
+    setPendingAvatarFile(null)
+  }
+
+  const displayUrl = previewUrl ?? savedAvatarUrl
   const initials = `${values.firstName?.[0] || ''}${values.lastName?.[0] || ''}`.toUpperCase() || '?'
 
   return (
@@ -273,23 +301,24 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
           {/* Avatar */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
             <div style={{ position: 'relative', width: 80, height: 80 }}>
-              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+              <input ref={avatarInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
               <div
-                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                onClick={() => avatarInputRef.current?.click()}
                 style={{
                   width: 80, height: 80, borderRadius: '50%', background: '#2563EB',
-                  overflow: 'hidden', cursor: avatarUploading ? 'wait' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
+                  overflow: 'hidden', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  outline: pendingAvatarFile ? '2px solid #2563EB' : 'none',
+                  outlineOffset: 2,
                 }}
               >
-                {avatarUrl
-                  ? <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {displayUrl
+                  ? <img src={displayUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span style={{ color: '#fff', fontSize: 24, fontWeight: 700, letterSpacing: '-0.5px' }}>{initials}</span>
                 }
               </div>
               <div
-                onClick={() => !avatarUploading && avatarInputRef.current?.click()}
+                onClick={() => avatarInputRef.current?.click()}
                 style={{
                   position: 'absolute', bottom: 0, right: 0,
                   width: 26, height: 26, borderRadius: '50%',
@@ -313,7 +342,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
         </Card>
       </div>
 
-      <SaveBar dirty={dirty} valid={valid} onSave={saveProfile} onDiscard={() => setValues({ ...initial })} />
+      <SaveBar dirty={dirty} valid={valid && !saving} onSave={saveProfile} onDiscard={handleDiscard} />
     </div>
   )
 }
