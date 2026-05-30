@@ -53,7 +53,7 @@ export default function NewAppointmentPage() {
       if (!user) return
       const [{ data: prof }, { data: members }] = await Promise.all([
         supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single(),
-        supabase.from('team_members').select('id, first_name, last_name, email').eq('owner_id', user.id),
+        supabase.from('profiles').select('id, first_name, last_name, email').eq('team_owner_id', user.id),
       ])
       const ownerName = prof
         ? [( prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') || 'You'
