@@ -125,12 +125,15 @@ export default function ClientEstimatePage() {
   const companyLine = [profile?.company_name, profile?.phone].filter(Boolean).join(' · ')
 
   return (
-    <div style={{ background: T.bg, minHeight: '100vh', fontFamily: SANS, paddingBottom: 90 }}>
+    <div className="page-wrap" style={{ background: T.bg, minHeight: '100vh', fontFamily: SANS, paddingBottom: 90 }}>
       <style>{`
         @media print {
           .download-btn { display: none !important; }
           @page { margin: 10mm; size: A4; }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background: #FFFFFF !important; }
+          .page-wrap { background: #FFFFFF !important; padding: 0 !important; }
+          .terms-block { background: #F4F6FB !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
@@ -269,7 +272,7 @@ export default function ClientEstimatePage() {
 
         {/* ── TERMS ── */}
         {profile?.contract_terms && (
-          <div style={{ margin: '10px 0', background: T.bg, borderRadius: 14, padding: '18px 20px' }}>
+          <div className="terms-block" style={{ margin: '10px 0', background: T.bg, borderRadius: 14, padding: '18px 20px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>Terms &amp; Conditions</div>
             <div style={{ fontSize: 12.5, color: T.inkMid, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
           </div>
