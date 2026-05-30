@@ -16,11 +16,9 @@ interface Estimate {
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
-  logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
+  phone: string | null; logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
 }
-interface TierData {
-  display_name: string; specs: string[]; pricing_type: string; price: number
-}
+interface TierData { display_name: string; specs: string[]; pricing_type: string; price: number }
 interface PriceListItem {
   opening_type: string; is_tiered: boolean
   tier_good: TierData | null; tier_better: TierData | null; tier_best: TierData | null
@@ -35,6 +33,16 @@ function aggregateSpecs(ops: Opening[], items: PriceListItem[], field: 'tier_goo
     tier?.specs?.forEach(s => { if (!seen.has(s)) { seen.add(s); out.push(s) } })
   })
   return out.slice(0, 5)
+}
+
+function fmtDate(iso: string) {
+  return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(iso + 'T00:00:00'))
+}
+
+const ff = '"Inter", system-ui, -apple-system, sans-serif'
+
+const card: React.CSSProperties = {
+  background: '#fff', borderRadius: 14, border: '0.5px solid #E5E7EB', overflow: 'hidden',
 }
 
 export default function ClientEstimatePage() {
@@ -57,33 +65,29 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, address, city, province, postal_code, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)
 
       if (est.has_tiers) {
         const { data: pl } = await supabase
-          .from('price_lists')
-          .select('opening_type, is_tiered, tier_good, tier_better, tier_best')
-          .eq('user_id', (est as any).user_id)
-          .eq('is_tiered', true)
+          .from('price_lists').select('opening_type, is_tiered, tier_good, tier_better, tier_best')
+          .eq('user_id', (est as any).user_id).eq('is_tiered', true)
         setPriceListItems((pl || []) as PriceListItem[])
       }
     }
     load()
   }, [id])
 
-  const fontFamily = '"Inter", system-ui, -apple-system, sans-serif'
-
   if (docStatus === 'loading' || !estimate) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily: ff }}>
       <div style={{ fontSize: 13, color: '#94A3B8' }}>Loading…</div>
     </div>
   )
 
   if (docStatus === 'signed') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily: ff, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
       <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', marginBottom: 8 }}>Already signed</div>
       <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
@@ -93,7 +97,7 @@ export default function ClientEstimatePage() {
   )
 
   if (docStatus === 'declined') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#F5F6F8', fontFamily: ff, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
       <div style={{ fontSize: 20, fontWeight: 800, color: '#0A1628', marginBottom: 8 }}>Estimate declined</div>
       <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
@@ -103,78 +107,94 @@ export default function ClientEstimatePage() {
   )
 
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const tierLabel = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : null
-  const hasNotes = !!estimate.scope_notes
-  const hasTerms = !!profile?.contract_terms
   const showGBB = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
-
   const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
   const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
   const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')
+  const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
+
+  const badgeBase: React.CSSProperties = {
+    display: 'inline-block', padding: '4px 10px', borderRadius: 20,
+    fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+  }
 
   return (
-    <div style={{ background: '#F5F6F8', minHeight: '100vh', fontFamily }}>
+    <div style={{ background: '#F5F6F8', minHeight: '100vh', fontFamily: ff }}>
       <style>{`
         @media print {
-          @page { margin: 12mm; }
-          body { background: #fff !important; }
-          .no-print { display: none !important; }
-          div[style*="box-shadow"] { box-shadow: none !important; }
-          div[style*="border-radius: 16px"] { border-radius: 0 !important; }
+          body { background: #F5F6F8 !important; }
+          .download-btn { display: none !important; }
+          .powered-by { display: none !important; }
+          @page { margin: 10mm; size: A4; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '24px 16px 48px' }}>
-        <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
 
-          {/* Company info */}
-          <div style={{ padding: '24px 24px 20px', borderBottom: '1px solid #EEF0F4' }}>
-            {profile?.logo_url && (
-              <img src={profile.logo_url} alt={profile.company_name || ''} style={{ height: 40, maxWidth: 160, objectFit: 'contain', marginBottom: 12, display: 'block' }} />
-            )}
-            <div style={{ fontSize: 16, fontWeight: 800, color: '#0A1628' }}>{profile?.company_name || 'Contractor'}</div>
-            {(profile?.address || profile?.city) && (
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
-                {[profile?.address, profile?.city, [profile?.postal_code, profile?.province].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
-              </div>
-            )}
+      {/* Dark header */}
+      <div style={{ background: '#080E1C', padding: '32px 20px 36px' }}>
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>
+            Prepared for
           </div>
-
-          {/* Estimate number + client */}
-          <div style={{ padding: '16px 24px', borderBottom: '1px solid #EEF0F4', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>Estimate</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>{estimate.estimate_number}</div>
-              {estimate.client_name && (
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{estimate.client_name}</div>
-              )}
-              {estimate.client_address && (
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{estimate.client_address}</div>
-              )}
+          <div style={{ fontSize: 28, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: estimate.client_address ? 6 : 16 }}>
+            {estimate.client_name || 'Client'}
+          </div>
+          {estimate.client_address && (
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 16 }}>
+              {estimate.client_address}
             </div>
-            {estimate.valid_until && (
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 3 }}>Valid until</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>
-                  {estimate.valid_until
-                    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.valid_until + 'T00:00:00'))
-                    : ''}
-                </div>
-              </div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <span style={{ ...badgeBase, background: 'rgba(37,99,235,0.25)', border: '1px solid rgba(59,130,246,0.4)', color: '#93C5FD', fontFamily: 'ui-monospace, monospace', letterSpacing: '0.05em' }}>
+              {estimate.estimate_number}
+            </span>
+            {profile?.company_name && (
+              <span style={{ ...badgeBase, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
+                {profile.company_name}
+              </span>
+            )}
+            {validUntil && (
+              <span style={{ ...badgeBase, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)' }}>
+                Valid until {validUntil}
+              </span>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Line items */}
-          {openings.length > 0 && (
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid #EEF0F4' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 12 }}>
+      {/* Content */}
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 16px 40px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* Company + Total card */}
+        <div style={{ ...card, padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ minWidth: 0 }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} alt={profile.company_name || ''} style={{ height: 32, maxWidth: 120, objectFit: 'contain', display: 'block', marginBottom: 8 }} />
+            )}
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>{profile?.company_name || 'Contractor'}</div>
+            {profile?.phone && (
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>{profile.phone}</div>
+            )}
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>Estimate Total</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.03em', lineHeight: 1 }}>{fmtCAD(estimate.total)}</div>
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>inc. {taxLabel}</div>
+          </div>
+        </div>
+
+        {/* Items card */}
+        {openings.length > 0 && (
+          <div style={card}>
+            <div style={{ padding: '12px 18px', borderBottom: '0.5px solid #E5E7EB' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8' }}>
                 Items ({openings.length})
-              </div>
-              {openings.map((op, idx) => (
-                <div key={op.id} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                  padding: '10px 0', borderBottom: idx < openings.length - 1 ? '1px solid #EEF0F4' : 'none',
-                }}>
-                  <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+              </span>
+            </div>
+            <div style={{ padding: '0 18px' }}>
+              {openings.map((op, i) => (
+                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: i < openings.length - 1 ? '0.5px solid #F1F5F9' : 'none' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>
                       {OPENING_TYPES[op.type]?.name || op.type}
                       {op.qty > 1 && <span style={{ fontSize: 12, color: '#94A3B8', fontWeight: 500 }}> × {op.qty}</span>}
@@ -184,115 +204,96 @@ export default function ClientEstimatePage() {
                     )}
                   </div>
                   {!showGBB && (
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>
-                      {fmtCAD(op.total_cost)}
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
                   )}
                 </div>
               ))}
             </div>
-          )}
-
-          {/* GBB 3-card view */}
-          {showGBB && (
-            <div style={{ padding: '20px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 14 }}>
-                Your Options
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-
-                {/* Good */}
-                <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: goodSpecs.length ? 8 : 0 }}>Good</div>
-                  {goodSpecs.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#64748B', marginBottom: 3 }}>• {s}</div>
-                  ))}
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_good!)}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+            {!showGBB && (
+              <div style={{ padding: '12px 18px', borderTop: '0.5px solid #E5E7EB', background: '#FAFAFA' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 6 }}>
+                  <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
                 </div>
-
-                {/* Better — recommended */}
-                <div style={{ border: '2px solid #3B6CFF', borderRadius: 12, padding: '14px 16px', background: '#F5F8FF' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: betterSpecs.length ? 8 : 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#3B6CFF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Better</div>
-                    <span style={{ fontSize: 10, fontWeight: 700, background: '#3B6CFF', color: '#fff', borderRadius: 20, padding: '2px 8px' }}>Recommended</span>
+                {estimate.discount_amount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>
+                    <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+                    <span>−{fmtCAD(estimate.discount_amount)}</span>
                   </div>
-                  {betterSpecs.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#3B6CFF', marginBottom: 3 }}>• {s}</div>
-                  ))}
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#3B6CFF', marginTop: 10 }}>{fmtCAD(estimate.total_better!)}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 10 }}>
+                  <span>{taxLabel}</span><span>{fmtCAD(estimate.tax_amount)}</span>
                 </div>
-
-                {/* Best */}
-                <div style={{ border: '1.5px solid #D97706', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: bestSpecs.length ? 8 : 0 }}>Best</div>
-                  {bestSpecs.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, color: '#92400E', marginBottom: 3 }}>• {s}</div>
-                  ))}
-                  <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_best!)}</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>incl. {taxLabel}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '0.5px solid #E5E7EB', paddingTop: 10 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Total</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.02em' }}>{fmtCAD(estimate.total)}</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Standard totals — only when not GBB */}
-          {!showGBB && (
-            <div style={{ padding: '16px 24px', borderBottom: hasNotes || hasTerms ? '1px solid #EEF0F4' : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 8 }}>
-                <span>Subtotal</span>
-                <span>{fmtCAD(estimate.subtotal)}</span>
+        {/* GBB 3-card view */}
+        {showGBB && (
+          <div style={card}>
+            <div style={{ padding: '12px 18px', borderBottom: '0.5px solid #E5E7EB' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8' }}>Your Options</span>
+            </div>
+            <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: goodSpecs.length ? 8 : 0 }}>Good</div>
+                {goodSpecs.map((s, i) => <div key={i} style={{ fontSize: 12, color: '#64748B', marginBottom: 3 }}>• {s}</div>)}
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_good!)}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>inc. {taxLabel}</div>
               </div>
-              {estimate.discount_amount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 8 }}>
-                  <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-                  <span>−{fmtCAD(estimate.discount_amount)}</span>
+              <div style={{ border: '2px solid #2563EB', borderRadius: 10, padding: '14px 16px', background: '#F5F8FF' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: betterSpecs.length ? 8 : 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#2563EB', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Better</div>
+                  <span style={{ fontSize: 10, fontWeight: 700, background: '#2563EB', color: '#fff', borderRadius: 20, padding: '2px 8px' }}>Recommended</span>
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#64748B', marginBottom: 12 }}>
-                <span>{taxLabel}</span>
-                <span>{fmtCAD(estimate.tax_amount)}</span>
+                {betterSpecs.map((s, i) => <div key={i} style={{ fontSize: 12, color: '#2563EB', marginBottom: 3 }}>• {s}</div>)}
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#2563EB', marginTop: 10 }}>{fmtCAD(estimate.total_better!)}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>inc. {taxLabel}</div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid #EEF0F4', paddingTop: 12 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>Total</span>
-                <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
+              <div style={{ border: '1.5px solid #D97706', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#D97706', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: bestSpecs.length ? 8 : 0 }}>Best</div>
+                {bestSpecs.map((s, i) => <div key={i} style={{ fontSize: 12, color: '#92400E', marginBottom: 3 }}>• {s}</div>)}
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginTop: 10 }}>{fmtCAD(estimate.total_best!)}</div>
+                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>inc. {taxLabel}</div>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Scope notes */}
-          {hasNotes && (
-            <div style={{ padding: '16px 24px', borderBottom: hasTerms ? '1px solid #EEF0F4' : 'none' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Notes</div>
-              <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
-            </div>
-          )}
+        {/* Notes */}
+        {estimate.scope_notes && (
+          <div style={{ ...card, padding: '14px 18px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Notes</div>
+            <div style={{ fontSize: 13, color: '#475569', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
+          </div>
+        )}
 
-          {/* Terms & Conditions */}
-          {hasTerms && (
-            <div style={{ padding: '16px 24px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Terms &amp; Conditions</div>
-              <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{profile!.contract_terms}</div>
-            </div>
-          )}
+        {/* Terms & Conditions */}
+        {profile?.contract_terms && (
+          <div style={{ ...card, padding: '14px 18px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 8 }}>Terms &amp; Conditions</div>
+            <div style={{ fontSize: 12, color: '#64748B', lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
+          </div>
+        )}
 
-        </div>
-
+        {/* Download button */}
         <button
-          className="no-print"
+          className="download-btn"
           onClick={() => window.print()}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', marginTop: 16, padding: '14px 0', background: '#fff', color: '#2045B8', border: '1.5px solid #E5E7EB', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily }}
+          style={{ width: '100%', padding: '15px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: ff }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
           Download PDF
         </button>
 
-        <div className="no-print" style={{ textAlign: 'center', marginTop: 20, fontSize: 11, color: '#94A3B8' }}>
-          Powered by ApexScale
+        {/* Footer */}
+        <div className="powered-by" style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', paddingBottom: 8 }}>
+          Powered by ApexScale · useapexscale.com
         </div>
+
       </div>
     </div>
   )
