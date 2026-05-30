@@ -122,14 +122,27 @@ export default function ClientEstimatePage() {
   const handleDownload = async () => {
     const element = document.getElementById('estimate-content')
     if (!element) return
+
+    const prevWidth = element.style.width
+    const prevMaxWidth = element.style.maxWidth
+    const prevOverflow = element.style.overflow
+    element.style.width = '390px'
+    element.style.maxWidth = '390px'
+    element.style.overflow = 'visible'
+
     const html2canvas = (await import('html2canvas')).default
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#F8F9FC',
-      windowWidth: element.scrollWidth,
-      width: element.scrollWidth,
+      windowWidth: 390,
+      width: 390,
     })
+
+    element.style.width = prevWidth
+    element.style.maxWidth = prevMaxWidth
+    element.style.overflow = prevOverflow
+
     const { default: jsPDF } = await import('jspdf')
     const imgWidth = 595
     const imgHeight = (canvas.height * imgWidth) / canvas.width
