@@ -116,6 +116,26 @@ export default function ClientEstimatePage() {
     </div>
   )
 
+  const estimateNumber = estimate.estimate_number
+  const clientName = estimate.client_name || ''
+
+  const handleDownload = async () => {
+    const element = document.getElementById('estimate-content')
+    if (!element) return
+    const html2canvas = (await import('html2canvas')).default
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#F8F9FC',
+    })
+    const { default: jsPDF } = await import('jspdf')
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const imgWidth = 210
+    const imgHeight = (canvas.height * imgWidth) / canvas.width
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight)
+    pdf.save(`${estimateNumber} — ${clientName}.pdf`)
+  }
+
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
   const showGBB = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
   const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
@@ -137,7 +157,7 @@ export default function ClientEstimatePage() {
         }
       `}</style>
 
-      <div style={{ maxWidth: 520, margin: '0 auto' }}>
+      <div id="estimate-content" style={{ maxWidth: 520, margin: '0 auto' }}>
 
         {/* ── HEADER ── */}
         <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '26px 22px 22px' }}>
@@ -287,7 +307,7 @@ export default function ClientEstimatePage() {
       >
         <div style={{ maxWidth: 520, margin: '0 auto' }}>
           <button
-            onClick={() => window.print()}
+            onClick={handleDownload}
             style={{ width: '100%', height: 54, borderRadius: 14, background: T.blue, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 16px rgba(37,99,235,0.35)' }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
