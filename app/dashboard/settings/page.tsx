@@ -1235,71 +1235,13 @@ function BillingSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-const PLACEHOLDER_INVOICES = [
-  { id: 'INV-2026-005', date: 'May 1, 2026',  amount: 'CA$149.00', status: 'Paid' },
-  { id: 'INV-2026-004', date: 'Apr 1, 2026',  amount: 'CA$149.00', status: 'Paid' },
-  { id: 'INV-2026-003', date: 'Mar 1, 2026',  amount: 'CA$149.00', status: 'Failed' },
-  { id: 'INV-2026-002', date: 'Feb 1, 2026',  amount: 'CA$24.00',  status: 'Paid' },
-  { id: 'INV-2026-001', date: 'Jan 1, 2026',  amount: 'CA$24.00',  status: 'Paid' },
-]
-
-function statusBadge(status: string) {
-  const map: Record<string, { color: string; bg: string }> = {
-    Paid:    { color: '#16A34A', bg: '#DCFCE7' },
-    Failed:  { color: '#C0341A', bg: '#FEE2E2' },
-    Pending: { color: '#D97706', bg: '#FEF3C7' },
-  }
-  const s = map[status] ?? map['Pending']
-  return (
-    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, color: s.color, background: s.bg }}>
-      {status}
-    </span>
-  )
-}
-
 function InvoicesSection() {
-  const [rows] = useState(PLACEHOLDER_INVOICES)
-
-  const cols: React.CSSProperties[] = [
-    { width: '28%' },
-    { width: '26%' },
-    { width: '24%' },
-    { width: '22%' },
-  ]
-
   return (
     <div>
       <SectionHeader kicker="BILLING" title="Invoices" subtitle="Your subscription billing history." />
-      <Card padding={0}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse' }}>
-            <colgroup>
-              {cols.map((c, i) => <col key={i} style={c} />)}
-            </colgroup>
-            <thead>
-              <tr>
-                {['INVOICE', 'DATE', 'AMOUNT', 'STATUS'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: '#94A3B8', borderBottom: '1px solid #EEF0F4', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} style={{ padding: '32px 16px', textAlign: 'center', fontSize: 13, color: '#94A3B8' }}>No invoices yet.</td>
-                </tr>
-              ) : rows.map((r, i) => (
-                <tr key={r.id} onClick={() => alert('Invoice PDF coming soon')} style={{ cursor: 'pointer', borderBottom: i < rows.length - 1 ? '1px solid #EEF0F4' : 'none' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.id}</td>
-                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.date}</td>
-                  <td style={{ padding: '12px 14px', fontSize: 13, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.amount}</td>
-                  <td style={{ padding: '12px 14px', overflow: 'hidden', whiteSpace: 'nowrap' }}>{statusBadge(r.status)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <Card>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontSize: 13 }}>
+          No invoices yet.
         </div>
       </Card>
     </div>
