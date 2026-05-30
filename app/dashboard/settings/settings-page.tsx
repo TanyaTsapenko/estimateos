@@ -1142,6 +1142,7 @@ export default function SettingsPage() {
   const [companyName, setCompanyName] = useState('')
   const [userName, setUserName] = useState('')
   const [userInitial, setUserInitial] = useState('?')
+  const [teamDesc, setTeamDesc] = useState('Manage team members')
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1153,11 +1154,19 @@ export default function SettingsPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      const { data: prof } = await supabase.from('profiles').select('company_name, first_name, last_name').eq('id', user.id).single()
+      const [{ data: prof }, { data: teamMems }, { data: teamInvs }] = await Promise.all([
+        supabase.from('profiles').select('company_name, first_name, last_name').eq('id', user.id).single(),
+        supabase.from('profiles').select('id').eq('team_owner_id', user.id),
+        supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
+      ])
       if (prof?.company_name) setCompanyName(prof.company_name)
       const name = [(prof as any)?.first_name, (prof as any)?.last_name].filter(Boolean).join(' ') || user.email || ''
       setUserName(name)
       setUserInitial(name[0]?.toUpperCase() || '?')
+      const memberCount = 1 + (teamMems?.length ?? 0)
+      const pendingCount = teamInvs?.length ?? 0
+      const memberLabel = `${memberCount} member${memberCount !== 1 ? 's' : ''}`
+      setTeamDesc(pendingCount > 0 ? `${memberLabel} · ${pendingCount} invite${pendingCount !== 1 ? 's' : ''}` : memberLabel)
     })
   }, [])
 
@@ -1193,7 +1202,7 @@ export default function SettingsPage() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{item.label}</div>
-                          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
+                          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>{item.id === 'team' ? teamDesc : item.desc}</div>
                         </div>
                         <SIcon name="chevron-r" size={16} />
                       </div>
@@ -1308,7 +1317,7 @@ export default function SettingsPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
-                      <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.desc}</div>
+                      <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.id === 'team' ? teamDesc : item.desc}</div>
                     </div>
                   </button>
                 ))}
