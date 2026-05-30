@@ -108,7 +108,6 @@ export async function GET(request: NextRequest) {
   .hdr-company-sub{font-size:11px;color:rgba(255,255,255,.5)}
   .logo{font-size:16px;font-weight:800;color:#fff;letter-spacing:-.02em}
   .logo span{color:#2563EB}
-  .save-btn{background:#2563EB;border:none;border-radius:20px;padding:8px 20px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;flex-shrink:0}
   .hdr-kicker{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px}
   .hdr-client{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.02em;margin-bottom:14px;line-height:1.15}
   .pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -160,7 +159,6 @@ export async function GET(request: NextRequest) {
 
   @media print{
     body{background:#F5F6F8}
-    .save-btn{display:none}
   }
 </style>
 </head>
@@ -179,7 +177,6 @@ export async function GET(request: NextRequest) {
       ${prof?.phone ? `<div class="hdr-company-sub">${prof.phone}</div>` : ''}
       ${(prof as any)?.email && !(prof as any)?.phone ? `<div class="hdr-company-sub">${(prof as any).email}</div>` : ''}
     </div>
-    <button class="save-btn" onclick="window.print()">Save PDF</button>
   </div>
   <div class="hdr-kicker">Prepared for</div>
   <div class="hdr-client">${est.client_name || 'Client'}</div>

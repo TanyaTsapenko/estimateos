@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
 interface Estimate {
-  id: string; estimate_number: string; client_name: string | null; client_province: string | null
+  id: string; estimate_number: string; client_name: string | null; client_address: string | null; client_province: string | null
   status: string; tier: string | null; subtotal: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   scope_notes: string | null; valid_until: string | null
@@ -15,7 +15,7 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
-  company_name: string | null; city: string | null; province: string | null
+  company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
   logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
 }
 interface TierData {
@@ -57,7 +57,7 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, city, province, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, address, city, province, postal_code, logo_url, contract_terms, pricing_mode').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)
@@ -123,9 +123,9 @@ export default function ClientEstimatePage() {
               <img src={profile.logo_url} alt={profile.company_name || ''} style={{ height: 40, maxWidth: 160, objectFit: 'contain', marginBottom: 12, display: 'block' }} />
             )}
             <div style={{ fontSize: 16, fontWeight: 800, color: '#0A1628' }}>{profile?.company_name || 'Contractor'}</div>
-            {(profile?.city || profile?.province) && (
+            {(profile?.address || profile?.city) && (
               <div style={{ fontSize: 12, color: '#64748B', marginTop: 3 }}>
-                {[profile?.city, profile?.province].filter(Boolean).join(', ')}
+                {[profile?.address, profile?.city, [profile?.postal_code, profile?.province].filter(Boolean).join(' ')].filter(Boolean).join(', ')}
               </div>
             )}
           </div>
@@ -138,14 +138,18 @@ export default function ClientEstimatePage() {
               {estimate.client_name && (
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{estimate.client_name}</div>
               )}
-              {!showGBB && tierLabel && profile?.pricing_mode === 'gbb' && (
-                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{tierLabel} Package</div>
+              {estimate.client_address && (
+                <div style={{ fontSize: 12, color: '#64748B', marginTop: 2 }}>{estimate.client_address}</div>
               )}
             </div>
             {estimate.valid_until && (
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 3 }}>Valid until</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{estimate.valid_until}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>
+                  {estimate.valid_until
+                    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.valid_until + 'T00:00:00'))
+                    : ''}
+                </div>
               </div>
             )}
           </div>
