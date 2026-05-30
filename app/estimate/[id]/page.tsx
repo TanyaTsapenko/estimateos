@@ -133,14 +133,14 @@ export default function ClientEstimatePage() {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           body { background: #FFFFFF !important; }
           .page-wrap { background: #FFFFFF !important; padding: 0 !important; }
-          .terms-block { background: #F4F6FB !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .terms-block { background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
       <div style={{ maxWidth: 520, margin: '0 auto' }}>
 
         {/* ── HEADER ── */}
-        <div style={{ background: T.card, padding: '26px 22px 22px' }}>
+        <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '26px 22px 22px' }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>
             Prepared for
           </div>
@@ -170,7 +170,7 @@ export default function ClientEstimatePage() {
         </div>
 
         {/* ── TOTAL BAND ── */}
-        <div style={{ background: T.card, borderTop: `1px solid ${T.hair}`, borderBottom: `1px solid ${T.hair}`, padding: '20px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+        <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', marginTop: 10, padding: '20px 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 5 }}>
               Estimate Total
@@ -189,7 +189,7 @@ export default function ClientEstimatePage() {
 
         {/* ── ITEMS ── */}
         {openings.length > 0 && (
-          <div style={{ background: T.card, padding: '22px 22px 0', marginTop: 10 }}>
+          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '22px 22px 0', marginTop: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 14 }}>
               Items ({openings.length})
             </div>
@@ -240,7 +240,7 @@ export default function ClientEstimatePage() {
 
         {/* ── GBB ── */}
         {showGBB && (
-          <div style={{ background: T.card, padding: '22px', marginTop: 10 }}>
+          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '22px', marginTop: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 14 }}>Your Options</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
@@ -264,7 +264,7 @@ export default function ClientEstimatePage() {
 
         {/* ── NOTES ── */}
         {estimate.scope_notes && (
-          <div style={{ background: T.card, padding: '20px 22px', marginTop: 10 }}>
+          <div style={{ background: T.card, borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '20px 22px', marginTop: 10 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>Notes</div>
             <div style={{ fontSize: 13, color: T.inkMid, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
           </div>
