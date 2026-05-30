@@ -272,7 +272,7 @@ export default function ClientEstimatePage() {
 
         {/* ── TERMS ── */}
         {profile?.contract_terms && (
-          <div className="terms-block" style={{ margin: '10px 0', background: T.bg, borderRadius: 14, padding: '18px 20px' }}>
+          <div className="terms-block" style={{ margin: '10px 0', background: '#ffffff', borderRadius: 14, border: '0.5px solid #E5E7EB', padding: '16px 20px' }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10 }}>Terms &amp; Conditions</div>
             <div style={{ fontSize: 12.5, color: T.inkMid, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
           </div>
