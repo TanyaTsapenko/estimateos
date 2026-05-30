@@ -106,7 +106,7 @@ export default function TeamPage() {
 
   const plan = profile?.plan || 'pro'
   const seatLimit = SEAT_LIMITS[plan] ?? 3
-  const seatsUsed = 1 + members.length + invitations.length
+  const seatsUsed = 1 + members.length
   const seatsLeft = Math.max(0, seatLimit - seatsUsed)
   const canInvite = plan === 'team' || seatsLeft > 0
 
