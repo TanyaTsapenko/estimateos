@@ -25,7 +25,7 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     title: 'BUSINESS',
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',    desc: 'Logo, address, defaults' },
-      { id: 'team',     icon: 'team',     label: 'Team',       desc: '5 members · 1 invite' },
+      { id: 'team',     icon: 'team',     label: 'Team',       desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
     ],
@@ -1312,6 +1312,7 @@ export default function SettingsPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
+  const [teamDesc, setTeamDesc] = useState('Manage team members')
   const { role, permissions, loading: permLoading } = usePermissions()
 
   useEffect(() => {
@@ -1324,8 +1325,16 @@ export default function SettingsPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      const { data: prof } = await supabase.from('profiles').select('company_name').eq('id', user.id).single()
+      const [{ data: prof }, { data: teamMems }, { data: teamInvs }] = await Promise.all([
+        supabase.from('profiles').select('company_name').eq('id', user.id).single(),
+        supabase.from('profiles').select('id').eq('team_owner_id', user.id),
+        supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
+      ])
       if (prof?.company_name) setCompanyName(prof.company_name)
+      const memberCount = 1 + (teamMems?.length ?? 0)
+      const pendingCount = teamInvs?.length ?? 0
+      const memberLabel = `${memberCount} member${memberCount !== 1 ? 's' : ''}`
+      setTeamDesc(pendingCount > 0 ? `${memberLabel} · ${pendingCount} invite${pendingCount !== 1 ? 's' : ''}` : memberLabel)
     })
   }, [])
 
@@ -1398,7 +1407,7 @@ export default function SettingsPage() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{item.label}</div>
-                          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
+                          <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1 }}>{item.id === 'team' ? teamDesc : item.desc}</div>
                         </div>
                         <SIcon name="chevron-r" size={16} />
                       </div>
@@ -1500,7 +1509,7 @@ export default function SettingsPage() {
                     </span>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600 }}>{item.label}</div>
-                      <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.desc}</div>
+                      <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.id === 'team' ? teamDesc : item.desc}</div>
                     </div>
                   </button>
                 ))}
