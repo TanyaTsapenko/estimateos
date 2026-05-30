@@ -284,44 +284,92 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
   } else if (type === 'send') {
     subject = `Your estimate from ${companyName} — ${est.estimate_number}`
     const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ')
+    const validUntilFmt = est.valid_until
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
+      : '30 days'
+    const estimateUrl = `https://useapexscale.com/estimate/${est.id}`
 
-    html = outerWrap(`
-${hdrBlock('Prepared for', est.client_name || 'Client',
-  pill(est.estimate_number, true) + pill(companyName)
-)}
-      <!-- BODY -->
-      <tr><td style="${bodyStyle}">
+    html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="x-apple-disable-message-reformatting" />
+<title>Your estimate is ready</title>
+<style>
+  body { margin:0; padding:0; background:#E9EDF5; -webkit-text-size-adjust:100%; }
+  table { border-collapse:collapse; }
+  img { border:0; line-height:100%; outline:none; text-decoration:none; }
+  a { text-decoration:none; }
+  .px { padding-left:40px; padding-right:40px; }
+  @media (max-width:620px){
+    .wrap { width:100% !important; }
+    .px { padding-left:24px !important; padding-right:24px !important; }
+    .h1 { font-size:24px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#E9EDF5;font-family:'Inter',-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">
 
-        <!-- Greeting -->
-        <p style="font-size:20px;font-weight:700;color:#0A1628;margin:0 0 8px;font-family:Arial,sans-serif">Hey ${est.client_name || 'there'}, your estimate is ready.</p>
-        <p style="font-size:14px;color:#64748B;margin:0 0 24px;font-family:Arial,sans-serif">We've prepared a custom estimate for your project${projectAddress ? ` at ${projectAddress}` : ''}. Click below to review your options.</p>
+<!-- preheader (hidden in inbox preview) -->
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your custom estimate ${est.estimate_number} is ready to review.</div>
 
-        <!-- Info cards -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-          <tr>
-            <td width="48%" style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;">
-              <div style="font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-family:sans-serif;">Estimate</div>
-              <div style="font-size:15px;font-weight:600;color:#111827;font-family:sans-serif;">${est.estimate_number}</div>
-            </td>
-            <td width="4%"></td>
-            <td width="48%" style="background-color:#FFFFFF;border:1px solid #E5E7EB;border-radius:8px;padding:12px 16px;">
-              <div style="font-size:11px;color:#9CA3AF;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-family:sans-serif;">Valid until</div>
-              <div style="font-size:15px;font-weight:600;color:#111827;font-family:sans-serif;">${est.valid_until ? new Date(est.valid_until + 'T00:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : '30 days'}</div>
-            </td>
-          </tr>
-        </table>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#E9EDF5;">
+<tr><td align="center" style="padding:24px 12px 48px;">
+  <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:20px;overflow:hidden;box-shadow:0 12px 40px rgba(11,22,64,0.10);">
 
-        <!-- CTA -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View estimate &rarr;</a>
-          </td></tr>
-        </table>
+    <!-- top bar: estimate badge only -->
+    <tr><td class="px" style="padding:24px 40px;border-bottom:1px solid #EEF1F6;" align="right">
+      <span style="background:#EEF3FF;border-radius:99px;padding:6px 12px;font:800 11px/1 'Inter',Arial,sans-serif;letter-spacing:0.06em;color:#2563EB;">${est.estimate_number}</span>
+    </td></tr>
 
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}</p>
+    <!-- prepared for -->
+    <tr><td class="px" style="padding:34px 40px 0;font:800 11px/1 'Inter',Arial,sans-serif;letter-spacing:0.2em;color:#94A0B4;text-transform:uppercase;">Prepared for</td></tr>
+    <tr><td class="px" style="padding:8px 40px 0;font:800 34px/1.05 'Inter',Arial,sans-serif;letter-spacing:-0.03em;color:#0B1220;">${est.client_name}</td></tr>
 
-      </td></tr>
-`)
+    <!-- intro -->
+    <tr><td class="px" style="padding:22px 40px 0;">
+      <div class="h1" style="font:800 26px/1.2 'Inter',Arial,sans-serif;letter-spacing:-0.02em;color:#0B1220;">Your estimate is ready.</div>
+      <div style="padding-top:12px;font:400 15px/1.6 'Inter',Arial,sans-serif;color:#475467;">We've prepared a custom estimate for your project at <span style="color:#0B1220;font-weight:600;">${projectAddress}</span>. Review your options below.</div>
+    </td></tr>
+
+    <!-- detail rows with blue left stripe -->
+    <tr><td class="px" style="padding:24px 40px 0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #E6EAF2;border-radius:14px;overflow:hidden;">
+        <tr><td style="border-left:3px solid #2563EB;padding:14px 18px;border-bottom:1px solid #EEF1F6;">
+          <table role="presentation" width="100%"><tr>
+            <td style="font:600 13px/1 'Inter',Arial,sans-serif;color:#94A0B4;">Estimate</td>
+            <td align="right" style="font:800 14px/1 'Inter',Arial,sans-serif;color:#0B1220;">${est.estimate_number}</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="border-left:3px solid #2563EB;padding:14px 18px;">
+          <table role="presentation" width="100%"><tr>
+            <td style="font:600 13px/1 'Inter',Arial,sans-serif;color:#94A0B4;">Valid until</td>
+            <td align="right" style="font:800 14px/1 'Inter',Arial,sans-serif;color:#0B1220;">${validUntilFmt}</td>
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>
+
+    <!-- CTA -->
+    <tr><td class="px" style="padding:26px 40px 8px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="background:#2563EB;border-radius:14px;box-shadow:0 10px 24px rgba(37,99,235,0.32);">
+        <a href="${estimateUrl}" style="display:block;padding:17px 0;font:800 15px/1 'Inter',Arial,sans-serif;color:#FFFFFF;">View estimate&nbsp;&nbsp;&rarr;</a>
+      </td></tr></table>
+    </td></tr>
+    <tr><td align="center" style="padding:14px 40px 34px;font:400 13px/1.5 'Inter',Arial,sans-serif;color:#94A0B4;">Questions? Contact ${prof?.company_name || ''}</td></tr>
+
+    <!-- footer -->
+    <tr><td style="border-top:1px solid #EEF1F6;padding:20px 40px;text-align:center;font:400 12px/1.5 'Inter',Arial,sans-serif;color:#94A0B4;">
+      Powered by <span style="font-weight:700;color:#475467;">ApexScale</span>
+    </td></tr>
+
+  </table>
+</td></tr>
+</table>
+
+</body>
+</html>`
   }
 
   const emailPayload: any = {
