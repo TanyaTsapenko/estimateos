@@ -127,11 +127,13 @@ export default function ClientEstimatePage() {
       scale: 2,
       useCORS: true,
       backgroundColor: '#F8F9FC',
+      windowWidth: element.scrollWidth,
+      width: element.scrollWidth,
     })
     const { default: jsPDF } = await import('jspdf')
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    const imgWidth = 210
+    const imgWidth = 595
     const imgHeight = (canvas.height * imgWidth) / canvas.width
+    const pdf = new jsPDF('p', 'pt', [imgWidth, imgHeight])
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight)
     pdf.save(`${estimateNumber} — ${clientName}.pdf`)
   }
