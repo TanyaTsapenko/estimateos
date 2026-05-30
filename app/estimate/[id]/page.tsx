@@ -84,6 +84,12 @@ export default function ClientEstimatePage() {
     load()
   }, [id])
 
+  useEffect(() => {
+    if (estimate) {
+      document.title = `${estimate.estimate_number} — ${estimate.client_name || ''}`
+    }
+  }, [estimate])
+
   if (docStatus === 'loading' || !estimate) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: T.bg, fontFamily: SANS }}>
       <div style={{ fontSize: 13, color: T.inkSoft }}>Loading…</div>
