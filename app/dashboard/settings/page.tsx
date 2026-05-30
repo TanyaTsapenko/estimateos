@@ -319,14 +319,36 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function PasswordSection({ flash }: { flash: (m: string) => void }) {
+  const supabase = createClient()
+  const router = useRouter()
   const [values, setValues] = useState({ current: '', next: '', confirm: '' })
-  const [twofa, setTwofa] = useState(false)
+  const [saving, setSaving] = useState(false)
   const dirty = !!values.current || !!values.next || !!values.confirm
   const valid = !!values.current && values.next.length >= 8 && values.next === values.confirm
 
+  async function handleSave() {
+    if (!valid || saving) return
+    setSaving(true)
+    // Re-authenticate with current password first
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) { flash('Could not get user email'); setSaving(false); return }
+    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: user.email, password: values.current })
+    if (signInErr) { flash('Current password is incorrect'); setSaving(false); return }
+    const { error } = await supabase.auth.updateUser({ password: values.next })
+    setSaving(false)
+    if (error) { flash('Error: ' + error.message); return }
+    setValues({ current: '', next: '', confirm: '' })
+    flash('Password updated')
+  }
+
+  async function handleSignOutAll() {
+    await supabase.auth.signOut({ scope: 'global' })
+    router.push('/auth')
+  }
+
   return (
     <div>
-      <SectionHeader kicker="ACCOUNT" title="Password" subtitle="Update your password and manage two-factor authentication." />
+      <SectionHeader kicker="ACCOUNT" title="Password" subtitle="Update your sign-in password." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
           <SectionLabel>Change password</SectionLabel>
@@ -336,34 +358,22 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
             error={values.confirm && values.next !== values.confirm ? 'Passwords do not match' : undefined} required />
         </Card>
         <Card>
+          <SectionLabel>Sessions</SectionLabel>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>Two-factor authentication</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Add an extra layer of security to your account</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Sign out all devices</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Ends all active sessions including this one</div>
             </div>
-            <Toggle on={twofa} onChange={v => { setTwofa(v); flash(v ? '2FA enabled' : '2FA disabled') }} />
+            <button
+              onClick={handleSignOutAll}
+              style={{ fontSize: 12, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Sign out all
+            </button>
           </div>
         </Card>
-        <Card>
-          <SectionLabel>Active sessions</SectionLabel>
-          {[{ device: 'MacBook Pro · Chrome', location: 'Calgary, AB', lastActive: 'Now', current: true }].map((s, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {s.device} {s.current && <Pill tone="blue">THIS DEVICE</Pill>}
-                </div>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{s.location} · {s.lastActive}</div>
-              </div>
-              {!s.current && (
-                <button style={{ fontSize: 12, color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
-                  Sign out
-                </button>
-              )}
-            </div>
-          ))}
-        </Card>
       </div>
-      <SaveBar dirty={dirty} valid={valid} onSave={() => { setValues({ current: '', next: '', confirm: '' }); flash('Password updated') }} onDiscard={() => setValues({ current: '', next: '', confirm: '' })} />
+      <SaveBar dirty={dirty} valid={valid && !saving} onSave={handleSave} onDiscard={() => setValues({ current: '', next: '', confirm: '' })} />
     </div>
   )
 }
