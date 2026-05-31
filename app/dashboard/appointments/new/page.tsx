@@ -200,11 +200,12 @@ export default function NewAppointmentPage() {
             error={!!errors.client_address}
             onChange={v => { clearErr('client_address'); set('client_address', v) }}
             onBlur={() => setErr('client_address', validateAddress(form.client_address))}
-            onSelect={({ street, city, province }) => {
+            onSelect={({ street, city, province, postalCode }) => {
               clearErr('client_address')
               set('client_address', street)
               if (city) set('client_city', city)
               if (province && TAX_RATES[province]) set('client_province', province)
+              if (postalCode) set('postal_code', formatPostal(postalCode))
             }}
           />
           {errors.client_address && <div style={errStyle}>{errors.client_address}</div>}
