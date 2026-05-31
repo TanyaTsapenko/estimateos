@@ -47,6 +47,13 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
       })
     : ALL_SLOTS
 
+  // If current value is not in the filtered slot list, snap to the first available slot
+  useEffect(() => {
+    if (slots.length > 0 && !slots.some(s => s.value === value)) {
+      onChange(slots[0].value)
+    }
+  }, [date])
+
   // Close on outside click
   useEffect(() => {
     if (!open) return
