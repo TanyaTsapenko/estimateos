@@ -299,6 +299,11 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
   )
 }
 
+function formatPostal(v: string): string {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+  return raw.length > 3 ? `${raw.slice(0, 3)} ${raw.slice(3)}` : raw
+}
+
 function NewEstimateForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -660,17 +665,36 @@ function NewEstimateForm() {
                   error={!!clientErrors.client_address}
                   onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                   onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
-                  onSelect={({ street, city, province }) => {
+                  onSelect={({ street, city, province, postalCode }) => {
                     clearCErr('client_address')
                     setClient(p => ({
                       ...p,
                       client_address: street,
-                      ...(city     && { client_city: city }),
-                      ...(province && TAX_RATES[province] && { client_province: province }),
+                      ...(city       && { client_city: city }),
+                      ...(province   && TAX_RATES[province] && { client_province: province }),
+                      ...(postalCode && { client_postal_code: formatPostal(postalCode) }),
                     }))
                   }}
                 />
                 {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
+              </div></div>
+              <div className="r2">
+                <div className="f"><label>City</label>
+                  <input placeholder="Calgary" value={client.client_city}
+                    onChange={e => setClient(p => ({ ...p, client_city: e.target.value }))} />
+                </div>
+                <div className="f"><label>Province</label>
+                  <select value={client.client_province}
+                    onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>
+                    {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                      <option key={k} value={k}>{k} — {lbl}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="r1"><div className="f"><label>Postal Code</label>
+                <input placeholder="A1A 1A1" value={client.client_postal_code}
+                  onChange={e => setClient(p => ({ ...p, client_postal_code: formatPostal(e.target.value) }))} />
               </div></div>
               <div className="sl" style={{ marginTop: 20 }}>Tier</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
@@ -877,17 +901,36 @@ function NewEstimateForm() {
                 error={!!clientErrors.client_address}
                 onChange={v => { clearCErr('client_address'); setClient(p => ({ ...p, client_address: v })) }}
                 onBlur={() => setCErr('client_address', validateAddress(client.client_address))}
-                onSelect={({ street, city, province }) => {
+                onSelect={({ street, city, province, postalCode }) => {
                   clearCErr('client_address')
                   setClient(p => ({
                     ...p,
                     client_address: street,
-                    ...(city     && { client_city: city }),
-                    ...(province && TAX_RATES[province] && { client_province: province }),
+                    ...(city       && { client_city: city }),
+                    ...(province   && TAX_RATES[province] && { client_province: province }),
+                    ...(postalCode && { client_postal_code: formatPostal(postalCode) }),
                   }))
                 }}
               />
               {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
+            </div></div>
+            <div className="r2">
+              <div className="f"><label>City</label>
+                <input placeholder="Calgary" value={client.client_city}
+                  onChange={e => setClient(p => ({ ...p, client_city: e.target.value }))} />
+              </div>
+              <div className="f"><label>Province</label>
+                <select value={client.client_province}
+                  onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>
+                  {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                    <option key={k} value={k}>{k} — {lbl}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="r1"><div className="f"><label>Postal Code</label>
+              <input placeholder="A1A 1A1" value={client.client_postal_code}
+                onChange={e => setClient(p => ({ ...p, client_postal_code: formatPostal(e.target.value) }))} />
             </div></div>
           </>
         )}
