@@ -421,16 +421,18 @@ function NewEstimateForm() {
       } else if (apptId) {
         const { data: appt } = await supabase
           .from('appointments')
-          .select('client_name, client_phone, client_email, client_address, notes')
+          .select('client_name, client_phone, client_email, client_address, client_city, client_province, notes')
           .eq('id', apptId)
           .maybeSingle()
         if (appt) {
           setClient(p => ({
             ...p,
-            ...(appt.client_name    && { client_name:    appt.client_name }),
-            ...(appt.client_phone   && { client_phone:   appt.client_phone }),
-            ...(appt.client_email   && { client_email:   appt.client_email }),
-            ...(appt.client_address && { client_address: appt.client_address }),
+            ...(appt.client_name     && { client_name:     appt.client_name }),
+            ...(appt.client_phone    && { client_phone:    appt.client_phone }),
+            ...(appt.client_email    && { client_email:    appt.client_email }),
+            ...(appt.client_address  && { client_address:  appt.client_address }),
+            ...(appt.client_city     && { client_city:     appt.client_city }),
+            ...(appt.client_province && { client_province: appt.client_province }),
           }))
         }
       }
@@ -668,27 +670,6 @@ function NewEstimateForm() {
                 />
                 {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
               </div></div>
-              <div className="r2">
-                <div className="f"><label>City</label>
-                  <AddressAutocomplete
-                    placeTypes="(cities)"
-                    value={client.client_city}
-                    placeholder="Calgary"
-                    onChange={v => setClient(p => ({ ...p, client_city: v }))}
-                    onSelect={({ city, province }) => setClient(p => ({
-                      ...p,
-                      client_city: city || p.client_city,
-                      ...(province ? { client_province: province } : {}),
-                    }))}
-                  /></div>
-                <div className="f"><label>Province</label>
-                  <select value={client.client_province}
-                    onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>
-                    {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
-                      <option key={k} value={k}>{k} — {lbl}</option>
-                    ))}
-                  </select></div>
-              </div>
               <div className="sl" style={{ marginTop: 20 }}>Tier</div>
               <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                 {TIERS.map(t => (
@@ -906,27 +887,6 @@ function NewEstimateForm() {
               />
               {clientErrors.client_address && <div style={estErrStyle}>{clientErrors.client_address}</div>}
             </div></div>
-            <div className="r2">
-              <div className="f"><label>City</label>
-                <AddressAutocomplete
-                  placeTypes="(cities)"
-                  value={client.client_city}
-                  placeholder="Calgary"
-                  onChange={v => setClient(p => ({ ...p, client_city: v }))}
-                  onSelect={({ city, province }) => setClient(p => ({
-                    ...p,
-                    client_city: city || p.client_city,
-                    ...(province ? { client_province: province } : {}),
-                  }))}
-                /></div>
-              <div className="f"><label>Province</label>
-                <select value={client.client_province}
-                  onChange={e => setClient(p => ({ ...p, client_province: e.target.value }))}>
-                  {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
-                    <option key={k} value={k}>{k} — {lbl}</option>
-                  ))}
-                </select></div>
-            </div>
           </>
         )}
 

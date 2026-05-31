@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import { TAX_RATES } from '@/lib/pricing'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 
@@ -35,6 +36,8 @@ export default function NewAppointmentPage() {
     client_phone: '',
     client_email: '',
     client_address: '',
+    client_city: '',
+    client_province: 'AB',
     appointment_date: today,
     appointment_time: '09:00',
     lead_source: 'Phone call',
@@ -92,6 +95,8 @@ export default function NewAppointmentPage() {
       client_phone: form.client_phone.trim() || null,
       client_email: form.client_email.trim() || null,
       client_address: form.client_address.trim() || null,
+      client_city: form.client_city.trim() || null,
+      client_province: form.client_province || null,
       appointment_date: form.appointment_date,
       appointment_time: form.appointment_time || null,
       lead_source: form.lead_source || null,
@@ -188,10 +193,34 @@ export default function NewAppointmentPage() {
             error={!!errors.client_address}
             onChange={v => { clearErr('client_address'); set('client_address', v) }}
             onBlur={() => setErr('client_address', validateAddress(form.client_address))}
-            onSelect={({ street }) => { clearErr('client_address'); set('client_address', street) }}
+            onSelect={({ street, city, province }) => {
+              clearErr('client_address')
+              set('client_address', street)
+              if (city) set('client_city', city)
+              if (province && TAX_RATES[province]) set('client_province', province)
+            }}
           />
           {errors.client_address && <div style={errStyle}>{errors.client_address}</div>}
         </div></div>
+
+        <div className="r2">
+          <div className="f">
+            <label>City</label>
+            <input
+              placeholder="Calgary"
+              value={form.client_city}
+              onChange={e => set('client_city', e.target.value)}
+            />
+          </div>
+          <div className="f">
+            <label>Province</label>
+            <select value={form.client_province} onChange={e => set('client_province', e.target.value)}>
+              {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                <option key={k} value={k}>{k} — {lbl}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <div className="sl">When</div>
 
