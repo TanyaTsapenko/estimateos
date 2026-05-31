@@ -262,8 +262,8 @@ export default function DashboardPage() {
         estSigned.forEach((e: any) => {
           attItems.push({
             icon: CheckIcon, color: '#059669',
-            title: `${e.client_name} estimate signed`,
-            desc: `${e.estimate_number} · Ready to invoice`,
+            title: e.client_name,
+            desc: `Contract signed · ${e.estimate_number} · Ready to invoice`,
             cta: 'Send final invoice', id: e.id, actionType: 'invoice',
           })
         })
