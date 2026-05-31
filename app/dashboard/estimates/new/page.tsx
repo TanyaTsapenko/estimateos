@@ -120,7 +120,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
 
 interface ClientInfo {
   client_name: string; client_email: string; client_phone: string
-  client_address: string; client_city: string; client_province: string
+  client_address: string; client_city: string; client_province: string; client_postal_code: string
 }
 
 const TIERS = [
@@ -323,7 +323,7 @@ function NewEstimateForm() {
     client_email: '',
     client_phone: '',
     client_address: searchParams.get('client_address') || '',
-    client_city: '', client_province: 'AB',
+    client_city: '', client_province: 'AB', client_postal_code: '',
   })
 
   const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
@@ -399,8 +399,9 @@ function NewEstimateForm() {
             client_email:    est.client_email || '',
             client_phone:    est.client_phone || '',
             client_address:  est.client_address || '',
-            client_city:     est.client_city || '',
-            client_province: est.client_province || 'AB',
+            client_city:        est.client_city || '',
+            client_province:    est.client_province || 'AB',
+            client_postal_code: (est as any).client_postal_code || '',
           })
           setTier(est.tier || 'better')
           if (est.discount_type) {
@@ -421,7 +422,7 @@ function NewEstimateForm() {
       } else if (apptId) {
         const { data: appt } = await supabase
           .from('appointments')
-          .select('client_name, client_phone, client_email, client_address, client_city, client_province, notes')
+          .select('client_name, client_phone, client_email, client_address, client_city, client_province, postal_code, notes')
           .eq('id', apptId)
           .maybeSingle()
         if (appt) {
@@ -431,8 +432,9 @@ function NewEstimateForm() {
             ...(appt.client_phone    && { client_phone:    appt.client_phone }),
             ...(appt.client_email    && { client_email:    appt.client_email }),
             ...(appt.client_address  && { client_address:  appt.client_address }),
-            ...(appt.client_city     && { client_city:     appt.client_city }),
-            ...(appt.client_province && { client_province: appt.client_province }),
+            ...(appt.client_city     && { client_city:        appt.client_city }),
+            ...(appt.client_province && { client_province:    appt.client_province }),
+            ...(appt.postal_code     && { client_postal_code: appt.postal_code }),
           }))
         }
       }

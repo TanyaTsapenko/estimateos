@@ -19,6 +19,11 @@ interface TeamMember { id: string; name: string }
 const errStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const errBorder = '1.5px solid #C0341A'
 
+function formatPostal(v: string): string {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+  return raw.length > 3 ? `${raw.slice(0, 3)} ${raw.slice(3)}` : raw
+}
+
 export default function NewAppointmentPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -38,6 +43,7 @@ export default function NewAppointmentPage() {
     client_address: '',
     client_city: '',
     client_province: 'AB',
+    postal_code: '',
     appointment_date: today,
     appointment_time: '09:00',
     lead_source: 'Phone call',
@@ -97,6 +103,7 @@ export default function NewAppointmentPage() {
       client_address: form.client_address.trim() || null,
       client_city: form.client_city.trim() || null,
       client_province: form.client_province || null,
+      postal_code: form.postal_code.trim() || null,
       appointment_date: form.appointment_date,
       appointment_time: form.appointment_time || null,
       lead_source: form.lead_source || null,
@@ -221,6 +228,15 @@ export default function NewAppointmentPage() {
             </select>
           </div>
         </div>
+
+        <div className="r1"><div className="f">
+          <label>Postal Code</label>
+          <input
+            placeholder="A1A 1A1"
+            value={form.postal_code}
+            onChange={e => set('postal_code', formatPostal(e.target.value))}
+          />
+        </div></div>
 
         <div className="sl">When</div>
 
