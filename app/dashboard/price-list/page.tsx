@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
-import { fmtCAD } from '@/lib/pricing'
+import { fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClipboardList } from 'lucide-react'
 
@@ -158,13 +158,32 @@ export default function PriceListPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      const { data } = await supabase
+      let { data } = await supabase
         .from('price_lists')
         .select('*')
         .eq('user_id', sanitizedId)
         .neq('opening_type', '_sizes')
         .order('category', { ascending: true, nullsFirst: false })
         .order('custom_label', { ascending: true, nullsFirst: false })
+      if (data && data.length === 0) {
+        const seeds = Object.entries(OPENING_TYPES).map(([key, val]) => ({
+          user_id:      sanitizedId,
+          opening_type: key,
+          custom_label: val.name,
+          base_price:   val.base,
+          labour_price: val.lab,
+          category:     key.startsWith('window') ? 'Windows' : 'Doors',
+        }))
+        await supabase.from('price_lists').insert(seeds)
+        const { data: refetched } = await supabase
+          .from('price_lists')
+          .select('*')
+          .eq('user_id', sanitizedId)
+          .neq('opening_type', '_sizes')
+          .order('category', { ascending: true, nullsFirst: false })
+          .order('custom_label', { ascending: true, nullsFirst: false })
+        data = refetched
+      }
       if (data) {
         setItems(data.map(r => ({
           key:         r.opening_type,
