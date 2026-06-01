@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature } from 'lucide-react'
+import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -386,17 +386,17 @@ export default function EstimateDetailPage() {
             {(isSigned || isInvoiced) && (() => {
               const depositPending = depositInvoice?.status === 'pending'
               return (
-              <div style={{ background: depositPending ? '#FEF3C7' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '1px solid #F59E0B' : 'none' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: depositPending ? '#92400E' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
+              <div style={{ background: depositPending ? '#F97316' : '#0F8A6B', borderRadius: 16, padding: 20 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#92400E' : '#fff', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} accepted this estimate
                 </div>
                 {depositPending ? (
                   <button onClick={() => router.push('/dashboard/invoices')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#F59E0B', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Receipt size={14} />
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '12px 16px', background: '#fff', color: '#EA580C', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Clock size={14} color="#EA580C" />
                     Deposit pending — {fmtCAD(depositInvoice!.amount)}
                   </button>
                 ) : (
