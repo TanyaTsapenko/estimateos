@@ -382,20 +382,22 @@ export default function EstimateDetailPage() {
           {/* ── RIGHT COLUMN ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 0' }}>
 
-            {/* Signed / invoiced — keep existing green card */}
-            {(isSigned || isInvoiced) && (
-              <div style={{ background: '#0F8A6B', borderRadius: 16, padding: 20 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginBottom: 6 }}>
+            {/* Signed / invoiced — amber when deposit pending, green otherwise */}
+            {(isSigned || isInvoiced) && (() => {
+              const depositPending = depositInvoice?.status === 'pending'
+              return (
+              <div style={{ background: depositPending ? '#FEF3C7' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '1px solid #F59E0B' : 'none' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: depositPending ? '#92400E' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#92400E' : '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} accepted this estimate
                 </div>
-                {depositInvoice?.status === 'pending' ? (
+                {depositPending ? (
                   <button onClick={() => router.push('/dashboard/invoices')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#FEF3C7', color: '#D97706', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#F59E0B', color: '#fff', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <Receipt size={14} />
-                    Deposit pending — {fmtCAD(depositInvoice.amount)}
+                    Deposit pending — {fmtCAD(depositInvoice!.amount)}
                   </button>
                 ) : (
                   <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
@@ -405,7 +407,8 @@ export default function EstimateDetailPage() {
                   </button>
                 )}
               </div>
-            )}
+              )
+            })()}
 
             {/* Step cards — only when not signed/invoiced */}
             {!isSigned && !isInvoiced && !isDeclined && (
