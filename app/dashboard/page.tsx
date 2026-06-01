@@ -176,6 +176,7 @@ export default function DashboardPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [attention, setAttention] = useState<AttentionItem[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [showAllAttention, setShowAllAttention] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showDiscover, setShowDiscover] = useState(true)
   const [pricingMode, setPricingMode] = useState<string | null>(null)
@@ -637,8 +638,10 @@ export default function DashboardPage() {
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 3 }}>All caught up!</div>
                     <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
                   </div>
-                ) : attention.slice(0, 7).map((item, i) => (
-                  <div key={i} style={{ padding: '13px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < Math.min(attention.length, 7) - 1 ? '1px solid #F1F5F9' : undefined }}>
+                ) : attention.slice(0, showAllAttention ? attention.length : 7).map((item, i) => {
+                  const visible = showAllAttention ? attention.length : Math.min(attention.length, 7)
+                  return (
+                  <div key={i} style={{ padding: '13px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < visible - 1 ? '1px solid #F1F5F9' : undefined }}>
                     <div style={{ width: 32, height: 32, borderRadius: 9, flexShrink: 0, background: `${item.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <item.icon size={14} color={item.color} strokeWidth={1.7} />
                     </div>
@@ -657,12 +660,13 @@ export default function DashboardPage() {
                       {item.cta}
                     </button>
                   </div>
-                ))}
+                  )
+                })}
               </div>
               {attention.length > 7 && (
-                <button onClick={() => router.push('/dashboard/invoices')}
+                <button onClick={() => setShowAllAttention(v => !v)}
                   style={{ width: '100%', marginTop: 8, background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 12, fontSize: 14, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Show all ({attention.length})
+                  {showAllAttention ? 'Show less' : `Show all (${attention.length})`}
                 </button>
               )}
             </section>
@@ -723,8 +727,10 @@ export default function DashboardPage() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
                   <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
                 </div>
-              ) : attention.slice(0, 7).map((item, i) => (
-                <div key={i} style={{ padding: '12px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < Math.min(attention.length, 7) - 1 ? '1px solid #EEF0F4' : undefined }}
+              ) : attention.slice(0, showAllAttention ? attention.length : 7).map((item, i) => {
+                const visible = showAllAttention ? attention.length : Math.min(attention.length, 7)
+                return (
+                <div key={i} style={{ padding: '12px 16px', display: 'flex', gap: 11, alignItems: 'center', borderBottom: i < visible - 1 ? '1px solid #EEF0F4' : undefined }}
                   onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
                   onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
                   <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: `${item.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -745,12 +751,13 @@ export default function DashboardPage() {
                     {item.cta}
                   </button>
                 </div>
-              ))}
+                )
+              })}
               {attention.length > 7 && (
                 <div style={{ padding: '8px 12px 12px' }}>
-                  <button onClick={() => router.push('/dashboard/invoices')}
+                  <button onClick={() => setShowAllAttention(v => !v)}
                     style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 12, padding: 12, fontSize: 14, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    Show all ({attention.length})
+                    {showAllAttention ? 'Show less' : `Show all (${attention.length})`}
                   </button>
                 </div>
               )}
