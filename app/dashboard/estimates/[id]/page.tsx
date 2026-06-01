@@ -116,14 +116,15 @@ export default function EstimateDetailPage() {
   async function duplicateEstimate() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user || !estimate) return
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     setDuplicating(true)
     setShowDuplicateModal(false)
 
-    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
     const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
 
     const { data: newEst } = await supabase.from('estimates').insert({
-      user_id: user.id,
+      user_id: sanitizedId,
       estimate_number: num,
       client_name: estimate.client_name,
       client_email: estimate.client_email,

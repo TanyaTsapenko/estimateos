@@ -37,9 +37,10 @@ export default function PaymentSetupPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: est }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('id, estimate_number, client_name, client_address, total').eq('id', id).single(),
-        supabase.from('profiles').select('deposit_percent').eq('id', user.id).single(),
+        supabase.from('profiles').select('deposit_percent').eq('id', sanitizedId).single(),
       ])
       if (est) setEstimate(est as Estimate)
       const defaultPct = (prof as any)?.deposit_percent ?? 30

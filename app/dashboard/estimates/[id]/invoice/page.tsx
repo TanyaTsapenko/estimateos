@@ -25,10 +25,11 @@ export default function CreateInvoicePage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
+      const sanitizedId = user ? user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '') : null
       const [{ data: est }, { data: dep }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single(),
-        user ? supabase.from('profiles').select('interac_email').eq('id', user.id).single() : Promise.resolve({ data: null }),
+        sanitizedId ? supabase.from('profiles').select('interac_email').eq('id', sanitizedId).single() : Promise.resolve({ data: null }),
       ])
       setEstimate(est)
       setDepositInvoice(dep)
@@ -58,13 +59,14 @@ export default function CreateInvoicePage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-    const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+    const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
     const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
 
     const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
       estimate_id:    estimate.id,
-      user_id:        user.id,
+      user_id:        sanitizedId,
       invoice_number: num,
       invoice_type:   isFinal ? 'final' : 'standard',
       status:         'pending',

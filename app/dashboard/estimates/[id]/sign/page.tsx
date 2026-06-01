@@ -25,10 +25,11 @@ export default function SignPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, contract_terms').eq('id', user.id).single(),
+        supabase.from('profiles').select('company_name, contract_terms').eq('id', sanitizedId).single(),
       ])
       setEstimate(est)
       setOpenings(ops || [])

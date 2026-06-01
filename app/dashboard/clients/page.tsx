@@ -93,10 +93,11 @@ export default function ClientsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data } = await supabase
         .from('estimates')
         .select('id, client_name, client_phone, client_address, client_city, status, total, created_at')
-        .eq('user_id', user.id)
+        .eq('user_id', sanitizedId)
         .order('created_at', { ascending: false })
       setClients(buildClients(data || []))
       setLoading(false)

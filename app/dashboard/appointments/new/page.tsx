@@ -60,14 +60,15 @@ export default function NewAppointmentPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: prof }, { data: members }] = await Promise.all([
-        supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single(),
-        supabase.from('profiles').select('id, first_name, last_name, email').eq('team_owner_id', user.id),
+        supabase.from('profiles').select('first_name, last_name').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('id, first_name, last_name, email').eq('team_owner_id', sanitizedId),
       ])
       const ownerName = prof
         ? [( prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') || 'You'
         : 'You'
-      const owner: TeamMember = { id: user.id, name: ownerName }
+      const owner: TeamMember = { id: sanitizedId, name: ownerName }
       const extras: TeamMember[] = (members || []).map((m: any) => ({
         id: m.id,
         name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Team member',
@@ -94,9 +95,10 @@ export default function NewAppointmentPage() {
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
     const { error: e } = await supabase.from('appointments').insert({
-      user_id: user.id,
+      user_id: sanitizedId,
       client_name: form.client_name.trim(),
       client_phone: form.client_phone.trim() || null,
       client_email: form.client_email.trim() || null,

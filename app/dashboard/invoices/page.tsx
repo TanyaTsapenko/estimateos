@@ -51,9 +51,10 @@ export default function InvoicesPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data } = await supabase.from('invoices')
         .select('id, invoice_number, status, amount, invoice_type, due_date, created_at, estimates!invoices_estimate_id_fkey(client_name, estimate_number)')
-        .eq('user_id', user.id).order('created_at', { ascending: false })
+        .eq('user_id', sanitizedId).order('created_at', { ascending: false })
       setInvoices((data as unknown as Invoice[]) || [])
       setLoading(false)
     }

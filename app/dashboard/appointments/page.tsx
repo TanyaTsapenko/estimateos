@@ -792,8 +792,9 @@ export default function AppointmentsPage() {
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const { data: rows } = await supabase
-      .from('appointments').select('*').eq('user_id', user.id)
+      .from('appointments').select('*').eq('user_id', sanitizedId)
       .order('appointment_date', { ascending: true })
       .order('appointment_time', { ascending: true, nullsFirst: false })
     const appts = rows || []

@@ -223,9 +223,10 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      setUserId(user.id)
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      setUserId(sanitizedId)
       if (user.user_metadata?.avatar_url) setSavedAvatarUrl(user.user_metadata.avatar_url)
-      const { data: prof } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', user.id).single()
+      const { data: prof } = await supabase.from('profiles').select('first_name, last_name, phone').eq('id', sanitizedId).single()
       if (prof) {
         const loaded = {
           firstName: prof.first_name || '',
@@ -493,11 +494,12 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      setUserId(user.id)
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
         .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email')
-        .eq('id', user.id)
+        .eq('id', sanitizedId)
         .single()
       if (prof) {
         const loaded = {
@@ -678,11 +680,12 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      setMyId(user.id)
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      setMyId(sanitizedId)
       const [{ data: ownerProf }, { data: mems }, { data: invs }] = await Promise.all([
-        supabase.from('profiles').select('first_name, last_name, email').eq('id', user.id).single(),
-        supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', user.id),
-        supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
+        supabase.from('profiles').select('first_name, last_name, email').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', sanitizedId),
+        supabase.from('team_invitations').select('id').eq('owner_id', sanitizedId).eq('status', 'pending'),
       ])
       setOwnerProfile(ownerProf)
       setMembers(mems || [])
@@ -906,8 +909,9 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return
-      setUserId(data.user.id)
-      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', data.user.id).single().then(({ data: prof }) => {
+      const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      setUserId(sanitizedId)
+      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
         setTerms(loaded); setInitialTerms(loaded)
@@ -1337,10 +1341,11 @@ export default function SettingsPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: prof }, { data: teamMems }, { data: teamInvs }] = await Promise.all([
-        supabase.from('profiles').select('company_name').eq('id', user.id).single(),
-        supabase.from('profiles').select('id').eq('team_owner_id', user.id),
-        supabase.from('team_invitations').select('id').eq('owner_id', user.id).eq('status', 'pending'),
+        supabase.from('profiles').select('company_name').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('id').eq('team_owner_id', sanitizedId),
+        supabase.from('team_invitations').select('id').eq('owner_id', sanitizedId).eq('status', 'pending'),
       ])
       if (prof?.company_name) setCompanyName(prof.company_name)
       const memberCount = 1 + (teamMems?.length ?? 0)
