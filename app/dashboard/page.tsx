@@ -230,7 +230,7 @@ export default function DashboardPage() {
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned, error: estSignedError }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices, error: pendingInvoicesError }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', user.id),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
@@ -300,8 +300,8 @@ export default function DashboardPage() {
         })
       }
       // Stale sent estimate → blue, reminder
-      const threeDaysAgo = new Date(Date.now()-3*86400000).toISOString()
-      const stale = (estAll||[]).filter((e:any)=>e.status==='sent'&&e.updated_at<=threeDaysAgo)
+      const threeDaysAgo = new Date(Date.now() - 1*60*1000).toISOString() // 1 minute ago for testing
+      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && e.created_at < threeDaysAgo)
       if (stale.length) {
         const daysSince = Math.floor((Date.now() - new Date(stale[0].updated_at).getTime()) / 86400000)
         attItems.push({
