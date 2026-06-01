@@ -193,7 +193,6 @@ export default function DashboardPage() {
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     supabase.from('profiles').select('pricing_mode').eq('id', sanitizedId).single().then(({ data: prof }) => {
-      console.log('pricing_mode from DB:', (prof as any)?.pricing_mode)
       if (prof) setPricingMode((prof as any).pricing_mode || 'single')
     })
     const meta = user.user_metadata
@@ -230,27 +229,19 @@ export default function DashboardPage() {
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned, error: estSignedError }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices, error: pendingInvoicesError }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'standard').order('created_at', { ascending: false }).limit(5),
       ])
-      console.log('pending invoices:', pendingInvoices, 'error:', pendingInvoicesError)
-      const { data: allInvoices } = await supabase.from('invoices').select('id, status, user_id').limit(5)
-      console.log('all invoices sample:', allInvoices)
       const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       let clientNames: Record<string, string> = {}
       if (estimateIds.length) {
         const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', estimateIds)
         ests?.forEach((e: any) => { clientNames[e.id] = e.client_name })
       }
-      console.log('estimateIds:', estimateIds)
-      console.log('clientNames:', clientNames)
-      console.log('pendingInvoices:', pendingInvoices)
-      if (estSignedError) console.error('[dashboard] estSigned query error:', estSignedError)
-      console.log('[dashboard] estSigned count:', estSigned?.length ?? 0, 'rows:', JSON.stringify(estSigned?.map((e: any) => ({ id: e.id, status: e.status, invoice_id: e.invoice_id, estimate_number: e.estimate_number }))))
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
