@@ -384,10 +384,11 @@ function NewEstimateForm() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/auth'); return }
-      userIdRef.current = user.id
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      userIdRef.current = sanitizedId
       const [{ data: prof }, { data: priceRows }] = await Promise.all([
-        supabase.from('profiles').select('province, pricing_mode').eq('id', user.id).single(),
-        supabase.from('price_lists').select('*').eq('user_id', user.id).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
+        supabase.from('profiles').select('province, pricing_mode').eq('id', sanitizedId).single(),
+        supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
       ])
       if (prof) {
         setProfile(prof)
@@ -510,6 +511,7 @@ function NewEstimateForm() {
     setSaving(true); setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
     const estimateFields = {
       ...client,
@@ -537,10 +539,10 @@ function NewEstimateForm() {
       if (estErr) { setError(estErr.message); setSaving(false); return }
       savedId = editId
     } else {
-      const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', user.id)
+      const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
       const num = `EST-${String((count || 0) + 1).padStart(4, '0')}`
       const { data: est, error: estErr } = await supabase.from('estimates').insert({
-        user_id: user.id,
+        user_id: sanitizedId,
         estimate_number: num,
         ...estimateFields,
         status: 'draft',
