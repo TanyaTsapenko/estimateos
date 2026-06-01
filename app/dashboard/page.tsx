@@ -590,7 +590,7 @@ export default function DashboardPage() {
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
                         else if (item.actionType === 'mark_paid') { await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', item.id); setAttention(prev => prev.filter(a => a.id !== item.id)) }
                         else router.push(`/dashboard/estimates/${item.id}`)
