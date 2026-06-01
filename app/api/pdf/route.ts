@@ -121,9 +121,9 @@ export async function GET(request: NextRequest) {
   .body{background:#F5F6F8;border-radius:24px 24px 0 0;margin-top:-24px;padding:20px 20px 40px;display:flex;flex-direction:column;gap:12px}
 
   /* ── Cards ── */
-  .card{background:#fff;border-radius:16px;padding:16px}
-  .card-blue{background:#fff;border-radius:16px;padding:16px;border:1.5px solid #BFDBFE}
-  .card-green{background:#ECFDF5;border-radius:16px;padding:16px;text-align:center}
+  .card{background:#fff;border-radius:16px;padding:16px;page-break-inside:avoid;break-inside:avoid}
+  .card-blue{background:#fff;border-radius:16px;padding:16px;border:1.5px solid #BFDBFE;page-break-inside:avoid;break-inside:avoid}
+  .card-green{background:#ECFDF5;border-radius:16px;padding:16px;text-align:center;page-break-inside:avoid;break-inside:avoid}
   .slbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
 
   /* ── Price card ── */
@@ -159,6 +159,7 @@ export async function GET(request: NextRequest) {
 
   @media print{
     body{background:#F5F6F8}
+    .card,.card-blue,.card-green,[class*="card"],.section{page-break-inside:avoid;break-inside:avoid}
   }
 </style>
 </head>
