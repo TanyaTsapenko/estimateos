@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Plus } from 'lucide-react'
 import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import { TAX_RATES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import BellButton from '@/components/BellButton'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
@@ -34,6 +35,9 @@ interface Appt {
   client_phone: string | null
   client_email: string | null
   client_address: string | null
+  client_city: string | null
+  client_province: string | null
+  postal_code: string | null
   appointment_date: string
   appointment_time: string | null
   notes: string | null
@@ -41,6 +45,11 @@ interface Appt {
   status: string
   estimate_id: string | null
   estimate_number: string | null
+}
+
+function formatPostal(v: string) {
+  const raw = v.toUpperCase().replace(/[^A-Z0-9]/g, '')
+  return raw.length > 3 ? raw.slice(0, 3) + ' ' + raw.slice(3, 6) : raw
 }
 
 type DesignStatus = 'upcoming' | 'completed' | 'canceled'
@@ -251,9 +260,13 @@ function EditScreen({
     if (appt) {
       setDraft({
         client_name:      appt.client_name,
-        client_phone:     appt.client_phone  ?? '',
-        client_address:   appt.client_address ?? '',
-        lead_source:      appt.lead_source    ?? '',
+        client_phone:     appt.client_phone     ?? '',
+        client_email:     appt.client_email     ?? '',
+        client_address:   appt.client_address   ?? '',
+        client_city:      appt.client_city      ?? '',
+        client_province:  appt.client_province  ?? '',
+        postal_code:      appt.postal_code      ?? '',
+        lead_source:      appt.lead_source      ?? '',
         appointment_date: appt.appointment_date,
         appointment_time: appt.appointment_time ?? '',
       })
@@ -375,6 +388,16 @@ function EditScreen({
             </div>
           </div>
           <div>
+            <label style={fieldLabel}>Email</label>
+            <input
+              type="email"
+              style={inp}
+              value={draft.client_email ?? ''}
+              onChange={e => set('client_email')(e.target.value)}
+              placeholder="client@example.com"
+            />
+          </div>
+          <div>
             <label style={fieldLabel}>Address</label>
             <input
               style={errors.client_address ? { ...inp, border: editErrBorder } : inp}
@@ -384,6 +407,40 @@ function EditScreen({
               placeholder="123 Main St"
             />
             {errors.client_address && <div style={editErrStyle}>{errors.client_address}</div>}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div>
+              <label style={fieldLabel}>City</label>
+              <input
+                style={inp}
+                value={draft.client_city ?? ''}
+                onChange={e => set('client_city')(e.target.value)}
+                placeholder="Calgary"
+              />
+            </div>
+            <div>
+              <label style={fieldLabel}>Postal code</label>
+              <input
+                style={inp}
+                value={draft.postal_code ?? ''}
+                onChange={e => set('postal_code')(formatPostal(e.target.value))}
+                placeholder="T2P 1J9"
+                maxLength={7}
+              />
+            </div>
+          </div>
+          <div>
+            <label style={fieldLabel}>Province</label>
+            <select
+              style={{ ...inp, appearance: 'none', WebkitAppearance: 'none', backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A94A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '16px', paddingRight: 32 }}
+              value={draft.client_province ?? ''}
+              onChange={e => set('client_province')(e.target.value)}
+            >
+              <option value="">Select province</option>
+              {Object.entries(TAX_RATES).sort().map(([code]) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -612,9 +669,13 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
   useEffect(() => {
     setDraft({
       client_name:      appt.client_name,
-      client_phone:     appt.client_phone  ?? '',
-      client_address:   appt.client_address ?? '',
-      lead_source:      appt.lead_source    ?? '',
+      client_phone:     appt.client_phone     ?? '',
+      client_email:     appt.client_email     ?? '',
+      client_address:   appt.client_address   ?? '',
+      client_city:      appt.client_city      ?? '',
+      client_province:  appt.client_province  ?? '',
+      postal_code:      appt.postal_code      ?? '',
+      lead_source:      appt.lead_source      ?? '',
       appointment_date: appt.appointment_date,
       appointment_time: appt.appointment_time ?? '',
       notes:            appt.notes ?? '',
@@ -709,6 +770,16 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
             </select>
           </div>
           <div style={{ gridColumn: 'span 2' }}>
+            <label style={fldLbl}>Email</label>
+            <input
+              type="email"
+              style={inp}
+              value={draft.client_email ?? ''}
+              onChange={e => set('client_email')(e.target.value)}
+              placeholder="client@example.com"
+            />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
             <label style={fldLbl}>Address</label>
             <input
               style={errors.client_address ? { ...inp, border: editErrBorder } : inp}
@@ -718,6 +789,35 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: {
               placeholder="123 Main St"
             />
             {errors.client_address && <div style={editErrStyle}>{errors.client_address}</div>}
+          </div>
+          <div>
+            <label style={fldLbl}>City</label>
+            <input
+              style={inp}
+              value={draft.client_city ?? ''}
+              onChange={e => set('client_city')(e.target.value)}
+              placeholder="Calgary"
+            />
+          </div>
+          <div>
+            <label style={fldLbl}>Postal code</label>
+            <input
+              style={inp}
+              value={draft.postal_code ?? ''}
+              onChange={e => set('postal_code')(formatPostal(e.target.value))}
+              placeholder="T2P 1J9"
+              maxLength={7}
+            />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={fldLbl}>Province</label>
+            <select style={{ ...inp, appearance: 'none', WebkitAppearance: 'none', backgroundImage: chevSvg, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center', backgroundSize: '16px', paddingRight: 32 }}
+              value={draft.client_province ?? ''} onChange={e => set('client_province')(e.target.value)}>
+              <option value="">Select province</option>
+              {Object.entries(TAX_RATES).sort().map(([code]) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -902,11 +1002,15 @@ export default function AppointmentsPage() {
   async function saveEdit(id: string, patch: Partial<Appt>) {
     await supabase.from('appointments').update({
       client_name:      patch.client_name?.trim(),
-      client_phone:     patch.client_phone?.trim()   || null,
-      client_address:   patch.client_address?.trim() || null,
-      lead_source:      patch.lead_source?.trim()    || null,
+      client_phone:     patch.client_phone?.trim()    || null,
+      client_email:     patch.client_email?.trim()    || null,
+      client_address:   patch.client_address?.trim()  || null,
+      client_city:      patch.client_city?.trim()     || null,
+      client_province:  patch.client_province?.trim() || null,
+      postal_code:      patch.postal_code?.trim()     || null,
+      lead_source:      patch.lead_source?.trim()     || null,
       appointment_date: patch.appointment_date,
-      appointment_time: patch.appointment_time       || null,
+      appointment_time: patch.appointment_time        || null,
     }).eq('id', id)
     setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
     closeEdit()
@@ -923,12 +1027,16 @@ export default function AppointmentsPage() {
   async function desktopSaveEdit(id: string, patch: Partial<Appt>) {
     await supabase.from('appointments').update({
       client_name:      patch.client_name?.trim(),
-      client_phone:     patch.client_phone?.trim()   || null,
-      client_address:   patch.client_address?.trim() || null,
-      lead_source:      patch.lead_source?.trim()    || null,
+      client_phone:     patch.client_phone?.trim()    || null,
+      client_email:     patch.client_email?.trim()    || null,
+      client_address:   patch.client_address?.trim()  || null,
+      client_city:      patch.client_city?.trim()     || null,
+      client_province:  patch.client_province?.trim() || null,
+      postal_code:      patch.postal_code?.trim()     || null,
+      lead_source:      patch.lead_source?.trim()     || null,
       appointment_date: patch.appointment_date,
-      appointment_time: patch.appointment_time       || null,
-      notes:            patch.notes?.trim()          || null,
+      appointment_time: patch.appointment_time        || null,
+      notes:            patch.notes?.trim()           || null,
     }).eq('id', id)
     setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
     setDesktopEditing(false)
