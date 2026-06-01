@@ -236,7 +236,7 @@ export default function PaymentSetupPage() {
           onClick={handleContinue}
           style={{ width: '100%', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: F }}
         >
-          Continue →
+          Continue
         </button>
       </div>
 
