@@ -43,11 +43,11 @@ export async function POST(request: NextRequest) {
     estimate_id:    estimateId,
     user_id:        est.user_id,
     invoice_number: invoiceNum,
-    invoice_type:   'deposit',
+    invoice_type:   depositPct === 100 ? 'final' : 'deposit',
     status:         'pending',
     amount:         depositAmount,
     due_date:       dueDateStr,
-    notes:          `${depositPct}% deposit on ${est.estimate_number} — ${companyName}`,
+    notes:          depositPct === 100 ? `Full payment on ${est.estimate_number} — ${companyName}` : `${depositPct}% deposit on ${est.estimate_number} — ${companyName}`,
   }).select().single()
 
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
@@ -132,8 +132,8 @@ export async function POST(request: NextRequest) {
                 <td style="${dvalStyle}">${est.estimate_number}</td>
               </tr>
               <tr>
-                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">Deposit rate</td>
-                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct}% of ${fmtCAD(est.total)}</td>
+                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">${depositPct === 100 ? 'Payment' : 'Deposit rate'}</td>
+                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct === 100 ? 'Full payment' : `${depositPct}% of ${fmtCAD(est.total)}`}</td>
               </tr>
             </table>
           </td></tr>
@@ -142,7 +142,10 @@ export async function POST(request: NextRequest) {
         <!-- Message -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.
+            ${depositPct === 100
+              ? `A full payment of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
+              : `Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
+            }
           </td></tr>
         </table>
 
@@ -172,7 +175,7 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: `${companyName} <noreply@useapexscale.com>`,
         to: [est.client_email],
-        subject: `Deposit Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
+        subject: `${depositPct === 100 ? 'Payment' : 'Deposit'} Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
         html,
       })
     } catch (emailError) {
