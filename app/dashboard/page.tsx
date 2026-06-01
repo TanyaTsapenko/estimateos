@@ -191,7 +191,8 @@ export default function DashboardPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    supabase.from('profiles').select('pricing_mode').eq('id', user.id).single().then(({ data: prof }) => {
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    supabase.from('profiles').select('pricing_mode').eq('id', sanitizedId).single().then(({ data: prof }) => {
       console.log('pricing_mode from DB:', (prof as any)?.pricing_mode)
       if (prof) setPricingMode((prof as any).pricing_mode || 'single')
     })
@@ -203,7 +204,7 @@ export default function DashboardPage() {
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
         .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id')
-        .eq('user_id', user.id).eq('appointment_date', today).order('appointment_time', { ascending: true })
+        .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true })
       if (appts) {
         setAppointments(appts.map((a: any) => {
           const t = a.appointment_time || ''
@@ -230,11 +231,11 @@ export default function DashboardPage() {
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned, error: estSignedError }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices, error: pendingInvoicesError }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', user.id),
-        supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
-        supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
-        supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).eq('status', 'pending').eq('invoice_type', 'standard').order('created_at', { ascending: false }).limit(5),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId),
+        supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null),
+        supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
+        supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'standard').order('created_at', { ascending: false }).limit(5),
       ])
       console.log('pending invoices:', pendingInvoices, 'error:', pendingInvoicesError)
       const { data: allInvoices } = await supabase.from('invoices').select('id, status, user_id').limit(5)
@@ -351,9 +352,10 @@ export default function DashboardPage() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const [{ data: est }, { data: prof }] = await Promise.all([
       supabase.from('estimates').select('client_name, client_email, client_address, estimate_number').eq('id', estimateId).single(),
-      supabase.from('profiles').select('company_name').eq('id', user.id).single(),
+      supabase.from('profiles').select('company_name').eq('id', sanitizedId).single(),
     ])
     if (!est) return
     const companyName = (prof as any)?.company_name || ''
