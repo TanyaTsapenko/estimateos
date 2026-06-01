@@ -185,9 +185,8 @@ export default function ContractPage() {
 
   const contractId = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
-  const depositAmt = profile?.deposit_percent
-    ? estimate.total * (profile.deposit_percent / 100)
-    : 0
+  const depositPct = urlDeposit ? parseFloat(urlDeposit) : (profile?.deposit_percent ?? 30)
+  const depositAmt = estimate.total * (depositPct / 100)
 
   const cardStyle: React.CSSProperties = {
     background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', marginBottom: 12, overflow: 'hidden',
@@ -297,7 +296,7 @@ export default function ContractPage() {
             {depositAmt > 0 && (
               <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                 <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
-                  Deposit due upon signing ({profile?.deposit_percent}%)
+                  Deposit due upon signing ({depositPct}%)
                 </span>
                 <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
               </div>
@@ -327,13 +326,16 @@ export default function ContractPage() {
                   <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
                 </div>
               )}
-              {profile?.payment_methods && profile.payment_methods.length > 0 && (
+              {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
                 <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                   <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {profile.payment_methods.map((m: string) => (
-                      <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
-                    ))}
+                    {urlPayment
+                      ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
+                      : profile!.payment_methods!.map((m: string) => (
+                          <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
+                        ))
+                    }
                   </div>
                 </div>
               )}
