@@ -2,242 +2,105 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Square, Home, Layers, LayoutGrid, Wind, MoreHorizontal } from 'lucide-react'
+import { Square, Home, Layers, Grid3x3, Wind, MoreHorizontal } from 'lucide-react'
 
-const F = 'system-ui, -apple-system, sans-serif'
-
-const inp: React.CSSProperties = {
-  width: '100%', height: 48, padding: '0 14px',
-  background: '#FFFFFF', border: '0.5px solid #E5E7EB', borderRadius: 12,
-  fontSize: 15, fontFamily: F, color: '#0A1628', outline: 'none',
-  boxSizing: 'border-box', display: 'block',
-}
-const lbl: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
-  textTransform: 'uppercase', color: '#9CA3AF',
-  display: 'block', marginBottom: 7,
-}
-
-const PROVINCES = ['AB','BC','MB','NB','NL','NS','NT','NU','ON','PE','QC','SK','YT']
-
-const NICHES: { key: string; label: string; Icon: React.ElementType }[] = [
-  { key: 'windows_doors', label: 'Windows & Doors', Icon: Square },
-  { key: 'roofing',       label: 'Roofing',          Icon: Home },
-  { key: 'siding',        label: 'Siding',            Icon: Layers },
-  { key: 'flooring',      label: 'Flooring',          Icon: LayoutGrid },
-  { key: 'hvac',          label: 'HVAC',              Icon: Wind },
-  { key: 'other',         label: 'Other',             Icon: MoreHorizontal },
+const NICHES = [
+  { id: 'windows_doors', label: 'Windows & Doors', icon: Square },
+  { id: 'roofing', label: 'Roofing', icon: Home },
+  { id: 'siding', label: 'Siding', icon: Layers },
+  { id: 'flooring', label: 'Flooring', icon: Grid3x3 },
+  { id: 'hvac', label: 'HVAC', icon: Wind },
+  { id: 'other', label: 'Other', icon: MoreHorizontal },
 ]
 
-function Logo() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="18" height="18" viewBox="0 0 120 120">
-          <g transform="translate(28 28) scale(1.0625)">
-            <path d="M32 7 L10 50 Q8 54 13 54 L24 54 L32 36 Z" fill="white" opacity="0.55"/>
-            <path d="M32 7 L54 50 Q56 54 51 54 L40 54 L32 36 Z" fill="white"/>
-          </g>
-        </svg>
-      </div>
-      <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>ApexScale</span>
-    </div>
-  )
-}
-
-function StepDots({ step }: { step: 1 | 2 }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      {[1, 2].map(n => (
-        <div key={n} style={{
-          height: 6, borderRadius: 99,
-          width: step === n ? 28 : 16,
-          background: step === n ? '#2563EB' : '#DBEAFE',
-          transition: 'width 200ms ease, background 200ms ease',
-        }} />
-      ))}
-    </div>
-  )
-}
+const PROVINCES = ['BC','AB','SK','MB','ON','QC','NS','NB','PE','NL','YT','NT','NU']
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const [step, setStep] = useState(1)
+  const [company, setCompany] = useState('')
+  const [phone, setPhone] = useState('')
+  const [province, setProvince] = useState('')
+  const [trade, setTrade] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const [step, setStep]               = useState<1 | 2>(1)
-  const [companyName, setCompanyName] = useState('')
-  const [phone, setPhone]             = useState('')
-  const [province, setProvince]       = useState('AB')
-  const [trade, setTrade]             = useState('windows_doors')
-  const [loading, setLoading]         = useState(false)
-  const [error, setError]             = useState('')
+  const inputStyle = { width: '100%', background: '#fff', border: '0.5px solid #E5E7EB', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: '#0A1628', marginBottom: 14, boxSizing: 'border-box' as const }
+  const labelStyle = { fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', textTransform: 'uppercase' as const, marginBottom: 5, display: 'block' }
 
-  function goStep2() {
-    if (!companyName.trim()) return setError('Company name is required')
-    setError('')
-    setStep(2)
-  }
-
-  async function finish() {
-    setError('')
+  async function handleFinish() {
+    if (!trade) { setError('Please select your trade'); return }
     setLoading(true)
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth'); return }
-    const userId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-
-    const { error: e } = await supabase.from('profiles').upsert({
-      id:           userId,
-      company_name: companyName.trim(),
-      phone:        phone.trim() || null,
-      province:     province,
-      trade:        trade,
-      updated_at:   new Date().toISOString(),
+    const userId = user?.id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    const { error: err } = await supabase.from('profiles').upsert({
+      id: userId,
+      company_name: company,
+      phone,
+      province,
+      trade,
+      updated_at: new Date().toISOString()
     }, { onConflict: 'id' })
-
-    if (e) { setError(e.message); setLoading(false); return }
+    setLoading(false)
+    if (err) { setError(err.message); return }
     router.push('/onboarding/welcome')
   }
 
-  const chevron = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239CA3AF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>")`
+  const dots = [1, 2]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: F, WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
-
-      {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <div style={{ background: '#FFFFFF', padding: '48px 24px 36px', position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', width: 300, height: 300, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.07) 0%, transparent 70%)',
-          filter: 'blur(48px)', top: -60, right: -60, pointerEvents: 'none',
-        }} />
-        <div style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-            <Logo />
-            <StepDots step={step} />
+    <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif' }}>
+      {/* HERO */}
+      <div style={{ background: '#fff', padding: '40px 24px 28px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ width: 220, height: 220, borderRadius: '50%', background: '#2563EB', opacity: 0.07, position: 'absolute', top: -80, right: -60, pointerEvents: 'none' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+          <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="18" height="18" viewBox="0 0 120 120"><g transform="translate(28 28) scale(1.0625)"><path d="M32 7 L10 50 Q8 54 13 54 L24 54 L32 36 Z" fill="white" opacity="0.55"/><path d="M32 7 L54 50 Q56 54 51 54 L40 54 L32 36 Z" fill="white"/></g></svg>
           </div>
-
-          {step === 1 ? (
-            <>
-              <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>Step 1 of 2</div>
-              <h1 style={{ fontSize: 30, fontWeight: 800, color: '#0A1628', letterSpacing: '-0.8px', lineHeight: 1.1, margin: 0 }}>
-                Tell us about your <span style={{ color: '#2563EB' }}>company.</span>
-              </h1>
-            </>
-          ) : (
-            <>
-              <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 8 }}>Step 2 of 2</div>
-              <h1 style={{ fontSize: 30, fontWeight: 800, color: '#0A1628', letterSpacing: '-0.8px', lineHeight: 1.1, margin: 0 }}>
-                What&apos;s your <span style={{ color: '#2563EB' }}>trade?</span>
-              </h1>
-            </>
-          )}
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>ApexScale</span>
+        </div>
+        {/* Step dots */}
+        <div style={{ display: 'flex', gap: 5, marginBottom: 20 }}>
+          {dots.map(d => (
+            <div key={d} style={{ height: 3, borderRadius: 2, background: d === step ? '#2563EB' : '#DBEAFE', width: d === step ? 28 : 16, transition: 'all 0.3s' }} />
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Step {step} of 2</div>
+        <div style={{ fontSize: 26, fontWeight: 800, color: '#0A1628', lineHeight: 1.1, letterSpacing: '-0.6px' }}>
+          {step === 1 ? <>Tell us about your <span style={{ color: '#2563EB' }}>company.</span></> : <>What&apos;s your <span style={{ color: '#2563EB' }}>trade?</span></>}
         </div>
       </div>
-
-      {/* ── Form ──────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, background: '#F8F9FB', padding: '32px 24px 40px' }}>
-
-        {step === 1 && (
+      {/* BODY */}
+      <div style={{ background: '#F8F9FB', padding: 24 }}>
+        {step === 1 ? (
           <>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Company name</label>
-              <input
-                type="text" value={companyName} placeholder="Northview Windows"
-                onChange={e => setCompanyName(e.target.value)}
-                style={inp}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label style={lbl}>Phone</label>
-              <input
-                type="tel" value={phone} placeholder="+1 (403) 555-0000"
-                onChange={e => setPhone(e.target.value)}
-                style={inp}
-              />
-            </div>
-            <div style={{ marginBottom: 28 }}>
-              <label style={lbl}>Province</label>
-              <select
-                value={province}
-                onChange={e => setProvince(e.target.value)}
-                style={{
-                  ...inp, appearance: 'none', WebkitAppearance: 'none',
-                  backgroundImage: chevron, backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 12px center', backgroundSize: '16px',
-                  paddingRight: 36, cursor: 'pointer',
-                }}
-              >
-                {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-
-            {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{error}</p>}
-
-            <button
-              onClick={goStep2}
-              style={{
-                width: '100%', height: 52, borderRadius: 12, border: 'none',
-                background: '#2563EB', color: '#fff', fontSize: 15, fontWeight: 700,
-                cursor: 'pointer', fontFamily: F, boxShadow: '0 4px 14px rgba(37,99,235,0.28)',
-              }}
-            >
-              Continue →
+            <label style={labelStyle}>Company name</label>
+            <input style={inputStyle} value={company} onChange={e => setCompany(e.target.value)} placeholder="Northview Windows & Doors" />
+            <label style={labelStyle}>Phone number</label>
+            <input style={inputStyle} type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(403) 555-0100" />
+            <label style={labelStyle}>Province</label>
+            <select style={{ ...inputStyle, appearance: 'none' }} value={province} onChange={e => setProvince(e.target.value)}>
+              <option value="">Select province</option>
+              {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <button onClick={() => setStep(2)} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
+              Continue
             </button>
           </>
-        )}
-
-        {step === 2 && (
+        ) : (
           <>
-            {/* Niche grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 28 }}>
-              {NICHES.map(({ key, label, Icon }) => {
-                const active = trade === key
-                return (
-                  <button
-                    key={key}
-                    onClick={() => setTrade(key)}
-                    style={{
-                      background: active ? '#EFF6FF' : '#FFFFFF',
-                      border: `0.5px solid ${active ? '#2563EB' : '#E5E7EB'}`,
-                      borderRadius: 14, padding: '16px 14px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      gap: 8, cursor: 'pointer', fontFamily: F,
-                      transition: 'border-color 150ms, background 150ms',
-                    }}
-                  >
-                    <Icon size={22} color={active ? '#2563EB' : '#9CA3AF'} strokeWidth={1.7} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: active ? '#2563EB' : '#0A1628' }}>
-                      {label}
-                    </span>
-                  </button>
-                )
-              })}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
+              {NICHES.map(({ id, label, icon: Icon }) => (
+                <div key={id} onClick={() => setTrade(id)} style={{ background: trade === id ? '#EFF6FF' : '#fff', border: `0.5px solid ${trade === id ? '#2563EB' : '#E5E7EB'}`, borderRadius: 14, padding: '14px 10px', textAlign: 'center', cursor: 'pointer' }}>
+                  <Icon size={22} color={trade === id ? '#2563EB' : '#9CA3AF'} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginTop: 6 }}>{label}</div>
+                </div>
+              ))}
             </div>
-
-            {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{error}</p>}
-
-            <button
-              onClick={finish} disabled={loading}
-              style={{
-                width: '100%', height: 52, borderRadius: 12, border: 'none',
-                background: loading ? '#93C5FD' : '#2563EB', color: '#fff',
-                fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-                fontFamily: F, boxShadow: '0 4px 14px rgba(37,99,235,0.28)',
-              }}
-            >
-              {loading ? 'Setting up…' : 'Finish setup →'}
-            </button>
-
-            <button
-              onClick={() => setStep(1)}
-              style={{
-                width: '100%', height: 44, borderRadius: 12,
-                background: 'transparent', border: 'none',
-                color: '#6B7280', fontSize: 14, fontWeight: 500,
-                cursor: 'pointer', fontFamily: F, marginTop: 8,
-              }}
-            >
-              ← Back
+            {error && <div style={{ color: '#EF4444', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+            <button onClick={handleFinish} disabled={loading} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Saving...' : 'Finish setup'}
             </button>
           </>
         )}
