@@ -165,6 +165,7 @@ export default function PriceListPage() {
         .neq('opening_type', '_sizes')
         .order('category', { ascending: true, nullsFirst: false })
         .order('custom_label', { ascending: true, nullsFirst: false })
+      console.log('price list userId:', sanitizedId, 'data length:', data?.length)
       if (data && data.length === 0) {
         const seeds = Object.entries(OPENING_TYPES).map(([key, val]) => ({
           user_id:      sanitizedId,
