@@ -12,15 +12,16 @@ interface Estimate {
   tier: string | null; created_at: string
 }
 
-const FILTERS = ['All', 'Draft', 'Sent', 'Accepted', 'Invoiced']
+const FILTERS = ['All', 'Draft', 'Sent', 'Accepted', 'Signed', 'Invoiced']
 
 const SC: Record<string, { text: string; bg: string }> = {
   draft:    { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
   sent:     { text: '#2563EB', bg: 'rgba(37,99,235,.1)'   },
+  opened:   { text: '#7C3AED', bg: '#EDE9FE'               },
   signed:   { text: '#059669', bg: 'rgba(5,150,105,.1)'   },
   declined: { text: '#DC2626', bg: 'rgba(220,38,38,.1)'   },
-  expired:  { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
   invoiced: { text: '#7C3AED', bg: 'rgba(124,58,237,.1)'  },
+  expired:  { text: '#92400E', bg: '#FEF3C7'               },
 }
 
 function StatBox({ label, value }: { label: string; value: string | number }) {
@@ -64,7 +65,8 @@ export default function EstimatesPage() {
   }, [])
 
   const visible = estimates.filter(e => {
-    const matchFilter = filter === 'All' || (filter === 'Accepted' ? e.status === 'signed' : e.status === filter.toLowerCase())
+    const matchFilter = filter === 'All'
+      || (filter === 'Accepted' || filter === 'Signed' ? e.status === 'signed' : e.status === filter.toLowerCase())
     const matchSearch = !search ||
       (e.client_name || '').toLowerCase().includes(search.toLowerCase()) ||
       e.estimate_number.toLowerCase().includes(search.toLowerCase())

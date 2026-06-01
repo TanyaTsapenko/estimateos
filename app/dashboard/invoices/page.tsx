@@ -65,6 +65,10 @@ export default function InvoicesPage() {
     setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
   }
 
+  const today = new Date().toISOString().slice(0, 10)
+  const displayStatus = (inv: Invoice) =>
+    inv.status === 'pending' && inv.due_date && inv.due_date < today ? 'overdue' : inv.status
+
   const totalPending = invoices.filter(i => i.status === 'pending').reduce((s, i) => s + i.amount, 0)
   const totalPaid    = invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0)
 
@@ -147,7 +151,8 @@ export default function InvoicesPage() {
                 ))}
               </div>
               {invoices.map((inv, idx) => {
-                const sc = SC[inv.status] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
+                const ds = displayStatus(inv)
+                const sc = SC[ds] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
                 return (
                   <div
                     key={inv.id}
@@ -200,7 +205,7 @@ export default function InvoicesPage() {
                         color: sc.text, background: sc.bg,
                         borderRadius: 4, padding: '3px 8px',
                       }}>
-                        {inv.status.toUpperCase()}
+                        {ds.toUpperCase()}
                       </span>
                     </span>
                     <span style={{ display: 'flex', gap: 6 }}>
@@ -225,7 +230,8 @@ export default function InvoicesPage() {
             {/* ── MOBILE CARDS ── */}
             <div className="mobile-only">
               {invoices.map(inv => {
-                const sc = SC[inv.status] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
+                const ds = displayStatus(inv)
+                const sc = SC[ds] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
                 return (
                   <div
                     key={inv.id}
@@ -263,7 +269,7 @@ export default function InvoicesPage() {
                         color: sc.text, background: sc.bg,
                         borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap', marginLeft: 8,
                       }}>
-                        {inv.status.toUpperCase()}
+                        {ds.toUpperCase()}
                       </span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
