@@ -323,6 +323,12 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  async function handleMarkPaid(invoiceId: string) {
+    const supabase = createClient()
+    await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+    setAttention(prev => prev.filter(i => i.id !== invoiceId))
+  }
+
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
   const doneCount  = appointments.filter(a => a.pillStatus === 'DONE').length
   const nextAppt   = appointments.find(a => a.pillStatus !== 'DONE') ?? null
@@ -590,9 +596,9 @@ export default function DashboardPage() {
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                     </div>
                     <button
-                      onClick={async () => {
+                      onClick={() => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                        else if (item.actionType === 'mark_paid') { await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', item.id); setAttention(prev => prev.filter(a => a.id !== item.id)) }
+                        else if (item.actionType === 'mark_paid') handleMarkPaid(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
                       style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
