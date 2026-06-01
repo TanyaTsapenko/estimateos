@@ -162,37 +162,6 @@ export default function EstimateDetailPage() {
     showToast('📋 Client link copied!')
   }
 
-  async function handleSignOnSpot() {
-    if (!estimate || !profile) return
-    setLoading(true)
-    try {
-      const { data: contract, error } = await supabase
-        .from('contracts')
-        .insert({
-          estimate_id: id,
-          profile_id: profile.id,
-          status: 'signing',
-          contract_terms_snapshot: profile.contract_terms,
-          contractor_signature_url: profile.signature_url,
-          company_name: profile.company_name || '',
-          company_email: profile.email || '',
-          company_phone: profile.phone || '',
-        })
-        .select()
-        .single()
-
-      if (error || !contract) {
-        alert('Error: ' + error?.message)
-        return
-      }
-
-      router.push(`/sign/contract/${contract.id}`)
-    } catch (e: any) {
-      alert('Error: ' + e.message)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   // ── LOADING ──────────────────────────────────────────
   if (loading) return (
@@ -455,14 +424,14 @@ export default function EstimateDetailPage() {
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Sign contract with client</div>
                     </div>
                   </div>
-                  <button onClick={handleSignOnSpot}
+                  <button onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=sign`)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A0E1A', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0E1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
                     </svg>
                     Sign on the spot
                   </button>
-                  <button onClick={() => router.push(`/dashboard/estimates/${id}/contract`)}
+                  <button onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=send`)}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>

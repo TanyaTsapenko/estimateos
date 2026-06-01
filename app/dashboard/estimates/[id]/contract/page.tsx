@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 
@@ -71,9 +71,13 @@ function PenIcon() {
 }
 
 export default function ContractPage() {
-  const router   = useRouter()
-  const { id }   = useParams<{ id: string }>()
-  const supabase = createClient()
+  const router       = useRouter()
+  const { id }       = useParams<{ id: string }>()
+  const searchParams = useSearchParams()
+  const trigger      = searchParams.get('trigger') || 'send'
+  const urlPayment   = searchParams.get('payment_method')
+  const urlDeposit   = searchParams.get('deposit_percent')
+  const supabase     = createClient()
 
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
@@ -118,25 +122,31 @@ export default function ContractPage() {
     </div>
   )
 
-  async function handleSend() {
-    if (!estimate?.client_email) { alert('No client email on this estimate'); return }
+  async function handleAction() {
     setSending(true)
-    console.log('[handleSend] profile:', profile)
-    console.log('[handleSend] profile?.id:', profile?.id)
-    const { data: { session } } = await supabase.auth.getSession()
-    console.log('[handleSend] session user:', session?.user?.id)
     try {
+      // Persist payment details to the estimate
+      const estimateUpdate: Record<string, unknown> = {}
+      if (urlPayment)  estimateUpdate.payment_method  = urlPayment
+      if (urlDeposit)  estimateUpdate.deposit_percent = parseFloat(urlDeposit)
+      if (Object.keys(estimateUpdate).length > 0) {
+        await supabase.from('estimates').update(estimateUpdate).eq('id', id)
+      }
+
+      const contractStatus = trigger === 'sign' ? 'signing' : 'sent'
       const { data: contract, error } = await supabase
         .from('contracts')
         .insert({
           estimate_id: id,
           profile_id: profile?.id,
-          status: 'sent',
+          status: contractStatus,
           contract_terms_snapshot: profile?.contract_terms,
           contractor_signature_url: profile?.signature_url,
           company_name: profile?.company_name || '',
           company_email: profile?.email || '',
           company_phone: profile?.phone || '',
+          ...(urlDeposit ? { deposit_percent: parseFloat(urlDeposit) } : {}),
+          ...(urlPayment ? { payment_method: urlPayment } : {}),
         })
         .select()
         .single()
@@ -146,6 +156,13 @@ export default function ContractPage() {
         return
       }
 
+      if (trigger === 'sign') {
+        router.push(`/sign/contract/${contract.id}`)
+        return
+      }
+
+      // trigger === 'send'
+      if (!estimate?.client_email) { alert('No client email on this estimate'); return }
       await fetch('/api/send-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -157,7 +174,6 @@ export default function ContractPage() {
           companyName: profile?.company_name || 'Your Contractor',
         }),
       })
-
       alert('Contract sent to ' + estimate.client_email)
       router.push(`/dashboard/estimates/${id}`)
     } catch (e: any) {
@@ -385,9 +401,9 @@ export default function ContractPage() {
         </div>
 
         <div style={{ padding: '16px 0 40px' }}>
-          <button onClick={handleSend} disabled={sending}
+          <button onClick={handleAction} disabled={sending}
             style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1 }}>
-            {sending ? 'Sending…' : 'Send to client →'}
+            {sending ? (trigger === 'sign' ? 'Opening…' : 'Sending…') : trigger === 'sign' ? 'Sign now →' : 'Send to client →'}
           </button>
         </div>
 
