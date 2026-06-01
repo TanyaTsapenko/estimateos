@@ -294,12 +294,22 @@ export default function ContractPage() {
             </div>
 
             {depositAmt > 0 && (
-              <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
-                  Deposit due upon signing ({depositPct}%)
-                </span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
-              </div>
+              <>
+                <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                  <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
+                    Deposit due upon signing ({depositPct}%)
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8F9FC', borderRadius: 10, marginTop: 8 }}>
+                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+                    Balance on completion ({100 - depositPct}%)
+                  </span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>
+                    {fmtCAD(estimate.total - depositAmt)}
+                  </span>
+                </div>
+              </>
             )}
           </div>
         </div>
