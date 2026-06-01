@@ -1168,7 +1168,7 @@ export default function AppointmentsPage() {
             >
               <Plus size={22} color="#2563EB" strokeWidth={1.5} />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>
               No appointments yet
             </div>
             <div style={{ fontSize: 12, color: '#94A3B8' }}>
