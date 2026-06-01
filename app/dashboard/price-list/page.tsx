@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import BottomNav from '@/components/BottomNav'
 import { fmtCAD } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
+import { ClipboardList } from 'lucide-react'
 
 interface Tier {
   display_name: string
@@ -490,7 +491,9 @@ export default function PriceListPage() {
 
           {!loading && !hasItems && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
+              <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <ClipboardList size={22} color="#2563EB" strokeWidth={1.5} />
+              </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>No items yet</div>
               <div style={{ fontSize: 13, color: '#64748B', marginBottom: 24, lineHeight: 1.6 }}>
                 Add the windows, doors, and other products you install. They'll appear in your estimate form.
