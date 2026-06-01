@@ -386,17 +386,17 @@ export default function EstimateDetailPage() {
             {(isSigned || isInvoiced) && (() => {
               const depositPending = depositInvoice?.status === 'pending'
               return (
-              <div style={{ background: depositPending ? '#FEF3C7' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '1px solid #F59E0B' : 'none' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: depositPending ? '#92400E' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
+              <div style={{ background: depositPending ? '#fff' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '0.5px solid #E2E8F0' : 'none' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: depositPending ? '0.1em' : '.12em', textTransform: 'uppercase', color: depositPending ? '#94A3B8' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
                   {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#92400E' : '#fff', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#0A1628' : '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} accepted this estimate
                 </div>
                 {depositPending ? (
                   <button onClick={() => router.push('/dashboard/invoices')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '12px 16px', background: '#F97316', color: '#fff', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Clock size={14} color="#fff" />
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '12px 16px', background: '#EEF3FF', color: '#2563EB', border: '1.5px solid #BFDBFE', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Clock size={14} color="#2563EB" />
                     Deposit pending — {fmtCAD(depositInvoice!.amount)}
                   </button>
                 ) : (
