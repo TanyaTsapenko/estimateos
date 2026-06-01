@@ -97,8 +97,9 @@ export async function GET(request: NextRequest) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;background:#F5F6F8;color:#0A1628;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,.section,.block{page-break-inside:avoid !important;break-inside:avoid !important}
 
   /* ── Header ── */
   .hdr{background:linear-gradient(135deg,#080E1C 0%,#0E1F3D 50%,#0C2847 100%);padding:28px 24px 48px}
@@ -273,7 +274,7 @@ export async function GET(request: NextRequest) {
   </div>
 
   <!-- Payment schedule -->
-  <div class="card" style="border:1px solid #BFDBFE">
+  <div class="card" style="border:1px solid #BFDBFE;page-break-inside:avoid;break-inside:avoid">
     <div class="slbl" style="color:#2563EB">Payment Schedule</div>
     <div class="drow">
       <span class="dkey">Deposit on signing (${depositPct}%)</span>
@@ -306,7 +307,7 @@ export async function GET(request: NextRequest) {
 
   <!-- Signed — show both signatures -->
   ${est.status === 'signed' ? `
-  <div class="card" style="border:1.5px solid #BBF7D0">
+  <div class="card" style="border:1.5px solid #BBF7D0;page-break-inside:avoid;break-inside:avoid">
     <div class="slbl" style="color:#059669">Signed &amp; Accepted</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:4px">
       <div>
