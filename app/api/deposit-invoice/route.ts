@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent')
     .eq('id', est.user_id).single()
 
-  const depositPct = (prof as any)?.deposit_percent ?? 30
-  const depositAmount = Math.round(est.total * depositPct) / 100
+  const depositPct = est.deposit_percent ?? (prof as any)?.deposit_percent ?? 30
+  const depositAmount = Math.round(est.total * depositPct / 100)
 
   const dueDate = new Date()
   dueDate.setDate(dueDate.getDate() + 14)

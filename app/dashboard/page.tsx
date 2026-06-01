@@ -234,7 +234,7 @@ export default function DashboardPage() {
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'standard').order('created_at', { ascending: false }).limit(5),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(5),
       ])
       const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       let clientNames: Record<string, string> = {}
