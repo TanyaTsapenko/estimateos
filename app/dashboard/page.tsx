@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon } from 'lucide-react'
 import BellButton from '@/components/BellButton'
 
 interface Appointment {
@@ -19,7 +19,7 @@ interface Metrics {
 }
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
-  id: string; actionType: 'reminder' | 'invoice'; address?: string
+  id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
 }
 interface ActivityItem {
   dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
@@ -223,11 +223,12 @@ export default function DashboardPage() {
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned, error: estSignedError }, { data: estThisMonth }, { data: estLastMonth }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned, error: estSignedError }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,estimate_number,client_name').eq('user_id', user.id),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
+        supabase.from('invoices').select('id,invoice_number,client_name,amount,invoice_type,estimate_id').eq('user_id', user.id).eq('status', 'pending'),
       ])
       if (estSignedError) console.error('[dashboard] estSigned query error:', estSignedError)
       console.log('[dashboard] estSigned count:', estSigned?.length ?? 0, 'rows:', JSON.stringify(estSigned?.map((e: any) => ({ id: e.id, status: e.status, invoice_id: e.invoice_id, estimate_number: e.estimate_number }))))
@@ -265,6 +266,18 @@ export default function DashboardPage() {
             title: e.client_name,
             desc: `Contract signed · ${e.estimate_number} · Ready to invoice`,
             cta: 'Send final invoice', id: e.id, actionType: 'invoice',
+          })
+        })
+      }
+      // Pending invoices (deposit unpaid)
+      if (pendingInvoices?.length) {
+        pendingInvoices.forEach((inv: any) => {
+          const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
+          attItems.push({
+            icon: ClockIcon, color: '#D97706',
+            title: inv.client_name || 'Client',
+            desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
+            cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
           })
         })
       }
@@ -579,6 +592,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
+                        else if (item.actionType === 'mark_paid') { await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', item.id); setAttention(prev => prev.filter(a => a.id !== item.id)) }
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
                       style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
