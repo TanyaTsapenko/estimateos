@@ -156,11 +156,12 @@ export default function PriceListPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-      setUserId(user.id)
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      setUserId(sanitizedId)
       const { data } = await supabase
         .from('price_lists')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', sanitizedId)
         .neq('opening_type', '_sizes')
         .order('category', { ascending: true, nullsFirst: false })
         .order('custom_label', { ascending: true, nullsFirst: false })
