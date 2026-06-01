@@ -100,12 +100,7 @@ export default function PublicSignPage() {
       link:    `/dashboard/estimates/${estimate.id}`,
     })
 
-    await Promise.allSettled([
-      estimate.client_email
-        ? fetch('/api/send-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id, type: 'signed' }) })
-        : Promise.resolve(),
-      fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) }),
-    ])
+    await fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })
 
     setDone(true)
     setSaving(false)
