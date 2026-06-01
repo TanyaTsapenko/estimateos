@@ -225,19 +225,6 @@ export default function ContractPage() {
         setClientSignatureUrl(result.signatureUrl)
 
         await Promise.allSettled([
-          fetch('/api/send-contract-signed', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clientEmail: estimate?.client_email,
-              clientName: estimate?.client_name,
-              companyName: profile?.company_name || 'Your Contractor',
-              companyPhone: profile?.phone || '',
-              companyEmail: profile?.email || '',
-              contractId: contract.id,
-              total: estimate?.total,
-            }),
-          }),
           fetch('/api/notify-contractor-signed', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
