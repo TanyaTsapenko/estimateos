@@ -289,6 +289,16 @@ export default function SignContractPage() {
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
                 <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
               </div>
+              <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -327,17 +337,6 @@ export default function SignContractPage() {
                     </div>
                   </div>
                 )}
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#8892b0', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Payment Schedule</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                    <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                    <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
-                  </div>
-                </div>
                 {profile?.customer_responsibilities && (
                   <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
@@ -625,6 +624,16 @@ export default function SignContractPage() {
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
                 <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
               </div>
+              <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -668,17 +677,6 @@ export default function SignContractPage() {
                     </div>
                   </div>
                 )}
-                <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#8892b0', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Payment Schedule</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                    <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                    <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
-                  </div>
-                </div>
                 {profile?.customer_responsibilities && (
                   <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
