@@ -175,7 +175,8 @@ export default function PriceListPage() {
           labour_price: val.lab,
           category:     key.startsWith('window') ? 'Windows' : 'Doors',
         }))
-        await supabase.from('price_lists').insert(seeds)
+        const { error: seedError } = await supabase.from('price_lists').insert(seeds)
+        console.log('seed error:', seedError)
         const { data: refetched } = await supabase
           .from('price_lists')
           .select('*')
