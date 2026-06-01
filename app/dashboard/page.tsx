@@ -228,12 +228,12 @@ export default function DashboardPage() {
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).eq('status', 'pending'),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).eq('status', 'pending').eq('invoice_type', 'deposit'),
       ])
       console.log('pending invoices:', pendingInvoices, 'error:', pendingInvoicesError)
       const { data: allInvoices } = await supabase.from('invoices').select('id, status, user_id').limit(5)
       console.log('all invoices sample:', allInvoices)
-      const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id).filter(Boolean)
+      const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       let clientNames: Record<string, string> = {}
       if (estimateIds.length) {
         const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', estimateIds)
