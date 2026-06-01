@@ -231,6 +231,8 @@ export default function DashboardPage() {
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,estimates(client_name)').eq('user_id', user.id).eq('status', 'pending'),
       ])
       console.log('pending invoices:', pendingInvoices, 'error:', pendingInvoicesError)
+      const { data: allInvoices } = await supabase.from('invoices').select('id, status, user_id').limit(5)
+      console.log('all invoices sample:', allInvoices)
       if (estSignedError) console.error('[dashboard] estSigned query error:', estSignedError)
       console.log('[dashboard] estSigned count:', estSigned?.length ?? 0, 'rows:', JSON.stringify(estSigned?.map((e: any) => ({ id: e.id, status: e.status, invoice_id: e.invoice_id, estimate_number: e.estimate_number }))))
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
