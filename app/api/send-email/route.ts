@@ -6,7 +6,7 @@ import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
-  const { estimateId: rawEstimateId, invoiceId, type, sendMode } = await request.json()
+  const { estimateId: rawEstimateId, invoiceId, type, sendMode, message: customMessage } = await request.json()
 
   const supabase = createServiceClient()
   let estimateId = rawEstimateId
@@ -276,6 +276,39 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
         </table>
 
         <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
+
+      </td></tr>
+`)
+
+  // ── REMINDER ─────────────────────────────────────────────────────────────────
+  } else if (type === 'reminder') {
+    subject = `Following up on your estimate, ${est.client_name || 'Client'}`
+    const msgLines = (customMessage || '').split('\n')
+    const msgHtml = msgLines.map((line: string) =>
+      `<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif">${line || '&nbsp;'}</p>`
+    ).join('')
+    html = outerWrap(`
+${hdrBlock('Following up', est.client_name || 'Client',
+  pill(est.estimate_number) + pill('Reminder')
+)}
+      <!-- BODY -->
+      <tr><td style="${bodyStyle}">
+
+        <!-- Message -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:20px">
+            ${msgHtml}
+          </td></tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+          <tr><td align="center" style="padding:8px 0">
+            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
+          </td></tr>
+        </table>
+
+        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${(prof as any)?.phone ? ` at ${(prof as any).phone}` : ''}</p>
 
       </td></tr>
 `)

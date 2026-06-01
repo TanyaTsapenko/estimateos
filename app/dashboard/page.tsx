@@ -179,6 +179,12 @@ export default function DashboardPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [showDiscover, setShowDiscover] = useState(true)
   const [pricingMode, setPricingMode] = useState<string | null>(null)
+  const [dashToast, setDashToast] = useState('')
+  const [reminderSending, setReminderSending] = useState(false)
+  const [reminderModal, setReminderModal] = useState<{
+    estimateId: string; estimateNumber: string; clientName: string
+    clientEmail: string; address: string; message: string
+  } | null>(null)
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -339,6 +345,46 @@ export default function DashboardPage() {
     const supabase = createClient()
     await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
     setAttention(prev => prev.filter(i => i.id !== invoiceId))
+  }
+
+  async function handleOpenReminder(estimateId: string) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const [{ data: est }, { data: prof }] = await Promise.all([
+      supabase.from('estimates').select('client_name, client_email, client_address, estimate_number').eq('id', estimateId).single(),
+      supabase.from('profiles').select('company_name').eq('id', user.id).single(),
+    ])
+    if (!est) return
+    const companyName = (prof as any)?.company_name || ''
+    const address = est.client_address || ''
+    const msg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
+    setReminderModal({
+      estimateId,
+      estimateNumber: est.estimate_number,
+      clientName: est.client_name || 'Client',
+      clientEmail: est.client_email || '',
+      address,
+      message: msg,
+    })
+  }
+
+  async function handleSendReminder() {
+    if (!reminderModal) return
+    setReminderSending(true)
+    try {
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: reminderModal.estimateId, type: 'reminder', message: reminderModal.message }),
+      })
+      setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
+      setReminderModal(null)
+      setDashToast('Reminder sent!')
+      setTimeout(() => setDashToast(''), 2500)
+    } finally {
+      setReminderSending(false)
+    }
   }
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
@@ -611,6 +657,7 @@ export default function DashboardPage() {
                       onClick={() => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
                         else if (item.actionType === 'mark_paid') handleMarkPaid(item.id)
+                        else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
                       style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -691,6 +738,8 @@ export default function DashboardPage() {
                   <button
                     onClick={() => {
                       if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
+                      else if (item.actionType === 'mark_paid') handleMarkPaid(item.id)
+                      else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                       else router.push(`/dashboard/estimates/${item.id}`)
                     }}
                     style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -742,6 +791,106 @@ export default function DashboardPage() {
 
           </div>
         )}
+
+      {/* ── REMINDER MODAL ── */}
+      {reminderModal && (
+        <div
+          onClick={() => setReminderModal(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'flex-end',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 560, margin: '0 auto',
+              background: '#fff', borderRadius: '24px 24px 0 0',
+              padding: '12px 20px calc(env(safe-area-inset-bottom) + 24px)',
+              fontFamily: '"Inter", system-ui, sans-serif',
+            }}
+          >
+            {/* Handle bar */}
+            <div style={{ width: 36, height: 4, borderRadius: 99, background: '#E2E8F0', margin: '0 auto 20px' }} />
+
+            {/* Title */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>Send Reminder</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>
+                {reminderModal.estimateNumber} · {reminderModal.clientName}
+              </div>
+            </div>
+
+            {/* TO field */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>TO</div>
+              <div style={{
+                background: '#F8FAFC', border: '1.5px solid #E5E7EB', borderRadius: 10,
+                padding: '11px 14px', fontSize: 14, color: '#475569',
+              }}>
+                {reminderModal.clientEmail || '(no email on file)'}
+              </div>
+            </div>
+
+            {/* Message */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>MESSAGE</div>
+              <textarea
+                value={reminderModal.message}
+                onChange={e => setReminderModal(m => m ? { ...m, message: e.target.value } : m)}
+                rows={6}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  border: '1.5px solid #E5E7EB', borderRadius: 10,
+                  padding: '11px 14px', fontSize: 14, lineHeight: 1.55,
+                  fontFamily: '"Inter", system-ui, sans-serif', color: '#0A1628',
+                  background: '#fff', resize: 'vertical', outline: 'none',
+                }}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setReminderModal(null)}
+                style={{
+                  flex: 1, padding: '13px 0', borderRadius: 12, fontSize: 15, fontWeight: 600,
+                  background: '#fff', border: '1.5px solid #E5E7EB', color: '#64748B',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendReminder}
+                disabled={reminderSending}
+                style={{
+                  flex: 1, padding: '13px 0', borderRadius: 12, fontSize: 15, fontWeight: 700,
+                  background: reminderSending ? '#93C5FD' : '#2563EB', color: '#fff',
+                  border: 'none', cursor: reminderSending ? 'default' : 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                {reminderSending ? 'Sending…' : 'Send Reminder'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TOAST ── */}
+      {dashToast && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(env(safe-area-inset-bottom) + 90px)', left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#0A1628', color: '#fff', borderRadius: 99,
+          padding: '10px 20px', fontSize: 13, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.18)', zIndex: 200,
+          whiteSpace: 'nowrap',
+        }}>
+          {dashToast}
+        </div>
+      )}
 
       </main>
     </div>
