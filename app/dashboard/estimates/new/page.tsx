@@ -20,13 +20,17 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   customPrices?: CustomPrices
 }) {
   const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
-  const searchRef = useRef<HTMLInputElement>(null)
-
+  const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (open) { setSearch('') }
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
+  // Build a flat list of all items, grouped by category
   const allItems: Array<{ key: string; name: string; price: number; category: string; is_tiered?: boolean }> = []
   Object.entries(OPENING_TYPES).forEach(([k, v]) => {
     const cat = k.startsWith('window_') ? 'Windows' : k.startsWith('door_') ? 'Doors' : 'Other'
@@ -41,11 +45,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
       }
     })
   }
-
-  const filtered = search.trim()
-    ? allItems.filter(i => i.name.toLowerCase().includes(search.toLowerCase()))
-    : allItems
-  const grouped = filtered.reduce<Record<string, typeof allItems>>((acc, item) => {
+  const grouped = allItems.reduce<Record<string, typeof allItems>>((acc, item) => {
     if (!acc[item.category]) acc[item.category] = []
     acc[item.category].push(item)
     return acc
@@ -53,119 +53,68 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
 
   const selectedName = OPENING_TYPES[value]?.name || customOpeningTypes?.[value]?.label || value
 
-  const F = 'inherit'
-
   return (
-    <>
+    <div ref={ref} style={{ position: 'relative' }}>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen(o => !o)}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 8,
           background: 'var(--surface)', border: '1.5px solid var(--border)',
-          borderRadius: 8, padding: '9px 10px', cursor: 'pointer', fontFamily: F,
+          borderRadius: 8, padding: '9px 10px', cursor: 'pointer', fontFamily: 'inherit',
           fontSize: 13, color: 'var(--jet)', textAlign: 'left',
         }}
       >
         <span style={{ flex: 1 }}>{selectedName}</span>
         <span style={{ fontSize: 10, color: '#94A3B8' }}>▾</span>
       </button>
-
       {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, zIndex: 1000,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: '20px 20px 0 0',
-              maxHeight: '60vh',
-              display: 'flex', flexDirection: 'column',
-              fontFamily: '"Inter", system-ui, sans-serif',
-            }}
-          >
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 16px 12px' }}>
-              <span style={{ fontSize: 17, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.2px' }}>Select type</span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                style={{ background: '#F1F5F9', border: 'none', borderRadius: 99, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
-              </button>
-            </div>
-
-            {/* Search */}
-            <div style={{ padding: '0 16px 12px', position: 'relative' }}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ position: 'absolute', left: 28, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input
-                ref={searchRef}
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search…"
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  border: '1.5px solid #E5E7EB', borderRadius: 10,
-                  padding: '10px 12px 10px 36px',
-                  fontSize: 14, fontFamily: F, color: '#0A1628',
-                  background: '#F8FAFC', outline: 'none',
-                }}
-              />
-            </div>
-
-            {/* List */}
-            <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 20 }}>
-              {Object.keys(grouped).length === 0 && (
-                <div style={{ textAlign: 'center', padding: '32px 16px', fontSize: 13, color: '#94A3B8' }}>No results</div>
-              )}
-              {Object.entries(grouped).map(([category, catItems]) => (
-                <div key={category}>
-                  <div style={{ padding: '8px 16px 4px', fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#94A3B8' }}>
-                    {category}
-                  </div>
-                  {catItems.map(item => {
-                    const selected = item.key === value
-                    return (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => { onChange(item.key); setOpen(false) }}
-                        style={{
-                          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                          padding: '12px 16px', border: 'none',
-                          background: selected ? '#EEF3FF' : '#fff',
-                          cursor: 'pointer', fontFamily: F, textAlign: 'left',
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, opacity: selected ? 1 : 0 }}
-                          stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round">
-                          <polyline points="2 8 6 12 14 4"/>
-                        </svg>
-                        <span style={{ flex: 1, fontSize: 14, color: selected ? '#1D4ED8' : '#0A1628', fontWeight: selected ? 600 : 400 }}>{item.name}</span>
-                        <span style={{ fontSize: 13, color: item.is_tiered ? '#3B6CFF' : '#64748B', fontWeight: 600, flexShrink: 0 }}>
-                          {item.is_tiered ? '3 Tiers' : fmtCAD(item.price)}
-                        </span>
-                      </button>
-                    )
-                  })}
-                </div>
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+          background: '#fff', border: '1.5px solid var(--border)', borderRadius: 10,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)', marginTop: 4,
+          maxHeight: 340, overflowY: 'auto',
+        }}>
+          {Object.entries(grouped).map(([category, catItems]) => (
+            <div key={category}>
+              {/* Category divider */}
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 12px', background: '#F8FAFC',
+                borderTop: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9',
+              }}>
+                <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#94A3B8', letterSpacing: '.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+                  {category}
+                </span>
+                <div style={{ flex: 1, height: 1, background: '#E2E8F0' }} />
+              </div>
+              {catItems.map(item => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => { onChange(item.key); setOpen(false) }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center',
+                    padding: '10px 12px', border: 'none',
+                    background: item.key === value ? 'rgba(37,99,235,.07)' : '#fff',
+                    cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                    color: 'var(--jet)', textAlign: 'left', gap: 8,
+                  }}
+                >
+                  {item.key === value
+                    ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round" style={{ flexShrink: 0 }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>
+                    : <div style={{ width: 14, flexShrink: 0 }} />
+                  }
+                  <span style={{ flex: 1 }}>{item.name}</span>
+                  <span style={{ fontSize: 12, color: item.is_tiered ? '#3B6CFF' : '#64748B', fontWeight: 600, flexShrink: 0 }}>{item.is_tiered ? '3 Tiers' : fmtCAD(item.price)}</span>
+                </button>
               ))}
             </div>
-          </div>
+          ))}
         </div>
       )}
-    </>
+    </div>
   )
 }
 
