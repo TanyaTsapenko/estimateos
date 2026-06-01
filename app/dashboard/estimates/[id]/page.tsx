@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy } from 'lucide-react'
+import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
@@ -51,6 +51,7 @@ export default function EstimateDetailPage() {
   const [estimate,       setEstimate]       = useState<Estimate | null>(null)
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
+  const [contract,       setContract]       = useState<{ id: string; status: string } | null>(null)
   const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; pricing_mode: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
   const [loading,             setLoading]             = useState(true)
   const [sending,             setSending]             = useState(false)
@@ -74,9 +75,12 @@ export default function EstimateDetailPage() {
         setProfile(prof)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced') {
-        const { data: dep } = await supabase.from('invoices')
-          .select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single()
+        const [{ data: dep }, { data: con }] = await Promise.all([
+          supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').maybeSingle(),
+          supabase.from('contracts').select('id, status').eq('estimate_id', id).eq('status', 'signed').order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        ])
         setDepositInvoice(dep)
+        setContract(con)
       }
       setLoading(false)
     }
@@ -387,11 +391,19 @@ export default function EstimateDetailPage() {
                 <div style={{ fontSize: 16, fontWeight: 700, color: '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} accepted this estimate
                 </div>
-                <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  <Receipt size={14} />
-                  {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
-                </button>
+                {depositInvoice?.status === 'pending' ? (
+                  <button onClick={() => router.push('/dashboard/invoices')}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#FEF3C7', color: '#D97706', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Receipt size={14} />
+                    Deposit pending — {fmtCAD(depositInvoice.amount)}
+                  </button>
+                ) : (
+                  <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    <Receipt size={14} />
+                    {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+                  </button>
+                )}
               </div>
             )}
 
@@ -449,10 +461,11 @@ export default function EstimateDetailPage() {
                 MORE ACTIONS
               </div>
               {[
-                { icon: <FileDown size={15} color="#64748B" />, label: 'Download PDF',      onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'), danger: false },
-                { icon: <Copy     size={15} color="#64748B" />, label: 'Duplicate estimate', onClick: () => setShowDuplicateModal(true),                 danger: false },
-                { icon: <Trash2   size={15} color="#DC2626" />, label: 'Delete estimate',    onClick: () => setDeleteOpen(true),                          danger: true  },
-              ].map((item, i, arr) => (
+                { icon: <FileDown       size={15} color="#64748B" />, label: 'Download PDF',          onClick: () => window.open(`/api/pdf?id=${id}`, '_blank'),              danger: false, show: true },
+                { icon: <FileSignature  size={15} color="#64748B" />, label: 'View signed contract',   onClick: () => router.push(`/sign/contract/${contract!.id}`),           danger: false, show: !!contract },
+                { icon: <Copy          size={15} color="#64748B" />, label: 'Duplicate estimate',     onClick: () => setShowDuplicateModal(true),                             danger: false, show: true },
+                { icon: <Trash2        size={15} color="#DC2626" />, label: 'Delete estimate',         onClick: () => setDeleteOpen(true),                                    danger: true,  show: true },
+              ].filter(item => item.show).map((item, i, arr) => (
                 <button
                   key={item.label}
                   onClick={item.onClick}
