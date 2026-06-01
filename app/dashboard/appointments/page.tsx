@@ -83,7 +83,7 @@ function sectionColor(label: string): string {
 }
 
 const SOURCES = ['Phone call', 'Referral', 'Web form', 'Walk-in', 'Repeat client']
-const FILTERS = ['All', 'Upcoming', 'Done'] as const
+const FILTERS = ['All', 'Today', 'Upcoming', 'Done'] as const
 
 // ─── StatusTag ────────────────────────────────────────────────────────────────
 function StatusTag({ status }: { status: DesignStatus }) {
@@ -821,6 +821,7 @@ export default function AppointmentsPage() {
   const todayCount = appts.filter(a => a.appointment_date === todayStr).length
 
   const filtered: Appt[] = (() => {
+    if (filter === 'Today')    return appts.filter(a => a.appointment_date === todayStr)
     if (filter === 'Upcoming') return appts.filter(a => toDesignStatus(a.status) === 'upcoming')
     if (filter === 'Done')     return appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
     return appts
