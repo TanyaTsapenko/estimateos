@@ -106,7 +106,7 @@ export default function PaymentSetupPage() {
       </div>
 
       {/* Body */}
-      <div style={{ padding: '24px 16px 120px', flex: 1 }}>
+      <div style={{ padding: '24px 16px 180px', flex: 1 }}>
 
         {/* Page heading */}
         <div style={{ marginBottom: 24 }}>
