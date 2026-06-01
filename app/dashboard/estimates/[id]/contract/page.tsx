@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
@@ -85,6 +85,15 @@ export default function ContractPage() {
   const [loading,  setLoading]  = useState(true)
   const [sending,  setSending]  = useState(false)
 
+  // Inline signing state
+  const svgRef                                        = useRef<SVGSVGElement>(null)
+  const [paths,              setPaths]              = useState<string[]>([])
+  const [currentPath,        setCurrentPath]        = useState<string>('')
+  const [isDrawing,          setIsDrawing]          = useState(false)
+  const [agreedToTerms,      setAgreedToTerms]      = useState(false)
+  const [showSuccess,        setShowSuccess]        = useState(false)
+  const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
+
   useEffect(() => {
     async function load() {
       const [{ data: est }, { data: ops }] = await Promise.all([
@@ -122,13 +131,28 @@ export default function ContractPage() {
     </div>
   )
 
+  function getPoint(e: React.PointerEvent) {
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+    const rect = svg.getBoundingClientRect()
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * 600,
+      y: ((e.clientY - rect.top) / rect.height) * 200,
+    }
+  }
+
   async function handleAction() {
+    if (trigger === 'sign') {
+      if (paths.length === 0) { alert('Please sign before submitting'); return }
+      if (!agreedToTerms) { alert('Please agree to the terms before signing'); return }
+    }
+
     setSending(true)
     try {
       // Persist payment details to the estimate
       const estimateUpdate: Record<string, unknown> = {}
       if (urlPayment)  estimateUpdate.payment_method  = urlPayment
-      if (urlDeposit)  estimateUpdate.deposit_percent = parseFloat(urlDeposit)
+      if (urlDeposit)  estimateUpdate.deposit_percent = parseFloat(urlDeposit!)
       if (Object.keys(estimateUpdate).length > 0) {
         await supabase.from('estimates').update(estimateUpdate).eq('id', id)
       }
@@ -157,7 +181,84 @@ export default function ContractPage() {
       }
 
       if (trigger === 'sign') {
-        router.push(`/sign/contract/${contract.id}`)
+        // Render SVG pad to canvas PNG
+        const svgElement = svgRef.current
+        if (!svgElement) { setSending(false); return }
+
+        const svgData = new XMLSerializer().serializeToString(svgElement)
+        const offscreen = document.createElement('canvas')
+        offscreen.width = 600
+        offscreen.height = 200
+        const ctx = offscreen.getContext('2d')
+
+        let signatureBase64: string
+        try {
+          await new Promise<void>((resolve, reject) => {
+            const img = new Image()
+            img.onload = () => { ctx?.drawImage(img, 0, 0); resolve() }
+            img.onerror = reject
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+          })
+          signatureBase64 = offscreen.toDataURL('image/png')
+        } catch {
+          setSending(false)
+          alert('Could not render signature. Please try again.')
+          return
+        }
+
+        const res = await fetch('/api/sign-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contractId: contract.id,
+            signatureBase64,
+            clientName: estimate?.client_name,
+          }),
+        })
+        const result = await res.json()
+        if (!res.ok) {
+          setSending(false)
+          alert('Signing failed: ' + (result.error || 'Unknown error'))
+          return
+        }
+
+        setClientSignatureUrl(result.signatureUrl)
+
+        await Promise.allSettled([
+          fetch('/api/send-contract-signed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clientEmail: estimate?.client_email,
+              clientName: estimate?.client_name,
+              companyName: profile?.company_name || 'Your Contractor',
+              companyPhone: profile?.phone || '',
+              companyEmail: profile?.email || '',
+              contractId: contract.id,
+              total: estimate?.total,
+            }),
+          }),
+          fetch('/api/notify-contractor-signed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contractorEmail: profile?.email || '',
+              contractorName: profile?.company_name || '',
+              clientName: estimate?.client_name || '',
+              companyName: profile?.company_name || 'Your Company',
+              total: estimate?.total || 0,
+              depositPercent: depositPct,
+              contractId: contract.id,
+            }),
+          }),
+          fetch('/api/deposit-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estimateId: id }),
+          }),
+        ])
+
+        setShowSuccess(true)
         return
       }
 
@@ -183,244 +284,383 @@ export default function ContractPage() {
     }
   }
 
-  const contractId = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
+  const contractId  = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
-  const depositPct = urlDeposit ? parseFloat(urlDeposit) : (profile?.deposit_percent ?? 30)
-  const depositAmt = estimate.total * (depositPct / 100)
+  const depositPct  = urlDeposit ? parseFloat(urlDeposit) : (profile?.deposit_percent ?? 30)
+  const depositAmt  = estimate.total * (depositPct / 100)
+  const isEmpty     = paths.length === 0
 
   const cardStyle: React.CSSProperties = {
     background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', marginBottom: 12, overflow: 'hidden',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
+    <>
+      {/* ── SUCCESS OVERLAY (contractor-facing, after inline sign) ── */}
+      {showSuccess && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
-      {/* HEADER */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
-        <button onClick={() => router.back()}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2045B8', fontWeight: 600, fontSize: 14, fontFamily: F, display: 'flex', alignItems: 'center', gap: 5, padding: 0 }}>
-          ← Estimate
-        </button>
-        <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Contract</span>
-        <div style={{ width: 70 }} />
-      </div>
+          {/* Topbar */}
+          <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>EstimateOS</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#2563EB', background: '#EFF6FF', borderRadius: 6, padding: '4px 10px', letterSpacing: '0.06em' }}>{estimate.estimate_number}</span>
+          </div>
 
-      {/* CONTRACT BAR */}
-      <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{contractId}</div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>DATE</div>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
-        </div>
-      </div>
+          {/* Body */}
+          <div style={{ flex: 1, padding: '20px 16px 40px' }}>
 
-      {/* BODY */}
-      <div style={{ padding: '16px 16px 120px', flex: 1, paddingBottom: 160 }}>
-
-        {/* PARTIES */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-          {/* Contractor */}
-          <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{profile?.company_name || '—'}</div>
-            <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-              {profile?.phone && <div>{profile.phone}</div>}
-              {profile?.city && <div>{profile.city}</div>}
-            </div>
-            {profile?.licence_number && (
-              <div style={{ marginTop: 8 }}>
-                <span style={{ background: '#EEF2FF', color: '#2045B8', fontSize: 9, borderRadius: 6, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.05em' }}>
-                  LIC #{profile.licence_number}
-                </span>
+            {/* Success card */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#DCFCE7', border: '1.5px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </div>
-            )}
-          </div>
-          {/* Client */}
-          <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-            <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-              {estimate.client_phone && <div>{estimate.client_phone}</div>}
-              {estimate.client_email && <div>{estimate.client_email}</div>}
-              {estimate.client_address && <div>{estimate.client_address}</div>}
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', marginBottom: 6 }}>Contract Signed!</div>
+              <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>Client will receive payment instructions by email</div>
             </div>
-          </div>
-        </div>
 
-        {/* SCOPE OF WORK */}
-        <div style={cardStyle}>
-          <CardHeader icon={<DocumentIcon />} title="Scope of Work" />
-          <div style={{ padding: '14px 16px' }}>
-            {openings.map((op, i) => {
-              const def = OPENING_TYPES[op.type]
-              const name = def?.name || op.type
-              return (
-                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{name} × {op.qty}</div>
-                    {(op.colour || op.glass) && (
-                      <div style={{ fontSize: 11, color: '#8892b0', marginTop: 2 }}>
-                        {[op.colour, op.glass].filter(Boolean).join(' · ')}
-                      </div>
-                    )}
+            {/* Deposit card */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+            </div>
+
+            {/* What happens next */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 24 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 14 }}>What happens next</div>
+              {([
+                { icon: '✅', label: 'Contract signed',     status: 'Done',    bg: '#F0FDF4', color: '#16A34A' },
+                { icon: '✅', label: 'Payment email sent',  status: 'Sent',    bg: '#F0FDF4', color: '#16A34A' },
+                { icon: '⏳', label: 'Client pays deposit', status: 'Pending', bg: '#FFFBEB', color: '#D97706' },
+              ] as { icon: string; label: string; status: string; bg: string; color: string }[]).map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 2 ? '1px solid #F1F3F7' : 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 16 }}>{step.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>{step.label}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: step.color, background: step.bg, borderRadius: 20, padding: '3px 10px' }}>{step.status}</span>
                 </div>
-              )
-            })}
-
-            <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
-              <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
-            </div>
-            {estimate.discount_amount > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', marginBottom: 4 }}>
-                <span>Discount</span><span>−{fmtCAD(estimate.discount_amount)}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
-              <span>Tax</span><span>{fmtCAD(estimate.tax_amount)}</span>
+              ))}
             </div>
 
-            <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
+            {/* Back to dashboard */}
+            <button
+              onClick={() => router.push(`/dashboard/estimates/${id}`)}
+              style={{ width: '100%', height: 52, background: '#0A1628', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
+              Back to Estimate
+            </button>
+          </div>
+        </div>
+      )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
-              <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
-            </div>
+      {/* ── MAIN CONTRACT PAGE ── */}
+      <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
 
-            {depositAmt > 0 && (
-              <>
-                <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                  <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
-                    Deposit due upon signing ({depositPct}%)
-                  </span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8F9FC', borderRadius: 10, marginTop: 8 }}>
-                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-                    Balance on completion ({100 - depositPct}%)
-                  </span>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>
-                    {fmtCAD(estimate.total - depositAmt)}
-                  </span>
-                </div>
-              </>
-            )}
+        {/* HEADER */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+          <button onClick={() => router.back()}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2045B8', fontWeight: 600, fontSize: 14, fontFamily: F, display: 'flex', alignItems: 'center', gap: 5, padding: 0 }}>
+            ← Estimate
+          </button>
+          <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Contract</span>
+          <div style={{ width: 70 }} />
+        </div>
+
+        {/* CONTRACT BAR */}
+        <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{contractId}</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>DATE</div>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
           </div>
         </div>
 
-        {/* TERMS & CONDITIONS */}
-        <div style={cardStyle}>
-          <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
-          <div style={{ padding: '14px 16px' }}>
-            <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
-            <CheckRow text="Payment: Upon completion" />
-            <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
-            <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
-          </div>
-        </div>
+        {/* BODY */}
+        <div style={{ padding: '16px 16px 160px', flex: 1 }}>
 
-        {/* CONTRACT DETAILS */}
-        {(profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.customer_responsibilities || profile?.buyer_right_to_cancel || profile?.damage_disclaimer || profile?.permits_responsibility || profile?.project_manager) && (
-          <div style={cardStyle}>
-            <CardHeader icon={<DocumentIcon />} title="Contract Details" />
-            <div style={{ padding: '12px 16px' }}>
-              {profile?.completion_timeframe && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
-                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
-                </div>
-              )}
-              {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {urlPayment
-                      ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
-                      : profile!.payment_methods!.map((m: string) => (
-                          <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
-                        ))
-                    }
-                  </div>
-                </div>
-              )}
-              {profile?.customer_responsibilities && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
-                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.customer_responsibilities}</p>
-                </div>
-              )}
-              {profile?.buyer_right_to_cancel && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Buyer's Right to Cancel</div>
-                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.buyer_right_to_cancel}</p>
-                </div>
-              )}
-              {profile?.damage_disclaimer && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Damage Disclaimer</div>
-                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.damage_disclaimer}</p>
-                </div>
-              )}
-              {profile?.permits_responsibility && (
-                <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Permits Responsibility</div>
-                  <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.permits_responsibility}</p>
-                </div>
-              )}
-              {profile?.project_manager && (
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* SIGNATURES */}
-        <div style={cardStyle}>
-          <CardHeader icon={<PenIcon />} title="Signatures" />
-          <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {/* PARTIES */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             {/* Contractor */}
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-              {profile?.signature_url ? (
-                <img src={profile.signature_url} alt="Contractor signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
-              ) : (
-                <div style={{ height: 60, marginBottom: 4 }} />
+            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{profile?.company_name || '—'}</div>
+              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
+                {profile?.phone && <div>{profile.phone}</div>}
+                {profile?.city && <div>{profile.city}</div>}
+              </div>
+              {profile?.licence_number && (
+                <div style={{ marginTop: 8 }}>
+                  <span style={{ background: '#EEF2FF', color: '#2045B8', fontSize: 9, borderRadius: 6, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.05em' }}>
+                    LIC #{profile.licence_number}
+                  </span>
+                </div>
               )}
-              <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-              <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.company_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0' }}>{createdDate}</div>
             </div>
             {/* Client */}
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-              <div style={{ height: 60, border: '1.5px dashed #E0E0E0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
-                <span style={{ fontSize: 11, color: '#C0C8D0' }}>Awaiting signature</span>
+            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
+                {estimate.client_phone && <div>{estimate.client_phone}</div>}
+                {estimate.client_email && <div>{estimate.client_email}</div>}
+                {estimate.client_address && <div>{estimate.client_address}</div>}
               </div>
-              <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-              <div style={{ fontSize: 11, color: '#8892b0' }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0' }}>Date: ___________</div>
             </div>
           </div>
-        </div>
 
-        <div style={{ padding: '16px 0 40px' }}>
-          <button onClick={handleAction} disabled={sending}
-            style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1 }}>
-            {sending ? (trigger === 'sign' ? 'Opening…' : 'Sending…') : trigger === 'sign' ? 'Sign now →' : 'Send to client →'}
-          </button>
+          {/* SCOPE OF WORK */}
+          <div style={cardStyle}>
+            <CardHeader icon={<DocumentIcon />} title="Scope of Work" />
+            <div style={{ padding: '14px 16px' }}>
+              {openings.map((op, i) => {
+                const def = OPENING_TYPES[op.type]
+                const name = def?.name || op.type
+                return (
+                  <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '8px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{name} × {op.qty}</div>
+                      {(op.colour || op.glass) && (
+                        <div style={{ fontSize: 11, color: '#8892b0', marginTop: 2 }}>
+                          {[op.colour, op.glass].filter(Boolean).join(' · ')}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
+                  </div>
+                )
+              })}
+
+              <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
+                <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
+              </div>
+              {estimate.discount_amount > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', marginBottom: 4 }}>
+                  <span>Discount</span><span>−{fmtCAD(estimate.discount_amount)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
+                <span>Tax</span><span>{fmtCAD(estimate.tax_amount)}</span>
+              </div>
+
+              <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
+              </div>
+
+              {depositAmt > 0 && (
+                <>
+                  <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+                    <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
+                      Deposit due upon signing ({depositPct}%)
+                    </span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8F9FC', borderRadius: 10, marginTop: 8 }}>
+                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+                      Balance on completion ({100 - depositPct}%)
+                    </span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>
+                      {fmtCAD(estimate.total - depositAmt)}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* TERMS & CONDITIONS */}
+          <div style={cardStyle}>
+            <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
+            <div style={{ padding: '14px 16px' }}>
+              <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
+              <CheckRow text="Payment: Upon completion" />
+              <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
+              <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
+            </div>
+          </div>
+
+          {/* CONTRACT DETAILS */}
+          {(profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.customer_responsibilities || profile?.buyer_right_to_cancel || profile?.damage_disclaimer || profile?.permits_responsibility || profile?.project_manager) && (
+            <div style={cardStyle}>
+              <CardHeader icon={<DocumentIcon />} title="Contract Details" />
+              <div style={{ padding: '12px 16px' }}>
+                {profile?.completion_timeframe && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                  </div>
+                )}
+                {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {urlPayment
+                        ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
+                        : profile!.payment_methods!.map((m: string) => (
+                            <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
+                          ))
+                      }
+                    </div>
+                  </div>
+                )}
+                {profile?.customer_responsibilities && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Customer Responsibilities</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.customer_responsibilities}</p>
+                  </div>
+                )}
+                {profile?.buyer_right_to_cancel && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Buyer's Right to Cancel</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.buyer_right_to_cancel}</p>
+                  </div>
+                )}
+                {profile?.damage_disclaimer && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Damage Disclaimer</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.damage_disclaimer}</p>
+                  </div>
+                )}
+                {profile?.permits_responsibility && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Permits Responsibility</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.permits_responsibility}</p>
+                  </div>
+                )}
+                {profile?.project_manager && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* SIGNATURES */}
+          <div style={cardStyle}>
+            <CardHeader icon={<PenIcon />} title="Signatures" />
+            <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {/* Contractor */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
+                {profile?.signature_url ? (
+                  <img src={profile.signature_url} alt="Contractor signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                ) : (
+                  <div style={{ height: 60, marginBottom: 4 }} />
+                )}
+                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.company_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{createdDate}</div>
+              </div>
+              {/* Client */}
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
+                {trigger === 'sign' ? (
+                  clientSignatureUrl ? (
+                    <img src={clientSignatureUrl} alt="Client signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                  ) : (
+                    <div style={{ position: 'relative', touchAction: 'none', userSelect: 'none', marginBottom: 4 }}>
+                      <svg
+                        ref={svgRef}
+                        viewBox="0 0 600 200"
+                        style={{ width: '100%', height: 80, border: '2px dashed #E0E0E0', borderRadius: 10, background: '#fff', display: 'block', cursor: 'crosshair' }}
+                        onPointerDown={(e) => {
+                          e.currentTarget.setPointerCapture(e.pointerId)
+                          const p = getPoint(e)
+                          setCurrentPath(`M ${p.x} ${p.y}`)
+                          setIsDrawing(true)
+                        }}
+                        onPointerMove={(e) => {
+                          if (!isDrawing) return
+                          const p = getPoint(e)
+                          setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
+                        }}
+                        onPointerUp={() => {
+                          if (currentPath) setPaths(prev => [...prev, currentPath])
+                          setCurrentPath('')
+                          setIsDrawing(false)
+                        }}
+                      >
+                        {paths.map((d, i) => (
+                          <path key={i} d={d} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        ))}
+                        {currentPath && (
+                          <path d={currentPath} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        )}
+                        {isEmpty && !isDrawing && (
+                          <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here</text>
+                        )}
+                      </svg>
+                      {!isEmpty && (
+                        <button
+                          onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
+                          style={{ background: 'none', border: 'none', fontSize: 11, color: '#8892b0', cursor: 'pointer', padding: '2px 0', fontFamily: F }}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div style={{ height: 60, border: '1.5px dashed #E0E0E0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: '#C0C8D0' }}>Awaiting signature</span>
+                  </div>
+                )}
+                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{estimate.client_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>
+                  {clientSignatureUrl
+                    ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
+                    : 'Date: ___________'}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* BOTTOM CTA */}
+          {trigger === 'sign' ? (
+            <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div
+                onClick={() => setAgreedToTerms(!agreedToTerms)}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: '#fff', borderRadius: 12, border: agreedToTerms ? '1.5px solid #2045B8' : '1.5px solid #E8E8E8', cursor: 'pointer' }}
+              >
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: agreedToTerms ? '#2045B8' : '#fff', border: agreedToTerms ? 'none' : '1.5px solid #D0D5DD', flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {agreedToTerms && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                      <polyline points="1.5 5 4 7.5 8.5 2.5" />
+                    </svg>
+                  )}
+                </div>
+                <p style={{ fontSize: 13, color: '#353A3E', lineHeight: 1.5, margin: 0 }}>
+                  I have read and agree to the <span style={{ color: '#2045B8', fontWeight: 600 }}>Terms & Conditions</span> and authorize the work described in this contract.
+                </p>
+              </div>
+              <button
+                onClick={handleAction}
+                disabled={isEmpty || !agreedToTerms || sending}
+                style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: (isEmpty || !agreedToTerms || sending) ? 'not-allowed' : 'pointer', opacity: (isEmpty || !agreedToTerms || sending) ? 0.5 : 1, fontFamily: F }}>
+                {sending ? 'Signing…' : 'I Agree — Sign Contract'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '16px 0 40px' }}>
+              <button onClick={handleAction} disabled={sending}
+                style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1, fontFamily: F }}>
+                {sending ? 'Sending…' : 'Send to client →'}
+              </button>
+            </div>
+          )}
+
         </div>
 
       </div>
-
-    </div>
+    </>
   )
 }
