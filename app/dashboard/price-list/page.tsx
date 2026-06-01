@@ -169,6 +169,7 @@ export default function PriceListPage() {
       if (data && data.length === 0) {
         const seeds = Object.entries(OPENING_TYPES).map(([key, val]) => ({
           user_id:      sanitizedId,
+          type:         key,
           opening_type: key,
           custom_label: val.name,
           base_price:   val.base,
