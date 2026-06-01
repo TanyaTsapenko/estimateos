@@ -300,7 +300,7 @@ export default function DashboardPage() {
         })
       }
       // Stale sent estimate → blue, reminder
-      const threeDaysAgo = new Date(Date.now() - 1*60*1000).toISOString() // 1 minute ago for testing
+      const threeDaysAgo = new Date(Date.now() - 3*86400000).toISOString()
       const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && e.created_at < threeDaysAgo)
       if (stale.length) {
         const daysSince = Math.floor((Date.now() - new Date(stale[0].updated_at).getTime()) / 86400000)
