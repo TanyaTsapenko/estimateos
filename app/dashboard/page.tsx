@@ -275,7 +275,7 @@ export default function DashboardPage() {
           attItems.push({
             icon: CheckIcon, color: '#059669',
             title: e.client_name,
-            desc: `Contract signed · ${e.estimate_number} · Ready to invoice`,
+            desc: `Ready for final invoice · ${e.estimate_number}`,
             cta: 'Send final invoice', id: e.id, actionType: 'invoice',
           })
         })
