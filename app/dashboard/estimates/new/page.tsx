@@ -24,7 +24,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (open) { setSearch(''); setTimeout(() => searchRef.current?.focus(), 80) }
+    if (open) { setSearch('') }
   }, [open])
 
   const allItems: Array<{ key: string; name: string; price: number; category: string; is_tiered?: boolean }> = []
@@ -75,7 +75,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
         <div
           onClick={() => setOpen(false)}
           style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
+            position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.45)',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
           }}
@@ -85,7 +85,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
             style={{
               background: '#fff',
               borderRadius: '20px 20px 0 0',
-              maxHeight: '85vh',
+              maxHeight: '60vh',
               display: 'flex', flexDirection: 'column',
               fontFamily: '"Inter", system-ui, sans-serif',
             }}
@@ -125,7 +125,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
             </div>
 
             {/* List */}
-            <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 'calc(env(safe-area-inset-bottom) + 16px)' }}>
+            <div style={{ overflowY: 'auto', flex: 1, paddingBottom: 20 }}>
               {Object.keys(grouped).length === 0 && (
                 <div style={{ textAlign: 'center', padding: '32px 16px', fontSize: 13, color: '#94A3B8' }}>No results</div>
               )}
