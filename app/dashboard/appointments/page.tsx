@@ -1162,10 +1162,13 @@ export default function AppointmentsPage() {
 
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+            <div
+              onClick={() => router.push('/dashboard/appointments/new')}
+              style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', cursor: 'pointer' }}
+            >
               <Plus size={22} color="#2563EB" strokeWidth={1.5} />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>
               No appointments yet
             </div>
             <div style={{ fontSize: 12, color: '#94A3B8' }}>
