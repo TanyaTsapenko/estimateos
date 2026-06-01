@@ -228,11 +228,17 @@ export default function DashboardPage() {
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,estimates(client_name)').eq('user_id', user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).eq('status', 'pending'),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).eq('status', 'pending'),
       ])
       console.log('pending invoices:', pendingInvoices, 'error:', pendingInvoicesError)
       const { data: allInvoices } = await supabase.from('invoices').select('id, status, user_id').limit(5)
       console.log('all invoices sample:', allInvoices)
+      const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id).filter(Boolean)
+      let clientNames: Record<string, string> = {}
+      if (estimateIds.length) {
+        const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', estimateIds)
+        ests?.forEach((e: any) => { clientNames[e.id] = e.client_name })
+      }
       if (estSignedError) console.error('[dashboard] estSigned query error:', estSignedError)
       console.log('[dashboard] estSigned count:', estSigned?.length ?? 0, 'rows:', JSON.stringify(estSigned?.map((e: any) => ({ id: e.id, status: e.status, invoice_id: e.invoice_id, estimate_number: e.estimate_number }))))
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
@@ -278,7 +284,7 @@ export default function DashboardPage() {
           const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
           attItems.push({
             icon: ClockIcon, color: '#D97706',
-            title: (inv.estimates as any)?.client_name || 'Client',
+            title: clientNames[inv.estimate_id] || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
           })
