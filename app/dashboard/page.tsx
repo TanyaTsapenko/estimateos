@@ -228,7 +228,7 @@ export default function DashboardPage() {
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', user.id).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', user.id).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,client_name,amount,invoice_type,estimate_id').eq('user_id', user.id).eq('status', 'pending'),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,estimates(client_name)').eq('user_id', user.id).eq('status', 'pending'),
       ])
       if (estSignedError) console.error('[dashboard] estSigned query error:', estSignedError)
       console.log('[dashboard] estSigned count:', estSigned?.length ?? 0, 'rows:', JSON.stringify(estSigned?.map((e: any) => ({ id: e.id, status: e.status, invoice_id: e.invoice_id, estimate_number: e.estimate_number }))))
@@ -275,7 +275,7 @@ export default function DashboardPage() {
           const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
           attItems.push({
             icon: ClockIcon, color: '#D97706',
-            title: inv.client_name || 'Client',
+            title: (inv.estimates as any)?.client_name || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
           })
