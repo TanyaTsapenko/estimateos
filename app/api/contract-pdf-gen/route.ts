@@ -101,6 +101,11 @@ export async function GET(request: NextRequest) {
   .sig-line{height:56px;border-bottom:1.5px solid #0A1628;margin-bottom:4px}
   .sig-name{font-size:11px;color:#6B7280;margin-top:4px}
   .footer-bar{margin-top:24px;padding-top:12px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;font-size:10px;color:#9CA3AF}
+  .clause{page-break-inside:avoid;break-inside:avoid}
+  .card{page-break-inside:avoid;break-inside:avoid}
+  .terms-card{page-break-inside:avoid;break-inside:avoid}
+  .scope-card{page-break-inside:avoid;break-inside:avoid}
+  .sig-grid{page-break-inside:avoid;break-inside:avoid}
 </style>
 </head>
 <body>
