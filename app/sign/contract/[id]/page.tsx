@@ -243,9 +243,10 @@ export default function SignContractPage() {
       <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
         <style>{`
           @media print {
-            @page { margin: 0; size: A4; }
+            @page { margin: 15mm 10mm; size: A4; }
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
+            .card, section, div { page-break-inside: avoid; }
           }
         `}</style>
 
@@ -456,7 +457,9 @@ export default function SignContractPage() {
             margin: 0 !important;
           }
           * { max-width: 100% !important; box-sizing: border-box !important; }
-          @page { margin: 15mm; size: A4; }
+          @page { margin: 15mm 10mm; size: A4; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .card, section, div { page-break-inside: avoid; }
         }
       `}</style>
 
