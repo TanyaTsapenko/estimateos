@@ -84,6 +84,14 @@ export default function SignContractPage() {
   }, [])
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const style = document.createElement('style')
+      style.textContent = '@media print { head { display: none; } }'
+      document.head.appendChild(style)
+    }
+  }, [])
+
+  useEffect(() => {
     if (!contract) return
     const num = estimate?.estimate_number || contract.id.slice(0, 8)
     const client = estimate?.client_name || 'Client'
@@ -243,10 +251,24 @@ export default function SignContractPage() {
       <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
         <style>{`
           @media print {
-            @page { margin: 15mm 10mm; size: A4; }
-            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            .card, section, div { page-break-inside: avoid; }
+            @page {
+              margin: 10mm 12mm;
+              size: A4;
+            }
+            @page :first {
+              margin-top: 10mm;
+            }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .no-print {
+              display: none !important;
+            }
           }
         `}</style>
 
@@ -447,19 +469,24 @@ export default function SignContractPage() {
     <>
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          body { background: #fff !important; margin: 0; padding: 0; }
-          .contract-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          #contract-content {
-            max-width: 100% !important;
-            width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
+          @page {
+            margin: 10mm 12mm;
+            size: A4;
           }
-          * { max-width: 100% !important; box-sizing: border-box !important; }
-          @page { margin: 15mm 10mm; size: A4; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .card, section, div { page-break-inside: avoid; }
+          @page :first {
+            margin-top: 10mm;
+          }
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          body {
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
         }
       `}</style>
 
