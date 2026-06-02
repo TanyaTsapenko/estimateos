@@ -13,11 +13,18 @@ export async function GET(request: NextRequest) {
     const { data: con } = await admin.from('contracts').select('*').eq('id', contractId).single()
     if (!con) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
 
-    const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
+    const profileId = (con.profile_id || '').toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+
+    const [{ data: est }, { data: ops }, { data: allProfiles }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('id, company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager'),
     ])
+
+    const prof = allProfiles?.find((pr: any) => {
+      const id = (pr.id || '').toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      return id === profileId
+    }) || null
 
     const p = prof as any
     console.log('DEBUG profile_id:', con.profile_id, 'prof:', prof ? 'found' : 'null', 'company:', p?.company_name)
