@@ -169,13 +169,13 @@ export async function GET(request: NextRequest) {
 
     const browser = await puppeteer.default.launch({
       args: chromium.default.args,
-      defaultViewport: chromium.default.defaultViewport,
+      defaultViewport: { width: 1280, height: 800 },
       executablePath,
       headless: true,
     })
 
     const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.setContent(html, { waitUntil: 'load' as any })
 
     const pdf = await page.pdf({
       format: 'A4',
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
 
     await browser.close()
 
-    return new NextResponse(pdf, {
+    return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName.replace(/[^a-zA-Z0-9]/g, '-')}.pdf"`,
