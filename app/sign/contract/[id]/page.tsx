@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
@@ -61,6 +61,8 @@ export default function SignContractPage() {
   const params = useParams()
   const contractId = Array.isArray(params?.id) ? params.id[0] : params?.id as string
   const supabase = createClient()
+  const searchParams = useSearchParams()
+  const isPdf = searchParams.get('pdf') === 'true'
 
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -455,14 +457,16 @@ export default function SignContractPage() {
           </div>
 
           {/* Download button */}
-          <a
-            href={`/api/contract-pdf-gen?contractId=${contract.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 24, textDecoration: 'none' }}
-          >
-            <Download size={16} /> Download Contract
-          </a>
+          {!isPdf && (
+            <a
+              href={`/api/contract-pdf-gen?contractId=${contract.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 24, textDecoration: 'none' }}
+            >
+              <Download size={16} /> Download Contract
+            </a>
+          )}
 
         </div>
       </div>
@@ -836,46 +840,50 @@ export default function SignContractPage() {
                   />
                 ) : (
                   <div className="no-print">
-                    <div style={{ position: 'relative', touchAction: 'none', userSelect: 'none', marginBottom: 4 }}>
-                      <svg
-                        ref={svgRef}
-                        viewBox="0 0 600 200"
-                        style={{ width: '100%', height: 120, border: '2px dashed #E0E0E0', borderRadius: 12, background: '#fff', display: 'block', cursor: 'crosshair' }}
-                        onPointerDown={(e) => {
-                          e.currentTarget.setPointerCapture(e.pointerId)
-                          const p = getPoint(e)
-                          setCurrentPath(`M ${p.x} ${p.y}`)
-                          setIsDrawing(true)
-                          setPaths(prev => prev.length === 0 ? prev : prev)
-                        }}
-                        onPointerMove={(e) => {
-                          if (!isDrawing) return
-                          const p = getPoint(e)
-                          setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
-                        }}
-                        onPointerUp={() => {
-                          if (currentPath) setPaths(prev => [...prev, currentPath])
-                          setCurrentPath('')
-                          setIsDrawing(false)
-                        }}
-                      >
-                        {paths.map((d, i) => (
-                          <path key={i} d={d} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        ))}
-                        {currentPath && (
-                          <path d={currentPath} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                    {!isPdf && (
+                      <>
+                        <div style={{ position: 'relative', touchAction: 'none', userSelect: 'none', marginBottom: 4 }}>
+                          <svg
+                            ref={svgRef}
+                            viewBox="0 0 600 200"
+                            style={{ width: '100%', height: 120, border: '2px dashed #E0E0E0', borderRadius: 12, background: '#fff', display: 'block', cursor: 'crosshair' }}
+                            onPointerDown={(e) => {
+                              e.currentTarget.setPointerCapture(e.pointerId)
+                              const p = getPoint(e)
+                              setCurrentPath(`M ${p.x} ${p.y}`)
+                              setIsDrawing(true)
+                              setPaths(prev => prev.length === 0 ? prev : prev)
+                            }}
+                            onPointerMove={(e) => {
+                              if (!isDrawing) return
+                              const p = getPoint(e)
+                              setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
+                            }}
+                            onPointerUp={() => {
+                              if (currentPath) setPaths(prev => [...prev, currentPath])
+                              setCurrentPath('')
+                              setIsDrawing(false)
+                            }}
+                          >
+                            {paths.map((d, i) => (
+                              <path key={i} d={d} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            ))}
+                            {currentPath && (
+                              <path d={currentPath} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            )}
+                            {paths.length === 0 && !isDrawing && (
+                              <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here with your finger</text>
+                            )}
+                          </svg>
+                        </div>
+                        {!isEmpty && (
+                          <button
+                            onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
+                            style={{ background: 'none', border: 'none', fontSize: 11, color: '#8892b0', cursor: 'pointer', padding: 0, fontFamily: F, marginBottom: 4 }}>
+                            Clear
+                          </button>
                         )}
-                        {paths.length === 0 && !isDrawing && (
-                          <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here with your finger</text>
-                        )}
-                      </svg>
-                    </div>
-                    {!isEmpty && (
-                      <button
-                        onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
-                        style={{ background: 'none', border: 'none', fontSize: 11, color: '#8892b0', cursor: 'pointer', padding: 0, fontFamily: F, marginBottom: 4 }}>
-                        Clear
-                      </button>
+                      </>
                     )}
                   </div>
                 )}
@@ -886,8 +894,8 @@ export default function SignContractPage() {
             </div>
           </div>
 
-          {/* ACTIONS — hidden on print */}
-          <div className="no-print" style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* ACTIONS — hidden on print and in pdf mode */}
+          {!isPdf && <div className="no-print" style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div
               onClick={() => setAgreedToTerms(!agreedToTerms)}
               style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: '#fff', borderRadius: 12, border: agreedToTerms ? '1.5px solid #2045B8' : '1.5px solid #E8E8E8', marginBottom: 4, cursor: 'pointer' }}
@@ -914,7 +922,7 @@ export default function SignContractPage() {
               style={{ width: '100%', background: 'transparent', border: 'none', borderRadius: 13, padding: 12, fontSize: 14, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: F }}>
               Decline
             </button>
-          </div>
+          </div>}
 
         </div>
       </div>
