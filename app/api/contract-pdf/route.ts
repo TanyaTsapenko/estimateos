@@ -171,13 +171,13 @@ ${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_c
   <span>${companyName}${p?.licence ? ` · Lic. ${p.licence}` : ''}</span>
   <span>Powered by ApexScale &middot; useapexscale.com</span>
 </div>
+<script>window.onload = function(){ window.print(); }</script>
 </body>
 </html>`
 
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `inline; filename="signed-contract-${conDisplayId}.html"`,
       },
     })
   }
@@ -327,14 +327,13 @@ ${(prof as any)?.signature_url ? `
   <span>${companyName}${prof.licence ? ` · Lic. ${prof.licence}` : ''}${prof.insurance ? ` · Ins. ${prof.insurance}` : ''}</span>
   <span style="font-size:10px;color:#CBD5E1">Powered by ApexScale &middot; useapexscale.com</span>
 </div>
-
+<script>window.onload = function(){ window.print(); }</script>
 </body>
 </html>`
 
   return new NextResponse(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Disposition': `inline; filename="contract-terms-${companyName.replace(/\s+/g, '-').toLowerCase()}.html"`,
     },
   })
 }
