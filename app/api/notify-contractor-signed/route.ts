@@ -39,9 +39,7 @@ export async function POST(req: Request) {
 
       <!-- HERO -->
       <tr><td style="padding:32px 32px 24px;text-align:center">
-        <div style="width:52px;height:52px;background:#DCFCE7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;line-height:52px">
-          <span style="color:#16A34A;font-size:22px;line-height:52px">✓</span>
-        </div>
+        <table cellpadding="0" cellspacing="0" style="margin:0 auto 16px"><tr><td style="width:52px;height:52px;background:#DCFCE7;border-radius:26px;text-align:center;vertical-align:middle;font-size:22px;color:#16A34A;line-height:52px">✓</td></tr></table>
         <div style="font-size:22px;font-weight:800;color:#0A1628;letter-spacing:-0.5px;margin-bottom:6px">Contract signed!</div>
         <div style="font-size:14px;color:#6B7280;line-height:1.5"><span style="color:#2563EB;font-weight:600">${clientName}</span> has signed the contract.<br>Review the details and follow up.</div>
       </td></tr>
