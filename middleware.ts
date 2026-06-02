@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const publicPaths = [
-    '/auth', '/estimate', '/team/join', '/sign',
+    '/auth', '/landing', '/estimate', '/team/join', '/sign',
     '/api/deposit-invoice', '/api/sign-contract',
     '/api/notify-contractor-signed', '/api/send-contract-signed',
   ]
