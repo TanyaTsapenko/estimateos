@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
   try {
     const admin = createAdminClient()
     const cleanContractId = contractId.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-    const { data: con } = await admin.from('contracts').select('id, client_name, profile_id').eq('id', cleanContractId).single()
-    if (!con) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
+    console.log('Looking for contract:', cleanContractId)
+
+    const { data: con, error: conError } = await admin.from('contracts').select('id, client_name, profile_id').eq('id', cleanContractId).single()
+    console.log('Contract result:', con ? 'found' : 'null', 'error:', conError?.message)
+
+    if (!con) return NextResponse.json({ error: 'Contract not found', id: cleanContractId, dbError: conError?.message }, { status: 404 })
 
     const chromium = await import('@sparticuz/chromium-min')
     const puppeteer = await import('puppeteer-core')
