@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const p = prof as any
     const companyName = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Your Contractor'
-    const clientName = est?.client_name || '—'
+    const clientName = con.client_name || est?.client_name || '—'
     const signedDate = con.signed_at ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.signed_at)) : ''
     const total = est?.total || 0
     const tax = est?.tax_amount || 0
@@ -51,118 +51,133 @@ export async function GET(request: NextRequest) {
 <meta charset="UTF-8">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;padding:40px 48px;max-width:720px;margin:0 auto;font-size:13px}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #E0E0E0;margin-bottom:24px}
-  .logo-text{font-size:18px;font-weight:800;color:#1A1A1A}
-  .logo-text span{color:#2563EB}
-  .company-meta{font-size:11px;color:#6b7280;line-height:1.7;margin-top:4px}
-  .doc-title{font-size:20px;font-weight:800;color:#1A1A1A;text-align:right}
-  .doc-sub{font-size:11px;color:#6b7280;margin-top:4px;line-height:1.6;text-align:right}
-  .signed-badge{display:inline-block;background:#DCFCE7;color:#16A34A;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:6px}
-  .section-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:8px;margin-top:20px}
-  .card{background:#fff;border:1px solid #E8E8E8;border-radius:8px;padding:14px;margin-bottom:14px}
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-  .info-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94A3B8;margin-bottom:4px}
-  .info-val{font-size:13px;font-weight:600;color:#0A1628}
-  .info-sub{font-size:11px;color:#6b7280;margin-top:2px}
-  .totals-row{display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:3px}
-  .totals-total{display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#0A1628;margin-top:8px;padding-top:8px;border-top:1px solid #E0E0E0}
-  .deposit-row{display:flex;justify-content:space-between;font-size:12px;color:#2563EB;margin-top:4px;font-weight:600}
-  .clause{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #F0F0F0}
+  body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;font-size:13px}
+  .hdr{background:#0A1628;padding:24px 40px;display:flex;justify-content:space-between;align-items:center}
+  .hdr-kicker{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+  .hdr-num{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px}
+  .hdr-date{font-size:16px;font-weight:700;color:#fff}
+  .body{padding:28px 40px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .card{background:#F8F9FB;border:1px solid #E5E7EB;border-radius:8px;padding:14px}
+  .card-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9CA3AF;margin-bottom:6px}
+  .card-name{font-size:14px;font-weight:700;color:#0A1628;margin-bottom:3px}
+  .card-sub{font-size:11px;color:#6B7280;line-height:1.6}
+  .section-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9CA3AF;margin-bottom:8px;margin-top:20px}
+  .scope-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:16px;margin-bottom:4px}
+  .item-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F3F4F6}
+  .item-name{font-size:13px;font-weight:700;color:#0A1628}
+  .item-price{font-size:13px;font-weight:700;color:#0A1628}
+  .totals{margin-top:12px;padding-top:12px;border-top:1px solid #E5E7EB}
+  .tot-row{display:flex;justify-content:space-between;font-size:12px;color:#6B7280;margin-bottom:3px}
+  .tot-total{display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#0A1628;margin-top:8px;padding-top:8px;border-top:1.5px solid #0A1628}
+  .tot-deposit{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#2563EB;margin-top:6px}
+  .tot-balance{display:flex;justify-content:space-between;font-size:12px;color:#6B7280;margin-top:3px}
+  .terms-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:16px;margin-bottom:4px}
+  .check-row{display:flex;gap:8px;margin-bottom:8px;font-size:12px;color:#374151;line-height:1.5;align-items:flex-start}
+  .check-icon{width:16px;height:16px;min-width:16px;background:#EFF6FF;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#2563EB;font-weight:700;margin-top:1px}
+  .clause{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #F3F4F6}
   .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-  .clause-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:4px}
-  .clause p{font-size:12px;color:#353A3E;line-height:1.6}
-  .check-row{display:flex;gap:8px;margin-bottom:6px;font-size:12px;color:#353A3E;line-height:1.5}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px;padding-top:16px;border-top:2px solid #E0E0E0}
-  .sig-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94A3B8;margin-bottom:6px}
+  .clause-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9CA3AF;margin-bottom:4px}
+  .clause-text{font-size:12px;color:#374151;line-height:1.6}
+  .payment-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .payment-pill{background:#EFF6FF;color:#1D4ED8;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600}
+  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .sig-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9CA3AF;margin-bottom:8px}
   .sig-img{height:56px;max-width:160px;object-fit:contain;display:block;margin-bottom:4px}
-  .sig-line{border-bottom:1.5px solid #0A0E1A;margin-bottom:4px;height:56px}
-  .sig-name{font-size:11px;color:#6b7280}
-  .footer{margin-top:28px;padding-top:12px;border-top:1px solid #E0E0E0;font-size:10px;color:#BFBFBF;display:flex;justify-content:space-between}
-  .payment-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-  .payment-pill{background:#EEF2FF;color:#2045B8;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600}
+  .sig-line{height:56px;border-bottom:1.5px solid #0A1628;margin-bottom:4px}
+  .sig-name{font-size:11px;color:#6B7280;margin-top:4px}
+  .footer-bar{margin-top:24px;padding-top:12px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;font-size:10px;color:#9CA3AF}
 </style>
 </head>
 <body>
-<div style="background:#0A1628;padding:28px 40px;display:flex;justify-content:space-between;align-items:center;margin:-40px -48px 32px">
+
+<div class="hdr">
   <div>
-    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">CONTRACT</div>
-    <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.3px">CON-${con.id.slice(0,6).toUpperCase()}</div>
+    <div class="hdr-kicker">Contract</div>
+    <div class="hdr-num">CON-${con.id.slice(0,6).toUpperCase()}</div>
   </div>
   <div style="text-align:right">
-    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">${con.signed_at ? 'SIGNED' : 'DATE'}</div>
-    <div style="font-size:18px;font-weight:700;color:#ffffff">${signedDate}</div>
+    <div class="hdr-kicker">${con.signed_at ? 'Signed' : 'Date'}</div>
+    <div class="hdr-date">${signedDate}</div>
   </div>
 </div>
 
+<div class="body">
+
 <div class="grid-2">
   <div class="card">
-    <div class="info-label">Contractor</div>
-    <div class="info-val">${companyName}</div>
-    <div class="info-sub">${p?.phone || ''}</div>
+    <div class="card-label">Contractor</div>
+    <div class="card-name">${companyName}</div>
+    <div class="card-sub">${p?.phone || ''}</div>
   </div>
   <div class="card">
-    <div class="info-label">Client</div>
-    <div class="info-val">${clientName}</div>
-    <div class="info-sub">${con.client_email || ''}</div>
-    <div class="info-sub">${con.client_phone || ''}</div>
-    <div class="info-sub">${con.client_address || ''}</div>
+    <div class="card-label">Client</div>
+    <div class="card-name">${clientName}</div>
+    <div class="card-sub">${con.client_email || ''}${con.client_phone ? '<br>' + con.client_phone : ''}${con.client_address ? '<br>' + con.client_address : ''}</div>
   </div>
 </div>
 
 <div class="section-title">Scope of Work</div>
-<div class="card">
-  <table width="100%" cellpadding="0" cellspacing="0">${openingsRows}</table>
-  <div style="margin-top:10px">
-    <div class="totals-row"><span>Subtotal</span><span>${fmtCAD(subtotal)}</span></div>
-    <div class="totals-row"><span>Tax</span><span>${fmtCAD(tax)}</span></div>
-    <div class="totals-total"><span>Total</span><span style="color:#2563EB">${fmtCAD(total)}</span></div>
-    ${depositPct > 0 ? `<div class="deposit-row"><span>Deposit on signing (${depositPct}%)</span><span>${fmtCAD(depositAmt)}</span></div><div class="totals-row"><span>Balance on completion</span><span>${fmtCAD(balanceAmt)}</span></div>` : ''}
+<div class="scope-card">
+  <table width="100%" cellpadding="0" cellspacing="0">
+    ${openingsRows}
+  </table>
+  <div class="totals">
+    <div class="tot-row"><span>Subtotal</span><span>${fmtCAD(subtotal)}</span></div>
+    <div class="tot-row"><span>Tax</span><span>${fmtCAD(tax)}</span></div>
+    <div class="tot-total"><span>Total</span><span>${fmtCAD(total)}</span></div>
+    ${depositPct > 0 ? `
+    <div class="tot-deposit"><span>Deposit on signing (${depositPct}%)</span><span>${fmtCAD(depositAmt)}</span></div>
+    <div class="tot-balance"><span>Balance on completion</span><span>${fmtCAD(balanceAmt)}</span></div>
+    ` : ''}
   </div>
 </div>
 
-<div class="section-title">Terms & Conditions</div>
-<div class="card">
-  <div class="check-row"><span>✓</span><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
-  <div class="check-row"><span>✓</span><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
-  <div class="check-row"><span>✓</span><span>Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</span></div>
-  <div class="check-row"><span>✓</span><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
+<div class="section-title">Terms &amp; Conditions</div>
+<div class="terms-card">
+  <div class="check-row"><div class="check-icon">✓</div><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
+  <div class="check-row"><div class="check-icon">✓</div><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
+  <div class="check-row"><div class="check-icon">✓</div><span>Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</span></div>
+  <div class="check-row"><div class="check-icon">✓</div><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
 </div>
 
+${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_cancel || p?.damage_disclaimer || p?.permits_responsibility || paymentMethodsArr.length > 0 ? `
 <div class="section-title">Contract Details</div>
-<div class="card">
+<div class="terms-card">
   ${clauseBlock('Completion Timeframe', p?.completion_timeframe)}
   ${paymentMethodsArr.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethodsArr.map((m: string) => `<span class="payment-pill">${m.trim()}</span>`).join('')}</div></div>` : ''}
   ${clauseBlock('Customer Responsibilities', p?.customer_responsibilities)}
   ${clauseBlock("Buyer's Right to Cancel", p?.buyer_right_to_cancel)}
   ${clauseBlock('Damage Disclaimer', p?.damage_disclaimer)}
   ${clauseBlock('Permits Responsibility', p?.permits_responsibility)}
-  ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
 </div>
+` : ''}
 
 <div class="section-title">Signatures</div>
-<div class="card">
+<div class="terms-card">
   <div class="sig-grid">
     <div>
       <div class="sig-label">Contractor</div>
       ${con.contractor_signature_url ? `<img src="${con.contractor_signature_url}" class="sig-img" crossorigin="anonymous" />` : '<div class="sig-line"></div>'}
-      <div style="border-bottom:1.5px solid #0A0E1A;margin-bottom:4px"></div>
+      <div style="border-bottom:1.5px solid #0A1628;margin-bottom:4px"></div>
       <div class="sig-name">${companyName}</div>
       <div class="sig-name">${signedDate}</div>
     </div>
     <div>
       <div class="sig-label">Client</div>
       ${con.client_signature_url ? `<img src="${con.client_signature_url}" class="sig-img" crossorigin="anonymous" />` : '<div class="sig-line"></div>'}
-      <div style="border-bottom:1.5px solid #0A0E1A;margin-bottom:4px"></div>
+      <div style="border-bottom:1.5px solid #0A1628;margin-bottom:4px"></div>
       <div class="sig-name">${clientName}</div>
       <div class="sig-name">${signedDate}</div>
     </div>
   </div>
 </div>
 
-<div class="footer">
+<div class="footer-bar">
   <span>${companyName}</span>
   <span>Powered by ApexScale · useapexscale.com</span>
+</div>
+
 </div>
 </body>
 </html>`
