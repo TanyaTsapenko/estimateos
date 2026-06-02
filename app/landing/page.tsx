@@ -29,7 +29,7 @@ export default function LandingPage() {
         </div>
       </div>
       {/* BODY */}
-      <div style={{ background: '#ffffff', padding: 24 }}>
+      <div style={{ background: '#ffffff', padding: 24, minHeight: '60vh' }}>
         {FEATURES.map(({ icon: Icon, title, sub }) => (
           <div key={title} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: '0.5px solid #F3F4F6' }}>
             <div style={{ width: 34, height: 34, background: '#EFF6FF', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
