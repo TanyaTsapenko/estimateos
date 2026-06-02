@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const browser = await puppeteer.default.launch({
       args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: { width: 1200, height: 900, deviceScaleFactor: 1 },
+      defaultViewport: { width: 600, height: 900, deviceScaleFactor: 1 },
       executablePath,
       headless: true,
     })
@@ -36,16 +36,16 @@ export async function GET(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://useapexscale.com'
     await page.goto(`${baseUrl}/sign/contract/${contractId}?pdf=true`, {
       waitUntil: 'networkidle0',
-      timeout: 30000,
+      timeout: 45000,
     })
 
-    await new Promise(r => setTimeout(r, 2000))
+    await new Promise(r => setTimeout(r, 4000))
+    await page.evaluate(() => document.fonts.ready)
 
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
-      scale: 0.8,
     })
 
     await browser.close()
