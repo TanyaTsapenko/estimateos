@@ -258,6 +258,8 @@ export default function SignContractPage() {
             * {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
             }
             body {
               margin: 0 !important;
