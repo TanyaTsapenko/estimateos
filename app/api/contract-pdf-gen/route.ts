@@ -66,10 +66,10 @@ export async function GET(request: NextRequest) {
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;font-size:13px}
-  .hdr{background:#0A1628;padding:24px 40px;display:flex;justify-content:space-between;align-items:center}
-  .hdr-kicker{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-  .hdr-num{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.3px}
-  .hdr-date{font-size:16px;font-weight:700;color:#fff}
+  .hdr{padding:20px 32px;border-bottom:2px solid #0A1628;display:flex;justify-content:space-between;align-items:center}
+  .hdr-logo-img{max-height:48px;max-width:140px;object-fit:contain;display:block}
+  .hdr-company{font-size:15px;font-weight:700;color:#0A1628}
+  .hdr-sub{font-size:11px;color:#9CA3AF;margin-top:2px}
   .body{padding:28px 40px}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
   .card{background:#F8F9FB;border:1px solid #E5E7EB;border-radius:8px;padding:14px}
@@ -111,13 +111,19 @@ export async function GET(request: NextRequest) {
 <body>
 
 <div class="hdr">
-  <div>
-    <div class="hdr-kicker">Contract</div>
-    <div class="hdr-num">CON-${con.id.slice(0,6).toUpperCase()}</div>
+  <div style="display:flex;align-items:center;gap:12px">
+    ${p?.logo_url
+      ? `<img src="${p.logo_url}" class="hdr-logo-img" crossorigin="anonymous" />`
+      : ''
+    }
+    <div>
+      <div class="hdr-company">${companyName}</div>
+      <div class="hdr-sub">Signed Contract · CON-${con.id.slice(0,6).toUpperCase()}</div>
+    </div>
   </div>
   <div style="text-align:right">
-    <div class="hdr-kicker">${con.signed_at ? 'Signed' : 'Date'}</div>
-    <div class="hdr-date">${signedDate}</div>
+    <div style="font-size:10px;font-weight:600;color:#9CA3AF;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">${con.signed_at ? 'Signed' : 'Date'}</div>
+    <div style="font-size:16px;font-weight:700;color:#0A1628">${signedDate}</div>
   </div>
 </div>
 
