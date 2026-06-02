@@ -77,6 +77,13 @@ export default function SignContractPage() {
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('print') === 'true') {
+      setTimeout(() => window.print(), 1500)
+    }
+  }, [])
+
+  useEffect(() => {
     async function load() {
       const { data: con } = await supabase.from('contracts').select('*').eq('id', contractId).single()
       if (!con) { setLoading(false); return }
@@ -402,7 +409,7 @@ export default function SignContractPage() {
 
           {/* Download button */}
           <a
-            href={`/api/contract-pdf?contractId=${contract.id}`}
+            href={`/sign/contract/${contract.id}?print=true`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 24 }}
