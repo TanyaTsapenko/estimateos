@@ -84,6 +84,13 @@ export default function SignContractPage() {
   }, [])
 
   useEffect(() => {
+    if (!contract) return
+    const num = estimate?.estimate_number || contract.id.slice(0, 8)
+    const client = estimate?.client_name || 'Client'
+    document.title = `Contract-${num}-${client}`
+  }, [contract, estimate])
+
+  useEffect(() => {
     async function load() {
       const { data: con } = await supabase.from('contracts').select('*').eq('id', contractId).single()
       if (!con) { setLoading(false); return }
