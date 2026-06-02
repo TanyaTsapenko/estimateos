@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
 
     const profileId = (con.profile_id || '').toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
+    const { data: authUser } = await admin.auth.admin.getUserById(profileId)
+    const contractorEmail = authUser?.user?.email || ''
+
     const [{ data: est }, { data: ops }, { data: allProfiles }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
@@ -116,7 +119,7 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="card-label">Contractor</div>
     <div class="card-name">${companyName}</div>
-    <div class="card-sub">${p?.phone || p?.website || ''}</div>
+    <div class="card-sub">${p?.phone || ''}${contractorEmail ? '<br>' + contractorEmail : ''}</div>
   </div>
   <div class="card">
     <div class="card-label">Client</div>
