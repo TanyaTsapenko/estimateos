@@ -234,6 +234,13 @@ export default function SignContractPage() {
       : '—'
     return (
       <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F }}>
+        <style>{`
+          @media print {
+            @page { margin: 0; size: A4; }
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .no-print { display: none !important; }
+          }
+        `}</style>
 
         {/* Contract bar */}
         <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -408,14 +415,13 @@ export default function SignContractPage() {
           </div>
 
           {/* Download button */}
-          <a
-            href={`/sign/contract/${contract.id}?print=true`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 24 }}
+          <button
+            className="no-print"
+            onClick={() => window.print()}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 24 }}
           >
             <Download size={16} /> Download Contract
-          </a>
+          </button>
 
         </div>
       </div>
