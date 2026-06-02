@@ -119,12 +119,23 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="card-label">Contractor</div>
     <div class="card-name">${companyName}</div>
-    <div class="card-sub">${p?.phone || ''}${contractorEmail ? '<br>' + contractorEmail : ''}${p?.address ? '<br>' + p.address : ''}${(p?.city || p?.province) ? '<br>' + [p?.city, p?.province, p?.postal_code].filter(Boolean).join(', ') : ''}</div>
+    <div class="card-sub">
+      ${p?.phone || ''}
+      ${contractorEmail ? '<br>' + contractorEmail : ''}
+      ${p?.address ? '<br>' + p.address : ''}
+      ${(p?.city || p?.province) ? '<br>' + [p?.city, p?.province, p?.postal_code].filter(Boolean).join(', ') : ''}
+      ${p?.website && p.website !== 'https://' ? '<br><a href="' + p.website + '" style="color:#2563EB">' + p.website.replace('https://','').replace('http://','') + '</a>' : ''}
+    </div>
   </div>
   <div class="card">
     <div class="card-label">Client</div>
     <div class="card-name">${clientName}</div>
-    <div class="card-sub">${est?.client_email || con.client_email || ''}${(est?.client_phone || con.client_phone) ? '<br>' + (est?.client_phone || con.client_phone) : ''}${(est?.client_address || con.client_address) ? '<br>' + (est?.client_address || con.client_address) : ''}</div>
+    <div class="card-sub">
+      ${est?.client_phone || con.client_phone || ''}
+      ${(est?.client_email || con.client_email) ? '<br>' + (est?.client_email || con.client_email) : ''}
+      ${(est?.client_address || con.client_address) ? '<br>' + (est?.client_address || con.client_address) : ''}
+      ${(est?.client_city || con.client_city) ? '<br>' + [est?.client_city || con.client_city, est?.client_province || con.client_province, est?.client_postal || con.client_postal].filter(Boolean).join(', ') : ''}
+    </div>
   </div>
 </div>
 
