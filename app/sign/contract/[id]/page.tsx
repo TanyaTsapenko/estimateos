@@ -26,6 +26,8 @@ interface Profile {
   completion_timeframe: string | null; payment_methods: string[] | null
   customer_responsibilities: string | null; buyer_right_to_cancel: string | null
   damage_disclaimer: string | null; permits_responsibility: string | null; project_manager: string | null
+  logo_url: string | null; phone: string | null; website: string | null
+  city: string | null; province: string | null; address: string | null; postal_code: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -107,7 +109,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -272,14 +274,19 @@ export default function SignContractPage() {
         `}</style>
 
         {/* Contract bar */}
-        <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{_conId}</div>
+        <div style={{ background: '#0A1628', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            )}
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Signed Contract · {_conId}</div>
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>SIGNED</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{_signed}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{_signed}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>{profile?.province ? profile.province + ', Canada' : 'Canada'}</div>
           </div>
         </div>
 
@@ -291,8 +298,11 @@ export default function SignContractPage() {
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract.company_name || '—'}</div>
               <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {contract.company_phone && <div>{contract.company_phone}</div>}
+                {(contract.company_phone || profile?.phone) && <div>{contract.company_phone || profile?.phone}</div>}
                 {contract.company_email && <div>{contract.company_email}</div>}
+                {profile?.address && <div>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province, profile.postal_code].filter(Boolean).join(', ')}</div>}
+                {profile?.website && profile.website !== 'https://' && <div><a href={profile.website} style={{ color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a></div>}
               </div>
             </div>
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
@@ -302,6 +312,7 @@ export default function SignContractPage() {
                 {estimate.client_phone && <div>{estimate.client_phone}</div>}
                 {estimate.client_email && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
+                {(estimate as any).client_city && <div>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
               </div>
             </div>
           </div>
@@ -609,14 +620,19 @@ export default function SignContractPage() {
       <div id="contract-content" style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, padding: '12mm 14mm' }}>
 
         {/* CONTRACT BAR */}
-        <div className="contract-bar" style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{conDisplayId}</div>
+        <div className="contract-bar" style={{ background: '#0A1628', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            )}
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Signed Contract · {conDisplayId}</div>
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>DATE</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{createdDate}</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>{profile?.province ? profile.province + ', Canada' : 'Canada'}</div>
           </div>
         </div>
 
@@ -630,8 +646,11 @@ export default function SignContractPage() {
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract?.company_name || '—'}</div>
               <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {contract?.company_phone && <div>{contract.company_phone}</div>}
+                {(contract?.company_phone || profile?.phone) && <div>{contract?.company_phone || profile?.phone}</div>}
                 {contract?.company_email && <div>{contract.company_email}</div>}
+                {profile?.address && <div>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province, profile.postal_code].filter(Boolean).join(', ')}</div>}
+                {profile?.website && profile.website !== 'https://' && <div><a href={profile.website} style={{ color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a></div>}
               </div>
             </div>
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
@@ -641,6 +660,7 @@ export default function SignContractPage() {
                 {estimate.client_phone && <div>{estimate.client_phone}</div>}
                 {estimate.client_email && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
+                {(estimate as any).client_city && <div>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
               </div>
             </div>
           </div>
