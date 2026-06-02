@@ -402,7 +402,7 @@ export default function SignContractPage() {
 
           {/* Download button */}
           <a
-            href={`/api/contract-pdf?contractId=${contract.id}`}
+            href={`/api/contract-pdf?contractId=${contract.id}`} download={`Contract-${contract.contract_number}.pdf`}
             target="_blank"
             rel="noopener noreferrer"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 24 }}
