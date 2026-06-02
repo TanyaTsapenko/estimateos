@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const admin = createAdminClient()
-    const { data: con } = await admin.from('contracts').select('id, client_name').eq('id', contractId).single()
+    const cleanContractId = contractId.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    const { data: con } = await admin.from('contracts').select('id, client_name, profile_id').eq('id', cleanContractId).single()
     if (!con) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
 
     const chromium = await import('@sparticuz/chromium-min')
