@@ -11,7 +11,7 @@ const FEATURES = [
 export default function LandingPage() {
   const router = useRouter()
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ minHeight: "auto", background: '#fff', fontFamily: 'Inter, sans-serif' }}>
       {/* HERO */}
       <div style={{ background: '#fff', padding: '40px 24px 28px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ width: 220, height: 220, borderRadius: '50%', background: '#2563EB', opacity: 0.07, position: 'absolute', top: -80, right: -60, pointerEvents: 'none' }} />
