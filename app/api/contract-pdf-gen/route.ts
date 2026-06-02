@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     const p = prof as any
     const companyName = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Your Contractor'
-    const clientName = con.client_name || est?.client_name || '—'
+    const clientName = est?.client_name || con.client_name || '—'
     const signedDate = con.signed_at ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.signed_at)) : ''
     const total = est?.total || 0
     const tax = est?.tax_amount || 0
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="card-label">Client</div>
     <div class="card-name">${clientName}</div>
-    <div class="card-sub">${con.client_email || ''}${con.client_phone ? '<br>' + con.client_phone : ''}${con.client_address ? '<br>' + con.client_address : ''}</div>
+    <div class="card-sub">${est?.client_email || con.client_email || ''}${(est?.client_phone || con.client_phone) ? '<br>' + (est?.client_phone || con.client_phone) : ''}${(est?.client_address || con.client_address) ? '<br>' + (est?.client_address || con.client_address) : ''}</div>
   </div>
 </div>
 
