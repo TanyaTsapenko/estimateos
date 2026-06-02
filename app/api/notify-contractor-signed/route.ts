@@ -14,42 +14,84 @@ export async function POST(req: Request) {
     to: contractorEmail,
     subject: `✓ ${clientName} signed the contract`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="background: linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%); border-radius: 16px; padding: 28px; margin-bottom: 24px; text-align: center;">
-          <div style="width: 56px; height: 56px; background: rgba(255,255,255,0.1); border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-            <span style="color: #fff; font-size: 24px;">✓</span>
-          </div>
-          <h2 style="color: #fff; margin: 0 0 8px; font-size: 22px;">Contract Signed!</h2>
-          <p style="color: rgba(255,255,255,0.5); margin: 0; font-size: 14px;">${clientName} has signed the contract</p>
-        </div>
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#F5F6F8;font-family:Arial,Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#F5F6F8;padding:32px 16px">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #E5E7EB;max-width:560px;width:100%">
 
-        <div style="background: #F4F4F2; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr style="border-bottom: 1px solid #E8E8E8;">
-              <td style="padding: 10px 0; color: #8892b0; font-size: 13px;">Client</td>
-              <td style="padding: 10px 0; color: #0A0E1A; font-size: 13px; font-weight: 600; text-align: right;">${clientName}</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #E8E8E8;">
-              <td style="padding: 10px 0; color: #8892b0; font-size: 13px;">Contract Total</td>
-              <td style="padding: 10px 0; color: #2045B8; font-size: 16px; font-weight: 700; text-align: right;">CA$${Number(total).toLocaleString('en-CA')}</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; color: #8892b0; font-size: 13px;">Deposit Due (${depositPercent}%)</td>
-              <td style="padding: 10px 0; color: #059669; font-size: 14px; font-weight: 700; text-align: right;">CA$${depositAmount.toLocaleString('en-CA')}</td>
-            </tr>
-          </table>
-        </div>
+      <!-- HEADER -->
+      <tr><td style="padding:20px 32px;border-bottom:1px solid #F3F4F6">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td>
+            <table cellpadding="0" cellspacing="0"><tr>
+              <td style="width:28px;height:28px;background:#2563EB;border-radius:7px;text-align:center;vertical-align:middle">
+                <span style="color:#fff;font-size:14px;font-weight:700">A</span>
+              </td>
+              <td style="padding-left:8px;font-size:15px;font-weight:700;color:#0A1628;letter-spacing:-0.3px">ApexScale</td>
+            </tr></table>
+          </td>
+          <td align="right" style="font-size:12px;color:#9CA3AF">Signed contract notification</td>
+        </tr></table>
+      </td></tr>
 
-        <p style="color: #8892b0; font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
-          The signed contract is saved in your dashboard. Log in to view details and track the deposit.
-        </p>
-        <a href="${viewUrl}" style="display:inline-block;background:#2045B8;color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;margin-bottom:20px">
-          View Signed Contract &rarr;
-        </a>
-        <hr style="border: none; border-top: 1px solid #E8E8E8; margin: 24px 0;">
-        <p style="color: #C0C8D0; font-size: 12px; text-align: center;">Powered by ApexScale</p>
-      </div>
-    `,
+      <!-- HERO -->
+      <tr><td style="padding:32px 32px 24px;text-align:center">
+        <div style="width:52px;height:52px;background:#DCFCE7;border-radius:50%;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;line-height:52px">
+          <span style="color:#16A34A;font-size:22px;line-height:52px">✓</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#0A1628;letter-spacing:-0.5px;margin-bottom:6px">Contract signed!</div>
+        <div style="font-size:14px;color:#6B7280;line-height:1.5"><span style="color:#2563EB;font-weight:600">${clientName}</span> has signed the contract.<br>Review the details and follow up.</div>
+      </td></tr>
+
+      <!-- INFO CARD -->
+      <tr><td style="padding:0 32px 24px">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FB;border-radius:12px;overflow:hidden">
+          <tr><td style="padding:12px 16px;border-bottom:1px solid #E5E7EB">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="font-size:14px;color:#6B7280">Client</td>
+              <td align="right" style="font-size:14px;color:#0A1628;font-weight:600">${clientName}</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:12px 16px;border-bottom:1px solid #E5E7EB">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="font-size:14px;color:#6B7280">Signed</td>
+              <td align="right" style="font-size:14px;color:#0A1628;font-weight:600">${new Date().toLocaleDateString('en-CA', { year:'numeric', month:'long', day:'numeric' })}</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:12px 16px;border-bottom:1px solid #E5E7EB">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="font-size:14px;color:#6B7280">Contract total</td>
+              <td align="right" style="font-size:14px;color:#2563EB;font-weight:700">CA$${Number(total).toLocaleString('en-CA')}</td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:12px 16px">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="font-size:14px;color:#6B7280">Deposit due (${depositPercent}%)</td>
+              <td align="right" style="font-size:14px;color:#0F8A6B;font-weight:700">CA$${depositAmount.toLocaleString('en-CA')}</td>
+            </tr></table>
+          </td></tr>
+        </table>
+      </td></tr>
+
+      <!-- BUTTON -->
+      <tr><td style="padding:0 32px 32px">
+        <a href="${viewUrl}" style="display:block;background:#2563EB;color:#ffffff;text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none;letter-spacing:-0.1px">View signed contract</a>
+      </td></tr>
+
+      <!-- FOOTER -->
+      <tr><td style="padding:20px 32px;border-top:1px solid #F3F4F6;text-align:center">
+        <div style="font-size:12px;color:#9CA3AF;line-height:1.6">Sent by ApexScale · useapexscale.com<br>${companyName} · Canada</div>
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
+`,
   })
 
   return NextResponse.json({ success: true })
