@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const cleanContractId = contractId.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     console.log('Looking for contract:', cleanContractId)
 
-    const { data: con, error: conError } = await admin.from('contracts').select('id, client_name, profile_id').eq('id', cleanContractId).single()
+    const { data: con, error: conError } = await admin.from('contracts').select('id, profile_id').eq('id', cleanContractId).single()
     console.log('Contract result:', con ? 'found' : 'null', 'error:', conError?.message)
 
     if (!con) return NextResponse.json({ error: 'Contract not found', id: cleanContractId, dbError: conError?.message }, { status: 404 })
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     await browser.close()
 
-    const clientName = (con.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
+    const clientName = 'Client'
 
     return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
       headers: {
