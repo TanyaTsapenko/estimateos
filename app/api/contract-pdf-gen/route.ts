@@ -19,25 +19,26 @@ export async function GET(request: NextRequest) {
       admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', con.profile_id).single(),
     ])
 
-    const companyName = prof?.company_name || 'Your Contractor'
-    const clientName = con.client_name || 'Client'
-    const signedDate = con.signed_at ? new Date(con.signed_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
-    const total = est?.total_price || 0
+    const p = prof as any
+    const companyName = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Your Contractor'
+    const clientName = est?.client_name || '—'
+    const signedDate = con.signed_at ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.signed_at)) : ''
+    const total = est?.total || 0
     const tax = est?.tax_amount || 0
-    const subtotal = total - tax
+    const subtotal = est?.subtotal || (total - tax)
     const depositPct = con.deposit_percent || 0
     const depositAmt = Math.round(total * depositPct / 100)
     const balanceAmt = total - depositAmt
 
-    const openingsRows = (ops || []).map((op: any) => {
-      const typeName = (OPENING_TYPES as any)[op.type]?.label || op.type
-      return `<tr>
-        <td style="padding:10px 0;font-size:13px;color:#0A0E1A;font-weight:600;border-bottom:1px solid #F0F0F0">${typeName} × ${op.qty}</td>
-        <td style="padding:10px 0;font-size:13px;color:#0A0E1A;font-weight:600;text-align:right;border-bottom:1px solid #F0F0F0">${fmtCAD(op.total_cost)}</td>
+    const openingsRows = (ops || []).map((op: any, i: number) => {
+      const typeName = OPENING_TYPES[op.type]?.name || op.type
+      return `<tr style="border-bottom:${i < (ops || []).length - 1 ? '1px solid #F0F0F0' : 'none'}">
+        <td style="padding:10px 0;font-size:13px;color:#0A0E1A;font-weight:600">${typeName} × ${op.qty}</td>
+        <td style="padding:10px 0;font-size:13px;color:#0A0E1A;font-weight:600;text-align:right">${fmtCAD(op.total_cost)}</td>
       </tr>`
     }).join('')
 
-    const paymentMethods = Array.isArray(prof?.payment_methods) ? prof.payment_methods.join(', ') : (prof?.payment_methods || 'E-transfer')
+    const paymentMethodsArr: string[] = Array.isArray(p?.payment_methods) ? p.payment_methods : []
 
     const html = `<!DOCTYPE html>
 <html>
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
 <div class="header">
   <div>
     <div class="logo-text">Apex<span>Scale</span></div>
-    <div class="company-meta">${companyName}<br>${prof?.province || ''}<br>${prof?.phone || ''}</div>
+    <div class="company-meta">${companyName}<br>${p?.province || ''}<br>${p?.phone || ''}</div>
   </div>
   <div>
     <div class="doc-title">Signed Contract</div>
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="info-label">Contractor</div>
     <div class="info-val">${companyName}</div>
-    <div class="info-sub">${prof?.phone || ''}</div>
+    <div class="info-sub">${p?.phone || ''}</div>
   </div>
   <div class="card">
     <div class="info-label">Client</div>
@@ -117,20 +118,20 @@ export async function GET(request: NextRequest) {
 
 <div class="section-title">Terms & Conditions</div>
 <div class="card">
-  ${con.warranty_text ? `<div class="check-row"><span>✓</span><span>${con.warranty_text}</span></div>` : ''}
-  ${con.payment_terms ? `<div class="check-row"><span>✓</span><span>Payment: ${con.payment_terms}</span></div>` : ''}
-  ${con.cancellation_policy ? `<div class="check-row"><span>✓</span><span>Cancellation: ${con.cancellation_policy}</span></div>` : ''}
-  ${con.access_terms ? `<div class="check-row"><span>✓</span><span>Access: ${con.access_terms}</span></div>` : ''}
+  <div class="check-row"><span>✓</span><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
+  <div class="check-row"><span>✓</span><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
+  <div class="check-row"><span>✓</span><span>Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</span></div>
+  <div class="check-row"><span>✓</span><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
 </div>
 
 <div class="section-title">Contract Details</div>
 <div class="card">
-  ${con.completion_timeframe ? `<div class="clause"><div class="clause-title">Completion Timeframe</div><p>${con.completion_timeframe}</p></div>` : ''}
-  <div class="clause"><div class="clause-title">Accepted Payment Methods</div><p>${paymentMethods.split(',').map((m: string) => `<span class="payment-pill">${m.trim()}</span>`).join('')}</p></div>
-  ${con.customer_responsibilities ? `<div class="clause"><div class="clause-title">Customer Responsibilities</div><p>${con.customer_responsibilities}</p></div>` : ''}
-  ${con.buyer_right_to_cancel ? `<div class="clause"><div class="clause-title">Buyer's Right to Cancel</div><p>${con.buyer_right_to_cancel}</p></div>` : ''}
-  ${con.damage_disclaimer ? `<div class="clause"><div class="clause-title">Damage Disclaimer</div><p>${con.damage_disclaimer}</p></div>` : ''}
-  ${con.permits_responsibility ? `<div class="clause"><div class="clause-title">Permits Responsibility</div><p>${con.permits_responsibility}</p></div>` : ''}
+  ${p?.completion_timeframe ? `<div class="clause"><div class="clause-title">Completion Timeframe</div><p>${p.completion_timeframe}</p></div>` : ''}
+  ${paymentMethodsArr.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><p>${paymentMethodsArr.map((m: string) => `<span class="payment-pill">${m.trim()}</span>`).join('')}</p></div>` : ''}
+  ${p?.customer_responsibilities ? `<div class="clause"><div class="clause-title">Customer Responsibilities</div><p>${p.customer_responsibilities}</p></div>` : ''}
+  ${p?.buyer_right_to_cancel ? `<div class="clause"><div class="clause-title">Buyer's Right to Cancel</div><p>${p.buyer_right_to_cancel}</p></div>` : ''}
+  ${p?.damage_disclaimer ? `<div class="clause"><div class="clause-title">Damage Disclaimer</div><p>${p.damage_disclaimer}</p></div>` : ''}
+  ${p?.permits_responsibility ? `<div class="clause"><div class="clause-title">Permits Responsibility</div><p>${p.permits_responsibility}</p></div>` : ''}
 </div>
 
 <div class="section-title">Signatures</div>
