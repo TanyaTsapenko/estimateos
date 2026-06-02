@@ -78,15 +78,14 @@ export async function GET(request: NextRequest) {
 </style>
 </head>
 <body>
-<div class="header">
+<div style="background:#0A1628;padding:28px 40px;display:flex;justify-content:space-between;align-items:center;margin:-40px -48px 32px">
   <div>
-    <div class="logo-text">Apex<span>Scale</span></div>
-    <div class="company-meta">${companyName}<br>${p?.province || ''}<br>${p?.phone || ''}</div>
+    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">CONTRACT</div>
+    <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-.3px">CON-${con.id.slice(0,6).toUpperCase()}</div>
   </div>
-  <div>
-    <div class="doc-title">Signed Contract</div>
-    <div class="doc-sub">CON-${con.id.slice(0,6).toUpperCase()}<br>${est?.estimate_number || ''}</div>
-    <div><span class="signed-badge">✓ Signed ${signedDate}</span></div>
+  <div style="text-align:right">
+    <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">${con.signed_at ? 'SIGNED' : 'DATE'}</div>
+    <div style="font-size:18px;font-weight:700;color:#ffffff">${signedDate}</div>
   </div>
 </div>
 
