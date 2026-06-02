@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager').eq('id', con.profile_id).single(),
     ])
 
     const p = prof as any
@@ -39,6 +39,11 @@ export async function GET(request: NextRequest) {
     }).join('')
 
     const paymentMethodsArr: string[] = Array.isArray(p?.payment_methods) ? p.payment_methods : []
+
+    function clauseBlock(title: string, body: string | null): string {
+      if (!body) return ''
+      return `<div class="clause"><div class="clause-title">${title}</div><p>${body.replace(/\n/g, '<br>')}</p></div>`
+    }
 
     const html = `<!DOCTYPE html>
 <html>
@@ -74,7 +79,8 @@ export async function GET(request: NextRequest) {
   .sig-line{border-bottom:1.5px solid #0A0E1A;margin-bottom:4px;height:56px}
   .sig-name{font-size:11px;color:#6b7280}
   .footer{margin-top:28px;padding-top:12px;border-top:1px solid #E0E0E0;font-size:10px;color:#BFBFBF;display:flex;justify-content:space-between}
-  .payment-pill{display:inline-block;background:#EEF2FF;color:#2045B8;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600;margin-right:4px}
+  .payment-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .payment-pill{background:#EEF2FF;color:#2045B8;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600}
 </style>
 </head>
 <body>
@@ -125,12 +131,13 @@ export async function GET(request: NextRequest) {
 
 <div class="section-title">Contract Details</div>
 <div class="card">
-  ${p?.completion_timeframe ? `<div class="clause"><div class="clause-title">Completion Timeframe</div><p>${p.completion_timeframe}</p></div>` : ''}
-  ${paymentMethodsArr.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><p>${paymentMethodsArr.map((m: string) => `<span class="payment-pill">${m.trim()}</span>`).join('')}</p></div>` : ''}
-  ${p?.customer_responsibilities ? `<div class="clause"><div class="clause-title">Customer Responsibilities</div><p>${p.customer_responsibilities}</p></div>` : ''}
-  ${p?.buyer_right_to_cancel ? `<div class="clause"><div class="clause-title">Buyer's Right to Cancel</div><p>${p.buyer_right_to_cancel}</p></div>` : ''}
-  ${p?.damage_disclaimer ? `<div class="clause"><div class="clause-title">Damage Disclaimer</div><p>${p.damage_disclaimer}</p></div>` : ''}
-  ${p?.permits_responsibility ? `<div class="clause"><div class="clause-title">Permits Responsibility</div><p>${p.permits_responsibility}</p></div>` : ''}
+  ${clauseBlock('Completion Timeframe', p?.completion_timeframe)}
+  ${paymentMethodsArr.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethodsArr.map((m: string) => `<span class="payment-pill">${m.trim()}</span>`).join('')}</div></div>` : ''}
+  ${clauseBlock('Customer Responsibilities', p?.customer_responsibilities)}
+  ${clauseBlock("Buyer's Right to Cancel", p?.buyer_right_to_cancel)}
+  ${clauseBlock('Damage Disclaimer', p?.damage_disclaimer)}
+  ${clauseBlock('Permits Responsibility', p?.permits_responsibility)}
+  ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
 </div>
 
 <div class="section-title">Signatures</div>
