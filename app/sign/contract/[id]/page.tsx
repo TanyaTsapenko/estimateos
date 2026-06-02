@@ -250,7 +250,7 @@ export default function SignContractPage() {
       ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(contract.signed_at))
       : '—'
     return (
-      <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, padding: '12mm 14mm' }}>
+      <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
         <style>{`
           @media print {
             @page {
@@ -274,7 +274,7 @@ export default function SignContractPage() {
         `}</style>
 
         {/* Contract bar */}
-        <div style={{ background: '#0A1628', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: '#0A1628', padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {profile?.logo_url && (
               <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -617,10 +617,10 @@ export default function SignContractPage() {
       )}
 
       {/* ── MAIN CONTRACT (always in DOM — prints cleanly) ── */}
-      <div id="contract-content" style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, padding: '12mm 14mm' }}>
+      <div id="contract-content" style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
 
         {/* CONTRACT BAR */}
-        <div className="contract-bar" style={{ background: '#0A1628', padding: '24px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="contract-bar" style={{ background: '#0A1628', padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {profile?.logo_url && (
               <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
