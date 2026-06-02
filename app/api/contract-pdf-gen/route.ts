@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;font-size:13px}
   .hdr{background:#0A1628;padding:24px 32px;display:flex;justify-content:space-between;align-items:center}
-  .hdr-logo-img{height:56px;width:auto;max-width:180px;object-fit:contain;display:block}
+  .hdr-logo-img{max-height:80px;max-width:200px;display:block}
   .hdr-company{font-size:18px;font-weight:800;color:#ffffff;letter-spacing:-.3px}
   .hdr-sub{font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px}
   .body{padding:28px 40px}
