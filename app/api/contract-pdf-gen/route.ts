@@ -49,7 +49,10 @@ export async function GET(request: NextRequest) {
       </tr>`
     }).join('')
 
-    const paymentMethodsArr: string[] = Array.isArray(p?.payment_methods) ? p.payment_methods : []
+    const selectedPaymentMethod = (con as any).payment_method || null
+    const paymentMethodsArr: string[] = selectedPaymentMethod
+      ? [selectedPaymentMethod]
+      : (Array.isArray(p?.payment_methods) ? p.payment_methods : [])
 
     function clauseBlock(title: string, body: string | null): string {
       if (!body) return ''
