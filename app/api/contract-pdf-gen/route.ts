@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     ])
 
     const p = prof as any
+    console.log('DEBUG profile_id:', con.profile_id, 'prof:', prof ? 'found' : 'null', 'company:', p?.company_name)
     const companyName = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Your Contractor'
     const clientName = est?.client_name || con.client_name || '—'
     const signedDate = con.signed_at ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.signed_at)) : ''
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="card-label">Contractor</div>
     <div class="card-name">${companyName}</div>
-    <div class="card-sub">${p?.phone || ''}</div>
+    <div class="card-sub">${p?.phone || p?.website || ''}</div>
   </div>
   <div class="card">
     <div class="card-label">Client</div>
