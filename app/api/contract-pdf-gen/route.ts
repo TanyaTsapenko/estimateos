@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   .tot-balance{display:flex;justify-content:space-between;font-size:12px;color:#6B7280;margin-top:3px}
   .terms-card{background:#fff;border:1px solid #E5E7EB;border-radius:8px;padding:16px;margin-bottom:4px}
   .check-row{display:flex;gap:8px;margin-bottom:8px;font-size:12px;color:#374151;line-height:1.5;align-items:flex-start}
-  .check-icon{width:16px;height:16px;min-width:16px;background:#EFF6FF;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#2563EB;font-weight:700;margin-top:1px}
+  .check-icon{display:inline-block;width:14px;height:14px;background:#EFF6FF;border-radius:3px;text-align:center;line-height:14px;font-size:9px;color:#2563EB;font-weight:700;margin-right:6px;vertical-align:middle}
   .clause{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #F3F4F6}
   .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
   .clause-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9CA3AF;margin-bottom:4px}
@@ -135,10 +135,10 @@ export async function GET(request: NextRequest) {
 
 <div class="section-title">Terms &amp; Conditions</div>
 <div class="terms-card">
-  <div class="check-row"><div class="check-icon">✓</div><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
-  <div class="check-row"><div class="check-icon">✓</div><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
-  <div class="check-row"><div class="check-icon">✓</div><span>Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</span></div>
-  <div class="check-row"><div class="check-icon">✓</div><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
+  <table cellpadding="0" cellspacing="0" style="margin-bottom:8px;width:100%"><tr><td style="width:20px;vertical-align:top;padding-top:1px"><span style="display:inline-block;width:14px;height:14px;background:#EFF6FF;border-radius:3px;text-align:center;line-height:14px;font-size:9px;color:#2563EB;font-weight:700">✓</span></td><td style="font-size:12px;color:#374151;line-height:1.5">Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</td></tr></table>
+  <table cellpadding="0" cellspacing="0" style="margin-bottom:8px;width:100%"><tr><td style="width:20px;vertical-align:top;padding-top:1px"><span style="display:inline-block;width:14px;height:14px;background:#EFF6FF;border-radius:3px;text-align:center;line-height:14px;font-size:9px;color:#2563EB;font-weight:700">✓</span></td><td style="font-size:12px;color:#374151;line-height:1.5">Payment: ${p?.payment_terms || 'Upon completion'}</td></tr></table>
+  <table cellpadding="0" cellspacing="0" style="margin-bottom:8px;width:100%"><tr><td style="width:20px;vertical-align:top;padding-top:1px"><span style="display:inline-block;width:14px;height:14px;background:#EFF6FF;border-radius:3px;text-align:center;line-height:14px;font-size:9px;color:#2563EB;font-weight:700">✓</span></td><td style="font-size:12px;color:#374151;line-height:1.5">Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</td></tr></table>
+  <table cellpadding="0" cellspacing="0" style="margin-bottom:8px;width:100%"><tr><td style="width:20px;vertical-align:top;padding-top:1px"><span style="display:inline-block;width:14px;height:14px;background:#EFF6FF;border-radius:3px;text-align:center;line-height:14px;font-size:9px;color:#2563EB;font-weight:700">✓</span></td><td style="font-size:12px;color:#374151;line-height:1.5">Access: Client agrees to provide reasonable access to the property on scheduled installation day.</td></tr></table>
 </div>
 
 ${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_cancel || p?.damage_disclaimer || p?.permits_responsibility || paymentMethodsArr.length > 0 ? `
