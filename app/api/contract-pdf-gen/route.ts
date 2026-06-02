@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: allProfiles }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('id, company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager'),
+      admin.from('profiles').select('id, company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, address, postal_code'),
     ])
 
     const prof = allProfiles?.find((pr: any) => {
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
   <div class="card">
     <div class="card-label">Contractor</div>
     <div class="card-name">${companyName}</div>
-    <div class="card-sub">${p?.phone || ''}${contractorEmail ? '<br>' + contractorEmail : ''}</div>
+    <div class="card-sub">${p?.phone || ''}${contractorEmail ? '<br>' + contractorEmail : ''}${p?.address ? '<br>' + p.address : ''}${(p?.city || p?.province) ? '<br>' + [p?.city, p?.province, p?.postal_code].filter(Boolean).join(', ') : ''}</div>
   </div>
   <div class="card">
     <div class="card-label">Client</div>
