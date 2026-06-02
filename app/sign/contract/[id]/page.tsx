@@ -444,13 +444,14 @@ export default function SignContractPage() {
           </div>
 
           {/* Download button */}
-          <button
-            className="no-print"
-            onClick={() => window.print()}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 24 }}
+          <a
+            href={`/api/contract-pdf-gen?contractId=${contract.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', marginBottom: 24, textDecoration: 'none' }}
           >
             <Download size={16} /> Download Contract
-          </button>
+          </a>
 
         </div>
       </div>
