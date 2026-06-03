@@ -44,42 +44,18 @@ export async function GET(request: NextRequest) {
     const pageHeight = await page.evaluate(() => document.body.scrollHeight)
     console.log('Page height:', pageHeight)
 
-    const screenshot = await page.screenshot({ fullPage: true, type: 'png' })
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '0', right: '0', bottom: '0', left: '0' },
+    })
+
     await browser.close()
 
-    const { PDFDocument } = await import('pdf-lib')
-
-    const screenshotBuffer = Buffer.from(screenshot)
-    const pdfDoc = await PDFDocument.create()
-
-    const pngImage = await pdfDoc.embedPng(screenshotBuffer)
-    const { width: imgWidth, height: imgHeight } = pngImage
-
-    const a4Width = 595.28
-    const a4Height = 841.89
-    const scale = a4Width / imgWidth
-    const scaledHeight = imgHeight * scale
-
-    const pagesNeeded = Math.ceil(scaledHeight / a4Height)
-
-    for (let i = 0; i < pagesNeeded; i++) {
-      const pdfPage = pdfDoc.addPage([a4Width, a4Height])
-      const yOffset = i * a4Height
-      pdfPage.drawImage(pngImage, {
-        x: 0,
-        y: a4Height - scaledHeight + yOffset,
-        width: a4Width,
-        height: scaledHeight,
-      })
-    }
-
-    const pdfBytes = await pdfDoc.save()
-    const clientName = 'Client'
-
-    return new NextResponse(Buffer.from(pdfBytes) as unknown as BodyInit, {
+    return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName}.pdf"`,
+        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-Client.pdf"`,
       },
     })
 
