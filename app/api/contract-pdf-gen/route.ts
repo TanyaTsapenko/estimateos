@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     const browser = await puppeteer.default.launch({
       args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: { width: 600, height: 900, deviceScaleFactor: 1 },
+      defaultViewport: { width: 794, height: 1123, deviceScaleFactor: 1 },
       executablePath,
       headless: true,
     })
