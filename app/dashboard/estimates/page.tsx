@@ -241,11 +241,21 @@ export default function EstimatesPage() {
                       }}>
                         {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
                       </span>
-                      {e.viewed_at && (
-                        <div style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, marginTop: 3 }}>
-                          Viewed · {new Date(e.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(e.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                        </div>
-                      )}
+                      {e.viewed_at && (() => {
+                        const d = new Date(e.viewed_at)
+                        const isToday = d.toDateString() === new Date().toDateString()
+                        const color = isToday ? '#16A34A' : '#D97706'
+                        const time = d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })
+                        const label = isToday
+                          ? `Opened today · ${time}`
+                          : `Opened ${d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · ${time}`
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: 99, background: color, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                     <ChevronRight size={14} color="#CBD5E1" />
                   </div>
@@ -279,11 +289,21 @@ export default function EstimatesPage() {
                         {e.client_city ? ` · ${e.client_city}` : ''}
                         {` · ${new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(e.created_at))}`}
                       </div>
-                      {e.viewed_at && (
-                        <div style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, marginTop: 3 }}>
-                          Viewed · {new Date(e.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(e.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
-                        </div>
-                      )}
+                      {e.viewed_at && (() => {
+                        const d = new Date(e.viewed_at)
+                        const isToday = d.toDateString() === new Date().toDateString()
+                        const color = isToday ? '#16A34A' : '#D97706'
+                        const time = d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })
+                        const label = isToday
+                          ? `Opened today · ${time}`
+                          : `Opened ${d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · ${time}`
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+                            <div style={{ width: 6, height: 6, borderRadius: 99, background: color, flexShrink: 0 }} />
+                            <span style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</span>
+                          </div>
+                        )
+                      })()}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(e.total || 0)}</div>
