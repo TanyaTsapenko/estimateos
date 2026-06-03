@@ -40,7 +40,9 @@ export async function GET(request: NextRequest) {
     })
 
     await new Promise(r => setTimeout(r, 4000))
-    await page.evaluate(() => document.fonts.ready)
+
+    const pageHeight = await page.evaluate(() => document.body.scrollHeight)
+    console.log('Page height:', pageHeight)
 
     const pdf = await page.pdf({
       format: 'A4',
