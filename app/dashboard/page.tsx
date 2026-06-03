@@ -260,7 +260,7 @@ export default function DashboardPage() {
         pipelineCount: `${openEstimates.length} est.`,
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
-        signaturesNeeded: estSigned?.length || 0,
+        signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); return (estSigned || []).filter((e: any) => !pendingEstimateIdsForMetrics.has(e.id)).length })(),
         sparklines: {
           revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8),
           pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6),
