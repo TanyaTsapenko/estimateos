@@ -44,34 +44,39 @@ export async function GET(request: NextRequest) {
     const pageHeight = await page.evaluate(() => document.body.scrollHeight)
     console.log('Page height:', pageHeight)
 
-    const screenshotRaw = await page.screenshot({ fullPage: true, type: 'png' })
-    const screenshot = Buffer.from(screenshotRaw)
+    const screenshot = await page.screenshot({ fullPage: true, type: 'png' })
     await browser.close()
 
-    const PDFDocument = (await import('pdfkit')).default
-    const doc = new PDFDocument({ autoFirstPage: false, margin: 0 })
-    const chunks: Buffer[] = []
+    const { PDFDocument } = await import('pdf-lib')
 
-    await new Promise<void>((resolve) => {
-      doc.on('data', (chunk: Buffer) => chunks.push(chunk))
-      doc.on('end', resolve)
+    const screenshotBuffer = Buffer.from(screenshot)
+    const pdfDoc = await PDFDocument.create()
 
-      const imgWidth = 794
-      const imgHeight = Math.round(screenshotRaw.length / imgWidth / 4)
-      const pagesNeeded = Math.ceil(imgHeight / 1123)
+    const pngImage = await pdfDoc.embedPng(screenshotBuffer)
+    const { width: imgWidth, height: imgHeight } = pngImage
 
-      for (let i = 0; i < pagesNeeded; i++) {
-        doc.addPage({ size: 'A4', margin: 0 })
-        doc.image(screenshot, 0, -i * 841.89, { width: 595.28 })
-      }
+    const a4Width = 595.28
+    const a4Height = 841.89
+    const scale = a4Width / imgWidth
+    const scaledHeight = imgHeight * scale
 
-      doc.end()
-    })
+    const pagesNeeded = Math.ceil(scaledHeight / a4Height)
 
-    const pdfBuffer = Buffer.concat(chunks)
+    for (let i = 0; i < pagesNeeded; i++) {
+      const pdfPage = pdfDoc.addPage([a4Width, a4Height])
+      const yOffset = i * a4Height
+      pdfPage.drawImage(pngImage, {
+        x: 0,
+        y: a4Height - scaledHeight + yOffset,
+        width: a4Width,
+        height: scaledHeight,
+      })
+    }
+
+    const pdfBytes = await pdfDoc.save()
     const clientName = 'Client'
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBytes) as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName}.pdf"`,
