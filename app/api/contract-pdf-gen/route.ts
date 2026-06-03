@@ -12,10 +12,13 @@ export async function GET(request: NextRequest) {
     const cleanContractId = contractId.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     console.log('Looking for contract:', cleanContractId)
 
-    const { data: con, error: conError } = await admin.from('contracts').select('id, profile_id').eq('id', cleanContractId).single()
+    const { data: con, error: conError } = await admin.from('contracts').select('id, profile_id, estimate_id').eq('id', cleanContractId).single()
     console.log('Contract result:', con ? 'found' : 'null', 'error:', conError?.message)
 
     if (!con) return NextResponse.json({ error: 'Contract not found', id: cleanContractId, dbError: conError?.message }, { status: 404 })
+
+    const { data: est } = await admin.from('estimates').select('client_name').eq('id', con.estimate_id).single()
+    const clientName = (est?.client_name || 'Client').replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-')
 
     const chromium = await import('@sparticuz/chromium-min')
     const puppeteer = await import('puppeteer-core')
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-Client.pdf"`,
+        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName}.pdf"`,
       },
     })
 
