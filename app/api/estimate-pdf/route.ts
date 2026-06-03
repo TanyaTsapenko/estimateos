@@ -193,7 +193,7 @@ export async function GET(request: NextRequest) {
       if (req.url().includes('sw.js')) { req.abort() } else { req.continue() }
     })
 
-    await page.setContent(html, { waitUntil: 'networkidle0' })
+    await page.setContent(html, { waitUntil: 'load' })
 
     const pdf = await page.pdf({
       format: 'A4',
