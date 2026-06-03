@@ -269,9 +269,11 @@ export default function DashboardPage() {
       })
 
       const attItems: AttentionItem[] = []
+      const pendingEstimateIds = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id))
       // Signed/accepted estimates with no invoice yet
       if (estSigned?.length) {
         estSigned.forEach((e: any) => {
+          if (pendingEstimateIds.has(e.id)) return // deposit still pending, skip
           attItems.push({
             icon: CheckIcon, color: '#059669',
             title: e.client_name,
