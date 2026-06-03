@@ -515,7 +515,7 @@ function NewEstimateForm() {
 
     const estimateFields = {
       ...client,
-      tier,
+      tier: pricingMode === 'gbb' ? tier : null,
       subtotal: Math.round(subtotal * 100) / 100,
       discount_type: discountAmt > 0 ? discountType : null,
       discount_value: discountAmt > 0 ? parseFloat(discountValue) : null,
