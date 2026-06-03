@@ -62,6 +62,7 @@ export default function EstimateDetailPage() {
   const [duplicating,         setDuplicating]         = useState(false)
   const [toast,               setToast]               = useState('')
   const [dupToast,            setDupToast]            = useState<{ num: string; id: string } | null>(null)
+  const [customLabels,        setCustomLabels]        = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function load() {
@@ -71,6 +72,16 @@ export default function EstimateDetailPage() {
       ])
       setEstimate(est)
       setOpenings(ops || [])
+      const customTypes = (ops || []).map((o: any) => o.type).filter((t: string) => t?.startsWith('custom_'))
+      if (customTypes.length > 0) {
+        const { data: plRows } = await supabase
+          .from('price_lists')
+          .select('opening_type, custom_label')
+          .in('opening_type', customTypes)
+        const labels: Record<string, string> = {}
+        plRows?.forEach((r: any) => { if (r.custom_label) labels[r.opening_type] = r.custom_label })
+        setCustomLabels(labels)
+      }
       if (est?.user_id) {
         const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, pricing_mode, email, phone, signature_url').eq('id', est.user_id).single()
         setProfile(prof)
@@ -342,7 +353,7 @@ export default function EstimateDetailPage() {
               <div key={op.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>
-                    {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
                   </div>
                   <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3, display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
                     {(op.width_in && op.height_in) && <span>{op.width_in}" × {op.height_in}"</span>}
