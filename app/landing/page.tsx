@@ -13,7 +13,7 @@ export default function LandingPage() {
   return (
     <div style={{ minHeight: "auto", background: '#fff', fontFamily: 'Inter, sans-serif' }}>
       {/* HERO */}
-      <div style={{ background: '#fff', padding: '40px 24px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', padding: 'max(52px, calc(env(safe-area-inset-top) + 24px)) 24px 28px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ width: 220, height: 220, borderRadius: '50%', background: '#2563EB', opacity: 0.07, position: 'absolute', top: -80, right: -60, pointerEvents: 'none' }} />
         {/* Logo row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
