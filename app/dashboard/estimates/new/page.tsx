@@ -347,7 +347,7 @@ function NewEstimateForm() {
 
   function applyPriceRows(priceRows: any[] | null) {
     if (!priceRows || priceRows.length === 0) return
-    const types: Record<string, { base: number; lab: number }> = {}
+    const types: Record<string, { base: number; lab: number; is_tiered?: boolean; tier_good?: any; tier_better?: any; tier_best?: any }> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
       types[r.opening_type] = {
         base: r.base_price,
