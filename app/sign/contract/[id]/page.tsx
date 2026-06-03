@@ -277,7 +277,7 @@ export default function SignContractPage() {
         `}</style>
 
         {/* Contract bar */}
-        <div style={{ background: '#0A1628', padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: '#0A1628', padding: isPdf ? '12px 16px' : '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {profile?.logo_url && (
               <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -293,7 +293,7 @@ export default function SignContractPage() {
           </div>
         </div>
 
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: 16, marginTop: isPdf ? 0 : undefined }}>
 
           {/* Parties */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
@@ -626,7 +626,7 @@ export default function SignContractPage() {
       <div id="contract-content" style={{ minHeight: isPdf ? 'auto' : '100vh', background: '#F5F6F8', fontFamily: F }}>
 
         {/* CONTRACT BAR */}
-        <div className="contract-bar" style={{ background: '#0A1628', padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="contract-bar" style={{ background: '#0A1628', padding: isPdf ? '12px 16px' : '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {profile?.logo_url && (
               <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
@@ -643,7 +643,7 @@ export default function SignContractPage() {
         </div>
 
         {/* BODY */}
-        <div style={{ padding: 16 }}>
+        <div style={{ padding: 16, marginTop: isPdf ? 0 : undefined }}>
 
 
           {/* PARTIES */}
