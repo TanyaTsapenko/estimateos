@@ -252,7 +252,7 @@ export default function SignContractPage() {
       ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(contract.signed_at))
       : '—'
     return (
-      <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
+      <div style={{ minHeight: isPdf ? 'auto' : '100vh', background: '#F5F6F8', fontFamily: F }}>
         <style>{`
           @media print {
             @page {
@@ -268,6 +268,7 @@ export default function SignContractPage() {
             body {
               margin: 0 !important;
               padding: 0 !important;
+              min-height: auto !important;
             }
             .no-print {
               display: none !important;
@@ -495,6 +496,7 @@ export default function SignContractPage() {
           body {
             margin: 0 !important;
             padding: 0 !important;
+            min-height: auto !important;
           }
           .no-print {
             display: none !important;
@@ -621,7 +623,7 @@ export default function SignContractPage() {
       )}
 
       {/* ── MAIN CONTRACT (always in DOM — prints cleanly) ── */}
-      <div id="contract-content" style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
+      <div id="contract-content" style={{ minHeight: isPdf ? 'auto' : '100vh', background: '#F5F6F8', fontFamily: F }}>
 
         {/* CONTRACT BAR */}
         <div className="contract-bar" style={{ background: '#0A1628', padding: '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
