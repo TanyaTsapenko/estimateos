@@ -243,6 +243,7 @@ export default function SignContractPage() {
   const depositPct = contract?.deposit_percent ?? profile?.deposit_percent ?? 30
   const depositAmt = Math.round((estimate?.total || 0) * depositPct / 100)
   const balanceAmt = (estimate?.total || 0) - depositAmt
+  const contractorEmail = contract?.company_email
 
   // Already signed — read-only view
   if (contract.status === 'signed' && !clientSignatureUrl && !showDeposit && !showSuccess) {
@@ -298,22 +299,22 @@ export default function SignContractPage() {
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract.company_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {(contract.company_phone || profile?.phone) && <div>{contract.company_phone || profile?.phone}</div>}
-                {contract.company_email && <div>{contract.company_email}</div>}
-                {profile?.address && <div>{profile.address}</div>}
-                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province, profile.postal_code].filter(Boolean).join(', ')}</div>}
-                {profile?.website && profile.website !== 'https://' && <div><a href={profile.website} style={{ color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a></div>}
+              <div style={{ lineHeight: 1.6 }}>
+                {(contract.company_phone || profile?.phone) && <div style={{ fontSize: 13, color: '#6B7280' }}>{contract.company_phone || profile?.phone}</div>}
+                {contractorEmail && <div style={{ fontSize: 13, color: '#6B7280' }}>{contractorEmail}</div>}
+                {profile?.address && <div style={{ fontSize: 13, color: '#6B7280' }}>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div style={{ fontSize: 13, color: '#6B7280' }}>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
+                {profile?.website && profile.website !== 'https://' && <a href={profile.website} style={{ fontSize: 13, color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a>}
               </div>
             </div>
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {estimate.client_phone && <div>{estimate.client_phone}</div>}
-                {estimate.client_email && <div>{estimate.client_email}</div>}
-                {estimate.client_address && <div>{estimate.client_address}</div>}
-                {(estimate as any).client_city && <div>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
+              <div style={{ lineHeight: 1.6 }}>
+                {estimate.client_phone && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_phone}</div>}
+                {estimate.client_email && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_email}</div>}
+                {estimate.client_address && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_address}</div>}
+                {(estimate as any).client_city && <div style={{ fontSize: 13, color: '#6B7280' }}>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
               </div>
             </div>
           </div>
@@ -649,22 +650,22 @@ export default function SignContractPage() {
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract?.company_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {(contract?.company_phone || profile?.phone) && <div>{contract?.company_phone || profile?.phone}</div>}
-                {contract?.company_email && <div>{contract.company_email}</div>}
-                {profile?.address && <div>{profile.address}</div>}
-                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province, profile.postal_code].filter(Boolean).join(', ')}</div>}
-                {profile?.website && profile.website !== 'https://' && <div><a href={profile.website} style={{ color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a></div>}
+              <div style={{ lineHeight: 1.6 }}>
+                {(contract?.company_phone || profile?.phone) && <div style={{ fontSize: 13, color: '#6B7280' }}>{contract?.company_phone || profile?.phone}</div>}
+                {contractorEmail && <div style={{ fontSize: 13, color: '#6B7280' }}>{contractorEmail}</div>}
+                {profile?.address && <div style={{ fontSize: 13, color: '#6B7280' }}>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div style={{ fontSize: 13, color: '#6B7280' }}>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
+                {profile?.website && profile.website !== 'https://' && <a href={profile.website} style={{ fontSize: 13, color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a>}
               </div>
             </div>
             <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {estimate.client_phone && <div>{estimate.client_phone}</div>}
-                {estimate.client_email && <div>{estimate.client_email}</div>}
-                {estimate.client_address && <div>{estimate.client_address}</div>}
-                {(estimate as any).client_city && <div>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
+              <div style={{ lineHeight: 1.6 }}>
+                {estimate.client_phone && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_phone}</div>}
+                {estimate.client_email && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_email}</div>}
+                {estimate.client_address && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_address}</div>}
+                {(estimate as any).client_city && <div style={{ fontSize: 13, color: '#6B7280' }}>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
               </div>
             </div>
           </div>
