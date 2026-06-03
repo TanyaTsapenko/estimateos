@@ -44,17 +44,34 @@ export async function GET(request: NextRequest) {
     const pageHeight = await page.evaluate(() => document.body.scrollHeight)
     console.log('Page height:', pageHeight)
 
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' },
-    })
-
+    const screenshotRaw = await page.screenshot({ fullPage: true, type: 'png' })
+    const screenshot = Buffer.from(screenshotRaw)
     await browser.close()
 
+    const PDFDocument = (await import('pdfkit')).default
+    const doc = new PDFDocument({ autoFirstPage: false, margin: 0 })
+    const chunks: Buffer[] = []
+
+    await new Promise<void>((resolve) => {
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk))
+      doc.on('end', resolve)
+
+      const imgWidth = 794
+      const imgHeight = Math.round(screenshotRaw.length / imgWidth / 4)
+      const pagesNeeded = Math.ceil(imgHeight / 1123)
+
+      for (let i = 0; i < pagesNeeded; i++) {
+        doc.addPage({ size: 'A4', margin: 0 })
+        doc.image(screenshot, 0, -i * 841.89, { width: 595.28 })
+      }
+
+      doc.end()
+    })
+
+    const pdfBuffer = Buffer.concat(chunks)
     const clientName = 'Client'
 
-    return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
+    return new NextResponse(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName}.pdf"`,
