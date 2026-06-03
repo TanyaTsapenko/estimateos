@@ -52,7 +52,7 @@ export default function OnboardingPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif' }}>
       {/* HERO */}
-      <div style={{ background: '#fff', padding: '40px 24px 28px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', padding: 'max(40px, calc(env(safe-area-inset-top) + 16px)) 24px 28px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ width: 220, height: 220, borderRadius: '50%', background: '#2563EB', opacity: 0.07, position: 'absolute', top: -80, right: -60, pointerEvents: 'none' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
           <div style={{ width: 32, height: 32, background: '#2563EB', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

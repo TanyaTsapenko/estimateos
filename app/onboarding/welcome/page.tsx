@@ -20,7 +20,7 @@ export default function WelcomePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif' }}>
       {/* HERO */}
-      <div style={{ background: '#fff', padding: '40px 24px 28px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
+      <div style={{ background: '#fff', padding: 'max(40px, calc(env(safe-area-inset-top) + 16px)) 24px 28px', position: 'relative', overflow: 'hidden', textAlign: 'center' }}>
         <div style={{ width: 220, height: 220, borderRadius: '50%', background: '#2563EB', opacity: 0.07, position: 'absolute', top: -80, right: -60, pointerEvents: 'none' }} />
         <div style={{ width: 64, height: 64, background: '#EFF6FF', borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
           <Rocket size={28} color="#2563EB" />

@@ -30,7 +30,7 @@ export default function CheckEmailPage() {
 
   return (
     <div style={{minHeight:'100vh', background:'#F4F4F2', display:'flex', flexDirection:'column'}}>
-      <div style={{position:'relative', overflow:'hidden', padding:'44px 24px 28px', textAlign:'center'}}>
+      <div style={{position:'relative', overflow:'hidden', padding:'max(44px, calc(env(safe-area-inset-top) + 16px)) 24px 28px', textAlign:'center'}}>
         <div style={{position:'absolute', inset:0, background:'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'}} />
         <div style={{position:'absolute', width:200, height:200, borderRadius:'50%', background:'radial-gradient(circle, rgba(59,108,255,0.35) 0%, transparent 70%)', top:-60, right:-50}} />
         <div style={{position:'absolute', width:150, height:150, borderRadius:'50%', background:'radial-gradient(circle, rgba(32,69,184,0.2) 0%, transparent 70%)', bottom:-40, left:-20}} />

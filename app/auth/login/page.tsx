@@ -75,7 +75,7 @@ export default function LoginPage() {
     <div style={{ minHeight: '100vh', background: '#FFFFFF', fontFamily: F, WebkitFontSmoothing: 'antialiased', display: 'flex', flexDirection: 'column' }}>
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <div style={{ background: '#FFFFFF', padding: '48px 24px 36px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: '#FFFFFF', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 24px 36px', position: 'relative', overflow: 'hidden' }}>
         {/* Blob */}
         <div style={{
           position: 'absolute', width: 300, height: 300, borderRadius: '50%',
