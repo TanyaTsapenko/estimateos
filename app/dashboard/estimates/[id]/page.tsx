@@ -25,6 +25,7 @@ interface Estimate {
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
   sent_method: string | null; created_at: string; user_id: string; opened_at: string | null
+  viewed_at: string | null
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -292,6 +293,11 @@ export default function EstimateDetailPage() {
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
               inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}
             </div>
+            {estimate.viewed_at && (
+              <div style={{ fontSize: 11, color: '#16A34A', marginTop: 2 }}>
+                Viewed · {new Date(estimate.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(estimate.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
+              </div>
+            )}
 
             {/* Divider */}
             <div style={{ height: 1, background: '#EEF0F4', marginBottom: 16 }} />

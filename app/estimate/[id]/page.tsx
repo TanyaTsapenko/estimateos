@@ -23,7 +23,7 @@ interface Estimate {
   scope_notes: string | null; valid_until: string | null; created_at: string | null
   has_tiers: boolean | null
   total_good: number | null; total_better: number | null; total_best: number | null
-  tax_rate: number | null
+  tax_rate: number | null; view_count: number | null
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Profile {
@@ -83,6 +83,13 @@ export default function ClientEstimatePage() {
       const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
       if (!est) return
       setEstimate(est)
+      // Track view
+      if (est.status !== 'signed' && est.status !== 'declined') {
+        supabase.from('estimates').update({
+          viewed_at: new Date().toISOString(),
+          view_count: (est.view_count || 0) + 1,
+        }).eq('id', id).then(() => {})
+      }
       if (est.status === 'signed') setDocStatus('signed')
       else if (est.status === 'declined') setDocStatus('declined')
       else setDocStatus('active')
