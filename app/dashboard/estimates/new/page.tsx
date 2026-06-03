@@ -349,7 +349,14 @@ function NewEstimateForm() {
     if (!priceRows || priceRows.length === 0) return
     const types: Record<string, { base: number; lab: number }> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
-      types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
+      types[r.opening_type] = {
+        base: r.base_price,
+        lab: r.labour_price,
+        is_tiered: r.is_tiered || false,
+        tier_good: r.tier_good || null,
+        tier_better: r.tier_better || null,
+        tier_best: r.tier_best || null,
+      }
     })
     setCustomPrices({ types })
     const customTypesMap: Record<string, CustomOpeningType> = {}
@@ -457,7 +464,7 @@ function NewEstimateForm() {
   const gbbBest   = hasAnyTieredItems ? calcTierTotal(openings, 'best',   customOpeningTypes, customPrices) : null
   const subtotal = hasAnyTieredItems
     ? (gbbBetter ?? 0)
-    : openings.reduce((s, op) => s + opCost(op, mult, customPrices), 0)
+    : openings.reduce((s, op) => s + opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best'), 0)
   const discountAmt = discountValue
     ? discountType === 'percent'
       ? subtotal * (Math.min(parseFloat(discountValue) || 0, 100) / 100)
@@ -562,8 +569,8 @@ function NewEstimateForm() {
       shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom, screen: op.screen,
-      unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices) * 100) / 100,
-      total_cost: Math.round(opCost(op, mult, customPrices) * 100) / 100,
+      unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
+      total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       sort_order: i,
     }))
 
@@ -740,7 +747,7 @@ function NewEstimateForm() {
                     <span>{(OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type)} × {op.qty}</span>
                     {customOpeningTypes[op.type]?.is_tiered
                       ? <span style={{ fontSize: 11, fontWeight: 600, color: '#3B6CFF' }}>3 Tiers</span>
-                      : <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
+                      : <span>{fmtCAD(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best'))}</span>
                     }
                   </div>
                 ))}

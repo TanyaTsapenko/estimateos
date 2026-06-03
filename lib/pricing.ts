@@ -54,13 +54,22 @@ export function dimToSizeBucket(wIn: number, hIn: number): string {
 }
 
 export interface CustomPrices {
-  types: Record<string, { base: number; lab: number }>
+  types: Record<string, { base: number; lab: number; is_tiered?: boolean; tier_good?: any; tier_better?: any; tier_best?: any }>
 }
 
-export function opCost(op: Opening, mult: number, custom?: CustomPrices): number {
+export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey: 'good' | 'better' | 'best' = 'better'): number {
+  const customType = custom?.types[op.type]
+
+  // Tiered item — use tier price directly, no multipliers
+  if (customType?.is_tiered) {
+    const tier = tierKey === 'good' ? customType.tier_good : tierKey === 'better' ? customType.tier_better : customType.tier_best
+    const price = tier?.price || 0
+    return price * (op.qty || 1)
+  }
+
   const defaults = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
-  const base = custom?.types[op.type]?.base ?? defaults.base
-  const lab  = custom?.types[op.type]?.lab  ?? defaults.lab
+  const base = customType?.base ?? defaults.base
+  const lab  = customType?.lab  ?? defaults.lab
   const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
   const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
   const ia = op.install === 'fullframe' ? 200 : op.install === 'stud_to_stud' ? 350 : 0
