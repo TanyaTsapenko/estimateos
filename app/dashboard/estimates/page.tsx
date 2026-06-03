@@ -9,7 +9,7 @@ import BellButton from '@/components/BellButton'
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
   client_city: string | null; status: string; total: number
-  tier: string | null; created_at: string
+  tier: string | null; created_at: string; viewed_at: string | null
 }
 
 const FILTERS = ['All', 'Draft', 'Sent', 'Accepted', 'Signed', 'Invoiced']
@@ -56,7 +56,7 @@ export default function EstimatesPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data } = await supabase.from('estimates')
-        .select('id, estimate_number, client_name, client_city, status, total, tier, created_at')
+        .select('id, estimate_number, client_name, client_city, status, total, tier, created_at, viewed_at')
         .eq('user_id', sanitizedId)
         .order('created_at', { ascending: false })
       setEstimates(data || [])
@@ -241,6 +241,11 @@ export default function EstimatesPage() {
                       }}>
                         {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
                       </span>
+                      {e.viewed_at && (
+                        <div style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, marginTop: 3 }}>
+                          Viewed · {new Date(e.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(e.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                        </div>
+                      )}
                     </div>
                     <ChevronRight size={14} color="#CBD5E1" />
                   </div>
@@ -274,6 +279,11 @@ export default function EstimatesPage() {
                         {e.client_city ? ` · ${e.client_city}` : ''}
                         {` · ${new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(e.created_at))}`}
                       </div>
+                      {e.viewed_at && (
+                        <div style={{ fontSize: 11, color: '#16A34A', fontWeight: 600, marginTop: 3 }}>
+                          Viewed · {new Date(e.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(e.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(e.total || 0)}</div>
