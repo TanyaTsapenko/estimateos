@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     const { data: est } = await admin.from('estimates').select('client_name').eq('id', con.estimate_id).single()
     const clientName = (est?.client_name || 'Client').replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+    console.log('estimate_id:', con.estimate_id, 'clientName:', clientName)
 
     const chromium = await import('@sparticuz/chromium-min')
     const puppeteer = await import('puppeteer-core')
