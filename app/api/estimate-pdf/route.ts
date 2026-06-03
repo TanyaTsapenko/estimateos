@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const { data: est, error: estError } = await admin
       .from('estimates')
-      .select('id, estimate_number, client_name, client_email, client_phone, client_address, tier, subtotal, tax_rate, tax_amount, total, pricing_mode, user_id, created_at')
+      .select('id, estimate_number, client_name, client_email, client_phone, client_address, tier, subtotal, tax_rate, tax_amount, total, user_id, created_at')
       .eq('id', estimateId)
       .single()
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       </tr>
     `).join('')
 
-    const tierRow = (prof?.pricing_mode === 'gbb' || est.pricing_mode === 'gbb') && est.tier
+    const tierRow = prof?.pricing_mode === 'gbb' && est.tier
       ? `<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1D4ED8;">
            <strong>Selected Tier:</strong> ${est.tier.charAt(0).toUpperCase() + est.tier.slice(1)}
          </div>`
