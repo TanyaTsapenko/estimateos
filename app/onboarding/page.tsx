@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Square, Home, Layers, Grid3x3, Wind, MoreHorizontal } from 'lucide-react'
+import { Square, Home, Layers, Grid3x3, Wind, MoreHorizontal, FileText, Table, Smartphone, HelpCircle } from 'lucide-react'
 
 const NICHES = [
   { id: 'windows_doors', label: 'Windows & Doors', icon: Square },
@@ -15,6 +15,13 @@ const NICHES = [
 
 const PROVINCES = ['BC','AB','SK','MB','ON','QC','NS','NB','PE','NL','YT','NT','NU']
 
+const ESTIMATION_METHODS = [
+  { id: 'paper',   label: 'Paper / pen',            sub: 'Writing estimates by hand',    icon: FileText   },
+  { id: 'excel',   label: 'Excel / Google Sheets',  sub: 'Spreadsheet templates',        icon: Table      },
+  { id: 'app',     label: 'Another app',             sub: 'Jobber, ServiceTitan, etc.',   icon: Smartphone },
+  { id: 'nothing', label: 'Nothing yet',             sub: 'Just getting started',         icon: HelpCircle },
+]
+
 export default function OnboardingPage() {
   const router = useRouter()
   const [step, setStep] = useState(1)
@@ -22,6 +29,7 @@ export default function OnboardingPage() {
   const [phone, setPhone] = useState('')
   const [province, setProvince] = useState('')
   const [trade, setTrade] = useState('')
+  const [estimationMethod, setEstimationMethod] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -29,7 +37,6 @@ export default function OnboardingPage() {
   const labelStyle = { fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', textTransform: 'uppercase' as const, marginBottom: 5, display: 'block' }
 
   async function handleFinish() {
-    if (!trade) { setError('Please select your trade'); return }
     setLoading(true)
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -40,6 +47,7 @@ export default function OnboardingPage() {
       phone,
       province,
       trade,
+      estimation_method: estimationMethod,
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' })
     setLoading(false)
@@ -47,7 +55,7 @@ export default function OnboardingPage() {
     router.push('/onboarding/welcome')
   }
 
-  const dots = [1, 2]
+  const dots = [1, 2, 3]
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: 'Inter, sans-serif' }}>
@@ -66,9 +74,11 @@ export default function OnboardingPage() {
             <div key={d} style={{ height: 3, borderRadius: 2, background: d === step ? '#2563EB' : '#DBEAFE', width: d === step ? 28 : 16, transition: 'all 0.3s' }} />
           ))}
         </div>
-        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Step {step} of 2</div>
+        <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Step {step} of 3</div>
         <div style={{ fontSize: 26, fontWeight: 800, color: '#0A1628', lineHeight: 1.1, letterSpacing: '-0.6px' }}>
-          {step === 1 ? <>Tell us about your <span style={{ color: '#2563EB' }}>company.</span></> : <>What&apos;s your <span style={{ color: '#2563EB' }}>trade?</span></>}
+          {step === 1 ? <>Tell us about your <span style={{ color: '#2563EB' }}>company.</span></>
+          : step === 2 ? <>What&apos;s your <span style={{ color: '#2563EB' }}>trade?</span></>
+          : <>How do you currently <span style={{ color: '#2563EB' }}>estimate?</span></>}
         </div>
       </div>
       {/* BODY */}
@@ -88,7 +98,7 @@ export default function OnboardingPage() {
               Continue
             </button>
           </>
-        ) : (
+        ) : step === 2 ? (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
               {NICHES.map(({ id, label, icon: Icon }) => (
@@ -99,6 +109,24 @@ export default function OnboardingPage() {
               ))}
             </div>
             {error && <div style={{ color: '#EF4444', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+            <button onClick={() => { if (!trade) { setError('Please select your trade'); return } setStep(3) }} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
+              Continue
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+              {ESTIMATION_METHODS.map(({ id, label, sub, icon: Icon }) => (
+                <div key={id} onClick={() => setEstimationMethod(id)}
+                  style={{ background: estimationMethod === id ? '#EFF6FF' : '#fff', border: `0.5px solid ${estimationMethod === id ? '#2563EB' : '#E5E7EB'}`, borderRadius: 14, padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <Icon size={20} color={estimationMethod === id ? '#2563EB' : '#9CA3AF'} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{label}</div>
+                    <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>{sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
             <button onClick={handleFinish} disabled={loading} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
               {loading ? 'Saving...' : 'Finish setup'}
             </button>
