@@ -44,30 +44,22 @@ export async function GET(request: NextRequest) {
     const pageHeight = await page.evaluate(() => document.body.scrollHeight)
     console.log('Page height:', pageHeight)
 
-    const screenshot = await page.screenshot({ fullPage: true })
-    await browser.close()
-
-    return new NextResponse(Buffer.from(screenshot) as unknown as BodyInit, {
-      headers: {
-        'Content-Type': 'image/png',
-        'Content-Disposition': 'attachment; filename="debug.png"',
-      },
-    })
-
-    /* PDF generation — temporarily disabled
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
       margin: { top: '0', right: '0', bottom: '0', left: '0' },
     })
+
     await browser.close()
+
+    const clientName = 'Client'
+
     return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-Client.pdf"`,
+        'Content-Disposition': `attachment; filename="Contract-${con.id.slice(0,6).toUpperCase()}-${clientName}.pdf"`,
       },
     })
-    */
 
   } catch (err: any) {
     console.error('PDF generation error:', err)
