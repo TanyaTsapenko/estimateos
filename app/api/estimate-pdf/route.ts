@@ -54,7 +54,13 @@ export async function GET(request: NextRequest) {
         .single(),
     ])
 
-    const clientSlug = (est.client_name || 'Client').replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-')
+    const clientSlug = (est.client_name || 'Client')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^\x00-\x7F]/g, '')
+      .replace(/[^a-zA-Z0-9\s]/g, '')
+      .trim()
+      .replace(/\s+/g, '-') || 'Client'
     const dateStr = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.created_at))
 
     const openingRows = (openings || []).map(op => `
