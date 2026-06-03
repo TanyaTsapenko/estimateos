@@ -285,7 +285,7 @@ export default function EstimateDetailPage() {
           {/* ── LEFT COLUMN: tier + client in one card ── */}
           <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
             {/* Tier */}
-            {profile?.pricing_mode === 'gbb' && <div style={SL}>{tierLabel} Tier</div>}
+            {profile?.pricing_mode === 'gbb' && estimate.tier && estimate.tier !== 'single' && <div style={SL}>{tierLabel} Tier</div>}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
               {fmtCAD(estimate.total)}
             </div>
