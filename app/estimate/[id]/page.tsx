@@ -348,7 +348,7 @@ export default function ClientEstimatePage() {
       {/* ── DOWNLOAD BUTTON ── */}
       <div className="print-hide" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 28px', background: `linear-gradient(to top, ${BG} 60%, transparent)` }}>
         <button
-          onClick={() => window.print()}
+          onClick={() => window.location.href = `/api/estimate-pdf?id=${id}`}
           style={{ display: 'block', width: '100%', maxWidth: 480, margin: '0 auto', height: 54, borderRadius: 14, background: BLUE, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, boxShadow: '0 4px 20px rgba(37,99,235,0.28)' }}
         >
           Download PDF
