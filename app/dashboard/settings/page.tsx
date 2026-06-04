@@ -1360,6 +1360,7 @@ export default function SettingsPage() {
     ...g,
     items: g.items.filter(item => {
       if (isEstimator) return ['profile', 'password'].includes(item.id)
+      if (role === 'admin') return !['billing', 'invoices', 'notifications'].includes(item.id)
       if (item.id === 'team' && role !== 'owner') return false
       if ((item.id === 'company' || item.id === 'contract') && !permissions.settings) return false
       if (item.id === 'price' && !permissions.price_list) return false

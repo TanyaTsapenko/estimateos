@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from './supabase/client'
 
-export type AppRole = 'owner' | 'estimator'
+export type AppRole = 'owner' | 'estimator' | 'admin'
 
 export function useRole(): { role: AppRole; loading: boolean } {
   const [role, setRole] = useState<AppRole>('owner')
@@ -25,6 +25,8 @@ export function useRole(): { role: AppRole; loading: boolean } {
 
       if (r === 'estimator') {
         setRole('estimator')
+      } else if (r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')) {
+        setRole('admin')
       } else if (!r && isTeamMember && data.member_role && data.member_role !== 'owner') {
         // Legacy: role column not yet populated but team member exists
         setRole('estimator')

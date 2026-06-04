@@ -46,7 +46,7 @@ export default function EstimatesPage() {
   const router  = useRouter()
   const supabase = createClient()
   const { role } = usePermissions()
-  const isEstimator = role === 'estimator'
+  const isRestrictedRole = role === 'estimator' || role === 'admin'
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading,   setLoading]   = useState(true)
   const [filter,    setFilter]    = useState('All')
@@ -106,11 +106,13 @@ export default function EstimatesPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
+          {role !== 'admin' && (
           <button
             onClick={() => router.push('/dashboard/estimates/new')}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Plus size={14} strokeWidth={2.5} /> New Estimate
           </button>
+          )}
         </div>
       </div>
 
@@ -118,7 +120,7 @@ export default function EstimatesPage() {
       <div className="page-body" style={{ padding: '20px 16px 100px' }}>
 
         {/* Stats */}
-        {!isEstimator && (
+        {!isRestrictedRole && (
         <div className="est-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           <StatBox label="Total value" value={fmtCAD(totalValue)} />
           <StatBox label="Accepted"     value={signedCount}        />

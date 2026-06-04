@@ -22,6 +22,11 @@ export const DEFAULT_ESTIMATOR_PERMISSIONS: Permissions = {
   price_list: false, reports: false, settings: false,
 }
 
+export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
+  estimates: true, schedule: true, clients: true,
+  price_list: true, reports: false, settings: true,
+}
+
 export function usePermissions(): { role: AppRole; permissions: Permissions; loading: boolean } {
   const [role, setRole]               = useState<AppRole>('owner')
   const [permissions, setPermissions] = useState<Permissions>(OWNER_PERMISSIONS)
@@ -40,14 +45,15 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
 
       const r = (data.role ?? null) as string | null
       const isTeamMember = !!data.team_owner_id
-      const isOwner =
-        r === 'owner' ||
-        (!r && !isTeamMember) ||
-        (!r && data.member_role === 'owner')
+      const isOwner = r === 'owner' || (!r && !isTeamMember) || (!r && data.member_role === 'owner')
+      const isAdmin = r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')
 
       if (isOwner) {
         setRole('owner')
         setPermissions(OWNER_PERMISSIONS)
+      } else if (isAdmin) {
+        setRole('admin')
+        setPermissions(DEFAULT_ADMIN_PERMISSIONS)
       } else {
         setRole('estimator')
         const stored = data.permissions as Partial<Permissions> | null
