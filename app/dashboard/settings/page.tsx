@@ -675,6 +675,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
     price_list: false, reports: false, settings: false,
   })
   const [sending, setSending] = useState(false)
+  const [editingMember, setEditingMember] = useState<{ id: string; name: string; role: string; permissions: typeof invitePerms } | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -788,7 +789,10 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
           {members.map((m, i) => {
             const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || '—'
             return (
-              <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+              <div key={m.id} onClick={() => {
+                const memberPerms = (m as any).permissions || { estimates: true, schedule: true, clients: true, price_list: false, reports: false, settings: false }
+                setEditingMember({ id: m.id, name, role: m.member_role || 'estimator', permissions: memberPerms })
+              }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none', cursor: 'pointer' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {name[0]?.toUpperCase()}
                 </div>
@@ -796,20 +800,67 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>{name}</div>
                   <div style={{ fontSize: 12, color: '#94A3B8' }}>{m.email}</div>
                 </div>
-                <select
-                  value={m.member_role || 'estimator'}
-                  onChange={e => updateMemberRole(m.id, e.target.value)}
-                  style={{ padding: '5px 8px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', background: '#fff', cursor: 'pointer' }}
-                >
+                <div style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{ROLE_LABELS[m.member_role || 'estimator'] || m.member_role}</div>
+              </div>
+            )
+          })}
+        </Card>
+        {editingMember && (
+          <div onClick={() => setEditingMember(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div style={{ width: 36, height: 4, background: '#E2E8F0', borderRadius: 99, margin: '0 auto 20px' }} />
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>{editingMember.name}</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>Edit role & permissions</div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>Role</label>
+                <select value={editingMember.role} onChange={e => setEditingMember(m => m ? { ...m, role: e.target.value } : m)}
+                  style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
                   <option value="estimator">Sales</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Office Admin</option>
                   <option value="owner">Owner</option>
                 </select>
               </div>
-            )
-          })}
-        </Card>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Permissions</label>
+                <div style={{ border: '1px solid #E2E5EA', borderRadius: 10, overflow: 'hidden' }}>
+                  {[
+                    { key: 'estimates',  label: 'Estimates',        desc: 'Create and send quotes to clients' },
+                    { key: 'schedule',   label: 'Schedule',         desc: 'View and manage appointments' },
+                    { key: 'clients',    label: 'Clients',          desc: 'Add, edit, and view client profiles' },
+                    { key: 'price_list', label: 'Price List',       desc: 'View and edit product pricing' },
+                    { key: 'reports',    label: 'Reports',          desc: 'Access sales and revenue reports' },
+                    { key: 'settings',   label: 'Company Settings', desc: 'Manage branding, contracts, and billing' },
+                  ].map(({ key, label, desc }, i, arr) => {
+                    const val = editingMember.permissions[key as keyof typeof invitePerms]
+                    return (
+                      <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderBottom: i < arr.length - 1 ? '1px solid #F1F3F5' : 'none' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{label}</div>
+                          <div style={{ fontSize: 11, color: '#94A3B8' }}>{desc}</div>
+                        </div>
+                        <div onClick={() => setEditingMember(m => m ? { ...m, permissions: { ...m.permissions, [key]: !val } } : m)}
+                          style={{ width: 44, height: 24, borderRadius: 999, background: val ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                          <div style={{ position: 'absolute', top: 3, left: val ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => setEditingMember(null)} style={{ flex: 1, padding: 13, background: '#F5F6F8', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+                <button onClick={async () => {
+                  if (!editingMember) return
+                  await supabase.from('profiles').update({ role: editingMember.role, member_role: editingMember.role, permissions: editingMember.permissions }).eq('id', editingMember.id)
+                  setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role } : m))
+                  setEditingMember(null)
+                  flash('Member updated')
+                }} style={{ flex: 2, padding: 13, background: '#2563EB', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Save changes</button>
+              </div>
+            </div>
+          </div>
+        )}
         {showInvite && (
           <Card>
             <SectionLabel>Invite member</SectionLabel>
