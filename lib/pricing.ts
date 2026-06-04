@@ -101,20 +101,20 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey
   const base = customType?.base ?? defaults.base
   const lab  = customType?.lab  ?? defaults.lab
 
-  const sh = op.shape === 'arch' ? 1 + (s.arch_pct ?? 30) / 100
-           : op.shape === 'custom' ? 1 + (s.custom_shape_pct ?? 50) / 100 : 1.0
-  const col = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 80)
-            : op.colour === 'custom' ? (s.custom_colour ?? 150) : 0
-  const gl = op.glass === 'lowe' ? (s.lowe ?? 60)
-           : op.glass === 'frosted' ? (s.frosted ?? 90)
-           : op.glass === 'tinted' ? (s.tinted ?? 70)
-           : op.glass === 'tempered' ? (s.tempered ?? 110) : 0
-  const fa = op.floor === 'second' ? (s.second_floor ?? 80)
-           : op.floor === 'third' ? (s.third_floor ?? 180) : 0
-  const ia = op.install === 'fullframe' ? (s.fullframe ?? 200)
-           : op.install === 'stud_to_stud' ? (s.stud_to_stud ?? 350) : 0
-  const fc = op.frame === 'repair' ? (s.frame_repair ?? 120)
-           : op.frame === 'rotted' ? (s.frame_rotted ?? 280) : 0
+  const sh = op.shape === 'arch' ? 1 + (s.arch_pct ?? 0) / 100
+           : op.shape === 'custom' ? 1 + (s.custom_shape_pct ?? 0) / 100 : 1.0
+  const col = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 0)
+            : op.colour === 'custom' ? (s.custom_colour ?? 0) : 0
+  const gl = op.glass === 'lowe' ? (s.lowe ?? 0)
+           : op.glass === 'frosted' ? (s.frosted ?? 0)
+           : op.glass === 'tinted' ? (s.tinted ?? 0)
+           : op.glass === 'tempered' ? (s.tempered ?? 0) : 0
+  const fa = op.floor === 'second' ? (s.second_floor ?? 0)
+           : op.floor === 'third' ? (s.third_floor ?? 0) : 0
+  const ia = op.install === 'fullframe' ? (s.fullframe ?? 0)
+           : op.install === 'stud_to_stud' ? (s.stud_to_stud ?? 0) : 0
+  const fc = op.frame === 'repair' ? (s.frame_repair ?? 0)
+           : op.frame === 'rotted' ? (s.frame_rotted ?? 0) : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
 
   const unitCost = ((base + lab) * sh + fa + ia + fc + col + gl + ex) * mult
