@@ -6,7 +6,6 @@ import { Plus, Phone, MapPin, Pencil, Calendar } from 'lucide-react'
 import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 import { TAX_RATES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
-import BellButton from '@/components/BellButton'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -1008,7 +1007,6 @@ export default function AppointmentsPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
-              <BellButton />
               <button
                 onClick={() => router.push('/dashboard/appointments/new')}
                 style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 16px -5px rgba(37,99,235,0.6)' }}

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon } from 'lucide-react'
-import BellButton from '@/components/BellButton'
 
 interface Appointment {
   id: string; time: string; client: string; address: string; phone: string
@@ -409,7 +408,6 @@ export default function DashboardPage() {
               <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
             </div>
           </div>
-          <BellButton />
           <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
             display: 'flex', alignItems: 'center', gap: 6, background: '#2045B8',
             color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
@@ -438,7 +436,6 @@ export default function DashboardPage() {
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Welcome back</div>
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
-            <BellButton />
           </div>
 
           {/* Day + done count */}
