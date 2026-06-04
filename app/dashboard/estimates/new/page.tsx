@@ -149,6 +149,34 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
   install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
+  tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
+  transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
+  glass_type: '', core_type: '',
+}
+
+function getTypeSpecificOptions(type: string) {
+  const windows_with_screen = ['window_dh', 'window_sh', 'window_cas', 'window_awn', 'window_sl']
+  const tilt_windows = ['window_dh', 'window_sh']
+  const directional = ['window_cas']
+  const multi_panel = ['window_sl', 'door_patio']
+  const bay_bow = ['window_bay']
+  const transom = ['window_trans']
+  const door_entry = ['door_entry', 'door_french', 'door_double']
+  const storm = ['door_storm']
+  const interior = ['door_int']
+  const garden = ['door_garden']
+  return {
+    showScreen: windows_with_screen.includes(type),
+    showTiltClean: tilt_windows.includes(type),
+    showDirection: directional.includes(type),
+    showPanels: multi_panel.includes(type),
+    showBayOptions: bay_bow.includes(type),
+    showTransomPanes: transom.includes(type),
+    showSidelights: door_entry.includes(type),
+    showTransomAbove: door_entry.includes(type) || garden.includes(type),
+    showGlassType: storm.includes(type),
+    showCoreType: interior.includes(type),
+  }
 }
 
 interface OpeningCardProps {
@@ -158,7 +186,7 @@ interface OpeningCardProps {
   customPrices: CustomPrices | undefined
   openingsCount: number
   removeOpening: (id: string) => void
-  updateOpening: (id: string, k: keyof Opening, v: string | number) => void
+  updateOpening: (id: string, k: keyof Opening, v: string | number | boolean) => void
 }
 
 function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
@@ -296,6 +324,160 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           <input placeholder="Living room" value={op.room}
             onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
       </div>
+
+      {/* Type-specific options */}
+      {(() => {
+        const opts = getTypeSpecificOptions(op.type)
+        const hasAny = Object.values(opts).some(Boolean)
+        if (!hasAny) return null
+        return (
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2563EB', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              Options
+            </div>
+
+            {opts.showScreen && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Screen included</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Insect screen</div>
+                </div>
+                <div onClick={() => updateOpening(op.id, 'screen', !op.screen)}
+                  style={{ width: 40, height: 22, borderRadius: 99, background: op.screen ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: op.screen ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </div>
+              </div>
+            )}
+
+            {opts.showTiltClean && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Tilt-in for cleaning</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Both sashes tilt in</div>
+                </div>
+                <div onClick={() => updateOpening(op.id, 'tilt_clean', !op.tilt_clean)}
+                  style={{ width: 40, height: 22, borderRadius: 99, background: op.tilt_clean ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: op.tilt_clean ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </div>
+              </div>
+            )}
+
+            {opts.showDirection && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Opening direction</div>
+                <select value={op.opening_direction} onChange={e => updateOpening(op.id, 'opening_direction', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.opening_direction ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='left'>Left</option>
+                  <option value='right'>Right</option>
+                  <option value='both'>Both (double casement)</option>
+                </select>
+              </div>
+            )}
+
+            {opts.showPanels && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Number of panels</div>
+                <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.panels_count ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='2'>2 panels</option>
+                  <option value='3'>3 panels</option>
+                </select>
+              </div>
+            )}
+
+            {opts.showBayOptions && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Sections</div>
+                <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.panels_count ? '#0A1628' : '#94A3B8', background: '#fff', marginBottom: 8 }}>
+                  <option value=''>Select...</option>
+                  <option value='3'>3 sections</option>
+                  <option value='5'>5 sections</option>
+                  <option value='7'>7 sections</option>
+                </select>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Angle</div>
+                <select value={op.bay_angle} onChange={e => updateOpening(op.id, 'bay_angle', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.bay_angle ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='30'>30°</option>
+                  <option value='45'>45°</option>
+                  <option value='60'>60°</option>
+                </select>
+              </div>
+            )}
+
+            {opts.showTransomPanes && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Number of panes</div>
+                <select value={op.transom_panes} onChange={e => updateOpening(op.id, 'transom_panes', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.transom_panes ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='2'>2 panes</option>
+                  <option value='3'>3 panes</option>
+                  <option value='4'>4 panes</option>
+                </select>
+              </div>
+            )}
+
+            {opts.showSidelights && (
+              <>
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Left sidelight width (in)</div>
+                  <input type="number" min="0" value={op.sidelight_left || ''} placeholder="0 = none"
+                    onChange={e => updateOpening(op.id, 'sidelight_left', parseFloat(e.target.value) || 0)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
+                </div>
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Right sidelight width (in)</div>
+                  <input type="number" min="0" value={op.sidelight_right || ''} placeholder="0 = none"
+                    onChange={e => updateOpening(op.id, 'sidelight_right', parseFloat(e.target.value) || 0)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
+                </div>
+              </>
+            )}
+
+            {opts.showTransomAbove && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Transom above</div>
+                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Window above door</div>
+                </div>
+                <div onClick={() => updateOpening(op.id, 'transom_above', !op.transom_above)}
+                  style={{ width: 40, height: 22, borderRadius: 99, background: op.transom_above ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: op.transom_above ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                </div>
+              </div>
+            )}
+
+            {opts.showGlassType && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Glass coverage</div>
+                <select value={op.glass_type} onChange={e => updateOpening(op.id, 'glass_type', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.glass_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='full'>Full glass</option>
+                  <option value='half'>Half glass</option>
+                </select>
+              </div>
+            )}
+
+            {opts.showCoreType && (
+              <div style={{ padding: '8px 0' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Core type</div>
+                <select value={op.core_type} onChange={e => updateOpening(op.id, 'core_type', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.core_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  <option value='hollow'>Hollow core</option>
+                  <option value='solid'>Solid core</option>
+                </select>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* More options toggle */}
       <div
@@ -499,6 +681,11 @@ function NewEstimateForm() {
             sidelight: op.sidelight, transom: op.transom, screen: op.screen,
             material: op.material || 'vinyl', hardware_colour: op.hardware_colour || 'white',
             grid_pattern: op.grid_pattern || 'none', brand: op.brand || '', notes: op.notes || '',
+            tilt_clean: op.tilt_clean || false, opening_direction: op.opening_direction || '',
+            panels_count: op.panels_count || '', bay_angle: op.bay_angle || '',
+            transom_panes: op.transom_panes || '', sidelight_left: op.sidelight_left || 0,
+            sidelight_right: op.sidelight_right || 0, transom_above: op.transom_above || false,
+            glass_type: op.glass_type || '', core_type: op.core_type || '',
           })))
         }
       } else if (apptId) {
@@ -550,7 +737,7 @@ function NewEstimateForm() {
     if (openings.length <= 1) return
     setOpenings(p => p.filter(o => o.id !== id))
   }
-  function updateOpening(id: string, k: keyof Opening, v: string | number) {
+  function updateOpening(id: string, k: keyof Opening, v: string | number | boolean) {
     setOpenings(p => p.map(o => o.id === id ? { ...o, [k]: v } : o))
   }
 
@@ -645,6 +832,16 @@ function NewEstimateForm() {
       grid_pattern: (op as any).grid_pattern || 'none',
       brand: (op as any).brand || '',
       notes: (op as any).notes || '',
+      tilt_clean: op.tilt_clean || false,
+      opening_direction: op.opening_direction || '',
+      panels_count: op.panels_count || '',
+      bay_angle: op.bay_angle || '',
+      transom_panes: op.transom_panes || '',
+      sidelight_left: op.sidelight_left || 0,
+      sidelight_right: op.sidelight_right || 0,
+      transom_above: op.transom_above || false,
+      glass_type: op.glass_type || '',
+      core_type: op.core_type || '',
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       sort_order: i,

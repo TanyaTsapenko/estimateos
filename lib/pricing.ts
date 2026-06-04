@@ -58,6 +58,17 @@ export interface Opening {
   brand: string
   notes: string
   showMore?: boolean
+  // Type-specific fields
+  tilt_clean: boolean
+  opening_direction: string
+  panels_count: string
+  bay_angle: string
+  transom_panes: string
+  sidelight_left: number
+  sidelight_right: number
+  transom_above: boolean
+  glass_type: string
+  core_type: string
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
