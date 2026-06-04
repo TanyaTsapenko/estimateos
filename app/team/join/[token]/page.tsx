@@ -11,7 +11,7 @@ interface Invite {
 
 const ROLE_LABELS: Record<string, { label: string; desc: string; icon: string }> = {
   owner:     { label: 'Owner',             desc: 'Full access — estimates, billing, team management', icon: '👑' },
-  estimator: { label: 'Sales / Estimator', desc: 'Create estimates, visit clients, collect signatures',  icon: '📋' },
+  estimator: { label: 'Sales', desc: 'Create estimates, visit clients, collect signatures',  icon: '📋' },
   manager:   { label: 'Manager',           desc: 'View all estimates and reports, read-only access',     icon: '📊' },
   admin:     { label: 'Office Admin',      desc: 'Invoices and client list only',                        icon: '🧾' },
 }

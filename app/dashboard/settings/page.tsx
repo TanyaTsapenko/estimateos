@@ -729,7 +729,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
     setSending(false)
   }
 
-  const ROLE_LABELS: Record<string, string> = { owner: 'Owner', estimator: 'Sales / Estimator', manager: 'Manager', admin: 'Office Admin' }
+  const ROLE_LABELS: Record<string, string> = { owner: 'Owner', estimator: 'Sales', manager: 'Manager', admin: 'Office Admin' }
 
   return (
     <div>
@@ -801,7 +801,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                   onChange={e => updateMemberRole(m.id, e.target.value)}
                   style={{ padding: '5px 8px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', background: '#fff', cursor: 'pointer' }}
                 >
-                  <option value="estimator">Sales / Estimator</option>
+                  <option value="estimator">Sales</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Office Admin</option>
                   <option value="owner">Owner</option>
@@ -817,7 +817,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>Role</label>
               <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
-                <option value="estimator">Sales / Estimator</option>
+                <option value="estimator">Sales</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Office Admin</option>
                 <option value="owner">Owner</option>
