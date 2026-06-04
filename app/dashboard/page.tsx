@@ -387,7 +387,21 @@ export default function DashboardPage() {
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
   const doneCount  = appointments.filter(a => a.pillStatus === 'DONE').length
-  const nextAppt   = appointments.find(a => a.pillStatus !== 'DONE') ?? null
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  const nextAppt = appointments.find(a => {
+    if (a.pillStatus === 'DONE') return false
+    const timeParts = a.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    if (!timeParts) return true
+    let hours = parseInt(timeParts[1])
+    const minutes = parseInt(timeParts[2])
+    const ampm = timeParts[3].toUpperCase()
+    if (ampm === 'PM' && hours !== 12) hours += 12
+    if (ampm === 'AM' && hours === 12) hours = 0
+    const apptMinutes = hours * 60 + minutes
+    return apptMinutes >= currentMinutes - 30
+  }) ?? null
   const otherAppts = appointments.filter(a => a.id !== nextAppt?.id)
 
   return (
