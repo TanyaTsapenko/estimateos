@@ -147,7 +147,7 @@ function calcTierTotal(ops: Opening[], tierKey: 'good' | 'better' | 'best', cust
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
   shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
-  install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
+  install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0, has_screen: false,
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
@@ -343,9 +343,9 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                   <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Screen included</div>
                   <div style={{ fontSize: 11, color: '#94A3B8' }}>Insect screen</div>
                 </div>
-                <div onClick={() => updateOpening(op.id, 'screen', !op.screen)}
-                  style={{ width: 40, height: 22, borderRadius: 99, background: op.screen ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                  <div style={{ position: 'absolute', top: 3, left: op.screen ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                <div onClick={() => updateOpening(op.id, 'has_screen', !op.has_screen)}
+                  style={{ width: 40, height: 22, borderRadius: 99, background: op.has_screen ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: op.has_screen ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
                 </div>
               </div>
             )}
@@ -678,7 +678,7 @@ function NewEstimateForm() {
             width: op.width, width_in: op.width_in || '', height_in: op.height_in || '',
             shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
             install: op.install, floor: op.floor, room: op.room || '',
-            sidelight: op.sidelight, transom: op.transom, screen: op.screen,
+            sidelight: op.sidelight, transom: op.transom, screen: op.screen, has_screen: op.has_screen || false,
             material: op.material || 'vinyl', hardware_colour: op.hardware_colour || 'white',
             grid_pattern: op.grid_pattern || 'none', brand: op.brand || '', notes: op.notes || '',
             tilt_clean: op.tilt_clean || false, opening_direction: op.opening_direction || '',
@@ -827,7 +827,7 @@ function NewEstimateForm() {
       shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom,
-      screen: op.screen === true || op.screen === ('true' as any) ? true : false,
+      has_screen: Boolean(op.has_screen),
       material: (op as any).material || 'vinyl',
       hardware_colour: (op as any).hardware_colour || 'white',
       grid_pattern: (op as any).grid_pattern || 'none',

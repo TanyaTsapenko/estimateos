@@ -52,6 +52,7 @@ export interface Opening {
   sidelight: number
   transom: number
   screen: number
+  has_screen: boolean
   material: string
   hardware_colour: string
   grid_pattern: string

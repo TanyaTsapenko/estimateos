@@ -15,7 +15,7 @@ interface Opening {
   frame: string | null; floor: string | null
   material: string | null; hardware_colour: string | null; grid_pattern: string | null
   brand: string | null; notes: string | null
-  screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
+  has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
   glass_type: string | null; core_type: string | null
@@ -77,7 +77,7 @@ export default function EstimateDetailPage() {
     async function load() {
       const [{ data: est }, { data: ops }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type').eq('estimate_id', id).order('sort_order'),
       ])
       setEstimate(est)
       setOpenings(ops || [])
@@ -403,7 +403,7 @@ export default function EstimateDetailPage() {
                     {/* Type-specific pills */}
                     {(() => {
                       const pills: React.ReactNode[] = []
-                      if (op.screen) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
+                      if (op.has_screen) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
                       if (op.tilt_clean) pills.push(<span key="tilt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
                       if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
                       if (op.panels_count) pills.push(<span key="panels" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.panels_count} panels</span>)
