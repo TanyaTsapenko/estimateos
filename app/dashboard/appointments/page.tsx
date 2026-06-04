@@ -102,7 +102,7 @@ function toHour(t: string | null): number {
   return h + m / 60
 }
 
-function getDayDateStr(day: 'yesterday' | 'today' | 'tomorrow'): string {
+function getDayDateStr(day: 'yesterday' | 'today' | 'tomorrow' | string): string {
   const d = new Date()
   if (day === 'yesterday') d.setDate(d.getDate() - 1)
   if (day === 'tomorrow') d.setDate(d.getDate() + 1)
