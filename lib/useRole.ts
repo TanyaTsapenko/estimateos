@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from './supabase/client'
 
-export type AppRole = 'owner' | 'estimator' | 'admin'
+export type AppRole = 'owner' | 'estimator' | 'admin' | 'manager'
 
 export function useRole(): { role: AppRole; loading: boolean } {
   const [role, setRole] = useState<AppRole>('owner')
@@ -23,15 +23,12 @@ export function useRole(): { role: AppRole; loading: boolean } {
       const r = (data.role ?? null) as string | null
       const isTeamMember = !!data.team_owner_id
 
-      if (r === 'estimator') {
+      if (r === 'estimator' || (!r && isTeamMember && data.member_role === 'estimator')) {
         setRole('estimator')
       } else if (r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')) {
         setRole('admin')
-      } else if (!r && isTeamMember && data.member_role && data.member_role !== 'owner') {
-        // Legacy: role column not yet populated but team member exists
-        setRole('estimator')
       } else {
-        setRole('owner')
+        setRole('owner') // owner and manager both get full access
       }
       setLoading(false)
     })

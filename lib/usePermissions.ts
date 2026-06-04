@@ -45,7 +45,7 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
 
       const r = (data.role ?? null) as string | null
       const isTeamMember = !!data.team_owner_id
-      const isOwner = r === 'owner' || (!r && !isTeamMember) || (!r && data.member_role === 'owner')
+      const isOwner = r === 'owner' || r === 'manager' || (!r && !isTeamMember) || (!r && data.member_role === 'owner') || (!r && data.member_role === 'manager')
       const isAdmin = r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')
 
       if (isOwner) {
