@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
+import { usePermissions } from '@/lib/usePermissions'
 import { Search, Plus, ChevronRight } from 'lucide-react'
 import BellButton from '@/components/BellButton'
 
@@ -45,6 +46,8 @@ function StatBox({ label, value }: { label: string; value: string | number }) {
 export default function EstimatesPage() {
   const router  = useRouter()
   const supabase = createClient()
+  const { role } = usePermissions()
+  const isEstimator = role === 'estimator'
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading,   setLoading]   = useState(true)
   const [filter,    setFilter]    = useState('All')
@@ -117,11 +120,13 @@ export default function EstimatesPage() {
       <div className="page-body" style={{ padding: '20px 16px 100px' }}>
 
         {/* Stats */}
+        {!isEstimator && (
         <div className="est-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           <StatBox label="Total value" value={fmtCAD(totalValue)} />
           <StatBox label="Accepted"     value={signedCount}        />
           <StatBox label="Open"        value={openCount}          />
         </div>
+        )}
 
         {/* Search */}
         <div style={{
