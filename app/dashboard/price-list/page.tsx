@@ -137,12 +137,12 @@ export default function PriceListPage() {
   const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null)
   const [activeTab,    setActiveTab]    = useState<'items' | 'surcharges'>('items')
   const [surcharges, setSurcharges] = useState({
-    arch_pct: 30, custom_shape_pct: 50,
-    black_grey: 80, custom_colour: 150,
-    lowe: 60, frosted: 90, tinted: 70, tempered: 110,
-    fullframe: 200, stud_to_stud: 350,
-    second_floor: 80, third_floor: 180,
-    frame_repair: 120, frame_rotted: 280,
+    arch_pct: 0, custom_shape_pct: 0,
+    black_grey: 0, custom_colour: 0,
+    lowe: 0, frosted: 0, tinted: 0, tempered: 0,
+    fullframe: 0, stud_to_stud: 0,
+    second_floor: 0, third_floor: 0,
+    frame_repair: 0, frame_rotted: 0,
   })
   const [savingSurcharges, setSavingSurcharges] = useState(false)
 
