@@ -25,7 +25,11 @@ interface Estimate {
   total_good: number | null; total_better: number | null; total_best: number | null
   tax_rate: number | null; view_count: number | null
 }
-interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
+interface Opening {
+  id: string; type: string; qty: number; total_cost: number; room: string | null
+  install: string | null; shape: string | null; colour: string | null
+  glass: string | null; frame: string | null; floor: string | null
+}
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
   phone: string | null; logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
@@ -95,7 +99,7 @@ export default function ClientEstimatePage() {
       else setDocStatus('active')
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimate_openings').select('id, type, qty, total_cost, room').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor').eq('estimate_id', id).order('sort_order'),
         supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
@@ -167,6 +171,13 @@ export default function ClientEstimatePage() {
   const statusPill = estimate.status === 'signed'
     ? <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: 'rgba(5,150,105,0.25)', border: '1px solid rgba(16,185,129,0.4)', color: '#6EE7B7' }}>✓ Signed</span>
     : <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff' }}>Sent</span>
+
+  const SHAPE_LABELS:   Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
+  const COLOUR_LABELS:  Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
+  const GLASS_LABELS:   Record<string, string> = { clear: 'Clear', lowe: 'Low-E', frosted: 'Frosted', tinted: 'Tinted', tempered: 'Tempered' }
+  const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
+  const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
+  const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: SANS, background: BG }}>
@@ -268,7 +279,15 @@ export default function ClientEstimatePage() {
                       {OPENING_TYPES[op.type]?.name || op.type}
                       {op.qty > 1 && <span style={{ fontSize: 13, color: INK_SOFT, fontWeight: 400 }}> × {op.qty}</span>}
                     </div>
-                    {op.room && <div style={{ fontSize: 12, color: INK_SOFT, marginTop: 2 }}>{op.room}</div>}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                      {op.shape && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{SHAPE_LABELS[op.shape] || op.shape}</span>}
+                      {op.colour && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{COLOUR_LABELS[op.colour] || op.colour}</span>}
+                      {op.glass && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{GLASS_LABELS[op.glass] || op.glass}</span>}
+                      {op.frame && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FRAME_LABELS[op.frame] || op.frame}</span>}
+                      {op.install && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{INSTALL_LABELS[op.install] || op.install}</span>}
+                      {op.floor && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FLOOR_LABELS[op.floor] || op.floor}</span>}
+                      {op.room && <span style={{ background: '#EFF4FF', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#2563EB' }}>{op.room}</span>}
+                    </div>
                   </div>
                   {!showGBB && (
                     <div style={{ fontSize: 14, fontWeight: 600, color: INK, fontFamily: MONO, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
