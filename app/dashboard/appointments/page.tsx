@@ -747,7 +747,7 @@ export default function AppointmentsPage() {
 
   // Timeline state
   const [userId, setUserId]             = useState<string | null>(null)
-  const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow'>('today')
+  const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow' | string>('today')
   const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [dayCounts, setDayCounts]       = useState({ yesterday: 0, today: 0, tomorrow: 0 })
   const [dayAppts, setDayAppts]         = useState<TimelineAppt[]>([])
