@@ -27,7 +27,7 @@ interface Estimate {
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
   sent_method: string | null; created_at: string; user_id: string; opened_at: string | null
-  viewed_at: string | null
+  viewed_at: string | null; additional_charges: {label: string; amount: number}[] | null
 }
 
 const STATUS_COLOR: Record<string, string> = {
@@ -388,6 +388,13 @@ export default function EstimateDetailPage() {
                 <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
               </>
             )}
+
+            {estimate.additional_charges?.filter(c => c.label).map((c, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 13, color: '#475569' }}>{c.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(c.amount)}</span>
+              </div>
+            ))}
 
             {/* Divider before price */}
             <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
