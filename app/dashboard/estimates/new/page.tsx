@@ -148,6 +148,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
   shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
   install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0,
+  material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
 }
 
 interface OpeningCardProps {
@@ -295,6 +296,68 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           <input placeholder="Living room" value={op.room}
             onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
       </div>
+
+      {/* More options toggle */}
+      <div
+        onClick={() => updateOpening(op.id, 'showMore' as any, !op.showMore as any)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', border: '1px dashed #E2E8F0', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#94A3B8', marginTop: 4 }}
+      >
+        {(op as any).showMore ? '− Less options' : '+ More options'}
+      </div>
+
+      {/* Extra fields */}
+      {(op as any).showMore && (
+        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>Material</div>
+              <select style={{ width: '100%' }} value={(op as any).material} onChange={e => updateOpening(op.id, 'material' as any, e.target.value)}>
+                <option value="vinyl">Vinyl</option>
+                <option value="wood">Wood</option>
+                <option value="fiberglass">Fiberglass</option>
+                <option value="aluminum">Aluminum</option>
+                <option value="composite">Composite</option>
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>Hardware colour</div>
+              <select style={{ width: '100%' }} value={(op as any).hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour' as any, e.target.value)}>
+                <option value="white">White</option>
+                <option value="black">Black</option>
+                <option value="chrome">Chrome</option>
+                <option value="brass">Brass</option>
+                <option value="bronze">Bronze</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>Grid pattern</div>
+              <select style={{ width: '100%' }} value={(op as any).grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern' as any, e.target.value)}>
+                <option value="none">None</option>
+                <option value="colonial">Colonial</option>
+                <option value="prairie">Prairie</option>
+                <option value="diamond">Diamond</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>Brand (optional)</div>
+              <input style={{ width: '100%' }} value={(op as any).brand} onChange={e => updateOpening(op.id, 'brand' as any, e.target.value)} placeholder="e.g. Pella" />
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--jet)', marginBottom: 4 }}>Notes (this opening)</div>
+            <textarea
+              value={(op as any).notes}
+              onChange={e => updateOpening(op.id, 'notes' as any, e.target.value)}
+              placeholder="e.g. Remove existing trim, custom colour match"
+              rows={2}
+              style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -430,6 +493,8 @@ function NewEstimateForm() {
             shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
             install: op.install, floor: op.floor, room: op.room || '',
             sidelight: op.sidelight, transom: op.transom, screen: op.screen,
+            material: op.material || 'vinyl', hardware_colour: op.hardware_colour || 'white',
+            grid_pattern: op.grid_pattern || 'none', brand: op.brand || '', notes: op.notes || '',
           })))
         }
       } else if (apptId) {
@@ -515,6 +580,8 @@ function NewEstimateForm() {
     const errs = validateClientFields()
     setClientErrors(errs)
     if (hasErrors(errs)) return
+    const missingDimensions = openings.some(op => !op.width_in || !op.height_in)
+    if (missingDimensions) { setError('Please enter width and height for all openings'); return }
     setSaving(true); setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
@@ -569,6 +636,11 @@ function NewEstimateForm() {
       shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom, screen: op.screen,
+      material: (op as any).material || 'vinyl',
+      hardware_colour: (op as any).hardware_colour || 'white',
+      grid_pattern: (op as any).grid_pattern || 'none',
+      brand: (op as any).brand || '',
+      notes: (op as any).notes || '',
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       sort_order: i,

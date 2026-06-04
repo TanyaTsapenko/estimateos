@@ -52,6 +52,12 @@ export interface Opening {
   sidelight: number
   transom: number
   screen: number
+  material: string
+  hardware_colour: string
+  grid_pattern: string
+  brand: string
+  notes: string
+  showMore?: boolean
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
