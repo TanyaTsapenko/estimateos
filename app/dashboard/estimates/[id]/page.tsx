@@ -7,9 +7,11 @@ import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, C
 import ConfirmModal from '@/components/ConfirmModal'
 
 interface Opening {
-  id: string; type: string; qty: number; width: string
-  width_in: number | null; height_in: number | null
-  room: string | null; total_cost: number; install: string | null
+  id: string; type: string; qty: number; width: string | null
+  width_in: number | null; height_in: number | null; room: string | null
+  total_cost: number; install: string | null
+  shape: string | null; colour: string | null; glass: string | null
+  frame: string | null; floor: string | null
 }
 
 const INSTALL_LABELS: Record<string, string> = {
@@ -68,7 +70,7 @@ export default function EstimateDetailPage() {
     async function load() {
       const [{ data: est }, { data: ops }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor').eq('estimate_id', id).order('sort_order'),
       ])
       setEstimate(est)
       setOpenings(ops || [])
@@ -231,6 +233,13 @@ export default function EstimateDetailPage() {
     estimate.payment_method && { label: 'Payment', value: estimate.payment_method },
   ].filter(Boolean) as { label: string; value: string }[]
 
+  const SHAPE_LABELS:   Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
+  const COLOUR_LABELS:  Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
+  const GLASS_LABELS:   Record<string, string> = { clear: 'Clear', lowe: 'Low-E', frosted: 'Frosted', tinted: 'Tinted', tempered: 'Tempered' }
+  const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
+  const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
+  const INSTALL_LABELS2: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
+
   // ── MAIN RENDER ──────────────────────────────────────
   return (
     <>
@@ -355,10 +364,17 @@ export default function EstimateDetailPage() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>
                     {customLabels[op.type] || OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
                   </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3, display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
-                    {(op.width_in && op.height_in) && <span>{op.width_in}" × {op.height_in}"</span>}
-                    {op.install && <span>{INSTALL_LABELS[op.install] || op.install}</span>}
-                    {op.room && <span>{op.room}</span>}
+                  {(op.width_in && op.height_in) && (
+                    <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>{op.width_in}" × {op.height_in}"</div>
+                  )}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                    {op.shape && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{SHAPE_LABELS[op.shape] || op.shape}</span>}
+                    {op.colour && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{COLOUR_LABELS[op.colour] || op.colour}</span>}
+                    {op.glass && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{GLASS_LABELS[op.glass] || op.glass}</span>}
+                    {op.frame && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FRAME_LABELS[op.frame] || op.frame}</span>}
+                    {op.install && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{INSTALL_LABELS2[op.install] || op.install}</span>}
+                    {op.floor && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FLOOR_LABELS[op.floor] || op.floor}</span>}
+                    {op.room && <span style={{ background: '#EFF4FF', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#2563EB' }}>{op.room}</span>}
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
