@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon } from 'lucide-react'
+import { usePermissions } from '@/lib/usePermissions'
 
 interface Appointment {
   id: string; time: string; client: string; address: string; phone: string
@@ -185,6 +186,8 @@ export default function DashboardPage() {
     estimateId: string; estimateNumber: string; clientName: string
     clientEmail: string; address: string; message: string
   } | null>(null)
+  const { role, permissions } = usePermissions()
+  const isEstimator = role === 'estimator'
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -601,6 +604,7 @@ export default function DashboardPage() {
       <main className="db-main-body" style={{ padding: isMobile ? '16px 16px' : '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
 
         {/* KPI row */}
+        {!isEstimator && (
         <div className="db-kpi-row" style={{ display: 'flex', gap: 10, marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
           <KpiCard
             label="REVENUE" period="This month"
@@ -618,12 +622,13 @@ export default function DashboardPage() {
             accent="#0F8A6B" Icon={CheckIcon} sparkData={metrics?.sparklines.signed ?? []} empty={!metrics}
           />
         </div>
+        )}
 
         {/* ── MOBILE SECTIONS ── */}
         {isMobile ? (
           <>
             {/* Needs Attention */}
-            <section style={{ marginBottom: 24 }}>
+            {!isEstimator && (<section style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Needs Attention</div>
               <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>
                 {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
@@ -693,10 +698,10 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </section>
+            </section>)}
 
             {/* Discover */}
-            {showDiscover && (
+            {!isEstimator && showDiscover && (
               <section>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0A0E1A', letterSpacing: '-0.5px', marginBottom: 14 }}>Discover</div>
@@ -711,7 +716,7 @@ export default function DashboardPage() {
           <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
             {/* Needs attention */}
-            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+            {!isEstimator && (<div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
               <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
                 <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Needs Attention</div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
@@ -787,10 +792,10 @@ export default function DashboardPage() {
                   <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                 </div>
               ))}
-            </div>
+            </div>)}
 
             {/* Discover */}
-            {showDiscover && (
+            {!isEstimator && showDiscover && (
               <div style={{ gridColumn: '1 / -1', marginTop: 4 }}>
                 <div style={{ padding: '0 4px', marginBottom: 10 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>PLAYS FOR YOUR BUSINESS</div>
