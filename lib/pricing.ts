@@ -69,12 +69,28 @@ export function dimToSizeBucket(wIn: number, hIn: number): string {
 
 export interface CustomPrices {
   types: Record<string, { base: number; lab: number; is_tiered?: boolean; tier_good?: any; tier_better?: any; tier_best?: any }>
+  surcharges?: {
+    arch_pct?: number
+    custom_shape_pct?: number
+    black_grey?: number
+    custom_colour?: number
+    lowe?: number
+    frosted?: number
+    tinted?: number
+    tempered?: number
+    fullframe?: number
+    stud_to_stud?: number
+    second_floor?: number
+    third_floor?: number
+    frame_repair?: number
+    frame_rotted?: number
+  }
 }
 
 export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey: 'good' | 'better' | 'best' = 'better'): number {
   const customType = custom?.types[op.type]
+  const s = custom?.surcharges || {}
 
-  // Tiered item — use tier price directly, no multipliers
   if (customType?.is_tiered) {
     const tier = tierKey === 'good' ? customType.tier_good : tierKey === 'better' ? customType.tier_better : customType.tier_best
     const price = tier?.price || 0
@@ -84,13 +100,23 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey
   const defaults = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
   const base = customType?.base ?? defaults.base
   const lab  = customType?.lab  ?? defaults.lab
-  const sh = op.shape === 'arch' ? 1.3 : op.shape === 'custom' ? 1.5 : 1.0
-  const fa = op.floor === 'second' ? 80 : op.floor === 'third' ? 180 : 0
-  const ia = op.install === 'fullframe' ? 200 : op.install === 'stud_to_stud' ? 350 : 0
-  const fc = op.frame === 'repair' ? 120 : op.frame === 'rotted' ? 280 : 0
-  const col = op.colour === 'black' || op.colour === 'grey' ? 80 : op.colour === 'custom' ? 150 : 0
-  const gl = op.glass === 'lowe' ? 60 : op.glass === 'frosted' ? 90 : op.glass === 'tinted' ? 70 : op.glass === 'tempered' ? 110 : 0
+
+  const sh = op.shape === 'arch' ? 1 + (s.arch_pct ?? 30) / 100
+           : op.shape === 'custom' ? 1 + (s.custom_shape_pct ?? 50) / 100 : 1.0
+  const col = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 80)
+            : op.colour === 'custom' ? (s.custom_colour ?? 150) : 0
+  const gl = op.glass === 'lowe' ? (s.lowe ?? 60)
+           : op.glass === 'frosted' ? (s.frosted ?? 90)
+           : op.glass === 'tinted' ? (s.tinted ?? 70)
+           : op.glass === 'tempered' ? (s.tempered ?? 110) : 0
+  const fa = op.floor === 'second' ? (s.second_floor ?? 80)
+           : op.floor === 'third' ? (s.third_floor ?? 180) : 0
+  const ia = op.install === 'fullframe' ? (s.fullframe ?? 200)
+           : op.install === 'stud_to_stud' ? (s.stud_to_stud ?? 350) : 0
+  const fc = op.frame === 'repair' ? (s.frame_repair ?? 120)
+           : op.frame === 'rotted' ? (s.frame_rotted ?? 280) : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
+
   const unitCost = ((base + lab) * sh + fa + ia + fc + col + gl + ex) * mult
   return unitCost * (op.qty || 1)
 }

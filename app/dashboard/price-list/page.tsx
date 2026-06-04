@@ -135,6 +135,16 @@ export default function PriceListPage() {
   const [userId,       setUserId]       = useState<string | null>(null)
   const [error,        setError]        = useState('')
   const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null)
+  const [activeTab,    setActiveTab]    = useState<'items' | 'surcharges'>('items')
+  const [surcharges, setSurcharges] = useState({
+    arch_pct: 30, custom_shape_pct: 50,
+    black_grey: 80, custom_colour: 150,
+    lowe: 60, frosted: 90, tinted: 70, tempered: 110,
+    fullframe: 200, stud_to_stud: 350,
+    second_floor: 80, third_floor: 180,
+    frame_repair: 120, frame_rotted: 280,
+  })
+  const [savingSurcharges, setSavingSurcharges] = useState(false)
 
   // Modal — base fields
   const [showModal,           setShowModal]           = useState(false)
@@ -199,6 +209,10 @@ export default function PriceListPage() {
           tier_better: r.tier_better  || null,
           tier_best:   r.tier_best    || null,
         })))
+      }
+      const { data: profData } = await supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single()
+      if (profData?.surcharges && Object.keys(profData.surcharges).length > 0) {
+        setSurcharges(prev => ({ ...prev, ...profData.surcharges }))
       }
       setLoading(false)
     }
@@ -298,6 +312,17 @@ export default function PriceListPage() {
 
     setModalSaving(false)
     setShowModal(false)
+  }
+
+  const [flashMsg, setFlashMsg] = useState('')
+  function flash(msg: string) { setFlashMsg(msg); setTimeout(() => setFlashMsg(''), 2500) }
+
+  async function saveSurchargesHandler() {
+    if (!userId) return
+    setSavingSurcharges(true)
+    await supabase.from('profiles').update({ surcharges }).eq('id', userId)
+    setSavingSurcharges(false)
+    flash('Surcharges saved!')
   }
 
   async function deleteItem(item: PriceItem) {
@@ -505,8 +530,29 @@ export default function PriceListPage() {
           )}
         </div>
 
+        {/* ── TAB SWITCHER ── */}
+        <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 10, padding: 3, margin: '12px 16px 0', gap: 2 }}>
+          {(['items', 'surcharges'] as const).map(tab => (
+            <button key={tab} onClick={() => setActiveTab(tab)} style={{
+              flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: F,
+              fontSize: 13, fontWeight: 600,
+              background: activeTab === tab ? '#fff' : 'transparent',
+              color: activeTab === tab ? '#0A1628' : '#64748B',
+              boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+            }}>
+              {tab === 'items' ? 'Items' : 'Surcharges'}
+            </button>
+          ))}
+        </div>
+
+        {flashMsg && (
+          <div style={{ margin: '10px 16px 0', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#16A34A' }}>
+            {flashMsg}
+          </div>
+        )}
+
         {/* ── BODY ── */}
-        <div style={{ padding: '8px 16px 100px' }}>
+        {activeTab === 'items' && <div style={{ padding: '8px 16px 100px' }}>
 
           {loading && (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#94A3B8', fontSize: 13 }}>Loading…</div>
@@ -589,7 +635,70 @@ export default function PriceListPage() {
             </div>
           ))}
 
-        </div>
+        </div>}
+
+        {activeTab === 'surcharges' && (
+          <div style={{ padding: '12px 16px 100px' }}>
+            {[
+              { label: 'Shape', fields: [
+                { key: 'arch_pct', label: 'Arch', unit: '%' },
+                { key: 'custom_shape_pct', label: 'Custom shape', unit: '%' },
+              ]},
+              { label: 'Colour', fields: [
+                { key: 'black_grey', label: 'Black / Grey', unit: '$' },
+                { key: 'custom_colour', label: 'Custom colour', unit: '$' },
+              ]},
+              { label: 'Glass', fields: [
+                { key: 'lowe', label: 'Low-E', unit: '$' },
+                { key: 'frosted', label: 'Frosted', unit: '$' },
+                { key: 'tinted', label: 'Tinted', unit: '$' },
+                { key: 'tempered', label: 'Tempered', unit: '$' },
+              ]},
+              { label: 'Installation', fields: [
+                { key: 'fullframe', label: 'Full Frame', unit: '$' },
+                { key: 'stud_to_stud', label: 'Stud to Stud', unit: '$' },
+              ]},
+              { label: 'Floor', fields: [
+                { key: 'second_floor', label: '2nd floor', unit: '$' },
+                { key: 'third_floor', label: '3rd floor', unit: '$' },
+              ]},
+              { label: 'Frame condition', fields: [
+                { key: 'frame_repair', label: 'Needs repair', unit: '$' },
+                { key: 'frame_rotted', label: 'Rotted frame', unit: '$' },
+              ]},
+            ].map(({ label, fields }) => (
+              <div key={label} style={{ marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '14px 2px 8px' }}>
+                  <div style={{ width: 3, height: 14, background: '#2563EB', borderRadius: 2, marginRight: 8 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8' }}>{label}</span>
+                </div>
+                <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                    {fields.map(({ key, label: fieldLabel, unit }, i) => (
+                      <div key={key} style={{ padding: '12px 14px', borderBottom: i < fields.length - 2 ? '1px solid #F1F5F9' : 'none', borderRight: i % 2 === 0 ? '1px solid #F1F5F9' : 'none' }}>
+                        <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 6 }}>{fieldLabel}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 8, padding: '6px 10px' }}>
+                          {unit === '$' && <span style={{ fontSize: 12, color: '#94A3B8' }}>$</span>}
+                          <input
+                            type="number" min="0"
+                            value={surcharges[key as keyof typeof surcharges]}
+                            onChange={e => setSurcharges(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
+                            style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 14, fontWeight: 600, color: '#0A1628', textAlign: 'right', outline: 'none', fontFamily: F }}
+                          />
+                          {unit === '%' && <span style={{ fontSize: 12, color: '#94A3B8' }}>%</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <button onClick={saveSurchargesHandler} disabled={savingSurcharges}
+              style={{ width: '100%', marginTop: 16, background: savingSurcharges ? '#93C5FD' : '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
+              {savingSurcharges ? 'Saving…' : 'Save surcharges'}
+            </button>
+          </div>
+        )}
 
         <BottomNav />
       </div>

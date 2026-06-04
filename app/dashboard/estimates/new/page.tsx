@@ -421,7 +421,7 @@ function NewEstimateForm() {
         tier_best: r.tier_best || null,
       }
     })
-    setCustomPrices({ types })
+    setCustomPrices(prev => ({ surcharges: prev?.surcharges, types }))
     const customTypesMap: Record<string, CustomOpeningType> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
       customTypesMap[r.opening_type] = {
@@ -456,13 +456,17 @@ function NewEstimateForm() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
-      const [{ data: prof }, { data: priceRows }] = await Promise.all([
+      const [{ data: prof }, { data: priceRows }, { data: profSurcharges }] = await Promise.all([
         supabase.from('profiles').select('province, pricing_mode').eq('id', sanitizedId).single(),
         supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
+        supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single(),
       ])
       if (prof) {
         setProfile(prof)
         setPricingMode((prof as any).pricing_mode === 'gbb' ? 'gbb' : 'single')
+      }
+      if (profSurcharges?.surcharges) {
+        setCustomPrices(prev => ({ types: prev?.types || {}, surcharges: profSurcharges.surcharges }))
       }
       if (editId) {
         const [{ data: est }, { data: ops }] = await Promise.all([
