@@ -1329,6 +1329,7 @@ export default function SettingsPage() {
   const [companyName, setCompanyName] = useState('')
   const [teamDesc, setTeamDesc] = useState('Manage team members')
   const { role, permissions, loading: permLoading } = usePermissions()
+  const isEstimator = role === 'estimator'
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -1358,6 +1359,7 @@ export default function SettingsPage() {
   const visibleGroups = permLoading ? GROUPS : GROUPS.map(g => ({
     ...g,
     items: g.items.filter(item => {
+      if (isEstimator) return ['profile', 'password'].includes(item.id)
       if (item.id === 'team' && role !== 'owner') return false
       if ((item.id === 'company' || item.id === 'contract') && !permissions.settings) return false
       if (item.id === 'price' && !permissions.price_list) return false
@@ -1502,7 +1504,7 @@ export default function SettingsPage() {
 
           {/* Sub-sidebar */}
           <div style={{ borderRight: '1px solid rgba(10,22,40,0.06)', padding: '18px 12px', overflowY: 'auto', background: '#FAFBFC' }}>
-            {GROUPS.map(g => (
+            {visibleGroups.map(g => (
               <div key={g.title} style={{ marginBottom: 18 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', padding: '0 12px 8px' }}>{g.title}</div>
                 {g.items.map(item => (
