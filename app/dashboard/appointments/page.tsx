@@ -1062,7 +1062,7 @@ export default function AppointmentsPage() {
                 if (diff === -1) setSelectedDay('yesterday')
                 else if (diff === 0) setSelectedDay('today')
                 else if (diff === 1) setSelectedDay('tomorrow')
-                else setSelectedDay(e.target.value)
+                else setSelectedDay(e.target.value as 'yesterday' | 'today' | 'tomorrow')
               }}
             />
           </div>
