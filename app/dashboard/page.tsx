@@ -765,7 +765,7 @@ export default function DashboardPage() {
                   </button>
                 </div>
               )}
-            </div>
+            </div>)}
 
             {/* Live Feed / Recent activity */}
             <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
@@ -792,7 +792,7 @@ export default function DashboardPage() {
                   <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                 </div>
               ))}
-            </div>)}
+            </div>
 
             {/* Discover */}
             {!isEstimator && showDiscover && (
