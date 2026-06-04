@@ -673,7 +673,7 @@ export default function DashboardPage() {
                   {showAllAttention ? 'Show less' : `Show all (${attention.length})`}
                 </button>
               )}
-            </section>
+            </section>)}
 
             {/* Live Feed */}
             <section style={{ marginBottom: 24 }}>
@@ -698,7 +698,7 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            </section>)}
+            </section>
 
             {/* Discover */}
             {!isEstimator && showDiscover && (
