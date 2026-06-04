@@ -676,6 +676,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   })
   const [sending, setSending] = useState(false)
   const [editingMember, setEditingMember] = useState<{ id: string; name: string; role: string; permissions: typeof invitePerms } | null>(null)
+  const [editingMemberOriginal, setEditingMemberOriginal] = useState<{ role: string; permissions: typeof invitePerms } | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -731,6 +732,11 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   }
 
   const ROLE_LABELS: Record<string, string> = { owner: 'Owner', estimator: 'Sales', manager: 'Manager', admin: 'Office Admin' }
+
+  const hasChanges = editingMember && editingMemberOriginal && (
+    editingMember.role !== editingMemberOriginal.role ||
+    JSON.stringify(editingMember.permissions) !== JSON.stringify(editingMemberOriginal.permissions)
+  )
 
   return (
     <div>
@@ -792,6 +798,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
               <div key={m.id} onClick={() => {
                 const memberPerms = (m as any).permissions || { estimates: true, schedule: true, clients: true, price_list: false, reports: false, settings: false }
                 setEditingMember({ id: m.id, name, role: m.member_role || 'estimator', permissions: memberPerms })
+                setEditingMemberOriginal({ role: m.member_role || 'estimator', permissions: memberPerms })
               }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none', cursor: 'pointer' }}>
                 <div style={{ width: 34, height: 34, borderRadius: 10, background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {name[0]?.toUpperCase()}
@@ -856,7 +863,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                   setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role } : m))
                   setEditingMember(null)
                   flash('Member updated')
-                }} style={{ flex: 2, padding: 13, background: '#2563EB', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}>Save changes</button>
+                }} disabled={!hasChanges} style={{ flex: 2, padding: 13, background: '#2563EB', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: hasChanges ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: hasChanges ? 1 : 0.4 }}>Save changes</button>
               </div>
             </div>
           </div>
