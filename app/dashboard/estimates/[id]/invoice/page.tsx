@@ -21,6 +21,17 @@ export default function CreateInvoicePage() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [interacEmail, setInteracEmail] = useState('')
+  const [additionalCharges, setAdditionalCharges] = useState<{id: string; label: string; amount: number}[]>([])
+
+  function addCharge() {
+    setAdditionalCharges(prev => [...prev, { id: Date.now().toString(), label: '', amount: 0 }])
+  }
+  function removeCharge(id: string) {
+    setAdditionalCharges(prev => prev.filter(c => c.id !== id))
+  }
+  function updateCharge(id: string, field: 'label' | 'amount', value: string | number) {
+    setAdditionalCharges(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c))
+  }
 
   useEffect(() => {
     async function load() {
@@ -43,7 +54,8 @@ export default function CreateInvoicePage() {
   }, [id])
 
   const isFinal = !!depositInvoice
-  const invoiceAmount = estimate ? (isFinal ? estimate.total - depositInvoice!.amount : estimate.total) : 0
+  const additionalTotal = additionalCharges.reduce((s, c) => s + (c.amount || 0), 0)
+  const invoiceAmount = estimate ? (isFinal ? estimate.total - depositInvoice!.amount : estimate.total) + additionalTotal : 0
 
   function setNet(days: number) {
     const d = new Date()
@@ -73,6 +85,7 @@ export default function CreateInvoicePage() {
       amount:         Math.round(invoiceAmount * 100) / 100,
       due_date:       dueDate,
       notes,
+      additional_charges: additionalCharges.filter(c => c.label.trim()).map(c => ({ label: c.label.trim(), amount: c.amount })),
     }).select('id').single()
 
     if (invErr) { setError(invErr.message); setSaving(false); return }
@@ -179,6 +192,28 @@ export default function CreateInvoicePage() {
               <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</div>
             </div>
           </div>
+        </div>
+
+        {/* Additional charges */}
+        <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', marginBottom: 16 }}>
+          <div style={{ padding: '12px 14px', borderBottom: '0.5px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#94A3B8', textTransform: 'uppercase' as const }}>Additional charges</div>
+            <button onClick={addCharge} style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add</button>
+          </div>
+          {additionalCharges.length === 0 ? (
+            <div style={{ padding: '12px 14px', fontSize: 13, color: '#94A3B8' }}>None — tap + Add to include extras</div>
+          ) : additionalCharges.map((charge, i) => (
+            <div key={charge.id} style={{ padding: '10px 14px', borderBottom: i < additionalCharges.length - 1 ? '0.5px solid #F1F5F9' : 'none', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input value={charge.label} onChange={e => updateCharge(charge.id, 'label', e.target.value)} placeholder="e.g. Permit fee, Travel..." style={{ flex: 1, border: 'none', fontSize: 13, color: '#0A1628', outline: 'none', fontFamily: 'inherit', background: 'transparent' }}/>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 8, padding: '5px 8px', width: 90, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: '#94A3B8' }}>$</span>
+                <input type="number" min="0" value={charge.amount || ''} onChange={e => updateCharge(charge.id, 'amount', parseFloat(e.target.value) || 0)} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 13, fontWeight: 600, color: '#0A1628', textAlign: 'right' as const, outline: 'none', fontFamily: 'inherit' }}/>
+              </div>
+              <button onClick={() => removeCharge(charge.id)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(220,38,38,0.08)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+          ))}
         </div>
 
         {/* Form card */}
