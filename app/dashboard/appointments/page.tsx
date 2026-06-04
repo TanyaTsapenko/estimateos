@@ -110,7 +110,7 @@ function getDayDateStr(day: 'yesterday' | 'today' | 'tomorrow' | string): string
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-function getEyebrow(day: 'yesterday' | 'today' | 'tomorrow'): string {
+function getEyebrow(day: 'yesterday' | 'today' | 'tomorrow' | string): string {
   const d = new Date()
   if (day === 'yesterday') d.setDate(d.getDate() - 1)
   if (day === 'tomorrow') d.setDate(d.getDate() + 1)
