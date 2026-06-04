@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus } from 'lucide-react'
-import BellButton from '@/components/BellButton'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 import { usePermissions } from '@/lib/usePermissions'
@@ -1409,7 +1408,6 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>WORKSPACE</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Settings</div>
               </div>
-              <BellButton />
             </div>
             <div style={{ padding: '16px 16px 0' }}>
               {visibleGroups.map(g => (

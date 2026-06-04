@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { usePermissions } from '@/lib/usePermissions'
 import { Search, Plus, ChevronRight } from 'lucide-react'
-import BellButton from '@/components/BellButton'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
@@ -107,7 +106,6 @@ export default function EstimatesPage() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
-          <BellButton />
           <button
             onClick={() => router.push('/dashboard/estimates/new')}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
