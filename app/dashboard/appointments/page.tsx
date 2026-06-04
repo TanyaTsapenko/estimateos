@@ -1045,9 +1045,29 @@ export default function AppointmentsPage() {
               </button>
             )
           })}
-          <button style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0, border: '1px solid rgba(15,23,42,0.08)', background: '#fff', color: '#475467', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Calendar size={20} strokeWidth={1.7} />
-          </button>
+          <div style={{ position: 'relative' }}>
+            <div
+              onClick={() => document.getElementById('appt-date-picker')?.click()}
+              style={{ width: 56, height: 56, borderRadius: 14, background: '#fff', border: '1px solid rgba(15,23,42,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <Calendar size={20} color="#475467" strokeWidth={1.7} />
+            </div>
+            <input
+              id="appt-date-picker"
+              type="date"
+              style={{ position: 'absolute', opacity: 0, width: 1, height: 1, top: 0, left: 0, pointerEvents: 'none' }}
+              onChange={e => {
+                if (!e.target.value) return
+                const today = new Date(); today.setHours(0,0,0,0)
+                const selected = new Date(e.target.value + 'T00:00:00'); selected.setHours(0,0,0,0)
+                const diff = Math.round((selected.getTime() - today.getTime()) / 86400000)
+                if (diff === -1) setSelectedDay('yesterday')
+                else if (diff === 0) setSelectedDay('today')
+                else if (diff === 1) setSelectedDay('tomorrow')
+                else setSelectedDay(e.target.value)
+              }}
+            />
+          </div>
         </div>
 
         {/* Timeline scroll area */}
