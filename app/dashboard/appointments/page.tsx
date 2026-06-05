@@ -1043,17 +1043,11 @@ export default function AppointmentsPage() {
               </button>
             )
           })}
-          <div style={{ position: 'relative' }}>
-            <div
-              onClick={() => document.getElementById('appt-date-picker')?.click()}
-              style={{ width: 56, height: 56, borderRadius: 14, background: '#fff', border: '1px solid rgba(15,23,42,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            >
-              <Calendar size={20} color="#475467" strokeWidth={1.7} />
-            </div>
+          <label style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+            <Calendar size={18} strokeWidth={1.8} color="#64748B" />
             <input
-              id="appt-date-picker"
               type="date"
-              style={{ position: 'absolute', opacity: 0, width: 1, height: 1, top: 0, left: 0, pointerEvents: 'none' }}
+              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
               onChange={e => {
                 if (!e.target.value) return
                 const today = new Date(); today.setHours(0,0,0,0)
@@ -1065,7 +1059,7 @@ export default function AppointmentsPage() {
                 else setSelectedDay(e.target.value as 'yesterday' | 'today' | 'tomorrow')
               }}
             />
-          </div>
+          </label>
         </div>
 
         {/* Timeline scroll area */}
