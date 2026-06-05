@@ -151,7 +151,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
-  glass_type: '', core_type: '', combo_sections: null,
+  glass_type: '', core_type: '', handle_type: '', combo_sections: null,
 }
 
 function getTypeSpecificOptions(type: string) {
@@ -177,6 +177,7 @@ function getTypeSpecificOptions(type: string) {
     showGlassType: storm.includes(type),
     showCoreType: interior.includes(type),
     showComboSections: type === 'window_combo',
+    showHandleType: ['window_cas', 'window_awn', 'window_tilt', 'door_entry', 'door_french', 'door_patio', 'door_garden', 'door_double', 'door_int'].includes(type),
   }
 }
 
@@ -476,6 +477,28 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                 </select>
               </div>
             )}
+            {opts.showHandleType && (
+              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Handle type</div>
+                <select value={op.handle_type || ''} onChange={e => updateOpening(op.id, 'handle_type', e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.handle_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
+                  <option value=''>Select...</option>
+                  {['window_cas', 'window_awn', 'window_tilt'].includes(op.type) ? <>
+                    <option value='casement_lever'>Casement lever</option>
+                    <option value='tilt_latch'>Tilt latch</option>
+                    <option value='lift_rail'>Lift rail</option>
+                    <option value='push_bar'>Push bar</option>
+                  </> : <>
+                    <option value='lever'>Lever handle</option>
+                    <option value='knob'>Knob</option>
+                    <option value='pull_bar'>Pull bar</option>
+                    <option value='passage_set'>Passage set</option>
+                    <option value='deadbolt_lever'>Deadbolt + lever</option>
+                    <option value='dummy'>Dummy handle</option>
+                  </>}
+                </select>
+              </div>
+            )}
             {opts.showComboSections && (() => {
               const sections: { type: string; width: number }[] = (op as any).combo_sections || [{ type: 'window_fix', width: 24 }, { type: 'window_cas', width: 14 }]
               const typeLabels: Record<string, string> = { window_dh: 'D-Hung', window_sh: 'S-Hung', window_cas: 'Casement', window_awn: 'Awning', window_sl: 'Slider', window_fix: 'Fixed', window_trans: 'Transom' }
@@ -747,6 +770,7 @@ function NewEstimateForm() {
             transom_panes: op.transom_panes || '', sidelight_left: op.sidelight_left || 0,
             sidelight_right: op.sidelight_right || 0, transom_above: op.transom_above || false,
             glass_type: op.glass_type || '', core_type: op.core_type || '',
+            handle_type: (op as any).handle_type || '',
             combo_sections: (op as any).combo_sections || null,
           })))
         }
@@ -905,6 +929,7 @@ function NewEstimateForm() {
       transom_above: op.transom_above === true || op.transom_above === ('true' as any) ? true : false,
       glass_type: op.glass_type || '',
       core_type: op.core_type || '',
+      handle_type: op.handle_type || '',
       combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
