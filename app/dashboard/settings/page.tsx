@@ -863,7 +863,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                   if (!user) return
                   const sanitizedUserId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
                   const sanitizedMemberId = editingMember.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-                  const { error } = await supabase
+                  const { error, data } = await supabase
                     .from('profiles')
                     .update({
                       role: editingMember.role,
@@ -872,6 +872,8 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     })
                     .eq('id', sanitizedMemberId)
                     .eq('team_owner_id', sanitizedUserId)
+                    .select()
+                  console.log('Update result:', { error, data, sanitizedMemberId, sanitizedUserId })
                   if (error) {
                     flash('Failed to update: ' + error.message)
                     return
