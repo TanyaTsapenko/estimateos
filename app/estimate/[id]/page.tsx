@@ -201,6 +201,8 @@ export default function ClientEstimatePage() {
           .print-hide { display: none !important; }
           @page { margin: 10mm; size: A4; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .opening-diagram { width: 200px !important; padding: 16px !important; }
+          .opening-diagram svg { width: 170px !important; height: 170px !important; }
         }
       `}</style>
 
@@ -298,7 +300,7 @@ export default function ClientEstimatePage() {
                   {/* Body */}
                   <div style={{ display: 'flex' }}>
                     {/* Diagram */}
-                    <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}>
+                    <div className="opening-diagram" style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
                       <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
                     </div>
                     {/* Specs */}
