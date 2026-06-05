@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
 const MONO = 'ui-monospace, "SF Mono", "JetBrains Mono", monospace'
@@ -29,6 +30,13 @@ interface Opening {
   id: string; type: string; qty: number; total_cost: number; room: string | null
   install: string | null; shape: string | null; colour: string | null
   glass: string | null; frame: string | null; floor: string | null
+  width_in: number | null; height_in: number | null
+  material: string | null; hardware_colour: string | null; grid_pattern: string | null
+  brand: string | null; notes: string | null
+  has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
+  panels_count: string | null; bay_angle: string | null; transom_panes: string | null
+  sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
+  glass_type: string | null; core_type: string | null
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
@@ -99,7 +107,7 @@ export default function ClientEstimatePage() {
       else setDocStatus('active')
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type').eq('estimate_id', id).order('sort_order'),
         supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
@@ -178,6 +186,12 @@ export default function ClientEstimatePage() {
   const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
   const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
   const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
+  const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
+  const HARDWARE_LABELS: Record<string, string> = { white: 'White hardware', black: 'Black hardware', chrome: 'Chrome hardware', brass: 'Brass hardware', bronze: 'Bronze hardware' }
+  const GRID_LABELS: Record<string, string> = { none: 'No grid', colonial: 'Colonial grid', prairie: 'Prairie grid', diamond: 'Diamond grid', custom: 'Custom grid' }
+  const DIRECTION_LABELS: Record<string, string> = { left: 'Opens left', right: 'Opens right', both: 'Opens both sides' }
+  const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
+  const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: SANS, background: BG }}>
@@ -273,25 +287,55 @@ export default function ClientEstimatePage() {
             <div style={CARD}>
               <SLabel>Items ({openings.length})</SLabel>
               {openings.map((op, i) => (
-                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, paddingBottom: 12, marginBottom: 12, borderBottom: i < openings.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: INK }}>
-                      {OPENING_TYPES[op.type]?.name || op.type}
-                      {op.qty > 1 && <span style={{ fontSize: 13, color: INK_SOFT, fontWeight: 400 }}> × {op.qty}</span>}
+                <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
+                  {/* Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>
+                      {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
-                      {op.shape && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{SHAPE_LABELS[op.shape] || op.shape}</span>}
-                      {op.colour && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{COLOUR_LABELS[op.colour] || op.colour}</span>}
-                      {op.glass && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{GLASS_LABELS[op.glass] || op.glass}</span>}
-                      {op.frame && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FRAME_LABELS[op.frame] || op.frame}</span>}
-                      {op.install && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{INSTALL_LABELS[op.install] || op.install}</span>}
-                      {op.floor && <span style={{ background: '#F1F5F9', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#475569' }}>{FLOOR_LABELS[op.floor] || op.floor}</span>}
-                      {op.room && <span style={{ background: '#EFF4FF', borderRadius: 99, padding: '3px 9px', fontSize: 11, color: '#2563EB' }}>{op.room}</span>}
+                    {!showGBB && <div style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(op.total_cost)}</div>}
+                  </div>
+                  {/* Body */}
+                  <div style={{ display: 'flex' }}>
+                    {/* Diagram */}
+                    <div style={{ width: 90, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10, flexShrink: 0 }}>
+                      <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={65} />
+                    </div>
+                    {/* Specs */}
+                    <div style={{ flex: 1, padding: '10px 12px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', marginBottom: 8 }}>
+                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{COLOUR_LABELS[op.colour] || op.colour}</span></div>}
+                        {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
+                        {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
+                        {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
+                        {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
+                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{SHAPE_LABELS[op.shape] || op.shape}</span></div>}
+                        {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
+                        {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.brand}</span></div>}
+                        {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.width_in}" × {op.height_in}"</span></div>}
+                      </div>
+                      {(() => {
+                        const pills: React.ReactNode[] = []
+                        if (op.has_screen) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
+                        if (op.tilt_clean) pills.push(<span key="tilt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
+                        if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
+                        if (op.panels_count) pills.push(<span key="panels" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.panels_count} panels</span>)
+                        if (op.bay_angle) pills.push(<span key="angle" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.bay_angle}°</span>)
+                        if (op.transom_panes) pills.push(<span key="tpanes" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.transom_panes} panes</span>)
+                        if (op.sidelight_left) pills.push(<span key="sll" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>← SL {op.sidelight_left}"</span>)
+                        if (op.sidelight_right) pills.push(<span key="slr" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>→ SL {op.sidelight_right}"</span>)
+                        if (op.transom_above) pills.push(<span key="ta" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Transom above</span>)
+                        if (op.glass_type) pills.push(<span key="gt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
+                        if (op.core_type) pills.push(<span key="ct" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{CORE_LABELS[op.core_type]}</span>)
+                        if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{GRID_LABELS[op.grid_pattern]}</span>)
+                        if (op.hardware_colour && op.hardware_colour !== 'white') pills.push(<span key="hw" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{HARDWARE_LABELS[op.hardware_colour]}</span>)
+                        if (op.room) pills.push(<span key="room" style={{ background: '#F0FDF4', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#16A34A', border: '0.5px solid #BBF7D0' }}>{op.room}</span>)
+                        if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#C2410C', border: '0.5px solid #FED7AA' }}>📝 {op.notes}</span>)
+                        if (pills.length === 0) return null
+                        return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderTop: '0.5px solid #F1F5F9', paddingTop: 8 }}>{pills}</div>
+                      })()}
                     </div>
                   </div>
-                  {!showGBB && (
-                    <div style={{ fontSize: 14, fontWeight: 600, color: INK, fontFamily: MONO, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
-                  )}
                 </div>
               ))}
 
