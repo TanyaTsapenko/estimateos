@@ -275,15 +275,15 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
         <div className="f"><label>Shape</label>
           <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)}>
             <option value="rect">Rectangle</option>
-            <option value="arch">Arch (+30%)</option>
-            <option value="custom">Custom (+50%)</option>
+            <option value="arch">Arch{customPrices?.surcharges?.arch_pct ? ` (+${customPrices.surcharges.arch_pct}%)` : ''}</option>
+            <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
           </select></div>
         <div className="f"><label>Colour</label>
           <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
             <option value="white">White</option>
-            <option value="black">Black (+$80)</option>
-            <option value="grey">Grey (+$80)</option>
-            <option value="custom">Custom (+$150)</option>
+            <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+            <option value="grey">Grey{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+            <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
           </select></div>
       </div>
 
@@ -291,16 +291,16 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
         <div className="f"><label>Glass</label>
           <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
             <option value="clear">Clear</option>
-            <option value="lowe">Low-E (+$60)</option>
-            <option value="frosted">Frosted (+$90)</option>
-            <option value="tinted">Tinted (+$70)</option>
-            <option value="tempered">Tempered (+$110)</option>
+            <option value="lowe">Low-E{customPrices?.surcharges?.lowe ? ` (+$${customPrices.surcharges.lowe})` : ''}</option>
+            <option value="frosted">Frosted{customPrices?.surcharges?.frosted ? ` (+$${customPrices.surcharges.frosted})` : ''}</option>
+            <option value="tinted">Tinted{customPrices?.surcharges?.tinted ? ` (+$${customPrices.surcharges.tinted})` : ''}</option>
+            <option value="tempered">Tempered{customPrices?.surcharges?.tempered ? ` (+$${customPrices.surcharges.tempered})` : ''}</option>
           </select></div>
         <div className="f"><label>Frame</label>
           <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
             <option value="none">Good condition</option>
-            <option value="repair">Needs repair (+$120)</option>
-            <option value="rotted">Rotted (+$280)</option>
+            <option value="repair">Needs repair{customPrices?.surcharges?.frame_repair ? ` (+$${customPrices.surcharges.frame_repair})` : ''}</option>
+            <option value="rotted">Rotted{customPrices?.surcharges?.frame_rotted ? ` (+$${customPrices.surcharges.frame_rotted})` : ''}</option>
           </select></div>
       </div>
 
@@ -308,8 +308,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
         <div className="f"><label>Installation</label>
           <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
             <option value="retrofit">Retrofit</option>
-            <option value="fullframe">Full Frame (+$200)</option>
-            <option value="stud_to_stud">Stud to Stud (+$350)</option>
+            <option value="fullframe">Full Frame{customPrices?.surcharges?.fullframe ? ` (+$${customPrices.surcharges.fullframe})` : ''}</option>
+            <option value="stud_to_stud">Stud to Stud{customPrices?.surcharges?.stud_to_stud ? ` (+$${customPrices.surcharges.stud_to_stud})` : ''}</option>
           </select></div>
       </div>
 
@@ -317,8 +317,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
         <div className="f"><label>Floor</label>
           <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
             <option value="first">Ground floor</option>
-            <option value="second">2nd floor (+$80)</option>
-            <option value="third">3rd+ floor (+$180)</option>
+            <option value="second">Second floor{customPrices?.surcharges?.second_floor ? ` (+$${customPrices.surcharges.second_floor})` : ''}</option>
+            <option value="third">Third floor{customPrices?.surcharges?.third_floor ? ` (+$${customPrices.surcharges.third_floor})` : ''}</option>
           </select></div>
         <div className="f"><label>Room (optional)</label>
           <input placeholder="Living room" value={op.room}
