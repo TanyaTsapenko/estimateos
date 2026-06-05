@@ -298,12 +298,12 @@ export default function ClientEstimatePage() {
                   {/* Body */}
                   <div style={{ display: 'flex' }}>
                     {/* Diagram */}
-                    <div style={{ width: 90, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10, flexShrink: 0 }}>
-                      <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={65} />
+                    <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}>
+                      <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
                     </div>
                     {/* Specs */}
                     <div style={{ flex: 1, padding: '10px 12px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', marginBottom: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
                         {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{COLOUR_LABELS[op.colour] || op.colour}</span></div>}
                         {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
                         {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
