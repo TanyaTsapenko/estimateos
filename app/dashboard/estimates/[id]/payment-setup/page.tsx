@@ -32,6 +32,8 @@ export default function PaymentSetupPage() {
   const [depositPercent, setDepositPercent] = useState(30)
   const [customInput,    setCustomInput]    = useState('30')
   const [useCustom,      setUseCustom]      = useState(false)
+  const [discountType,   setDiscountType]   = useState<'$' | '%'>('$')
+  const [discountValue,  setDiscountValue]  = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -52,8 +54,10 @@ export default function PaymentSetupPage() {
   }, [id])
 
   const effectivePct    = useCustom ? (parseFloat(customInput) || 0) : depositPercent
-  const depositAmount   = estimate ? estimate.total * effectivePct / 100 : 0
-  const balance         = estimate ? Math.max(0, estimate.total - depositAmount) : 0
+  const discountAmount  = estimate ? (discountType === '$' ? discountValue : estimate.total * discountValue / 100) : 0
+  const afterDiscount   = estimate ? Math.max(0, estimate.total - discountAmount) : 0
+  const depositAmount   = afterDiscount * effectivePct / 100
+  const balance         = Math.max(0, afterDiscount - depositAmount)
 
   function selectPreset(pct: number) {
     setDepositPercent(pct)
@@ -67,6 +71,8 @@ export default function PaymentSetupPage() {
       trigger,
       payment_method:  paymentMethod,
       deposit_percent: String(pct),
+      discount_amount: String(Math.round(discountAmount * 100) / 100),
+      discount_type:   discountType,
     })
     router.push(`/dashboard/estimates/${id}/contract?${params.toString()}`)
   }
@@ -204,12 +210,34 @@ export default function PaymentSetupPage() {
             </div>
           </div>
 
+          {/* Discount */}
+          <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 14, border: '0.5px solid #E5E7EB', padding: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 10 }}>Discount (optional)</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #E5E7EB', flexShrink: 0 }}>
+                <div onClick={() => setDiscountType('$')} style={{ padding: '10px 14px', background: discountType === '$' ? '#2563EB' : '#fff', color: discountType === '$' ? '#fff' : '#64748B', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>$</div>
+                <div onClick={() => setDiscountType('%')} style={{ padding: '10px 14px', background: discountType === '%' ? '#2563EB' : '#fff', color: discountType === '%' ? '#fff' : '#64748B', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>%</div>
+              </div>
+              <input
+                type="number" min="0"
+                value={discountValue || ''}
+                placeholder="0.00"
+                onChange={e => setDiscountValue(parseFloat(e.target.value) || 0)}
+                style={{ flex: 1, padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 14, color: '#0A1628', fontFamily: F, outline: 'none' }}
+              />
+            </div>
+          </div>
+
           {/* Summary */}
           <div style={{ margin: '0 16px 16px', background: '#F8FAFC', borderRadius: 12, padding: '12px 14px' }}>
             {[
-              { label: 'Estimate total',        value: fmtCAD(estimate.total),  color: '#0A1628' },
+              { label: 'Estimate total', value: fmtCAD(estimate.total), color: '#0A1628' },
+              ...(discountAmount > 0 ? [
+                { label: discountType === '$' ? 'Discount' : `Discount (${discountValue}%)`, value: `− ${fmtCAD(discountAmount)}`, color: '#16A34A' },
+                { label: 'After discount', value: fmtCAD(afterDiscount), color: '#0A1628' },
+              ] : []),
               { label: `Deposit (${effectivePct}%)`, value: fmtCAD(depositAmount), color: '#F59E0B' },
-              { label: 'Balance on completion', value: fmtCAD(balance),          color: '#64748B' },
+              { label: 'Balance on completion', value: fmtCAD(balance), color: '#64748B' },
             ].map((row, i, arr) => (
               <div key={row.label} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
