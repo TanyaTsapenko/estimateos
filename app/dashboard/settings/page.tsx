@@ -954,6 +954,10 @@ const DEFAULT_CUSTOMER_RESPONSIBILITIES = 'Prior to installation: Customer must 
 const DEFAULT_BUYER_RIGHT_TO_CANCEL = 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel.'
 const DEFAULT_DAMAGE_DISCLAIMER = 'The Company is not liable for incidental damage to exterior materials such as stucco, siding, or plaster that may occur as a result of installation.'
 const DEFAULT_PERMITS_RESPONSIBILITY = 'The Customer is solely responsible for obtaining any required construction permits and ensuring compliance with local building codes.'
+const DEFAULT_INTERIOR_FINISHING = 'The Company is not responsible for painting, patching drywall, or repairing any interior surfaces around windows and doors after installation. The Customer is responsible for all interior touch-ups, caulking, and painting of wood jamb and casing.'
+const DEFAULT_CUSTOM_ORDER_POLICY = 'All products are manufactured to custom sizes and specifications and cannot be returned, restocked, or reused. Once an order has entered production, cancellations or changes are not permitted. The Customer will be invoiced for any portion of the order already manufactured.'
+const DEFAULT_FORCE_MAJEURE = 'The Company is not responsible for delays caused by circumstances beyond its control, including fire, flood, strikes, supplier delays, government actions, acts of God, or other similar events.'
+const BUYER_RIGHT_TO_CANCEL_FIXED = 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel. If you cancel, the seller has 15 days to refund your money. To cancel, you must give written notice by registered mail, fax, or personal delivery.'
 const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-transfer', 'Cheque', 'Financing']
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
@@ -972,6 +976,9 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [buyerRightToCancel,       setBuyerRightToCancel]       = useState(DEFAULT_BUYER_RIGHT_TO_CANCEL)
   const [damageDisclaimer,         setDamageDisclaimer]         = useState(DEFAULT_DAMAGE_DISCLAIMER)
   const [permitsResponsibility,    setPermitsResponsibility]    = useState(DEFAULT_PERMITS_RESPONSIBILITY)
+  const [interiorFinishing,        setInteriorFinishing]        = useState(DEFAULT_INTERIOR_FINISHING)
+  const [customOrderPolicy,        setCustomOrderPolicy]        = useState(DEFAULT_CUSTOM_ORDER_POLICY)
+  const [forceMajeure,             setForceMajeure]             = useState(DEFAULT_FORCE_MAJEURE)
   const dirty = true
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
@@ -985,7 +992,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, interior_finishing, custom_order_policy, force_majeure').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
         setTerms(loaded); setInitialTerms(loaded)
@@ -1001,6 +1008,9 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         if ((prof as any)?.buyer_right_to_cancel)      setBuyerRightToCancel((prof as any).buyer_right_to_cancel)
         if ((prof as any)?.damage_disclaimer)          setDamageDisclaimer((prof as any).damage_disclaimer)
         if ((prof as any)?.permits_responsibility)     setPermitsResponsibility((prof as any).permits_responsibility)
+        if ((prof as any)?.interior_finishing)         setInteriorFinishing((prof as any).interior_finishing)
+        if ((prof as any)?.custom_order_policy)        setCustomOrderPolicy((prof as any).custom_order_policy)
+        if ((prof as any)?.force_majeure)              setForceMajeure((prof as any).force_majeure)
       })
     })
   }, [])
@@ -1018,9 +1028,11 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       completion_timeframe:      completionTimeframe,
       payment_methods:           paymentMethods,
       customer_responsibilities: customerResponsibilities,
-      buyer_right_to_cancel:     buyerRightToCancel,
       damage_disclaimer:         damageDisclaimer,
       permits_responsibility:    permitsResponsibility,
+      interior_finishing:        interiorFinishing,
+      custom_order_policy:       customOrderPolicy,
+      force_majeure:             forceMajeure,
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
     setInitialTerms(terms)
@@ -1213,12 +1225,13 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
               style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
           </div>
 
-          {/* Buyer's Right to Cancel */}
+          {/* Buyer's Right to Cancel — read-only */}
           <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Buyer's Right to Cancel</div>
-            <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8 }}>Required by consumer protection law in most Canadian provinces.</p>
-            <textarea value={buyerRightToCancel} onChange={e => setBuyerRightToCancel(e.target.value)} rows={4}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Buyer's Right to Cancel</div>
+            <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, marginTop: 0 }}>Required by Canadian consumer protection law — cannot be modified.</p>
+            <div style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#64748B', background: '#F8FAFC', boxSizing: 'border-box', lineHeight: 1.6 }}>
+              {BUYER_RIGHT_TO_CANCEL_FIXED}
+            </div>
           </div>
 
           {/* Damage Disclaimer */}
@@ -1229,9 +1242,30 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           </div>
 
           {/* Permits Responsibility */}
-          <div>
+          <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Permits Responsibility</div>
             <textarea value={permitsResponsibility} onChange={e => setPermitsResponsibility(e.target.value)} rows={3}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Interior Finishing */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Interior Finishing</div>
+            <textarea value={interiorFinishing} onChange={e => setInteriorFinishing(e.target.value)} rows={4}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Custom Order Policy */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Custom Order Policy</div>
+            <textarea value={customOrderPolicy} onChange={e => setCustomOrderPolicy(e.target.value)} rows={4}
+              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+          </div>
+
+          {/* Force Majeure */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Force Majeure</div>
+            <textarea value={forceMajeure} onChange={e => setForceMajeure(e.target.value)} rows={3}
               style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
           </div>
         </Card>
