@@ -125,23 +125,30 @@ export async function GET(request: NextRequest) {
 </div>
 
 <!-- Terms & Conditions -->
-<div class="section-title">Terms &amp; Conditions</div>
-<div class="card">
-  ${con.contract_terms_snapshot ? `<p style="font-size:12px;color:#353A3E;line-height:1.65;margin-bottom:14px">${(con.contract_terms_snapshot as string).replace(/\n/g, '<br>')}</p>` : ''}
-  <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
-  <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
-  <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
-</div>
-
 ${(() => {
   const clauses: any[] = p?.contract_clauses ? (() => { try { return JSON.parse(p.contract_clauses) } catch { return [] } })() : []
   const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-  if (!p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && enabledClauses.length === 0 && !p?.project_manager) return ''
+  if (enabledClauses.length === 0) return ''
+  return `<div style="margin-bottom: 24px;">
+  <h2 style="font-size: 13px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px;">Terms &amp; Conditions</h2>
+  ${enabledClauses.map((c: any) => `<div style="display: flex; gap: 8px; margin-bottom: 8px;">
+      <div style="width: 16px; height: 16px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+        <svg width="9" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 4L3.5 6.5L9 1" stroke="#2045B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">${c.title}</div>
+        <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${c.content.replace(/\n/g, '<br>')}</div>
+      </div>
+    </div>`).join('')}
+</div>`
+})()}
+
+${(() => {
+  if (!p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && !p?.project_manager) return ''
   return `<div class="section-title">Contract Details</div>
 <div class="card">
   ${p?.completion_timeframe ? clauseBlock('Completion Timeframe', p.completion_timeframe) : ''}
   ${p?.payment_methods && p.payment_methods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${p.payment_methods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
-  ${enabledClauses.map((c: any) => clauseBlock(c.title, c.content)).join('')}
   ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
 </div>`
 })()}
