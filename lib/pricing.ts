@@ -1,9 +1,9 @@
 export const OPENING_TYPES: Record<string, { name: string; base: number; lab: number; icon: string }> = {
+  window_combo: { name: 'Combination Window',   base: 1200, lab: 400, icon: '' },
   window_dh:    { name: 'Double-Hung Window',  base: 700,  lab: 300, icon: '' },
   window_cas:   { name: 'Casement Window',     base: 850,  lab: 320, icon: '' },
   window_bay:   { name: 'Bay Window',           base: 2200, lab: 600, icon: '' },
   window_bow:   { name: 'Bow Window',           base: 2400, lab: 620, icon: '' },
-  window_combo: { name: 'Combination Window',   base: 1200, lab: 400, icon: '' },
   window_sl:    { name: 'Sliding Window',      base: 750,  lab: 280, icon: '' },
   window_fix:   { name: 'Fixed / Picture',     base: 600,  lab: 250, icon: '' },
   window_sh:    { name: 'Single-Hung Window',  base: 650,  lab: 280, icon: '' },
