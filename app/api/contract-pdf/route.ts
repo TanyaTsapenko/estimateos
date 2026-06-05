@@ -290,26 +290,34 @@ ${(() => {
   </div>
 </div>
 
-<div class="body-section">
-  ${paragraphs.length > 0
-    ? paragraphs.map((pg: string) => `<p>${pg.replace(/\n/g, '<br>')}</p>`).join('\n  ')
-    : `<div class="empty-state">No contract terms have been added yet.<br>Go to Company Profile → Contract to add your standard terms.</div>`}
-</div>
-
 ${(() => {
   const clauses2: any[] = p?.contract_clauses ? (() => { try { return JSON.parse(p.contract_clauses) } catch { return [] } })() : []
   const enabledClauses2 = clauses2.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-  if (!completionTimeframe && paymentMethods.length === 0 && enabledClauses2.length === 0 && !projectManager) return ''
+  if (enabledClauses2.length === 0) return ''
+  return `<div style="margin-bottom: 24px;">
+  <h2 style="font-size: 13px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px;">Terms &amp; Conditions</h2>
+  ${enabledClauses2.map((c: any) => `<div style="display: flex; gap: 8px; margin-bottom: 8px;">
+    <div style="width: 16px; height: 16px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+      <svg width="9" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#2045B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div>
+      <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">${c.title}</div>
+      <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${c.content.replace(/\n/g, '<br>')}</div>
+    </div>
+  </div>`).join('')}
+</div>`
+})()}
+
+${(() => {
+  if (!completionTimeframe && paymentMethods.length === 0 && !projectManager) return ''
   return `<div class="divider"></div>
 <div class="body-section">
   ${completionTimeframe ? `${clauseBlock('Completion Timeframe', completionTimeframe)}` : ''}
   ${paymentMethods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
-  ${enabledClauses2.map((c: any) => clauseBlock(c.title, c.content)).join('')}
   ${projectManager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${projectManager}</p></div>` : ''}
 </div>`
 })()}
 
-${paragraphs.length > 0 ? `
 <div class="divider"></div>
 
 <div class="sig-section">
@@ -322,7 +330,7 @@ ${paragraphs.length > 0 ? `
     <div class="sig-line"></div>
     <div class="sig-label">Client signature, printed name &amp; date</div>
   </div>
-</div>` : ''}
+</div>
 
 ${(prof as any)?.signature_url ? `
 <div style="margin-top:40px;padding-top:20px;border-top:1px solid #E2E8F0">
