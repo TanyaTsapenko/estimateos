@@ -576,12 +576,14 @@ export default function PriceListPage() {
             </div>
           )}
 
-          {!loading && hasItems && Object.entries(grouped).map(([category, catItems]) => (
+          {!loading && hasItems && Object.entries(grouped).map(([category, catItems]) => {
+            const isHardware = category === 'Hardware'
+            return (
             <div key={category} style={{ marginBottom: 4 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 2px 8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 3, height: 14, background: '#2563EB', borderRadius: 2, flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8' }}>
+                  <div style={{ width: 3, height: 14, background: isHardware ? '#CBD5E1' : '#2563EB', borderRadius: 2, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: isHardware ? '#94A3B8' : '#94A3B8' }}>
                     {category}
                   </span>
                 </div>
@@ -593,18 +595,18 @@ export default function PriceListPage() {
                 </button>
               </div>
 
-              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
+              <div style={{ background: '#fff', borderRadius: 14, border: isHardware ? '1.5px dashed #CBD5E1' : '0.5px solid #E5E7EB', overflow: 'hidden' }}>
                 {catItems.map((item, i) => (
                   <div
                     key={item.key}
                     style={{
                       display: 'flex', alignItems: 'center',
                       padding: '13px 16px',
-                      borderBottom: i < catItems.length - 1 ? '1px solid #EEF0F4' : 'none',
+                      borderBottom: i < catItems.length - 1 ? (isHardware ? '1px dashed #E2E8F0' : '1px solid #F1F5F9') : 'none',
                     }}
                   >
                     <div onClick={() => openEditModal(item)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: isHardware ? '#64748B' : '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.label}
                       </div>
                     </div>
@@ -633,7 +635,8 @@ export default function PriceListPage() {
                 ))}
               </div>
             </div>
-          ))}
+          )
+          })}
 
         </div>}
 
