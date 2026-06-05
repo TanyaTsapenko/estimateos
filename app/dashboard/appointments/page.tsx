@@ -1043,8 +1043,8 @@ export default function AppointmentsPage() {
               </button>
             )
           })}
-          <label style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-            <Calendar size={18} strokeWidth={1.8} color="#64748B" />
+          <label style={{ width: 48, height: 48, borderRadius: 12, border: '1px solid #E2E8F0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
+            <Calendar size={20} strokeWidth={1.8} color="#64748B" />
             <input
               type="date"
               style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
