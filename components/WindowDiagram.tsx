@@ -178,14 +178,38 @@ export default function WindowDiagram({ type, widthIn, heightIn, size = 80 }: Wi
         <line x1="85" y1="122" x2="130" y2="122" stroke={FRAME} strokeWidth="1.5"/>
         <line x1="130" y1="122" x2="170" y2="124" stroke={FRAME} strokeWidth="1.5"/>
         <line x1="170" y1="135" x2="200" y2="140" stroke={FRAME} strokeWidth="1.5"/>
-        <line x1="15" y1="232" x2="200" y2="232" stroke={SEC} strokeWidth="1"/>
-        <line x1="15" y1="227" x2="15" y2="237" stroke={SEC} strokeWidth="1.5"/>
-        <line x1="200" y1="227" x2="200" y2="237" stroke={SEC} strokeWidth="1.5"/>
-        <text x="107" y="245" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
+        <line x1="15" y1="222" x2="200" y2="222" stroke={SEC} strokeWidth="1"/>
+        <line x1="15" y1="217" x2="15" y2="227" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="200" y1="217" x2="200" y2="227" stroke={SEC} strokeWidth="1.5"/>
+        <text x="107" y="238" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
         <line x1="208" y1="30" x2="208" y2="210" stroke={SEC} strokeWidth="1"/>
         <line x1="203" y1="30" x2="213" y2="30" stroke={SEC} strokeWidth="1.5"/>
         <line x1="203" y1="210" x2="213" y2="210" stroke={SEC} strokeWidth="1.5"/>
         <text x="214" y="124" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{h}</text>
+      </svg>
+    ),
+
+    // Combination: angled-side casements + fixed center
+    window_combo: (
+      <svg viewBox="0 0 215 255" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="15,45 65,35 65,210 15,200" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <line x1="15" y1="122" x2="65" y2="115" stroke={SEC} strokeWidth="1" strokeDasharray="3 2"/>
+        <rect x="65" y="30" width="85" height="185" rx="2" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <line x1="65" y1="42" x2="65" y2="215" stroke={FRAME} strokeWidth="1"/>
+        <line x1="150" y1="42" x2="150" y2="215" stroke={FRAME} strokeWidth="1"/>
+        <line x1="107" y1="30" x2="107" y2="215" stroke={SEC} strokeWidth="1" opacity="0.4"/>
+        <polygon points="150,35 200,45 200,200 150,210" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <line x1="150" y1="122" x2="200" y2="115" stroke={SEC} strokeWidth="1" strokeDasharray="3 2"/>
+        <path d="M65 120 Q18 95 15 122" stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2" fill="none"/>
+        <path d="M150 120 Q197 95 200 122" stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2" fill="none"/>
+        <line x1="15" y1="222" x2="200" y2="222" stroke={SEC} strokeWidth="1"/>
+        <line x1="15" y1="217" x2="15" y2="227" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="200" y1="217" x2="200" y2="227" stroke={SEC} strokeWidth="1.5"/>
+        <text x="107" y="238" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
+        <line x1="208" y1="30" x2="208" y2="215" stroke={SEC} strokeWidth="1"/>
+        <line x1="203" y1="30" x2="213" y2="30" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="203" y1="215" x2="213" y2="215" stroke={SEC} strokeWidth="1.5"/>
+        <text x="214" y="127" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{h}</text>
       </svg>
     ),
 

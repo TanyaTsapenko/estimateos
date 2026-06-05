@@ -151,7 +151,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
-  glass_type: '', core_type: '',
+  glass_type: '', core_type: '', combo_sections: null,
 }
 
 function getTypeSpecificOptions(type: string) {
@@ -176,6 +176,7 @@ function getTypeSpecificOptions(type: string) {
     showTransomAbove: door_entry.includes(type) || garden.includes(type),
     showGlassType: storm.includes(type),
     showCoreType: interior.includes(type),
+    showComboSections: type === 'window_combo',
   }
 }
 
@@ -475,6 +476,65 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                 </select>
               </div>
             )}
+            {opts.showComboSections && (() => {
+              const sections: { type: string; width: number }[] = (op as any).combo_sections || [{ type: 'window_fix', width: 24 }, { type: 'window_cas', width: 14 }]
+              const typeLabels: Record<string, string> = { window_dh: 'D-Hung', window_sh: 'S-Hung', window_cas: 'Casement', window_awn: 'Awning', window_sl: 'Slider', window_fix: 'Fixed', window_trans: 'Transom' }
+              return (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 8 }}>Sections</div>
+                  <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8 }}>
+                    {sections.map((s, i) => (
+                      <div key={i} style={{ flex: s.width, border: '2px solid #334155', borderRadius: 6, background: '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                        <div style={{ fontSize: 7, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
+                        <div style={{ fontSize: 7, color: '#94A3B8' }}>{s.width}"</div>
+                      </div>
+                    ))}
+                    <div onClick={() => {
+                      const newSections = [...sections, { type: 'window_fix', width: 14 }]
+                      updateOpening(op.id, 'combo_sections' as any, newSections)
+                    }} style={{ width: 28, border: '1.5px dashed #E2E8F0', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#2563EB', fontSize: 18, flexShrink: 0 }}>+</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+                    {sections.map((s, i) => (
+                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                          <select value={s.type} onChange={e => {
+                            const updated = sections.map((sec, j) => j === i ? { ...sec, type: e.target.value } : sec)
+                            updateOpening(op.id, 'combo_sections' as any, updated)
+                          }} style={{ flex: 1, padding: '6px 4px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 10, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
+                            <option value="window_fix">Fixed</option>
+                            <option value="window_dh">Double-Hung</option>
+                            <option value="window_cas">Casement</option>
+                            <option value="window_awn">Awning</option>
+                            <option value="window_sl">Slider</option>
+                            <option value="window_trans">Transom</option>
+                          </select>
+                          {sections.length > 1 && (
+                            <div onClick={() => {
+                              const updated = sections.filter((_, j) => j !== i)
+                              updateOpening(op.id, 'combo_sections' as any, updated)
+                            }} style={{ width: 22, height: 22, borderRadius: 5, background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 8, padding: '4px 5px' }}>
+                          <input type="number" min="1" value={s.width} onChange={e => {
+                            const updated = sections.map((sec, j) => j === i ? { ...sec, width: parseFloat(e.target.value) || 0 } : sec)
+                            updateOpening(op.id, 'combo_sections' as any, updated)
+                          }} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 10, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}/>
+                          <span style={{ fontSize: 9, color: '#94A3B8', flexShrink: 0 }}>in</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: 8, padding: '6px 8px', background: '#F8FAFC', borderRadius: 6, fontSize: 10, color: '#64748B' }}>
+                    <span style={{ color: '#94A3B8' }}>Config: </span>
+                    <span style={{ color: '#0A1628', fontWeight: 600 }}>{sections.map(s => `${typeLabels[s.type] || s.type} ${s.width}"`).join(' + ')}</span>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         )
       })()}
@@ -843,6 +903,7 @@ function NewEstimateForm() {
       transom_above: op.transom_above === true || op.transom_above === ('true' as any) ? true : false,
       glass_type: op.glass_type || '',
       core_type: op.core_type || '',
+      combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
       sort_order: i,
