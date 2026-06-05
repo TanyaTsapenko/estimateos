@@ -940,13 +940,6 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-const DEFAULT_TERMS = `Payment: A deposit of 50% is due upon signing. The remaining balance is due upon completion of work.
-Cancellation: If cancelled after materials are ordered, the deposit is non-refundable.
-Warranty: All materials carry manufacturer warranty. Labour is warranted for 1 year.
-Validity: This estimate is valid for 30 days from the date of issue.
-Changes: Any changes to the scope of work must be agreed upon in writing.
-Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
-
 const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-transfer', 'Cheque', 'Financing']
 
 type ContractClause = {
@@ -980,8 +973,6 @@ const DEFAULT_CLAUSES: ContractClause[] = [
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
-  const [terms,              setTerms]              = useState(DEFAULT_TERMS)
-  const [initialTerms,       setInitialTerms]       = useState(DEFAULT_TERMS)
   const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
   const [depositRequired,    setDepositRequired]    = useState(true)
   const [depositPercent,     setDepositPercent]     = useState(10)
@@ -1005,10 +996,8 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
-        const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
-        setTerms(loaded); setInitialTerms(loaded)
         if ((prof as any)?.warranty_period)     setWarrantyPeriod((prof as any).warranty_period)
         if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
         if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
@@ -1036,7 +1025,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   async function saveContract() {
     if (!userId) return
     const { error } = await supabase.from('profiles').update({
-      contract_terms:       terms,
       warranty_period:      warrantyPeriod,
       deposit_required:     depositRequired,
       deposit_percent:      depositPercent,
@@ -1047,7 +1035,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       contract_clauses:     JSON.stringify(contractClauses),
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
-    setInitialTerms(terms)
     flash('Saved')
   }
 
@@ -1133,20 +1120,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Shown on every estimate before the client signs." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
-          <SectionLabel>Terms &amp; Conditions</SectionLabel>
-          <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 10 }}>
-            Displayed inline on the signing page. Default text is used if left empty.
-          </p>
-          <textarea value={terms} onChange={e => setTerms(e.target.value)} rows={9}
-            style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'ui-monospace, monospace', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }} />
-          {terms !== DEFAULT_TERMS && (
-            <button onClick={() => setTerms(DEFAULT_TERMS)}
-              style={{ marginTop: 8, padding: '5px 10px', background: 'transparent', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 11, color: '#94A3B8', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Reset to default
-            </button>
-          )}
-        </Card>
-        <Card>
           <SectionLabel>Contract Defaults</SectionLabel>
 
           {/* Warranty period */}
@@ -1226,9 +1199,9 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         </Card>
 
         <Card>
-          <SectionLabel>Contract Clauses</SectionLabel>
+          <SectionLabel>Terms &amp; Conditions</SectionLabel>
           <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>
-            Drag to reorder. Toggle to include or exclude each clause from the contract.
+            Customize the clauses shown on every contract before the client signs.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[...contractClauses].sort((a, b) => a.order - b.order).map((clause, idx, arr) => {
@@ -1410,7 +1383,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           )}
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => setTerms(initialTerms)} />
+      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
     </div>
   )
 }

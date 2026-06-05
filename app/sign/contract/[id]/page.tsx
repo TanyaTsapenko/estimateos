@@ -360,21 +360,25 @@ export default function SignContractPage() {
           </div>
 
           {/* Terms & Conditions */}
-          <div style={cardStyle}>
-            <CardHeader title="Terms & Conditions" />
-            <div style={{ padding: '14px 16px' }}>
-              <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
-              <CheckRow text="Payment: Upon completion" />
-              <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
-              <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
-            </div>
-          </div>
-
-          {/* Contract Details */}
           {(() => {
             const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
             const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager || enabledClauses.length > 0
+            if (enabledClauses.length === 0) return null
+            return (
+              <div style={cardStyle}>
+                <CardHeader title="Terms & Conditions" />
+                <div style={{ padding: '14px 16px' }}>
+                  {enabledClauses.map((clause: any) => (
+                    <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Contract Details */}
+          {(() => {
+            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
             if (!hasDetails) return null
             return (
               <div style={cardStyle}>
@@ -387,7 +391,7 @@ export default function SignContractPage() {
                     </div>
                   )}
                   {(contract?.payment_method || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ marginBottom: profile?.project_manager ? 12 : 0, paddingBottom: profile?.project_manager ? 12 : 0, borderBottom: profile?.project_manager ? '1px solid #F4F4F2' : 'none' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {contract?.payment_method
@@ -399,14 +403,8 @@ export default function SignContractPage() {
                       </div>
                     </div>
                   )}
-                  {enabledClauses.map((clause: any, i: number) => (
-                    <div key={clause.id} style={{ marginBottom: i < enabledClauses.length - 1 ? 12 : 0, paddingBottom: i < enabledClauses.length - 1 ? 12 : 0, borderBottom: i < enabledClauses.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>{clause.title}</div>
-                      <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{clause.content}</p>
-                    </div>
-                  ))}
                   {profile?.project_manager && (
-                    <div style={{ marginTop: enabledClauses.length > 0 ? 12 : 0 }}>
+                    <div>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
                       <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
                     </div>
@@ -699,25 +697,25 @@ export default function SignContractPage() {
           </div>
 
           {/* TERMS */}
-          <div style={cardStyle}>
-            <CardHeader title="Terms & Conditions" />
-            <div style={{ padding: '14px 16px' }}>
-              {contract.contract_terms_snapshot && (
-                <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.65, margin: '0 0 14px' }}>
-                  {contract.contract_terms_snapshot}
-                </p>
-              )}
-              <CheckRow text={`Warranty: All materials and labour are warranted for ${profile?.warranty_period || '1 year'} from installation date.`} />
-              <CheckRow text={`Payment: ${profile?.payment_terms || 'Upon completion'}`} />
-              <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
-            </div>
-          </div>
-
-          {/* ADDITIONAL CLAUSES */}
           {(() => {
             const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
             const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager || enabledClauses.length > 0
+            if (enabledClauses.length === 0) return null
+            return (
+              <div style={cardStyle}>
+                <CardHeader title="Terms & Conditions" />
+                <div style={{ padding: '14px 16px' }}>
+                  {enabledClauses.map((clause: any) => (
+                    <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* CONTRACT DETAILS */}
+          {(() => {
+            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
             if (!hasDetails) return null
             return (
               <div style={cardStyle}>
@@ -730,7 +728,7 @@ export default function SignContractPage() {
                     </div>
                   )}
                   {(contract?.payment_method || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ marginBottom: profile?.project_manager ? 12 : 0, paddingBottom: profile?.project_manager ? 12 : 0, borderBottom: profile?.project_manager ? '1px solid #F4F4F2' : 'none' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {contract?.payment_method
@@ -742,14 +740,8 @@ export default function SignContractPage() {
                       </div>
                     </div>
                   )}
-                  {enabledClauses.map((clause: any, i: number) => (
-                    <div key={clause.id} style={{ marginBottom: i < enabledClauses.length - 1 ? 12 : 0, paddingBottom: i < enabledClauses.length - 1 ? 12 : 0, borderBottom: i < enabledClauses.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>{clause.title}</div>
-                      <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{clause.content}</p>
-                    </div>
-                  ))}
                   {profile?.project_manager && (
-                    <div style={{ marginTop: enabledClauses.length > 0 ? 12 : 0 }}>
+                    <div>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
                       <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
                     </div>
