@@ -23,6 +23,7 @@ interface Profile {
   licence_number: string | null
   contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
+  warranty_period: string | null; payment_terms: string | null
   completion_timeframe: string | null; payment_methods: string[] | null
   project_manager: string | null; contract_clauses: string | null
 }
@@ -117,7 +118,7 @@ export default function ContractPage() {
       console.log('[contract page] sessionUserId:', sessionUserId)
       const { data: prof, error: profError } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent, completion_timeframe, payment_methods, project_manager, contract_clauses')
+        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, payment_terms, completion_timeframe, payment_methods, project_manager, contract_clauses')
         .eq('id', sessionUserId)
         .single()
       console.log('[contract page] prof:', prof, 'error:', profError)
@@ -532,12 +533,24 @@ export default function ContractPage() {
           {(() => {
             const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
             const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager || enabledClauses.length > 0
+            const hasDetails = profile?.warranty_period || profile?.payment_terms || profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager || enabledClauses.length > 0
             if (!hasDetails) return null
             return (
               <div style={cardStyle}>
                 <CardHeader icon={<DocumentIcon />} title="Contract Details" />
                 <div style={{ padding: '12px 16px' }}>
+                  {profile?.warranty_period && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
+                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+                    </div>
+                  )}
+                  {profile?.payment_terms && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Payment Terms</div>
+                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.payment_terms}</div>
+                    </div>
+                  )}
                   {profile?.completion_timeframe && (
                     <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>

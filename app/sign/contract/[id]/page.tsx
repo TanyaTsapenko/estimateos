@@ -378,12 +378,24 @@ export default function SignContractPage() {
 
           {/* Contract Details */}
           {(() => {
-            const hasDetails = profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
+            const hasDetails = profile?.warranty_period || profile?.payment_terms || profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
             if (!hasDetails) return null
             return (
               <div style={cardStyle}>
                 <CardHeader title="Contract Details" />
                 <div style={{ padding: '12px 16px' }}>
+                  {profile?.warranty_period && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
+                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+                    </div>
+                  )}
+                  {profile?.payment_terms && (
+                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Payment Terms</div>
+                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.payment_terms}</div>
+                    </div>
+                  )}
                   {profile?.completion_timeframe && (
                     <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                       <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
