@@ -26,9 +26,10 @@ export default function PaymentSetupPage() {
   const trigger      = searchParams.get('trigger') || 'send'
   const supabase     = createClient()
 
-  const [estimate,       setEstimate]       = useState<Estimate | null>(null)
-  const [loading,        setLoading]        = useState(true)
-  const [paymentMethod,  setPaymentMethod]  = useState('E-Transfer')
+  const [estimate,        setEstimate]        = useState<Estimate | null>(null)
+  const [loading,         setLoading]         = useState(true)
+  const [paymentMethod,   setPaymentMethod]   = useState('E-Transfer')
+  const [paymentMethods,  setPaymentMethods]  = useState<string[]>([])
   const [depositPercent, setDepositPercent] = useState(30)
   const [customInput,    setCustomInput]    = useState('30')
   const [useCustom,      setUseCustom]      = useState(false)
@@ -42,12 +43,17 @@ export default function PaymentSetupPage() {
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: est }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('id, estimate_number, client_name, client_address, total').eq('id', id).single(),
-        supabase.from('profiles').select('deposit_percent').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('deposit_percent, payment_methods').eq('id', sanitizedId).single(),
       ])
       if (est) setEstimate(est as Estimate)
       const defaultPct = (prof as any)?.deposit_percent ?? 30
       setDepositPercent(defaultPct)
       setCustomInput(String(defaultPct))
+      const profileMethods: string[] = (prof as any)?.payment_methods || []
+      if (profileMethods.length) {
+        setPaymentMethods(profileMethods)
+        setPaymentMethod(profileMethods[0])
+      }
       setLoading(false)
     }
     load()
@@ -131,7 +137,7 @@ export default function PaymentSetupPage() {
             PAYMENT METHOD
           </div>
           <div style={{ padding: '0 12px 12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {PAYMENT_OPTIONS.map(({ key, label, Icon }) => {
+            {PAYMENT_OPTIONS.filter(({ key }) => paymentMethods.length === 0 || paymentMethods.includes(key)).map(({ key, label, Icon }) => {
               const selected = paymentMethod === key
               return (
                 <button
