@@ -72,6 +72,7 @@ export default function EstimateDetailPage() {
   const [toast,               setToast]               = useState('')
   const [dupToast,            setDupToast]            = useState<{ num: string; id: string } | null>(null)
   const [customLabels,        setCustomLabels]        = useState<Record<string, string>>({})
+  const [enlargedDiagram,     setEnlargedDiagram]     = useState<{ type: string; widthIn?: number; heightIn?: number } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -383,7 +384,10 @@ export default function EstimateDetailPage() {
                 {/* Body: diagram + specs */}
                 <div style={{ display: 'flex' }}>
                   {/* Diagram */}
-                  <div style={{ width: 90, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10, flexShrink: 0 }}>
+                  <div
+                    onClick={() => setEnlargedDiagram({ type: op.type, widthIn: op.width_in || undefined, heightIn: op.height_in || undefined })}
+                    style={{ width: 90, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 10, flexShrink: 0, cursor: 'zoom-in' }}
+                  >
                     <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={65} />
                   </div>
                   {/* Specs */}
@@ -667,6 +671,15 @@ export default function EstimateDetailPage() {
                 {sending ? 'Sending…' : 'Send'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {enlargedDiagram && (
+        <div onClick={() => setEnlargedDiagram(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
+            <WindowDiagram type={enlargedDiagram.type} widthIn={enlargedDiagram.widthIn} heightIn={enlargedDiagram.heightIn} size={240} />
+            <button onClick={() => setEnlargedDiagram(null)} style={{ padding: '10px 28px', background: '#F1F5F9', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
           </div>
         </div>
       )}
