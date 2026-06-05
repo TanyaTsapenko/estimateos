@@ -517,10 +517,14 @@ export default function ContractPage() {
           <div style={cardStyle}>
             <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
             <div style={{ padding: '14px 16px' }}>
-              <CheckRow text="Warranty: All materials and labour are warranted for 1 year from installation date." />
-              <CheckRow text="Payment: Upon completion" />
-              <CheckRow text="Cancellation: Either party may cancel with 72 hours written notice prior to the scheduled start date." />
-              <CheckRow text="Access: Client agrees to provide reasonable access to the property on scheduled installation day." />
+              {(() => {
+                const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
+                const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+                if (enabledClauses.length === 0) return null
+                return enabledClauses.map((clause: any) => (
+                  <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                ))
+              })()}
             </div>
           </div>
 
