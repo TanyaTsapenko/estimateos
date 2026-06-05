@@ -187,7 +187,7 @@ interface OpeningCardProps {
   customPrices: CustomPrices | undefined
   openingsCount: number
   removeOpening: (id: string) => void
-  updateOpening: (id: string, k: keyof Opening, v: string | number | boolean) => void
+  updateOpening: (id: string, k: keyof Opening, v: string | number | boolean | object | null) => void
 }
 
 function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
@@ -797,7 +797,7 @@ function NewEstimateForm() {
     if (openings.length <= 1) return
     setOpenings(p => p.filter(o => o.id !== id))
   }
-  function updateOpening(id: string, k: keyof Opening, v: string | number | boolean) {
+  function updateOpening(id: string, k: keyof Opening, v: string | number | boolean | object | null) {
     setOpenings(p => p.map(o => o.id === id ? { ...o, [k]: v } : o))
   }
 
