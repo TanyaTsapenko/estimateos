@@ -2,23 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react'
 
-const TIME_FRAMES = [
-  '8:00 AM – 10:00 AM',
-  '10:00 AM – 12:00 PM',
-  '12:00 PM – 2:00 PM',
-  '2:00 PM – 4:00 PM',
-  '4:00 PM – 6:00 PM',
-  '6:00 PM – 8:00 PM',
-]
-
-// Start hour for each slot (for today-filtering)
-const SLOT_START_HOURS: Record<string, number> = {
-  '8:00 AM – 10:00 AM':  8,
-  '10:00 AM – 12:00 PM': 10,
-  '12:00 PM – 2:00 PM':  12,
-  '2:00 PM – 4:00 PM':   14,
-  '4:00 PM – 6:00 PM':   16,
-  '6:00 PM – 8:00 PM':   18,
+// All slots 12:00 AM – 11:45 PM, every 15 min
+const ALL_SLOTS: { value: string; label: string }[] = []
+for (let h = 0; h < 24; h++) {
+  for (const m of [0, 15, 30, 45]) {
+    const value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    const ampm  = h >= 12 ? 'PM' : 'AM'
+    const h12   = h % 12 || 12
+    const label = `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+    ALL_SLOTS.push({ value, label })
+  }
 }
 
 function todayStr() {
@@ -26,9 +19,16 @@ function todayStr() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
+// Next 15-min boundary from now (exclusive)
+function nextSlotMins(): number {
+  const now = new Date()
+  const total = now.getHours() * 60 + now.getMinutes()
+  return Math.ceil((total + 1) / 15) * 15
+}
+
 interface Props {
-  value: string
-  date: string
+  value: string        // "HH:MM" or ""
+  date: string         // "YYYY-MM-DD" or ""
   onChange: (v: string) => void
   style?: React.CSSProperties
 }
@@ -39,15 +39,17 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
   const listRef = useRef<HTMLDivElement>(null)
 
   const isToday = date === todayStr()
-  const nowHour = new Date().getHours()
   const slots = isToday
-    ? TIME_FRAMES.filter(s => SLOT_START_HOURS[s] > nowHour)
-    : TIME_FRAMES
+    ? ALL_SLOTS.filter(s => {
+        const [h, m] = s.value.split(':').map(Number)
+        return h * 60 + m >= nextSlotMins()
+      })
+    : ALL_SLOTS
 
   // If current value is not in the filtered slot list, snap to the first available slot
   useEffect(() => {
-    if (slots.length > 0 && !slots.includes(value)) {
-      onChange(slots[0])
+    if (slots.length > 0 && !slots.some(s => s.value === value)) {
+      onChange(slots[0].value)
     }
   }, [date])
 
@@ -61,6 +63,15 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
     return () => document.removeEventListener('mousedown', handle)
   }, [open])
 
+  // Scroll selected slot into view
+  useEffect(() => {
+    if (!open || !value) return
+    const el = listRef.current?.querySelector(`[data-value="${value}"]`) as HTMLElement | null
+    if (el) el.scrollIntoView({ block: 'nearest' })
+  }, [open, value])
+
+  const displayLabel = ALL_SLOTS.find(s => s.value === value)?.label ?? ''
+
   return (
     <div ref={ref} style={{ position: 'relative', ...style }}>
       {/* Trigger */}
@@ -70,11 +81,11 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
           width: '100%', border: '1px solid #E8E8E8', borderRadius: 12,
           padding: '12px 36px 12px 14px', fontSize: 15, background: '#fff',
           boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer',
-          color: value ? '#0A1628' : '#9CA3AF',
+          color: displayLabel ? '#0A1628' : '#9CA3AF',
           position: 'relative', userSelect: 'none',
         }}
       >
-        {value || 'Select time frame'}
+        {displayLabel || 'Select time'}
         <svg
           width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -101,11 +112,12 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
             </div>
           )}
           {slots.map(slot => {
-            const selected = slot === value
+            const selected = slot.value === value
             return (
               <div
-                key={slot}
-                onClick={() => { onChange(slot); setOpen(false) }}
+                key={slot.value}
+                data-value={slot.value}
+                onClick={() => { onChange(slot.value); setOpen(false) }}
                 style={{
                   padding: '10px 14px', fontSize: 14, fontFamily: 'inherit',
                   cursor: 'pointer',
@@ -117,7 +129,7 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = selected ? '#EFF6FF' : '#F8FAFC' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = selected ? '#EFF6FF' : 'transparent' }}
               >
-                {slot}
+                {slot.label}
               </div>
             )
           })}
