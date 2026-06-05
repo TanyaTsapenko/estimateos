@@ -746,6 +746,7 @@ function NewEstimateForm() {
             transom_panes: op.transom_panes || '', sidelight_left: op.sidelight_left || 0,
             sidelight_right: op.sidelight_right || 0, transom_above: op.transom_above || false,
             glass_type: op.glass_type || '', core_type: op.core_type || '',
+            combo_sections: (op as any).combo_sections || null,
           })))
         }
       } else if (apptId) {
