@@ -497,7 +497,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                   <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start', overflowX: 'auto', paddingBottom: 4 }}>
                     {sections.map((s, i) => (
                       <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 5, fontSize: 10, fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</div>
+                        <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 5, fontSize: 12, fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</div>
                         <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           <select value={s.type} onChange={e => {
                             const updated = sections.map((sec, j) => j === i ? { ...sec, type: e.target.value } : sec)
@@ -523,7 +523,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                           <input type="number" min="1" value={s.width} onChange={e => {
                             const updated = sections.map((sec, j) => j === i ? { ...sec, width: parseFloat(e.target.value) || 0 } : sec)
                             updateOpening(op.id, 'combo_sections' as any, updated)
-                          }} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 10, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}/>
+                          }} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 13, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}/>
                           <span style={{ fontSize: 9, color: '#94A3B8', flexShrink: 0 }}>in</span>
                         </div>
                       </div>
