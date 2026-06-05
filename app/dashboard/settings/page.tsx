@@ -947,18 +947,36 @@ Validity: This estimate is valid for 30 days from the date of issue.
 Changes: Any changes to the scope of work must be agreed upon in writing.
 Liability: Contractor is not responsible for pre-existing damage discovered during installation.`
 
-const DEFAULT_CANCELLATION = 'Either party may cancel this contract with 72 hours written notice prior to the scheduled start date.'
-
-const DEFAULT_COMPLETION_TIMEFRAME = '10-16 weeks from the date of signed contract'
-const DEFAULT_CUSTOMER_RESPONSIBILITIES = 'Prior to installation: Customer must provide clear access (minimum 3 feet) to all window and door openings, remove blinds, curtains, and furniture near work areas. Customer is responsible for covering personal belongings from dust.'
-const DEFAULT_BUYER_RIGHT_TO_CANCEL = 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel.'
-const DEFAULT_DAMAGE_DISCLAIMER = 'The Company is not liable for incidental damage to exterior materials such as stucco, siding, or plaster that may occur as a result of installation.'
-const DEFAULT_PERMITS_RESPONSIBILITY = 'The Customer is solely responsible for obtaining any required construction permits and ensuring compliance with local building codes.'
-const DEFAULT_INTERIOR_FINISHING = 'The Company is not responsible for painting, patching drywall, or repairing any interior surfaces around windows and doors after installation. The Customer is responsible for all interior touch-ups, caulking, and painting of wood jamb and casing.'
-const DEFAULT_CUSTOM_ORDER_POLICY = 'All products are manufactured to custom sizes and specifications and cannot be returned, restocked, or reused. Once an order has entered production, cancellations or changes are not permitted. The Customer will be invoiced for any portion of the order already manufactured.'
-const DEFAULT_FORCE_MAJEURE = 'The Company is not responsible for delays caused by circumstances beyond its control, including fire, flood, strikes, supplier delays, government actions, acts of God, or other similar events.'
-const BUYER_RIGHT_TO_CANCEL_FIXED = 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel. If you cancel, the seller has 15 days to refund your money. To cancel, you must give written notice by registered mail, fax, or personal delivery.'
 const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-transfer', 'Cheque', 'Financing']
+
+type ContractClause = {
+  id: string
+  title: string
+  content: string
+  enabled: boolean
+  fixed: boolean
+  order: number
+}
+
+const DEFAULT_CLAUSES: ContractClause[] = [
+  { id: 'workmanship', title: 'Workmanship', enabled: true, fixed: false, order: 0, content: 'All work will be completed in a professional manner according to industry standard practices. Any changes to the scope of work must be agreed upon in writing and may result in additional charges. Oral representations by the Company or its representatives do not form part of this Agreement.' },
+  { id: 'payment_terms', title: 'Payment terms', enabled: true, fixed: false, order: 1, content: 'A deposit is required to confirm your order and schedule installation. The remaining balance is due upon completion of work. All materials remain the property of the Company until payment is received in full.' },
+  { id: 'cancellation', title: 'Cancellation policy', enabled: true, fixed: false, order: 2, content: 'Either party may cancel this contract with 72 hours written notice prior to the scheduled start date. If the Customer cancels after materials have been ordered, the deposit is non-refundable.' },
+  { id: 'customer_responsibilities', title: 'Customer responsibilities', enabled: true, fixed: false, order: 3, content: 'Prior to installation, the Customer must provide clear access (minimum 3 feet) to all window and door openings, remove blinds, curtains, and furniture, and cover personal belongings from dust. All artwork and fragile items must be removed from the work area. The Customer must notify the installer if any old windows or doors are to be kept; otherwise they will be disposed of.' },
+  { id: 'damage_disclaimer', title: 'Damage disclaimer', enabled: true, fixed: false, order: 4, content: 'Although care is taken during every installation, the Company is not liable for incidental damage to exterior materials such as stucco, siding, or plaster that may occur as a result of installation.' },
+  { id: 'permits', title: 'Permits responsibility', enabled: true, fixed: false, order: 5, content: "The Customer is solely responsible for obtaining any required building permits and ensuring compliance with all applicable by-laws and building codes. The Company will inform the Customer of Fire Code requirements for bedroom windows but is not responsible for the Customer's choice not to comply." },
+  { id: 'interior_finishing', title: 'Interior finishing', enabled: true, fixed: false, order: 6, content: 'The Company is not responsible for painting, patching drywall, or repairing any interior surfaces around windows and doors after installation. The Customer is responsible for all interior touch-ups, caulking, and painting of wood jamb and casing.' },
+  { id: 'custom_order', title: 'Custom order policy', enabled: true, fixed: false, order: 7, content: 'All products are manufactured to custom sizes and specifications and cannot be returned, restocked, or reused. Once an order has entered production, cancellations or changes are not permitted. The Customer will be invoiced for any portion of the order already manufactured.' },
+  { id: 'force_majeure', title: 'Force majeure', enabled: true, fixed: false, order: 8, content: 'The Company is not responsible for delays caused by circumstances beyond its control, including fire, flood, strikes, supplier delays, government actions, acts of God, or other similar events.' },
+  { id: 'warranty', title: 'Warranty', enabled: true, fixed: false, order: 9, content: 'The Company warrants its workmanship for the period specified on the estimate. Manufacturer warranties apply to all products as provided. Warranty is void if products are misused, improperly maintained, or payment has not been received in full.' },
+  { id: 'storage_fee', title: 'Storage fee', enabled: false, fixed: false, order: 10, content: 'If the Customer postpones or refuses the installation date after materials have been delivered, the Company reserves the right to charge a storage fee of $15 per day after a 2-week grace period.' },
+  { id: 'interest_overdue', title: 'Interest on overdue amount', enabled: false, fixed: false, order: 11, content: 'Any amount not paid when due shall bear interest at the rate of 2% per month (24% per annum) from the due date until paid in full. The Customer shall also be liable for reasonable legal fees incurred in collection of overdue amounts.' },
+  { id: 'indemnification', title: 'Indemnification', enabled: false, fixed: false, order: 12, content: "The Customer agrees to hold the Company harmless from any damages, injuries, or claims related directly or indirectly to the installation or supply of goods, except where caused by the Company's own negligence." },
+  { id: 'condensation', title: 'Condensation & humidity', enabled: false, fixed: false, order: 13, content: 'Condensation on window surfaces is a normal result of indoor humidity and temperature differences and does not constitute a product defect. The Customer is responsible for maintaining proper ventilation and humidity levels in the home.' },
+  { id: 'window_accessories', title: 'Window accessories', enabled: false, fixed: false, order: 14, content: 'The Company does not guarantee that new windows will be compatible with existing blinds, shutters, drapes, or other window treatments. The Company is not liable for the functionality of existing accessories reinstalled on new windows.' },
+  { id: 'concrete_cut', title: 'Concrete cut / structural modifications', enabled: false, fixed: false, order: 15, content: "Any enlargement of existing window openings requires engineered drawings and a municipal building permit at the Customer's expense. The Company is not liable for costs related to such permits or drawings." },
+  { id: 'buyer_right_to_cancel', title: "Buyer's right to cancel", enabled: true, fixed: true, order: 16, content: 'You may cancel this contract from the day you enter into the contract until 10 days after you receive a copy of the contract. You do not need a reason to cancel. If you cancel, the seller has 15 days to refund your money. To cancel, you must give written notice by registered mail, fax, or personal delivery.' },
+]
 
 function ContractSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
@@ -968,17 +986,12 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [depositRequired,    setDepositRequired]    = useState(true)
   const [depositPercent,     setDepositPercent]     = useState(10)
   const [paymentTerms,       setPaymentTerms]       = useState('Upon completion')
-  const [cancellationPolicy,       setCancellationPolicy]       = useState(DEFAULT_CANCELLATION)
+  const [contractClauses, setContractClauses] = useState<ContractClause[]>(DEFAULT_CLAUSES)
+  const [expandedClause, setExpandedClause] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [projectManager,           setProjectManager]           = useState('')
-  const [completionTimeframe,      setCompletionTimeframe]      = useState(DEFAULT_COMPLETION_TIMEFRAME)
+  const [completionTimeframe,      setCompletionTimeframe]      = useState('10-16 weeks from the date of signed contract')
   const [paymentMethods,           setPaymentMethods]           = useState<string[]>(['E-transfer', 'Cheque'])
-  const [customerResponsibilities, setCustomerResponsibilities] = useState(DEFAULT_CUSTOMER_RESPONSIBILITIES)
-  const [buyerRightToCancel,       setBuyerRightToCancel]       = useState(DEFAULT_BUYER_RIGHT_TO_CANCEL)
-  const [damageDisclaimer,         setDamageDisclaimer]         = useState(DEFAULT_DAMAGE_DISCLAIMER)
-  const [permitsResponsibility,    setPermitsResponsibility]    = useState(DEFAULT_PERMITS_RESPONSIBILITY)
-  const [interiorFinishing,        setInteriorFinishing]        = useState(DEFAULT_INTERIOR_FINISHING)
-  const [customOrderPolicy,        setCustomOrderPolicy]        = useState(DEFAULT_CUSTOM_ORDER_POLICY)
-  const [forceMajeure,             setForceMajeure]             = useState(DEFAULT_FORCE_MAJEURE)
   const dirty = true
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
@@ -992,7 +1005,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, cancellation_policy, project_manager, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, interior_finishing, custom_order_policy, force_majeure').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('contract_terms, signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const loaded = (prof as any)?.contract_terms ?? DEFAULT_TERMS
         setTerms(loaded); setInitialTerms(loaded)
@@ -1000,17 +1013,22 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
         if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
         if ((prof as any)?.payment_terms)       setPaymentTerms((prof as any).payment_terms)
-        if ((prof as any)?.cancellation_policy) setCancellationPolicy((prof as any).cancellation_policy)
         if ((prof as any)?.project_manager != null)    setProjectManager((prof as any).project_manager)
         if ((prof as any)?.completion_timeframe)       setCompletionTimeframe((prof as any).completion_timeframe)
         if ((prof as any)?.payment_methods?.length)    setPaymentMethods((prof as any).payment_methods)
-        if ((prof as any)?.customer_responsibilities)  setCustomerResponsibilities((prof as any).customer_responsibilities)
-        if ((prof as any)?.buyer_right_to_cancel)      setBuyerRightToCancel((prof as any).buyer_right_to_cancel)
-        if ((prof as any)?.damage_disclaimer)          setDamageDisclaimer((prof as any).damage_disclaimer)
-        if ((prof as any)?.permits_responsibility)     setPermitsResponsibility((prof as any).permits_responsibility)
-        if ((prof as any)?.interior_finishing)         setInteriorFinishing((prof as any).interior_finishing)
-        if ((prof as any)?.custom_order_policy)        setCustomOrderPolicy((prof as any).custom_order_policy)
-        if ((prof as any)?.force_majeure)              setForceMajeure((prof as any).force_majeure)
+        const savedClauses = (prof as any)?.contract_clauses
+        if (savedClauses) {
+          try { setContractClauses(JSON.parse(savedClauses)) } catch {}
+        } else {
+          const migrated = DEFAULT_CLAUSES.map(c => {
+            if (c.id === 'cancellation' && (prof as any)?.cancellation_policy) return { ...c, content: (prof as any).cancellation_policy }
+            if (c.id === 'customer_responsibilities' && (prof as any)?.customer_responsibilities) return { ...c, content: (prof as any).customer_responsibilities }
+            if (c.id === 'damage_disclaimer' && (prof as any)?.damage_disclaimer) return { ...c, content: (prof as any).damage_disclaimer }
+            if (c.id === 'permits' && (prof as any)?.permits_responsibility) return { ...c, content: (prof as any).permits_responsibility }
+            return c
+          })
+          setContractClauses(migrated)
+        }
       })
     })
   }, [])
@@ -1018,21 +1036,15 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   async function saveContract() {
     if (!userId) return
     const { error } = await supabase.from('profiles').update({
-      contract_terms:            terms,
-      warranty_period:           warrantyPeriod,
-      deposit_required:          depositRequired,
-      deposit_percent:           depositPercent,
-      payment_terms:             paymentTerms,
-      cancellation_policy:       cancellationPolicy,
-      project_manager:           projectManager,
-      completion_timeframe:      completionTimeframe,
-      payment_methods:           paymentMethods,
-      customer_responsibilities: customerResponsibilities,
-      damage_disclaimer:         damageDisclaimer,
-      permits_responsibility:    permitsResponsibility,
-      interior_finishing:        interiorFinishing,
-      custom_order_policy:       customOrderPolicy,
-      force_majeure:             forceMajeure,
+      contract_terms:       terms,
+      warranty_period:      warrantyPeriod,
+      deposit_required:     depositRequired,
+      deposit_percent:      depositPercent,
+      payment_terms:        paymentTerms,
+      project_manager:      projectManager,
+      completion_timeframe: completionTimeframe,
+      payment_methods:      paymentMethods,
+      contract_clauses:     JSON.stringify(contractClauses),
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
     setInitialTerms(terms)
@@ -1174,12 +1186,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
             </select>
           </div>
 
-          {/* Cancellation policy */}
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Cancellation Policy</div>
-            <textarea value={cancellationPolicy} onChange={e => setCancellationPolicy(e.target.value)} rows={3}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
         </Card>
 
         <Card>
@@ -1217,57 +1223,129 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
               })}
             </div>
           </div>
+        </Card>
 
-          {/* Customer Responsibilities */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Customer Responsibilities</div>
-            <textarea value={customerResponsibilities} onChange={e => setCustomerResponsibilities(e.target.value)} rows={4}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
+        <Card>
+          <SectionLabel>Contract Clauses</SectionLabel>
+          <p style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>
+            Drag to reorder. Toggle to include or exclude each clause from the contract.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[...contractClauses].sort((a, b) => a.order - b.order).map((clause, idx, arr) => {
+              const isExpanded = expandedClause === clause.id
+              const isDragOver = dragOverId === clause.id
+              return (
+                <div
+                  key={clause.id}
+                  draggable={!clause.fixed}
+                  onDragStart={e => e.dataTransfer.setData('clauseId', clause.id)}
+                  onDragOver={e => { e.preventDefault(); setDragOverId(clause.id) }}
+                  onDragLeave={() => setDragOverId(null)}
+                  onDrop={e => {
+                    e.preventDefault()
+                    setDragOverId(null)
+                    const fromId = e.dataTransfer.getData('clauseId')
+                    if (fromId === clause.id) return
+                    setContractClauses(prev => {
+                      const sorted = [...prev].sort((a, b) => a.order - b.order)
+                      const fromIdx = sorted.findIndex(c => c.id === fromId)
+                      const toIdx = sorted.findIndex(c => c.id === clause.id)
+                      const moved = sorted.splice(fromIdx, 1)[0]
+                      sorted.splice(toIdx, 0, moved)
+                      return sorted.map((c, i) => ({ ...c, order: i }))
+                    })
+                  }}
+                  style={{
+                    borderRadius: 10,
+                    border: isDragOver ? '1.5px solid #2563EB' : '1px solid #E2E5EA',
+                    background: isDragOver ? '#EFF6FF' : '#fff',
+                    overflow: 'hidden',
+                    transition: 'border 0.1s',
+                    opacity: clause.enabled ? 1 : 0.55,
+                  }}
+                >
+                  {/* Clause header row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px' }}>
+                    {/* Drag handle */}
+                    {!clause.fixed && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, cursor: 'grab' }}>
+                        <circle cx="9" cy="5" r="1" fill="#CBD5E1"/><circle cx="9" cy="12" r="1" fill="#CBD5E1"/><circle cx="9" cy="19" r="1" fill="#CBD5E1"/>
+                        <circle cx="15" cy="5" r="1" fill="#CBD5E1"/><circle cx="15" cy="12" r="1" fill="#CBD5E1"/><circle cx="15" cy="19" r="1" fill="#CBD5E1"/>
+                      </svg>
+                    )}
+                    {clause.fixed && <div style={{ width: 14, flexShrink: 0 }} />}
+
+                    {/* Toggle or "Required" badge */}
+                    {clause.fixed ? (
+                      <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#2563EB', background: '#EFF6FF', borderRadius: 4, padding: '2px 6px', flexShrink: 0 }}>Required by law</span>
+                    ) : (
+                      <div
+                        onClick={() => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, enabled: !c.enabled } : c))}
+                        style={{ width: 34, height: 20, borderRadius: 10, background: clause.enabled ? '#2563EB' : '#9CA3AF', display: 'flex', alignItems: 'center', padding: '0 3px', cursor: 'pointer', flexShrink: 0, transition: 'background 0.15s' }}
+                      >
+                        <div style={{ width: 14, height: 14, borderRadius: 7, background: '#fff', transform: clause.enabled ? 'translateX(14px)' : 'translateX(0)', transition: 'transform 0.15s' }} />
+                      </div>
+                    )}
+
+                    {/* Title */}
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#0A1628', minWidth: 0 }}>{clause.title}</span>
+
+                    {/* Delete button (non-fixed only) */}
+                    {!clause.fixed && (
+                      <button
+                        onClick={() => setContractClauses(prev => prev.filter(c => c.id !== clause.id).map((c, i) => ({ ...c, order: i })))}
+                        style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(220,38,38,0.08)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    )}
+
+                    {/* Chevron */}
+                    <div onClick={() => setExpandedClause(isExpanded ? null : clause.id)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 2px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
+                    </div>
+                  </div>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div style={{ padding: '0 12px 12px' }}>
+                      {clause.fixed ? (
+                        <div style={{ padding: '10px 12px', background: '#F8FAFC', borderRadius: 8, fontSize: 12, color: '#64748B', lineHeight: 1.6, border: '1px solid #E2E5EA' }}>
+                          {clause.content}
+                        </div>
+                      ) : (
+                        <textarea
+                          value={clause.content}
+                          rows={4}
+                          onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, content: e.target.value } : c))}
+                          style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
+                        />
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
-          {/* Buyer's Right to Cancel — read-only */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Buyer's Right to Cancel</div>
-            <p style={{ fontSize: 11, color: '#94A3B8', marginBottom: 8, marginTop: 0 }}>Required by Canadian consumer protection law — cannot be modified.</p>
-            <div style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#64748B', background: '#F8FAFC', boxSizing: 'border-box', lineHeight: 1.6 }}>
-              {BUYER_RIGHT_TO_CANCEL_FIXED}
-            </div>
-          </div>
-
-          {/* Damage Disclaimer */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Damage Disclaimer</div>
-            <textarea value={damageDisclaimer} onChange={e => setDamageDisclaimer(e.target.value)} rows={3}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-
-          {/* Permits Responsibility */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Permits Responsibility</div>
-            <textarea value={permitsResponsibility} onChange={e => setPermitsResponsibility(e.target.value)} rows={3}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-
-          {/* Interior Finishing */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Interior Finishing</div>
-            <textarea value={interiorFinishing} onChange={e => setInteriorFinishing(e.target.value)} rows={4}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-
-          {/* Custom Order Policy */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Custom Order Policy</div>
-            <textarea value={customOrderPolicy} onChange={e => setCustomOrderPolicy(e.target.value)} rows={4}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
-
-          {/* Force Majeure */}
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Force Majeure</div>
-            <textarea value={forceMajeure} onChange={e => setForceMajeure(e.target.value)} rows={3}
-              style={{ width: '100%', padding: '11px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }} />
-          </div>
+          {/* Add clause button */}
+          <button
+            onClick={() => {
+              const newClause: ContractClause = {
+                id: 'custom_' + Date.now(),
+                title: 'New clause',
+                content: '',
+                enabled: true,
+                fixed: false,
+                order: contractClauses.length,
+              }
+              setContractClauses(prev => [...prev, newClause])
+              setExpandedClause(newClause.id)
+            }}
+            style={{ width: '100%', marginTop: 12, padding: '10px', background: '#fff', border: '1.5px dashed #E2E5EA', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#94A3B8', cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            + Add clause
+          </button>
         </Card>
 
         <Card>

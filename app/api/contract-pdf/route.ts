@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses').eq('id', con.profile_id).single(),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
@@ -130,21 +130,21 @@ export async function GET(request: NextRequest) {
   ${con.contract_terms_snapshot ? `<p style="font-size:12px;color:#353A3E;line-height:1.65;margin-bottom:14px">${(con.contract_terms_snapshot as string).replace(/\n/g, '<br>')}</p>` : ''}
   <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Warranty: All materials and labour are warranted for ${p?.warranty_period || '1 year'} from installation date.</span></div>
   <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Payment: ${p?.payment_terms || 'Upon completion'}</span></div>
-  <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Cancellation: ${p?.cancellation_policy || 'Either party may cancel with 72 hours written notice prior to the scheduled start date.'}</span></div>
   <div class="check-row"><div class="check-icon"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="#2045B8" stroke-width="2.2" stroke-linecap="round"><polyline points="2 6 5 9 10 3"/></svg></div><span>Access: Client agrees to provide reasonable access to the property on scheduled installation day.</span></div>
 </div>
 
-${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_cancel || p?.damage_disclaimer || p?.permits_responsibility || (p?.payment_methods && p.payment_methods.length > 0) || p?.project_manager ? `
-<div class="section-title">Contract Details</div>
+${(() => {
+  const clauses: any[] = p?.contract_clauses ? (() => { try { return JSON.parse(p.contract_clauses) } catch { return [] } })() : []
+  const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+  if (!p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && enabledClauses.length === 0 && !p?.project_manager) return ''
+  return `<div class="section-title">Contract Details</div>
 <div class="card">
-  ${clauseBlock('Completion Timeframe', p?.completion_timeframe)}
+  ${p?.completion_timeframe ? clauseBlock('Completion Timeframe', p.completion_timeframe) : ''}
   ${p?.payment_methods && p.payment_methods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${p.payment_methods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
-  ${clauseBlock('Customer Responsibilities', p?.customer_responsibilities)}
-  ${clauseBlock("Buyer's Right to Cancel", p?.buyer_right_to_cancel)}
-  ${clauseBlock('Damage Disclaimer', p?.damage_disclaimer)}
-  ${clauseBlock('Permits Responsibility', p?.permits_responsibility)}
+  ${enabledClauses.map((c: any) => clauseBlock(c.title, c.content)).join('')}
   ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
-</div>` : ''}
+</div>`
+})()}
 
 <!-- Signatures -->
 <div class="section-title">Signatures</div>
@@ -189,7 +189,7 @@ ${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_c
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager')
+    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses')
     .eq('id', user.id)
     .single()
 
@@ -289,17 +289,18 @@ ${p?.completion_timeframe || p?.customer_responsibilities || p?.buyer_right_to_c
     : `<div class="empty-state">No contract terms have been added yet.<br>Go to Company Profile → Contract to add your standard terms.</div>`}
 </div>
 
-${completionTimeframe || customerResponsibilities || buyerRightToCancel || damageDisclaimer || permitsResponsibility || paymentMethods.length > 0 || projectManager ? `
-<div class="divider"></div>
+${(() => {
+  const clauses2: any[] = p?.contract_clauses ? (() => { try { return JSON.parse(p.contract_clauses) } catch { return [] } })() : []
+  const enabledClauses2 = clauses2.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+  if (!completionTimeframe && paymentMethods.length === 0 && enabledClauses2.length === 0 && !projectManager) return ''
+  return `<div class="divider"></div>
 <div class="body-section">
   ${completionTimeframe ? `${clauseBlock('Completion Timeframe', completionTimeframe)}` : ''}
   ${paymentMethods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
-  ${clauseBlock('Customer Responsibilities', customerResponsibilities)}
-  ${clauseBlock("Buyer's Right to Cancel", buyerRightToCancel)}
-  ${clauseBlock('Damage Disclaimer', damageDisclaimer)}
-  ${clauseBlock('Permits Responsibility', permitsResponsibility)}
+  ${enabledClauses2.map((c: any) => clauseBlock(c.title, c.content)).join('')}
   ${projectManager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${projectManager}</p></div>` : ''}
-</div>` : ''}
+</div>`
+})()}
 
 ${paragraphs.length > 0 ? `
 <div class="divider"></div>
