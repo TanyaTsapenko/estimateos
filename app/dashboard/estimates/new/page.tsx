@@ -274,7 +274,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
 
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Shape</label>
-          <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)}>
+          <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)} disabled={op.type === 'window_combo'} style={{ opacity: op.type === 'window_combo' ? 0.4 : 1, cursor: op.type === 'window_combo' ? 'not-allowed' : 'pointer' }}>
             <option value="rect">Rectangle</option>
             <option value="arch">Arch{customPrices?.surcharges?.arch_pct ? ` (+${customPrices.surcharges.arch_pct}%)` : ''}</option>
             <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
