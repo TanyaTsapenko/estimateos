@@ -485,8 +485,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                   <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8, overflowX: 'auto', paddingBottom: 2 }}>
                     {sections.map((s, i) => (
                       <div key={i} style={{ flex: s.width, border: '1.5px solid #E2E8F0', borderRadius: 6, background: s.type === 'window_fix' ? '#F8FAFC' : '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        <div style={{ fontSize: 7, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
-                        <div style={{ fontSize: 7, color: '#94A3B8' }}>{s.width}"</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
+                        <div style={{ fontSize: 10, color: '#94A3B8' }}>{s.width}"</div>
                       </div>
                     ))}
                     <div onClick={() => {
