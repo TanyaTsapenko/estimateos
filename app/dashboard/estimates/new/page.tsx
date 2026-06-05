@@ -482,9 +482,9 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
               return (
                 <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 8 }}>Sections</div>
-                  <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8, overflowX: 'auto', paddingBottom: 2 }}>
                     {sections.map((s, i) => (
-                      <div key={i} style={{ flex: s.width, border: '2px solid #334155', borderRadius: 6, background: '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                      <div key={i} style={{ flex: s.width, border: '1.5px solid #E2E8F0', borderRadius: 6, background: s.type === 'window_fix' ? '#F8FAFC' : '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                         <div style={{ fontSize: 7, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
                         <div style={{ fontSize: 7, color: '#94A3B8' }}>{s.width}"</div>
                       </div>
@@ -494,14 +494,15 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                       updateOpening(op.id, 'combo_sections' as any, newSections)
                     }} style={{ width: 28, border: '1.5px dashed #E2E8F0', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#2563EB', fontSize: 18, flexShrink: 0 }}>+</div>
                   </div>
-                  <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start', overflowX: 'auto', paddingBottom: 4 }}>
                     {sections.map((s, i) => (
                       <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 5, fontSize: 10, fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</div>
                         <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                           <select value={s.type} onChange={e => {
                             const updated = sections.map((sec, j) => j === i ? { ...sec, type: e.target.value } : sec)
                             updateOpening(op.id, 'combo_sections' as any, updated)
-                          }} style={{ flex: 1, padding: '6px 4px', border: '1px solid #E5E7EB', borderRadius: 8, fontSize: 10, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
+                          }} style={{ flex: 1, padding: '9px 10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
                             <option value="window_fix">Fixed</option>
                             <option value="window_dh">Double-Hung</option>
                             <option value="window_cas">Casement</option>
@@ -513,12 +514,12 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                             <div onClick={() => {
                               const updated = sections.filter((_, j) => j !== i)
                               updateOpening(op.id, 'combo_sections' as any, updated)
-                            }} style={{ width: 22, height: 22, borderRadius: 5, background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                            }} style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                               <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                             </div>
                           )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 8, padding: '4px 5px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 10px' }}>
                           <input type="number" min="1" value={s.width} onChange={e => {
                             const updated = sections.map((sec, j) => j === i ? { ...sec, width: parseFloat(e.target.value) || 0 } : sec)
                             updateOpening(op.id, 'combo_sections' as any, updated)
@@ -528,7 +529,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
                       </div>
                     ))}
                   </div>
-                  <div style={{ marginTop: 8, padding: '6px 8px', background: '#F8FAFC', borderRadius: 6, fontSize: 10, color: '#64748B' }}>
+                  <div style={{ marginTop: 8, padding: '6px 8px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12, color: '#64748B' }}>
                     <span style={{ color: '#94A3B8' }}>Config: </span>
                     <span style={{ color: '#0A1628', fontWeight: 600 }}>{sections.map(s => `${typeLabels[s.type] || s.type} ${s.width}"`).join(' + ')}</span>
                   </div>
