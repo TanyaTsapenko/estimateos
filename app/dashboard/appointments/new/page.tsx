@@ -45,7 +45,7 @@ export default function NewAppointmentPage() {
     client_province: 'AB',
     postal_code: '',
     appointment_date: today,
-    appointment_time: '09:00',
+    appointment_time: '8:00 AM – 10:00 AM',
     lead_source: 'Phone call',
     notes: '',
     assigned_to: '',
@@ -250,7 +250,7 @@ export default function NewAppointmentPage() {
               style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
           </div>
           <div className="f">
-            <label>Time</label>
+            <label>Time Frame</label>
             <TimePickerDropdown
               value={form.appointment_time}
               date={form.appointment_date}
