@@ -873,7 +873,6 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     .eq('id', sanitizedMemberId)
                     .eq('team_owner_id', sanitizedUserId)
                     .select()
-                  console.log('Update result:', { error, data, sanitizedMemberId, sanitizedUserId })
                   if (error) {
                     flash('Failed to update: ' + error.message)
                     return
