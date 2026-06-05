@@ -859,7 +859,23 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                 <button onClick={() => setEditingMember(null)} style={{ flex: 1, padding: 13, background: '#F5F6F8', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
                 <button onClick={async () => {
                   if (!editingMember) return
-                  await supabase.from('profiles').update({ role: editingMember.role, member_role: editingMember.role, permissions: editingMember.permissions }).eq('id', editingMember.id)
+                  const { data: { user } } = await supabase.auth.getUser()
+                  if (!user) return
+                  const sanitizedUserId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+                  const sanitizedMemberId = editingMember.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+                  const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                      role: editingMember.role,
+                      member_role: editingMember.role,
+                      permissions: editingMember.permissions
+                    })
+                    .eq('id', sanitizedMemberId)
+                    .eq('team_owner_id', sanitizedUserId)
+                  if (error) {
+                    flash('Failed to update: ' + error.message)
+                    return
+                  }
                   setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role } : m))
                   setEditingMember(null)
                   flash('Member updated')
