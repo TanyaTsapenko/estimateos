@@ -493,7 +493,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Material</div>
-              <select style={{ width: '100%' }} value={(op as any).material} onChange={e => updateOpening(op.id, 'material' as any, e.target.value)}>
+              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).material} onChange={e => updateOpening(op.id, 'material' as any, e.target.value)}>
                 <option value="vinyl">Vinyl</option>
                 <option value="wood">Wood</option>
                 <option value="fiberglass">Fiberglass</option>
@@ -503,7 +503,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             </div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Hardware colour</div>
-              <select style={{ width: '100%' }} value={(op as any).hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour' as any, e.target.value)}>
+              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour' as any, e.target.value)}>
                 <option value="white">White</option>
                 <option value="black">Black</option>
                 <option value="chrome">Chrome</option>
@@ -515,7 +515,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Grid pattern</div>
-              <select style={{ width: '100%' }} value={(op as any).grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern' as any, e.target.value)}>
+              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern' as any, e.target.value)}>
                 <option value="none">None</option>
                 <option value="colonial">Colonial</option>
                 <option value="prairie">Prairie</option>
@@ -525,7 +525,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             </div>
             <div>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Brand (optional)</div>
-              <input style={{ width: '100%' }} value={(op as any).brand} onChange={e => updateOpening(op.id, 'brand' as any, e.target.value)} placeholder="e.g. Pella" />
+              <input style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).brand} onChange={e => updateOpening(op.id, 'brand' as any, e.target.value)} placeholder="e.g. Pella" />
             </div>
           </div>
           <div>
@@ -535,7 +535,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
               onChange={e => updateOpening(op.id, 'notes' as any, e.target.value)}
               placeholder="e.g. Remove existing trim, custom colour match"
               rows={2}
-              style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%' }}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff', resize: 'vertical' }}
             />
           </div>
         </div>
