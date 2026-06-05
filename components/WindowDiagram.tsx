@@ -143,25 +143,49 @@ export default function WindowDiagram({ type, widthIn, heightIn, size = 80 }: Wi
       </svg>
     ),
 
-    // Bay / Bow: three angled panels
+    // Bay: 3-panel with angled sides
     window_bay: (
       <svg viewBox="0 0 215 255" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="10" y="30" width="55" height="150" rx="2" fill={GLASS} stroke={FRAME} strokeWidth="2"
-          transform="rotate(-10 37 105)"/>
-        <rect x="62" y="10" width="76" height="180" rx="2" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
-        <rect x="135" y="30" width="55" height="150" rx="2" fill={GLASS} stroke={FRAME} strokeWidth="2"
-          transform="rotate(10 162 105)"/>
-        <line x1="66" y1="14" x2="134" y2="186" stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
-        <line x1="134" y1="14" x2="66" y2="186" stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
-        {/* Width dim aligned to outer extent */}
-        <line x1="10" y1="226" x2="190" y2="226" stroke={SEC} strokeWidth="1"/>
-        <line x1="10" y1="221" x2="10" y2="231" stroke={SEC} strokeWidth="1.5"/>
-        <line x1="190" y1="221" x2="190" y2="231" stroke={SEC} strokeWidth="1.5"/>
-        <text x="100" y="243" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
-        <line x1="197" y1="10" x2="197" y2="190" stroke={SEC} strokeWidth="1"/>
-        <line x1="193" y1="10" x2="201" y2="10" stroke={SEC} strokeWidth="1.5"/>
-        <line x1="193" y1="190" x2="201" y2="190" stroke={SEC} strokeWidth="1.5"/>
-        <text x="204" y="104" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{h}</text>
+        <polygon points="15,50 65,35 65,205 15,220" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <line x1="15" y1="135" x2="65" y2="120" stroke={FRAME} strokeWidth="1.5"/>
+        <rect x="65" y="30" width="85" height="180" rx="2" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <line x1="65" y1="120" x2="150" y2="120" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="107" y1="30" x2="107" y2="120" stroke={SEC} strokeWidth="1.2"/>
+        <line x1="107" y1="120" x2="107" y2="210" stroke={SEC} strokeWidth="1.2"/>
+        <polygon points="150,35 200,50 200,220 150,205" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <line x1="150" y1="120" x2="200" y2="135" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="15" y1="232" x2="200" y2="232" stroke={SEC} strokeWidth="1"/>
+        <line x1="15" y1="227" x2="15" y2="237" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="200" y1="227" x2="200" y2="237" stroke={SEC} strokeWidth="1.5"/>
+        <text x="107" y="245" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
+        <line x1="208" y1="30" x2="208" y2="210" stroke={SEC} strokeWidth="1"/>
+        <line x1="203" y1="30" x2="213" y2="30" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="203" y1="210" x2="213" y2="210" stroke={SEC} strokeWidth="1.5"/>
+        <text x="214" y="124" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{h}</text>
+      </svg>
+    ),
+
+    // Bow: 5-panel gentle curve
+    window_bow: (
+      <svg viewBox="0 0 215 255" width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="15,80 45,45 45,205 15,195" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <rect x="45" y="38" width="40" height="172" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <rect x="85" y="30" width="45" height="185" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <rect x="130" y="38" width="40" height="172" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <polygon points="170,45 200,80 200,195 170,205" fill={GLASS} stroke={FRAME} strokeWidth="2.5" strokeLinejoin="round"/>
+        <line x1="15" y1="140" x2="45" y2="135" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="45" y1="124" x2="85" y2="122" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="85" y1="122" x2="130" y2="122" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="130" y1="122" x2="170" y2="124" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="170" y1="135" x2="200" y2="140" stroke={FRAME} strokeWidth="1.5"/>
+        <line x1="15" y1="232" x2="200" y2="232" stroke={SEC} strokeWidth="1"/>
+        <line x1="15" y1="227" x2="15" y2="237" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="200" y1="227" x2="200" y2="237" stroke={SEC} strokeWidth="1.5"/>
+        <text x="107" y="245" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{w}</text>
+        <line x1="208" y1="30" x2="208" y2="210" stroke={SEC} strokeWidth="1"/>
+        <line x1="203" y1="30" x2="213" y2="30" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="203" y1="210" x2="213" y2="210" stroke={SEC} strokeWidth="1.5"/>
+        <text x="214" y="124" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{h}</text>
       </svg>
     ),
 
