@@ -665,7 +665,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const [myId, setMyId] = useState('')
   const [ownerProfile, setOwnerProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null)
-  const [members, setMembers] = useState<{ id: string; first_name: string | null; last_name: string | null; email: string | null; member_role: string | null }[]>([])
+  const [members, setMembers] = useState<{ id: string; first_name: string | null; last_name: string | null; email: string | null; member_role: string | null; permissions: any }[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -685,7 +685,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
       setMyId(sanitizedId)
       const [{ data: ownerProf }, { data: mems }, { data: invs }] = await Promise.all([
         supabase.from('profiles').select('first_name, last_name, email').eq('id', sanitizedId).single(),
-        supabase.from('profiles').select('id, first_name, last_name, email, member_role').eq('team_owner_id', sanitizedId),
+        supabase.from('profiles').select('id, first_name, last_name, email, member_role, permissions').eq('team_owner_id', sanitizedId),
         supabase.from('team_invitations').select('id').eq('owner_id', sanitizedId).eq('status', 'pending'),
       ])
       setOwnerProfile(ownerProf)
@@ -878,7 +878,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     flash('Failed to update: ' + error.message)
                     return
                   }
-                  setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role } : m))
+                  setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role, permissions: editingMember.permissions } : m))
                   setEditingMember(null)
                   flash('Member updated')
                 }} disabled={!hasChanges} style={{ flex: 2, padding: 13, background: '#2563EB', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', cursor: hasChanges ? 'pointer' : 'not-allowed', fontFamily: 'inherit', opacity: hasChanges ? 1 : 0.4 }}>Save changes</button>
