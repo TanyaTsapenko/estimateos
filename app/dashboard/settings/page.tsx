@@ -8,6 +8,7 @@ import { Camera, ImagePlus } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 import { usePermissions } from '@/lib/usePermissions'
+import ConfirmModal from '@/components/ConfirmModal'
 // ── TYPES ────────────────────────────────────────
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
 
@@ -985,6 +986,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [contractClauses, setContractClauses] = useState<ContractClause[]>(DEFAULT_CLAUSES)
   const [expandedClause, setExpandedClause] = useState<string | null>('buyer_right_to_cancel')
   const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [clauseToDelete, setClauseToDelete] = useState<string | null>(null)
   const [projectManager,           setProjectManager]           = useState('')
   const [completionTimeframe,      setCompletionTimeframe]      = useState('10-16 weeks from the date of signed contract')
   const [paymentMethods,           setPaymentMethods]           = useState<string[]>(['E-transfer', 'Cheque'])
@@ -1260,7 +1262,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
                     {/* Delete button (non-fixed only) */}
                     {!clause.fixed && (
                       <button
-                        onClick={() => setContractClauses(prev => prev.filter(c => c.id !== clause.id).map((c, i) => ({ ...c, order: i })))}
+                        onClick={() => setClauseToDelete(clause.id)}
                         style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(220,38,38,0.08)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -1378,6 +1380,20 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         </Card>
       </div>
       <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
+      <ConfirmModal
+        open={clauseToDelete !== null}
+        icon="trash"
+        title="Remove clause"
+        body="Are you sure you want to remove this clause? This cannot be undone."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (clauseToDelete) {
+            setContractClauses(prev => prev.filter(c => c.id !== clauseToDelete).map((c, i) => ({ ...c, order: i })))
+          }
+          setClauseToDelete(null)
+        }}
+        onCancel={() => setClauseToDelete(null)}
+      />
     </div>
   )
 }
