@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createServiceClient } from '@/lib/supabase/service'
 import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
+import { rateLimit } from '@/lib/rateLimit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const allowed = rateLimit(`send-email:${ip}`, 10, 60 * 60 * 1000) // 10 per hour per IP
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
+
   const { estimateId: rawEstimateId, invoiceId, type, sendMode, message: customMessage } = await request.json()
 
   const supabase = createServiceClient()
