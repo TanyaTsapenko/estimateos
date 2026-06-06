@@ -976,7 +976,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
   const [depositRequired,    setDepositRequired]    = useState(true)
   const [depositPercent,     setDepositPercent]     = useState(10)
-  const [paymentTerms,       setPaymentTerms]       = useState('Upon completion')
   const [contractClauses, setContractClauses] = useState<ContractClause[]>(DEFAULT_CLAUSES)
   const [expandedClause, setExpandedClause] = useState<string | null>('buyer_right_to_cancel')
   const [dragOverId, setDragOverId] = useState<string | null>(null)
@@ -996,12 +995,11 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, payment_terms, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         if ((prof as any)?.warranty_period)     setWarrantyPeriod((prof as any).warranty_period)
         if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
         if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
-        if ((prof as any)?.payment_terms)       setPaymentTerms((prof as any).payment_terms)
         if ((prof as any)?.project_manager != null)    setProjectManager((prof as any).project_manager)
         if ((prof as any)?.completion_timeframe)       setCompletionTimeframe((prof as any).completion_timeframe)
         if ((prof as any)?.payment_methods?.length)    setPaymentMethods((prof as any).payment_methods)
@@ -1028,7 +1026,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       warranty_period:      warrantyPeriod,
       deposit_required:     depositRequired,
       deposit_percent:      depositPercent,
-      payment_terms:        paymentTerms,
       project_manager:      projectManager,
       completion_timeframe: completionTimeframe,
       payment_methods:      paymentMethods,
@@ -1148,15 +1145,6 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Payment terms */}
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Payment Terms</div>
-            <select value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)}
-              style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
-              {['Upon completion', '50% deposit / 50% on completion', 'Custom'].map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
           </div>
 
         </Card>

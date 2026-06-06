@@ -21,7 +21,7 @@ interface Estimate {
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
-  warranty_period: string | null; payment_terms: string | null; cancellation_policy: string | null
+  warranty_period: string | null; cancellation_policy: string | null
   deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
   completion_timeframe: string | null; payment_methods: string[] | null
   customer_responsibilities: string | null; buyer_right_to_cancel: string | null
@@ -112,7 +112,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, payment_terms, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -378,7 +378,7 @@ export default function SignContractPage() {
 
           {/* Contract Details */}
           {(() => {
-            const hasDetails = profile?.warranty_period || profile?.payment_terms || profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
+            const hasDetails = profile?.warranty_period || profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager
             if (!hasDetails) return null
             return (
               <div style={cardStyle}>
@@ -388,12 +388,6 @@ export default function SignContractPage() {
                     <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
                       <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
-                    </div>
-                  )}
-                  {profile?.payment_terms && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Payment Terms</div>
-                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.payment_terms}</div>
                     </div>
                   )}
                   {profile?.completion_timeframe && (

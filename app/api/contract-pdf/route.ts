@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, payment_terms, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses').eq('id', con.profile_id).single(),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
@@ -144,11 +144,10 @@ ${(() => {
 })()}
 
 ${(() => {
-  if (!p?.warranty_period && !p?.payment_terms && !p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && !p?.project_manager) return ''
+  if (!p?.warranty_period && !p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && !p?.project_manager) return ''
   return `<div class="section-title">Contract Details</div>
 <div class="card">
   ${p?.warranty_period ? clauseBlock('Warranty Period', p.warranty_period) : ''}
-  ${p?.payment_terms ? clauseBlock('Payment Terms', p.payment_terms) : ''}
   ${p?.completion_timeframe ? clauseBlock('Completion Timeframe', p.completion_timeframe) : ''}
   ${p?.payment_methods && p.payment_methods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${p.payment_methods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
   ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
@@ -312,12 +311,10 @@ ${(() => {
 
 ${(() => {
   const warrantyPeriod2: string | null = p?.warranty_period || null
-  const paymentTerms2: string | null = p?.payment_terms || null
-  if (!warrantyPeriod2 && !paymentTerms2 && !completionTimeframe && paymentMethods.length === 0 && !projectManager) return ''
+  if (!warrantyPeriod2 && !completionTimeframe && paymentMethods.length === 0 && !projectManager) return ''
   return `<div class="divider"></div>
 <div class="body-section">
   ${warrantyPeriod2 ? `${clauseBlock('Warranty Period', warrantyPeriod2)}` : ''}
-  ${paymentTerms2 ? `${clauseBlock('Payment Terms', paymentTerms2)}` : ''}
   ${completionTimeframe ? `${clauseBlock('Completion Timeframe', completionTimeframe)}` : ''}
   ${paymentMethods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
   ${projectManager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${projectManager}</p></div>` : ''}
