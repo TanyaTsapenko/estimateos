@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     const clientSlug = (est.client_name || 'Client')
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
-      .replace(/[^\x00-\x7F]/g, '')
       .replace(/[^a-zA-Z0-9\s]/g, '')
       .trim()
       .replace(/\s+/g, '-') || 'Client'
