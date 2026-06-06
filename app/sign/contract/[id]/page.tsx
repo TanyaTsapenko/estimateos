@@ -29,6 +29,7 @@ interface Profile {
   logo_url: string | null; phone: string | null; website: string | null
   city: string | null; province: string | null; address: string | null; postal_code: string | null
   contract_clauses: string | null
+  deposit_timing: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
