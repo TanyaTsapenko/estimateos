@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createServiceClient } from '@/lib/supabase/service'
 import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import { rateLimit } from '@/lib/rateLimit'
+import { isValidEmail } from '@/lib/validation'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
 
   const { data: est } = await supabase.from('estimates').select('*').eq('id', estimateId).single()
   if (!est || !est.client_email) return NextResponse.json({ error: 'No email' }, { status: 400 })
+  if (!isValidEmail(est.client_email)) return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
 
   const cleanUserId = (est.user_id ?? '')
     .toString()

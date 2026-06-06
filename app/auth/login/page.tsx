@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isValidEmail } from '@/lib/validation'
 
 const F = 'system-ui, -apple-system, sans-serif'
 
@@ -47,14 +48,17 @@ function GoogleIcon() {
 export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState('')
+  const [email, setEmail]           = useState('')
+  const [password, setPassword]     = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [emailError, setEmailError] = useState('')
 
   async function handleLogin() {
     setError('')
+    setEmailError('')
     if (!email.trim()) return setError('Email is required')
+    if (!isValidEmail(email)) { setEmailError('Please enter a valid email address'); return }
     if (!password)     return setError('Password is required')
     setLoading(true)
     const { error: e } = await supabase.auth.signInWithPassword({ email, password })
@@ -100,10 +104,12 @@ export default function LoginPage() {
           <label style={lbl}>Email</label>
           <input
             type="email" value={email} placeholder="james@northview.ca"
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); setEmailError('') }}
+            onBlur={() => { if (email && !isValidEmail(email)) setEmailError('Please enter a valid email address') }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
-            style={inp}
+            style={emailError ? { ...inp, border: '1px solid #EF4444' } : inp}
           />
+          {emailError && <p style={{ color: '#EF4444', fontSize: 12, margin: '4px 0 0' }}>{emailError}</p>}
         </div>
 
         <div style={{ marginBottom: 6 }}>

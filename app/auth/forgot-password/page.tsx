@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isValidEmail } from '@/lib/validation'
 
 const F = 'system-ui, -apple-system, sans-serif'
 
@@ -36,14 +37,16 @@ function Logo() {
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [email, setEmail]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const [sent, setSent]       = useState(false)
+  const [email, setEmail]           = useState('')
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState('')
+  const [sent, setSent]             = useState(false)
+  const [emailError, setEmailError] = useState('')
 
   async function handleSend() {
-    setError('')
+    setError(''); setEmailError('')
     if (!email.trim()) return setError('Email is required')
+    if (!isValidEmail(email)) { setEmailError('Please enter a valid email address'); return }
     setLoading(true)
     localStorage.setItem('reset_email', email.trim())
     const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim(), {
@@ -81,10 +84,12 @@ export default function ForgotPasswordPage() {
           <label style={lbl}>Email address</label>
           <input
             type="email" value={email} placeholder="james@northview.ca"
-            onChange={e => setEmail(e.target.value)}
+            onChange={e => { setEmail(e.target.value); setEmailError('') }}
+            onBlur={() => { if (email && !isValidEmail(email)) setEmailError('Please enter a valid email address') }}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
-            style={inp}
+            style={emailError ? { ...inp, border: '1px solid #EF4444' } : inp}
           />
+          {emailError && <p style={{ color: '#EF4444', fontSize: 12, margin: '4px 0 0' }}>{emailError}</p>}
         </div>
 
         {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{error}</p>}

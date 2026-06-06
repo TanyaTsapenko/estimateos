@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { rateLimit } from '@/lib/rateLimit'
+import { isValidEmail } from '@/lib/validation'
 
 const ROLE_LABELS: Record<string, string> = {
   owner:      'Owner',
@@ -41,6 +42,7 @@ export async function POST(request: NextRequest) {
   console.log('[team-invite] payload:', { inviteeEmail, inviteeName, role, resendId, permissions })
 
   if (!inviteeEmail) return NextResponse.json({ error: 'Email required' }, { status: 400 })
+  if (!isValidEmail(inviteeEmail)) return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
 
   const { data: prof } = await supabase
     .from('profiles')

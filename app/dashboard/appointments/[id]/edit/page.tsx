@@ -2,7 +2,7 @@
 import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { formatPhone, validateName, validatePhone, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import { formatPhone, validateName, validatePhone, validateEmail, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 import { TAX_RATES } from '@/lib/pricing'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -114,7 +114,8 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
   async function save() {
     const nameErr  = validateName(form.client_name)
     const phoneErr = validatePhone(form.client_phone)
-    const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr }
+    const emailErr = validateEmail(form.client_email)
+    const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr, client_email: emailErr }
     setErrors(newErrors)
     if (hasErrors(newErrors)) return
 
@@ -236,11 +237,13 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                 <label style={fldLbl}>Email</label>
                 <input
                   type="email"
-                  style={inp}
+                  style={errors.client_email ? { ...inp, border: errBorder } : inp}
                   value={form.client_email}
-                  onChange={e => set('client_email', e.target.value)}
+                  onChange={e => { clearErr('client_email'); set('client_email', e.target.value) }}
+                  onBlur={() => setErr('client_email', validateEmail(form.client_email))}
                   placeholder="jane@email.com"
                 />
+                {errors.client_email && <div style={errStyle}>{errors.client_email}</div>}
               </div>
             </div>
 

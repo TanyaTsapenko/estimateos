@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isValidEmail, isValidPassword } from '@/lib/validation'
 
 const F = 'system-ui, -apple-system, sans-serif'
 
@@ -47,20 +48,23 @@ function GoogleIcon() {
 export default function RegisterPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName]   = useState('')
-  const [email, setEmail]         = useState('')
-  const [password, setPassword]   = useState('')
-  const [agreed, setAgreed]       = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState('')
+  const [firstName, setFirstName]     = useState('')
+  const [lastName, setLastName]       = useState('')
+  const [email, setEmail]             = useState('')
+  const [password, setPassword]       = useState('')
+  const [agreed, setAgreed]           = useState(false)
+  const [loading, setLoading]         = useState(false)
+  const [error, setError]             = useState('')
+  const [emailError, setEmailError]   = useState('')
+  const [pwError, setPwError]         = useState('')
 
   async function handleRegister() {
-    setError('')
-    if (!firstName.trim())        return setError('First name is required')
-    if (!email.trim())            return setError('Email is required')
-    if (password.length < 8)     return setError('Password must be at least 8 characters')
-    if (!agreed)                  return setError('Please agree to the Terms and Privacy Policy')
+    setError(''); setEmailError(''); setPwError('')
+    if (!firstName.trim())              return setError('First name is required')
+    if (!email.trim())                  return setError('Email is required')
+    if (!isValidEmail(email))           { setEmailError('Please enter a valid email address'); return }
+    if (!isValidPassword(password))     { setPwError('Password must be at least 8 characters'); return }
+    if (!agreed)                        return setError('Please agree to the Terms and Privacy Policy')
     setLoading(true)
     const { error: e } = await supabase.auth.signUp({
       email, password,
@@ -116,12 +120,24 @@ export default function RegisterPage() {
 
         <div style={{ marginBottom: 16 }}>
           <label style={lbl}>Email</label>
-          <input type="email" value={email} placeholder="james@northview.ca" onChange={e => setEmail(e.target.value)} style={inp} />
+          <input
+            type="email" value={email} placeholder="james@northview.ca"
+            onChange={e => { setEmail(e.target.value); setEmailError('') }}
+            onBlur={() => { if (email && !isValidEmail(email)) setEmailError('Please enter a valid email address') }}
+            style={emailError ? { ...inp, border: '1px solid #EF4444' } : inp}
+          />
+          {emailError && <p style={{ color: '#EF4444', fontSize: 12, margin: '4px 0 0' }}>{emailError}</p>}
         </div>
 
         <div style={{ marginBottom: 20 }}>
           <label style={lbl}>Password</label>
-          <input type="password" value={password} placeholder="Min 8 characters" onChange={e => setPassword(e.target.value)} style={inp} />
+          <input
+            type="password" value={password} placeholder="Min 8 characters"
+            onChange={e => { setPassword(e.target.value); setPwError('') }}
+            onBlur={() => { if (password && !isValidPassword(password)) setPwError('Password must be at least 8 characters') }}
+            style={pwError ? { ...inp, border: '1px solid #EF4444' } : inp}
+          />
+          {pwError && <p style={{ color: '#EF4444', fontSize: 12, margin: '4px 0 0' }}>{pwError}</p>}
         </div>
 
         {/* Terms checkbox */}
