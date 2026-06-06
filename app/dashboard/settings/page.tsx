@@ -983,6 +983,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
   const [depositRequired,    setDepositRequired]    = useState(true)
   const [depositPercent,     setDepositPercent]     = useState(10)
+  const [depositTiming,      setDepositTiming]      = useState<string>('signing')
   const [contractClauses, setContractClauses] = useState<ContractClause[]>(DEFAULT_CLAUSES)
   const [expandedClause, setExpandedClause] = useState<string | null>('buyer_right_to_cancel')
   const [dragOverId, setDragOverId] = useState<string | null>(null)
@@ -994,6 +995,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [savedWarrantyPeriod,      setSavedWarrantyPeriod]      = useState('1 year')
   const [savedDepositRequired,     setSavedDepositRequired]     = useState(true)
   const [savedDepositPercent,      setSavedDepositPercent]      = useState(10)
+  const [savedDepositTiming,       setSavedDepositTiming]       = useState<string>('signing')
   const [savedCompletionTimeframe, setSavedCompletionTimeframe] = useState('10-16 weeks from the date of signed contract')
   const [savedPaymentMethods,      setSavedPaymentMethods]      = useState<string[]>(['E-transfer', 'Cheque'])
   const [savedProjectManager,      setSavedProjectManager]      = useState('')
@@ -1002,6 +1004,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     warrantyPeriod !== savedWarrantyPeriod ||
     depositRequired !== savedDepositRequired ||
     depositPercent !== savedDepositPercent ||
+    depositTiming !== savedDepositTiming ||
     completionTimeframe !== savedCompletionTimeframe ||
     JSON.stringify(paymentMethods) !== JSON.stringify(savedPaymentMethods) ||
     projectManager !== savedProjectManager
@@ -1017,7 +1020,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, deposit_timing, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const wp  = (prof as any)?.warranty_period     || '1 year'
         const dr  = (prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null ? (prof as any).deposit_required : true
@@ -1025,9 +1028,11 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
         const pm  = (prof as any)?.project_manager     ?? ''
         const ct  = (prof as any)?.completion_timeframe || '10-16 weeks from the date of signed contract'
         const pms = (prof as any)?.payment_methods?.length ? (prof as any).payment_methods : ['E-transfer', 'Cheque']
+        const dt  = (prof as any)?.deposit_timing || 'signing'
         setWarrantyPeriod(wp);      setSavedWarrantyPeriod(wp)
         setDepositRequired(dr);     setSavedDepositRequired(dr)
         setDepositPercent(dp);      setSavedDepositPercent(dp)
+        setDepositTiming(dt);       setSavedDepositTiming(dt)
         setProjectManager(pm);      setSavedProjectManager(pm)
         setCompletionTimeframe(ct); setSavedCompletionTimeframe(ct)
         setPaymentMethods(pms);     setSavedPaymentMethods(pms)
@@ -1059,6 +1064,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       warranty_period:      warrantyPeriod,
       deposit_required:     depositRequired,
       deposit_percent:      depositPercent,
+      deposit_timing:       depositTiming,
       project_manager:      projectManager,
       completion_timeframe: completionTimeframe,
       payment_methods:      paymentMethods,
@@ -1068,6 +1074,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     setSavedWarrantyPeriod(warrantyPeriod)
     setSavedDepositRequired(depositRequired)
     setSavedDepositPercent(depositPercent)
+    setSavedDepositTiming(depositTiming)
     setSavedProjectManager(projectManager)
     setSavedCompletionTimeframe(completionTimeframe)
     setSavedPaymentMethods([...paymentMethods])
@@ -1182,6 +1189,25 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
                     placeholder="10"
                     style={{ width: '100%', padding: '10px 32px 10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
                   <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#94A3B8', pointerEvents: 'none' }}>%</span>
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 500, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 10 }}>Deposit due</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {[
+                      { value: 'signing', label: 'Upon signing', sub: 'Client pays deposit when signing the contract' },
+                      { value: 'delivery', label: 'Upon delivery', sub: 'Client pays deposit when materials are delivered' }
+                    ].map(opt => (
+                      <div key={opt.value} onClick={() => setDepositTiming(opt.value)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: `0.5px solid ${depositTiming === opt.value ? '#2045B8' : '#E2E8F0'}`, borderRadius: 8, cursor: 'pointer', background: depositTiming === opt.value ? '#EEF2FF' : 'white' }}>
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', border: `2px solid ${depositTiming === opt.value ? '#2045B8' : '#CBD5E1'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {depositTiming === opt.value && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2045B8' }} />}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>{opt.label}</div>
+                          <div style={{ fontSize: 11, color: '#64748B', marginTop: 1 }}>{opt.sub}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

@@ -112,7 +112,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -348,7 +348,7 @@ export default function SignContractPage() {
               </div>
               <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
@@ -691,7 +691,7 @@ export default function SignContractPage() {
               </div>
               <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>

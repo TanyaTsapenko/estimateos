@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, warranty_period, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
@@ -82,10 +82,31 @@ export async function GET(request: NextRequest) {
   .sig-line{border-bottom:1.5px solid #0A0E1A;margin-bottom:6px;height:64px}
   .sig-name{font-size:11px;color:#6b7280}
   .footer{margin-top:32px;padding-top:16px;border-top:1px solid #E0E0E0;font-size:10px;color:#BFBFBF;display:flex;justify-content:space-between}
-  @media print{.print-bar{display:none}body{padding:32px 40px}}
+  .pdf-header{position:fixed;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid #E2E8F0;background:#fff;z-index:1000}
+  .pdf-header-left{display:flex;align-items:center;gap:10px}
+  .pdf-header-logo{font-size:12px;font-weight:700;color:#0A1628;background:#F1F5F9;border-radius:4px;padding:4px 8px}
+  .pdf-header-company{font-size:12px;font-weight:700;color:#0A1628}
+  .pdf-header-contacts{font-size:10px;color:#64748B;margin-top:1px}
+  .pdf-header-right{text-align:right}
+  .pdf-header-con{font-size:11px;font-weight:600;color:#0A1628}
+  .pdf-header-date{font-size:10px;color:#64748B}
+  @media print{.print-bar{display:none}body{padding:64px 40px 32px}}
 </style>
 </head>
 <body>
+<div class="pdf-header">
+  <div class="pdf-header-left">
+    ${p?.logo_url ? `<img src="${p.logo_url}" style="height:28px;width:auto;object-fit:contain;" />` : `<div class="pdf-header-logo">${companyName}</div>`}
+    <div>
+      <div class="pdf-header-company">${companyName}</div>
+      <div class="pdf-header-contacts">${p?.email || ''}${p?.phone ? ` · ${p.phone}` : ''}${p?.address ? ` · ${p.address}` : ''}${p?.project_manager ? ` · Contact: ${p.project_manager}` : ''}</div>
+    </div>
+  </div>
+  <div class="pdf-header-right">
+    <div class="pdf-header-con">${conDisplayId}</div>
+    <div class="pdf-header-date">${createdFmt}</div>
+  </div>
+</div>
 <div class="print-bar">
   Signed Contract — ${conDisplayId} · ${signedFmt}
   <button onclick="window.print()">🖨️ Print / Save PDF</button>
@@ -122,6 +143,7 @@ export async function GET(request: NextRequest) {
   ${est.discount_amount > 0 ? `<div class="totals-row" style="color:#16a34a"><span>Discount</span><span>−${fmtCAD(est.discount_amount)}</span></div>` : ''}
   <div class="totals-row"><span>Tax</span><span>${fmtCAD(est.tax_amount)}</span></div>
   <div class="totals-total"><span>Total</span><span style="color:#2045B8">${fmtCAD(est.total)}</span></div>
+  <div class="totals-row" style="color:#D97706"><span>Deposit due</span><span>${p?.deposit_timing === 'delivery' ? 'Upon delivery' : 'Upon signing'}</span></div>
 </div>
 
 <!-- Terms & Conditions -->
@@ -197,7 +219,7 @@ ${(() => {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses')
+    .select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses, deposit_timing')
     .eq('id', user.id)
     .single()
 
@@ -311,11 +333,13 @@ ${(() => {
 
 ${(() => {
   const warrantyPeriod2: string | null = p?.warranty_period || null
+  const depositTiming2: string = p?.deposit_timing || 'signing'
   if (!warrantyPeriod2 && !completionTimeframe && paymentMethods.length === 0 && !projectManager) return ''
   return `<div class="divider"></div>
 <div class="body-section">
   ${warrantyPeriod2 ? `${clauseBlock('Warranty Period', warrantyPeriod2)}` : ''}
   ${completionTimeframe ? `${clauseBlock('Completion Timeframe', completionTimeframe)}` : ''}
+  ${clauseBlock('Deposit Due', depositTiming2 === 'delivery' ? 'Upon delivery' : 'Upon signing')}
   ${paymentMethods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${paymentMethods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
   ${projectManager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${projectManager}</p></div>` : ''}
 </div>`
