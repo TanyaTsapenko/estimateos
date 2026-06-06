@@ -257,7 +257,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
           <div style={{ position: 'relative' }}>
-            <input type="number" min="0" step="0.5" placeholder="32"
+            <input type="number" min="0" step="0.5"
+              placeholder={op.type?.includes('door') || op.type?.includes('entry') || op.type?.includes('patio') ? '36' : '32'}
               value={op.width_in || ''}
               onChange={e => updateOpening(op.id, 'width_in', e.target.value ? parseFloat(e.target.value) : 0)}
               style={{ paddingRight: 28 }} />
@@ -265,7 +266,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           </div></div>
         <div className="f"><label>Height</label>
           <div style={{ position: 'relative' }}>
-            <input type="number" min="0" step="0.5" placeholder="48"
+            <input type="number" min="0" step="0.5"
+              placeholder={op.type?.includes('door') || op.type?.includes('entry') || op.type?.includes('patio') ? '80' : '48'}
               value={op.height_in || ''}
               onChange={e => updateOpening(op.id, 'height_in', e.target.value ? parseFloat(e.target.value) : 0)}
               style={{ paddingRight: 28 }} />
