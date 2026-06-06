@@ -530,56 +530,38 @@ export default function ContractPage() {
           </div>
 
           {/* CONTRACT DETAILS */}
-          {(() => {
-            const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
-            const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-            const hasDetails = profile?.warranty_period || profile?.completion_timeframe || (profile?.payment_methods && profile.payment_methods.length > 0) || profile?.project_manager || enabledClauses.length > 0
-            if (!hasDetails) return null
-            return (
-              <div style={cardStyle}>
-                <CardHeader icon={<DocumentIcon />} title="Contract Details" />
-                <div style={{ padding: '12px 16px' }}>
-                  {profile?.warranty_period && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
-                      <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+          {(profile?.warranty_period || profile?.completion_timeframe || urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
+            <div style={cardStyle}>
+              <CardHeader icon={<DocumentIcon />} title="Contract Details" />
+              <div style={{ padding: '12px 16px' }}>
+                {profile?.warranty_period && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
+                    <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+                  </div>
+                )}
+                {profile?.completion_timeframe && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
+                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                  </div>
+                )}
+                {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {urlPayment
+                        ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
+                        : profile!.payment_methods!.map((m: string) => (
+                            <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
+                          ))
+                      }
                     </div>
-                  )}
-                  {profile?.completion_timeframe && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
-                      <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
-                    </div>
-                  )}
-                  {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                    <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {urlPayment
-                          ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
-                          : profile!.payment_methods!.map((m: string) => (
-                              <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
-                            ))
-                        }
-                      </div>
-                    </div>
-                  )}
-                  {enabledClauses.map((clause: any, i: number) => (
-                    <div key={clause.id} style={{ marginBottom: i < enabledClauses.length - 1 ? 12 : 0, paddingBottom: i < enabledClauses.length - 1 ? 12 : 0, borderBottom: i < enabledClauses.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>{clause.title}</div>
-                      <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{clause.content}</p>
-                    </div>
-                  ))}
-                  {profile?.project_manager && (
-                    <div style={{ marginTop: enabledClauses.length > 0 ? 12 : 0 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', margin: 0 }}>{profile.project_manager}</p>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            )
-          })()}
+            </div>
+          )}
 
           {/* SIGNATURES */}
           <div style={cardStyle}>
