@@ -1232,7 +1232,10 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
             Customize the clauses shown on every contract before the client signs.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[...contractClauses].sort((a, b) => a.order - b.order).map((clause, idx, arr) => {
+            {[
+              ...[...contractClauses].filter(c => !c.fixed).sort((a, b) => a.order - b.order),
+              ...[...contractClauses].filter(c => c.fixed),
+            ].map((clause, idx, arr) => {
               const isExpanded = expandedClause === clause.id
               const isDragOver = dragOverId === clause.id
               return (
@@ -1240,13 +1243,13 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
                   key={clause.id}
                   draggable={!clause.fixed}
                   onDragStart={e => e.dataTransfer.setData('clauseId', clause.id)}
-                  onDragOver={e => { e.preventDefault(); setDragOverId(clause.id) }}
+                  onDragOver={e => { if (clause.fixed) return; e.preventDefault(); setDragOverId(clause.id) }}
                   onDragLeave={() => setDragOverId(null)}
                   onDrop={e => {
                     e.preventDefault()
                     setDragOverId(null)
                     const fromId = e.dataTransfer.getData('clauseId')
-                    if (fromId === clause.id) return
+                    if (fromId === clause.id || clause.fixed) return
                     setContractClauses(prev => {
                       const sorted = [...prev].sort((a, b) => a.order - b.order)
                       const fromIdx = sorted.findIndex(c => c.id === fromId)
