@@ -1154,7 +1154,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
 
   return (
     <div>
-      <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Shown on every estimate before the client signs." />
+      <SectionHeader kicker="BUSINESS" title="Contract" subtitle="Customize the terms and clauses shown on every signed contract." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
           <SectionLabel>Contract Defaults</SectionLabel>
