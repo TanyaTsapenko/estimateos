@@ -990,7 +990,21 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
   const [projectManager,           setProjectManager]           = useState('')
   const [completionTimeframe,      setCompletionTimeframe]      = useState('10-16 weeks from the date of signed contract')
   const [paymentMethods,           setPaymentMethods]           = useState<string[]>(['E-transfer', 'Cheque'])
-  const dirty = true
+  const [savedClauses,             setSavedClauses]             = useState('')
+  const [savedWarrantyPeriod,      setSavedWarrantyPeriod]      = useState('1 year')
+  const [savedDepositRequired,     setSavedDepositRequired]     = useState(true)
+  const [savedDepositPercent,      setSavedDepositPercent]      = useState(10)
+  const [savedCompletionTimeframe, setSavedCompletionTimeframe] = useState('10-16 weeks from the date of signed contract')
+  const [savedPaymentMethods,      setSavedPaymentMethods]      = useState<string[]>(['E-transfer', 'Cheque'])
+  const [savedProjectManager,      setSavedProjectManager]      = useState('')
+  const isDirty =
+    JSON.stringify(contractClauses) !== savedClauses ||
+    warrantyPeriod !== savedWarrantyPeriod ||
+    depositRequired !== savedDepositRequired ||
+    depositPercent !== savedDepositPercent ||
+    completionTimeframe !== savedCompletionTimeframe ||
+    JSON.stringify(paymentMethods) !== JSON.stringify(savedPaymentMethods) ||
+    projectManager !== savedProjectManager
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -1005,15 +1019,25 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       setUserId(sanitizedId)
       supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
-        if ((prof as any)?.warranty_period)     setWarrantyPeriod((prof as any).warranty_period)
-        if ((prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null) setDepositRequired((prof as any).deposit_required)
-        if ((prof as any)?.deposit_percent)     setDepositPercent((prof as any).deposit_percent)
-        if ((prof as any)?.project_manager != null)    setProjectManager((prof as any).project_manager)
-        if ((prof as any)?.completion_timeframe)       setCompletionTimeframe((prof as any).completion_timeframe)
-        if ((prof as any)?.payment_methods?.length)    setPaymentMethods((prof as any).payment_methods)
-        const savedClauses = (prof as any)?.contract_clauses
-        if (savedClauses) {
-          try { setContractClauses(JSON.parse(savedClauses)) } catch {}
+        const wp  = (prof as any)?.warranty_period     || '1 year'
+        const dr  = (prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null ? (prof as any).deposit_required : true
+        const dp  = (prof as any)?.deposit_percent     || 10
+        const pm  = (prof as any)?.project_manager     ?? ''
+        const ct  = (prof as any)?.completion_timeframe || '10-16 weeks from the date of signed contract'
+        const pms = (prof as any)?.payment_methods?.length ? (prof as any).payment_methods : ['E-transfer', 'Cheque']
+        setWarrantyPeriod(wp);      setSavedWarrantyPeriod(wp)
+        setDepositRequired(dr);     setSavedDepositRequired(dr)
+        setDepositPercent(dp);      setSavedDepositPercent(dp)
+        setProjectManager(pm);      setSavedProjectManager(pm)
+        setCompletionTimeframe(ct); setSavedCompletionTimeframe(ct)
+        setPaymentMethods(pms);     setSavedPaymentMethods(pms)
+        const rawClauses = (prof as any)?.contract_clauses
+        if (rawClauses) {
+          try {
+            const parsed = JSON.parse(rawClauses)
+            setContractClauses(parsed)
+            setSavedClauses(rawClauses)
+          } catch {}
         } else {
           const migrated = DEFAULT_CLAUSES.map(c => {
             if (c.id === 'cancellation' && (prof as any)?.cancellation_policy) return { ...c, content: (prof as any).cancellation_policy }
@@ -1023,6 +1047,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
             return c
           })
           setContractClauses(migrated)
+          setSavedClauses(JSON.stringify(migrated))
         }
       })
     })
@@ -1040,6 +1065,13 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       contract_clauses:     JSON.stringify(contractClauses),
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message); return }
+    setSavedWarrantyPeriod(warrantyPeriod)
+    setSavedDepositRequired(depositRequired)
+    setSavedDepositPercent(depositPercent)
+    setSavedProjectManager(projectManager)
+    setSavedCompletionTimeframe(completionTimeframe)
+    setSavedPaymentMethods([...paymentMethods])
+    setSavedClauses(JSON.stringify(contractClauses))
     flash('Saved')
   }
 
@@ -1379,7 +1411,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           )}
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
+      <SaveBar dirty={isDirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
       <ConfirmModal
         open={clauseToDelete !== null}
         icon="trash"
