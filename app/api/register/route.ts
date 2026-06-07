@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://useapexscale.com'
+  const baseUrl = 'https://useapexscale.com'
 
   // Create the user without triggering Supabase's own confirmation email
   const { error: createError } = await admin.auth.admin.createUser({

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
   const admin = createAdminClient()
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://useapexscale.com'
+  const baseUrl = 'https://useapexscale.com'
 
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
