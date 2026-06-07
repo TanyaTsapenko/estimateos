@@ -36,7 +36,20 @@ export async function GET(request: NextRequest) {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'id', ignoreDuplicates: false })
 
-      return NextResponse.redirect(new URL(next, origin))
+      // If `next` was explicitly set (e.g. password reset), honour it.
+      // Otherwise decide based on whether the user has completed onboarding.
+      if (next !== '/dashboard') {
+        return NextResponse.redirect(new URL(next, origin))
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_done')
+        .eq('id', data.user.id)
+        .single()
+
+      const destination = profile?.onboarding_done ? '/dashboard' : '/onboarding'
+      return NextResponse.redirect(new URL(destination, origin))
     }
   }
 
