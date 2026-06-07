@@ -57,21 +57,25 @@ export default function ConfirmedPage() {
       }
     })
 
-    // Fallback B: after 2 s, check again in case the hash was parsed late.
-    const timer = setTimeout(async () => {
-      if (finishedRef.current) return
+    // Fallback B: poll every 200 ms (up to 5 s) for Supabase to parse the hash.
+    let attempts = 0
+    const maxAttempts = 25
+    const interval = setInterval(async () => {
+      if (finishedRef.current) { clearInterval(interval); return }
+      attempts++
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
+        clearInterval(interval)
         finish(session.user.id, session.user.email, session.user.user_metadata)
-      } else {
-        // No session after 2 s — link likely expired or already used.
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval)
         router.replace('/auth?error=confirmation_expired')
       }
-    }, 2000)
+    }, 200)
 
     return () => {
       subscription.unsubscribe()
-      clearTimeout(timer)
+      clearInterval(interval)
     }
   }, [router])
 
