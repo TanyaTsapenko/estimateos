@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: 'signup',
     email,
-    options: { redirectTo: `${baseUrl}/auth/callback` },
+    options: { redirectTo: `${baseUrl}/auth/confirmed` },
   })
 
   if (linkError || !linkData?.properties?.action_link) {
