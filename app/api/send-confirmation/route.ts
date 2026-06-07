@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await admin.auth.admin.generateLink({
     type: 'magiclink',
     email,
-    options: { redirectTo: `${baseUrl}/auth/callback` },
+    options: { redirectTo: `${baseUrl}/auth/confirmed` },
   })
 
   if (error || !data?.properties?.action_link) {
