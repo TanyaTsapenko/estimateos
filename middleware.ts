@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const publicPaths = [
-    '/auth', '/landing', '/estimate', '/team/join', '/sign',
+    '/auth', '/estimate', '/team/join', '/sign',
     '/api/deposit-invoice', '/api/sign-contract',
     '/api/notify-contractor-signed', '/api/send-contract-signed',
     '/api/register', '/api/send-confirmation',
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
 
   if (!user && !isPublic) {
-    return NextResponse.redirect(new URL('/landing', request.url))
+    return NextResponse.redirect(new URL('/auth', request.url))
   }
   if (user && pathname === '/auth') {
     return NextResponse.redirect(new URL('/dashboard', request.url))

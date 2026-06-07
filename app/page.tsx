@@ -12,7 +12,7 @@ export default function RootPage() {
       if (session) {
         setTimeout(() => router.replace('/dashboard'), 2200)
       } else {
-        setTimeout(() => router.replace('/landing'), 2200)
+        setTimeout(() => router.replace('/auth'), 2200)
       }
     })
   }, [])
