@@ -38,28 +38,22 @@ export default function ConfirmedPage() {
       }
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          subscription.unsubscribe()
-          await finish(session.user.id, session.user.email, session.user.user_metadata)
-        }
-      }
-    )
+    const hash = window.location.hash
+    const params = new URLSearchParams(hash.replace('#', ''))
+    const access_token = params.get('access_token')
+    const refresh_token = params.get('refresh_token')
 
-    const timeout = setTimeout(async () => {
-      if (finishedRef.current) return
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        await finish(session.user.id, session.user.email, session.user.user_metadata)
-      } else {
-        router.replace('/auth?error=confirmation_expired')
-      }
-    }, 8000)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
+    if (access_token && refresh_token) {
+      supabase.auth.setSession({ access_token, refresh_token })
+        .then(async ({ data }) => {
+          if (data.session?.user) {
+            await finish(data.session.user.id, data.session.user.email, data.session.user.user_metadata)
+          } else {
+            router.replace('/auth?error=confirmation_expired')
+          }
+        })
+    } else {
+      router.replace('/auth?error=confirmation_expired')
     }
   }, [])
 
