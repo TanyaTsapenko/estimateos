@@ -30,6 +30,7 @@ interface Profile {
   city: string | null; province: string | null; address: string | null; postal_code: string | null
   contract_clauses: string | null
   deposit_timing: string | null
+  deposit_required: boolean | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -113,7 +114,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, deposit_required, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
@@ -242,7 +243,8 @@ export default function SignContractPage() {
     </div>
   )
 
-  const depositPct = contract?.deposit_percent ?? profile?.deposit_percent ?? 30
+  const depositPct = profile?.deposit_percent ?? contract?.deposit_percent ?? 10
+  const depositRequired = profile?.deposit_required !== false
   const depositAmt = Math.round((estimate?.total || 0) * depositPct / 100)
   const balanceAmt = (estimate?.total || 0) - depositAmt
   const contractorEmail = contract?.company_email
@@ -347,16 +349,18 @@ export default function SignContractPage() {
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
                 <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
               </div>
-              <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+              {depositRequired && (
+                <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
+                    <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                    <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -516,11 +520,11 @@ export default function SignContractPage() {
 
             {/* Combined card */}
             <div style={{ width: '100%', background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 14 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#1D4ED8', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
-
-              <div style={{ height: 1, background: '#F1F5F9', marginBottom: 16 }} />
+              {depositRequired && <>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#1D4ED8', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+                </>}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: estimate.client_email ? 10 : 0 }}>
                 <span style={{ fontSize: 12, color: '#94A3B8' }}>Status</span>
@@ -581,11 +585,13 @@ export default function SignContractPage() {
             </div>
 
             {/* Deposit card */}
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-              <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
-            </div>
+            {depositRequired && (
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
+                <div style={{ fontSize: 28, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+              </div>
+            )}
 
             {/* What happens next */}
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 24 }}>
@@ -690,16 +696,18 @@ export default function SignContractPage() {
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
                 <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
               </div>
-              <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+              {depositRequired && (
+                <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F4F4F2' }}>
+                    <span style={{ fontSize: 13, color: '#8892b0' }}>{profile?.deposit_timing === 'delivery' ? 'Deposit on delivery' : 'Deposit on signing'} ({depositPct}%)</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                    <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -759,27 +767,29 @@ export default function SignContractPage() {
           })()}
 
           {/* PAYMENT DETAILS */}
-          <div style={cardStyle}>
-            <CardHeader title="Payment Details" />
-            <div style={{ padding: '12px 16px' }}>
-              {(contract?.payment_method || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F4F4F2' }}>
-                  <span style={{ fontSize: 13, color: '#8892b0' }}>Payment method</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>
-                    {contract?.payment_method || profile?.payment_methods?.[0] || '—'}
-                  </span>
+          {depositRequired && (
+            <div style={cardStyle}>
+              <CardHeader title="Payment Details" />
+              <div style={{ padding: '12px 16px' }}>
+                {(contract?.payment_method || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F4F4F2' }}>
+                    <span style={{ fontSize: 13, color: '#8892b0' }}>Payment method</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>
+                      {contract?.payment_method || profile?.payment_methods?.[0] || '—'}
+                    </span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: depositRequired ? '1px solid #F4F4F2' : 'none' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F4F4F2' }}>
-                <span style={{ fontSize: 13, color: '#8892b0' }}>Deposit on signing ({depositPct}%)</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
-                <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(balanceAmt)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                  <span style={{ fontSize: 13, color: '#8892b0' }}>Balance on completion</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(balanceAmt)}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* SIGNATURES */}
           <div style={cardStyle}>
