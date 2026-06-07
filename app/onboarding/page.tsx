@@ -32,9 +32,26 @@ export default function OnboardingPage() {
   const [estimationMethod, setEstimationMethod] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [phoneError, setPhoneError] = useState('')
 
   const inputStyle = { width: '100%', background: '#fff', border: '0.5px solid #E5E7EB', borderRadius: 12, padding: '12px 14px', fontSize: 14, color: '#0A1628', marginBottom: 14, boxSizing: 'border-box' as const }
   const labelStyle = { fontSize: 11, fontWeight: 600, color: '#9CA3AF', letterSpacing: '0.07em', textTransform: 'uppercase' as const, marginBottom: 5, display: 'block' }
+
+  function formatPhone(raw: string) {
+    const digits = raw.replace(/\D/g, '').slice(0, 10)
+    if (digits.length < 4) return digits
+    if (digits.length < 7) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+  }
+
+  function handlePhoneChange(raw: string) {
+    setPhone(formatPhone(raw))
+    setPhoneError('')
+  }
+
+  function isValidPhone(val: string) {
+    return val.replace(/\D/g, '').length === 10
+  }
 
   async function handleFinish() {
     setLoading(true)
@@ -88,13 +105,23 @@ export default function OnboardingPage() {
             <label style={labelStyle}>Company name</label>
             <input style={inputStyle} value={company} onChange={e => setCompany(e.target.value)} placeholder="Northview Windows & Doors" />
             <label style={labelStyle}>Phone number</label>
-            <input style={inputStyle} type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(403) 555-0100" />
+            <input
+              style={{ ...inputStyle, marginBottom: phoneError ? 4 : 14, border: phoneError ? '1px solid #EF4444' : '0.5px solid #E5E7EB' }}
+              type="tel" value={phone} placeholder="(403) 555-0100"
+              onChange={e => handlePhoneChange(e.target.value)}
+              onBlur={() => { if (phone && !isValidPhone(phone)) setPhoneError('Please enter a valid Canadian phone number') }}
+              maxLength={14}
+            />
+            {phoneError && <p style={{ color: '#EF4444', fontSize: 12, margin: '0 0 14px' }}>{phoneError}</p>}
             <label style={labelStyle}>Province</label>
             <select style={{ ...inputStyle, appearance: 'none' }} value={province} onChange={e => setProvince(e.target.value)}>
               <option value="">Select province</option>
               {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
-            <button onClick={() => setStep(2)} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
+            <button onClick={() => {
+              if (phone && !isValidPhone(phone)) { setPhoneError('Please enter a valid Canadian phone number'); return }
+              setStep(2)
+            }} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
               Continue
             </button>
           </>
