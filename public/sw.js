@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estimateos-v14';
+const CACHE_NAME = 'apexscale-v2-2026-06-07';
 
 self.addEventListener('install', () => self.skipWaiting());
 
