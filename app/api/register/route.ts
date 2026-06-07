@@ -37,6 +37,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: linkError?.message || 'Failed to generate link' }, { status: 500 })
   }
 
+  console.log('[register] redirectTo sent to generateLink:', `${baseUrl}/auth/callback`)
+  console.log('[register] action_link generated:', linkData.properties.action_link)
+
   const { error: emailError } = await resend.emails.send({
     from: 'ApexScale <noreply@useapexscale.com>',
     to: [email],
