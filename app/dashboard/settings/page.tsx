@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
@@ -1552,8 +1552,12 @@ const SECTIONS: Record<SectionId, (props: { flash: (m: string) => void }) => Rea
 // ── MAIN PAGE ────────────────────────────────────
 export default function SettingsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
-  const [active, setActive] = useState<SectionId>('profile')
+  const [active, setActive] = useState<SectionId>(() => {
+    const s = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('section') : null
+    return (s as SectionId) || 'profile'
+  })
   const [toast, setToast] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
