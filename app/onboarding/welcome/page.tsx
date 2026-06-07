@@ -9,19 +9,19 @@ const SETUP_ROWS = [
     icon: List,
     title: 'Price list',
     sub: 'Add your services and pricing',
-    href: '/dashboard/settings/price-list',
+    href: '/dashboard/settings#price',
   },
   {
     icon: FileText,
     title: 'Contract clauses',
     sub: 'Customize your contract terms',
-    href: '/dashboard/settings/contract',
+    href: '/dashboard/settings#contract',
   },
   {
     icon: Building2,
     title: 'Company settings',
     sub: 'Logo, address, payment details',
-    href: '/dashboard/settings/company',
+    href: '/dashboard/settings#company',
   },
 ]
 
