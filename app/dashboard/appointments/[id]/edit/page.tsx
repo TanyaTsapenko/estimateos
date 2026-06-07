@@ -309,13 +309,6 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           <div style={secHdr}>Details</div>
           <div style={card}>
             <div>
-              <label style={fldLbl}>Status</label>
-              <select style={selStyle} value={form.status} onChange={e => set('status', e.target.value)}>
-                {STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
-              </select>
-            </div>
-
-            <div>
               <label style={fldLbl}>Assigned to</label>
               {teamMembers.length >= 2 ? (
                 <select style={selStyle} value={form.assigned_to} onChange={e => set('assigned_to', e.target.value)}>
