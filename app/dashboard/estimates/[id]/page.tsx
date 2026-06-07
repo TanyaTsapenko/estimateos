@@ -193,7 +193,7 @@ export default function EstimateDetailPage() {
   // ── LOADING ──────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
+      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
         <button onClick={() => router.push('/dashboard/estimates')}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
           <ArrowLeft size={15} strokeWidth={2} /> Estimates
@@ -208,7 +208,7 @@ export default function EstimateDetailPage() {
   // ── NOT FOUND ────────────────────────────────────────
   if (!estimate) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
+      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
         <button onClick={() => router.push('/dashboard/estimates')}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
           <ArrowLeft size={15} strokeWidth={2} /> Estimates
@@ -270,7 +270,7 @@ export default function EstimateDetailPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
-      <div style={{
+      <div className="page-hd" style={{
         background: '#fff', borderBottom: '1px solid #EEF0F4',
         padding: '14px 28px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

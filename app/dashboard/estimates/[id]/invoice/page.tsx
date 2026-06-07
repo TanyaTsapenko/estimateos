@@ -144,7 +144,7 @@ export default function CreateInvoicePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
       {/* TOPBAR */}
-      <div style={{
+      <div className="page-hd" style={{
         background: '#fff',
         borderBottom: '1px solid #EEF0F4',
         padding: '16px 20px',
@@ -328,7 +328,7 @@ export default function CreateInvoicePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
       {/* TOPBAR */}
-      <div style={{
+      <div className="page-hd" style={{
         background: '#fff',
         borderBottom: '1px solid #EEF0F4',
         padding: '16px 28px',

@@ -180,7 +180,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
         WebkitFontSmoothing: 'antialiased',
       }}>
         {/* Top bar */}
-        <div style={{
+        <div className="page-hd" style={{
           background: T.card, borderBottom: `1px solid ${T.border}`,
           padding: '16px 20px',
           paddingTop: 'max(60px, calc(env(safe-area-inset-top) + 16px))',

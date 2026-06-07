@@ -703,28 +703,35 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   .sidebar-container { display: none !important; }
 }
 
-/* ── MOBILE SIDEBAR HAMBURGER TRIGGER ── */
-.mobile-sidebar-trigger {
+/* ── MOBILE TOP BAR ── */
+.mobile-topbar {
   position: fixed;
-  top: max(16px, calc(env(safe-area-inset-top) + 12px));
-  left: 16px;
+  top: 0; left: 0; right: 0;
   z-index: 60;
+  height: calc(env(safe-area-inset-top) + 52px);
+  padding-top: env(safe-area-inset-top);
+  background: #0A1628;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.92);
+}
+.mobile-topbar-btn {
+  position: absolute;
+  left: 12px;
+  bottom: 7px;
+  background: rgba(255,255,255,0.1);
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   width: 38px;
   height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: #0A1628;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  color: rgba(255,255,255,0.85);
 }
 @media (min-width: 768px) {
-  .mobile-sidebar-trigger { display: none !important; }
+  .mobile-topbar { display: none !important; }
 }
 
 /* ── MOBILE (< 768px) ─────────────────────────────── */
@@ -732,8 +739,11 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   /* App shell: single column */
   .app-shell { flex-direction: column; }
 
-  /* Main content: full width */
-  .main-content { margin-left: 0 !important; width: 100% !important; }
+  /* Main content: full width + offset for fixed top bar */
+  .main-content { margin-left: 0 !important; width: 100% !important; padding-top: calc(env(safe-area-inset-top) + 52px); }
+
+  /* Page sticky headers: stick just below the mobile top bar */
+  .page-hd { top: calc(env(safe-area-inset-top) + 52px) !important; padding-top: 14px !important; }
 
   /* Dashboard page */
   .dash-bg { padding: 12px 16px 90px; border-radius: 0; margin-top: 0; }

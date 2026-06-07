@@ -96,7 +96,7 @@ export default function PaymentSetupPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
 
       {/* Topbar */}
-      <div style={{
+      <div className="page-hd" style={{
         background: '#fff', borderBottom: '1px solid #EEF0F4',
         padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12,
         position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10,

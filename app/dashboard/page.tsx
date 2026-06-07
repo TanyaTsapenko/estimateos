@@ -454,8 +454,8 @@ export default function DashboardPage() {
           <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
 
           {/* Welcome row */}
-          <div style={{ padding: 'max(20px, calc(env(safe-area-inset-top) + 16px)) 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-            <div style={{ paddingLeft: 52 }}>
+          <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+            <div>
               {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>

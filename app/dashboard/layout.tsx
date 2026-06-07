@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import BottomTabBar from '@/components/BottomTabBar'
 import MobileSidebar from '@/components/MobileSidebar'
+import MobileTopBar from '@/components/MobileTopBar'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -22,6 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Sidebar />
       </div>
       <div className="main-content">{children}</div>
+      <MobileTopBar />
       <BottomTabBar />
       <MobileSidebar />
     </div>

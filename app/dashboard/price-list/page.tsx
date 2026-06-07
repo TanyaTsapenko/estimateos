@@ -501,7 +501,7 @@ export default function PriceListPage() {
       <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
 
         {/* ── TOPBAR ── */}
-        <div style={{
+        <div className="page-hd" style={{
           background: '#fff', borderBottom: '1px solid #EEF0F4',
           padding: '16px 20px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',

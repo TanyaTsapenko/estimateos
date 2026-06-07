@@ -360,7 +360,7 @@ export default function ContractPage() {
       <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
 
         {/* HEADER */}
-        <div style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+        <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 10, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
           <button onClick={() => router.back()}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#2045B8', fontWeight: 600, fontSize: 14, fontFamily: F, display: 'flex', alignItems: 'center', gap: 5, padding: 0 }}>
             ← Estimate

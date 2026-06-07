@@ -119,7 +119,7 @@ export default function ClientsPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
-      <div style={{
+      <div className="page-hd" style={{
         background: '#fff',
         borderBottom: '1px solid #EEF0F4',
         padding: '16px 28px',

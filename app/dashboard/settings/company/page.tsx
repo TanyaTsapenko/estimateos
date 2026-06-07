@@ -177,7 +177,7 @@ export default function CompanySettingsPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
       {/* Back header */}
-      <div style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
+      <div className="page-hd" style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => router.push('/dashboard/settings')}

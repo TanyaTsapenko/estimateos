@@ -42,6 +42,12 @@ export default function MobileSidebar() {
 
   useEffect(() => { setOpen(false) }, [pathname])
 
+  useEffect(() => {
+    function handleOpen() { setOpen(true) }
+    window.addEventListener('open-mobile-sidebar', handleOpen)
+    return () => window.removeEventListener('open-mobile-sidebar', handleOpen)
+  }, [])
+
   const parts   = name.trim().split(/\s+/).filter(Boolean)
   const initials = parts.length >= 2
     ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
@@ -84,19 +90,6 @@ export default function MobileSidebar() {
 
   return (
     <>
-      {/* Hamburger trigger — hidden on desktop via CSS */}
-      <button
-        onClick={() => setOpen(true)}
-        className="mobile-sidebar-trigger"
-        aria-label="Open navigation"
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <rect x="1" y="3.5"  width="18" height="2" rx="1" fill="currentColor" />
-          <rect x="1" y="9"    width="18" height="2" rx="1" fill="currentColor" />
-          <rect x="1" y="14.5" width="18" height="2" rx="1" fill="currentColor" />
-        </svg>
-      </button>
-
       {/* Overlay */}
       {open && (
         <div

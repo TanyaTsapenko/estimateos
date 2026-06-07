@@ -9,9 +9,9 @@ export default function PdfViewerPage() {
   const label = searchParams.get('label') ?? 'Document'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', background: '#1a1a1a', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - env(safe-area-inset-top) - 52px)', background: '#1a1a1a', fontFamily: 'Inter, sans-serif' }}>
       {/* Header */}
-      <div style={{
+      <div className="page-hd" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: 'max(48px, calc(env(safe-area-inset-top) + 12px)) 16px 12px',
         background: '#111', flexShrink: 0,
