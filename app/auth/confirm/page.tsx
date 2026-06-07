@@ -1,13 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 const F = 'system-ui, -apple-system, sans-serif'
 
 export default function ConfirmPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [email, setEmail]       = useState('')
   const [resending, setResending] = useState(false)
   const [resent, setResent]     = useState(false)
@@ -19,7 +17,11 @@ export default function ConfirmPage() {
   async function handleResend() {
     if (!email || resending) return
     setResending(true)
-    await supabase.auth.resend({ type: 'signup', email })
+    await fetch('/api/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
     setResending(false)
     setResent(true)
     setTimeout(() => setResent(false), 4000)
