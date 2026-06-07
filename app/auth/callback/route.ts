@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash,
-      type: type as Parameters<typeof supabase.auth.verifyOtp>[0]['type'],
+      type: 'email',
     })
     if (!error && data.user) {
       await supabase.from('profiles').upsert({
