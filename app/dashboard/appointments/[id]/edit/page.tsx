@@ -293,7 +293,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
             <div style={{ minWidth: 0 }}>
               <label style={fldLbl}>Date</label>
               <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
-                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', WebkitAppearance: 'none', appearance: 'none', color: form.appointment_date ? '#0A1628' : '#9CA3AF' }} />
             </div>
             <div style={{ minWidth: 0 }}>
               <label style={fldLbl}>Time</label>
