@@ -9,7 +9,7 @@ const SETUP_ROWS = [
     icon: List,
     title: 'Price list',
     sub: 'Add your services and pricing',
-    href: '/dashboard/settings#price',
+    href: '/dashboard/price-list',
   },
   {
     icon: FileText,
