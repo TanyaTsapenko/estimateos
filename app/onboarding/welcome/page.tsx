@@ -42,9 +42,12 @@ export default function WelcomePage() {
 
       {/* BODY */}
       <div style={{ background: '#F8F9FB', padding: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 12 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 6 }}>
           Set up your business
         </div>
+        <p style={{ fontSize: 13, color: '#6B7280', marginBottom: 14 }}>
+          Complete these in Settings before your first estimate:
+        </p>
 
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #E5E7EB', overflow: 'hidden', marginBottom: 24 }}>
           {SETUP_ROWS.map(({ icon: Icon, title, sub }, i) => (
