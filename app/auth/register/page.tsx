@@ -73,7 +73,8 @@ export default function RegisterPage() {
       options: { data: { first_name: firstName, last_name: lastName } },
     })
     if (e) { setError(e.message); setLoading(false); return }
-    router.push('/onboarding')
+    localStorage.setItem('confirm_email', email.trim())
+    router.push('/auth/confirm')
   }
 
   async function handleGoogle() {

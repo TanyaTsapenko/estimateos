@@ -37,6 +37,9 @@ export async function middleware(request: NextRequest) {
   if (user && pathname === '/auth') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
+  if (user && !user.email_confirmed_at && pathname.startsWith('/dashboard')) {
+    return NextResponse.redirect(new URL('/auth/confirm', request.url))
+  }
 
   return supabaseResponse
 }
