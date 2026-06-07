@@ -94,7 +94,7 @@ export default function OnboardingPage() {
         <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 6 }}>Step {step} of 3</div>
         <div style={{ fontSize: 26, fontWeight: 800, color: '#0A1628', lineHeight: 1.1, letterSpacing: '-0.6px' }}>
           {step === 1 ? <>Tell us about your <span style={{ color: '#2563EB' }}>company.</span></>
-          : step === 2 ? <>What&apos;s your <span style={{ color: '#2563EB' }}>trade?</span></>
+          : step === 2 ? <>Your <span style={{ color: '#2563EB' }}>specialty.</span></>
           : <>How do you currently <span style={{ color: '#2563EB' }}>estimate?</span></>}
         </div>
       </div>
