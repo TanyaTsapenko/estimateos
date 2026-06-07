@@ -139,6 +139,9 @@ export default function OnboardingPage() {
             <button onClick={() => { if (!trade) { setError('Please select your trade'); return } setStep(3) }} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
               Continue
             </button>
+            <button onClick={() => { setError(''); setStep(1) }} style={{ width: '100%', background: 'transparent', border: '0.5px solid #E5E7EB', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 600, color: '#6B7280', cursor: 'pointer', marginTop: 10 }}>
+              Back
+            </button>
           </>
         ) : (
           <>
@@ -156,6 +159,9 @@ export default function OnboardingPage() {
             </div>
             <button onClick={handleFinish} disabled={loading} style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: loading ? 0.7 : 1 }}>
               {loading ? 'Saving...' : 'Finish setup'}
+            </button>
+            <button onClick={() => setStep(2)} style={{ width: '100%', background: 'transparent', border: '0.5px solid #E5E7EB', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 600, color: '#6B7280', cursor: 'pointer', marginTop: 10 }}>
+              Back
             </button>
           </>
         )}
