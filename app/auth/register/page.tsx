@@ -68,20 +68,13 @@ export default function RegisterPage() {
     if (!isValidPassword(password))     { setPwError('Password must be at least 8 characters'); return }
     if (!agreed)                        return setError('Please agree to the Terms and Privacy Policy')
     setLoading(true)
-    const { data: signUpData, error: e } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { first_name: firstName, last_name: lastName } },
+    const res = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password, first_name: firstName, last_name: lastName }),
     })
-    if (e) { setError(e.message); setLoading(false); return }
-
-    // Send branded confirmation email if email not yet confirmed
-    if (signUpData.user && !signUpData.user.email_confirmed_at) {
-      await fetch('/api/send-confirmation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-    }
+    const json = await res.json()
+    if (!res.ok) { setError(json.error || 'Registration failed. Please try again.'); setLoading(false); return }
 
     localStorage.setItem('confirm_email', email.trim())
     router.push('/auth/confirm')
