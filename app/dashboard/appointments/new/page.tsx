@@ -97,8 +97,42 @@ export default function NewAppointmentPage() {
     if (!user) { router.push('/auth'); return }
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
+    // Resolve team owner ID so all team members share the same client list
+    let ownerId = sanitizedId
+    try {
+      const { data: prof } = await supabase
+        .from('profiles').select('team_owner_id').eq('id', sanitizedId).single()
+      if (prof?.team_owner_id) ownerId = prof.team_owner_id
+    } catch {}
+
+    // Find-or-create client record
+    let clientId: string | null = null
+    try {
+      const phone = form.client_phone.trim() || null
+      if (phone) {
+        const { data: existing } = await supabase
+          .from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
+        clientId = existing?.id ?? null
+      }
+      if (!clientId) {
+        const { data: created } = await supabase
+          .from('clients').insert({
+            owner_id:    ownerId,
+            name:        form.client_name.trim(),
+            phone:       form.client_phone.trim() || null,
+            email:       form.client_email.trim() || null,
+            address:     form.client_address.trim() || null,
+            city:        form.client_city.trim() || null,
+            province:    form.client_province || null,
+            postal_code: form.postal_code.trim() || null,
+          }).select('id').maybeSingle()
+        clientId = created?.id ?? null
+      }
+    } catch {}
+
     const { error: e } = await supabase.from('appointments').insert({
       user_id: sanitizedId,
+      client_id: clientId,
       client_name: form.client_name.trim(),
       client_phone: form.client_phone.trim() || null,
       client_email: form.client_email.trim() || null,
