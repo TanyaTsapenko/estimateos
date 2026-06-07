@@ -65,6 +65,7 @@ export default function OnboardingPage() {
       province,
       trade,
       estimation_method: estimationMethod,
+      onboarding_done: true,
       updated_at: new Date().toISOString()
     }, { onConflict: 'id' })
     setLoading(false)
