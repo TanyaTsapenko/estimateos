@@ -15,13 +15,13 @@ const SETUP_ROWS = [
     icon: FileText,
     title: 'Contract clauses',
     sub: 'Customize your contract terms',
-    href: '/dashboard/settings?section=contract',
+    href: '/dashboard/settings/contract',
   },
   {
     icon: Building2,
     title: 'Company settings',
     sub: 'Logo, address, payment details',
-    href: '/dashboard/settings?section=company',
+    href: '/dashboard/settings/company',
   },
 ]
 
