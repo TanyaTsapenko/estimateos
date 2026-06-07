@@ -2,27 +2,13 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Rocket, List, FileText, Building2, ChevronRight } from 'lucide-react'
+import { Rocket, List, FileText, Building2, Users } from 'lucide-react'
 
 const SETUP_ROWS = [
-  {
-    icon: List,
-    title: 'Price list',
-    sub: 'Add your services and pricing',
-    href: '/dashboard/price-list',
-  },
-  {
-    icon: FileText,
-    title: 'Contract clauses',
-    sub: 'Customize your contract terms',
-    href: '/dashboard/settings/contract',
-  },
-  {
-    icon: Building2,
-    title: 'Company settings',
-    sub: 'Logo, address, payment details',
-    href: '/dashboard/settings/company',
-  },
+  { icon: Building2, title: 'Company',    sub: 'Logo, address, defaults' },
+  { icon: Users,     title: 'Team',       sub: 'Invite your team members' },
+  { icon: FileText,  title: 'Contract',   sub: 'Terms template' },
+  { icon: List,      title: 'Price list', sub: 'Opening types & rates' },
 ]
 
 export default function WelcomePage() {
@@ -61,24 +47,22 @@ export default function WelcomePage() {
         </div>
 
         <div style={{ background: '#fff', borderRadius: 16, border: '0.5px solid #E5E7EB', overflow: 'hidden', marginBottom: 24 }}>
-          {SETUP_ROWS.map(({ icon: Icon, title, sub, href }, i) => (
+          {SETUP_ROWS.map(({ icon: Icon, title, sub }, i) => (
             <div
-              key={href}
-              onClick={() => router.push(href)}
+              key={title}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 16px', cursor: 'pointer',
+                padding: '14px 16px',
                 borderBottom: i < SETUP_ROWS.length - 1 ? '0.5px solid #F3F4F6' : 'none',
               }}
             >
               <div style={{ width: 36, height: 36, background: '#EFF6FF', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Icon size={17} color="#2563EB" />
               </div>
-              <div style={{ flex: 1 }}>
+              <div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', marginBottom: 2 }}>{title}</div>
                 <div style={{ fontSize: 12, color: '#6B7280' }}>{sub}</div>
               </div>
-              <ChevronRight size={16} color="#D1D5DB" />
             </div>
           ))}
         </div>
