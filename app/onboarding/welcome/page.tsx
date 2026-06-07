@@ -76,9 +76,6 @@ export default function WelcomePage() {
         >
           Go to dashboard
         </button>
-        <p style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginTop: 14 }}>
-          You can always update these in Settings
-        </p>
       </div>
     </div>
   )
