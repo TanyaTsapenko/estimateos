@@ -8,7 +8,7 @@ import { ApexScaleLogo } from './ApexScaleLogo'
 const MAIN_ITEMS = [
   { path: '/dashboard',            label: 'Home',      Icon: Home,     exact: true  },
   { path: '/dashboard/schedule',   label: 'Schedule',  Icon: Calendar, exact: false },
-  { path: '/dashboard/clients',    label: 'Clients',   Icon: Users,    exact: false, badge: 'New' },
+  { path: '/dashboard/clients',    label: 'Clients',   Icon: Users,    exact: false },
   { path: '/dashboard/estimates',  label: 'Estimates', Icon: FileText, exact: false },
   { path: '/dashboard/invoices',   label: 'Invoices',  Icon: Receipt,  exact: false },
 ]

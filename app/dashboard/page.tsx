@@ -196,16 +196,18 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-    supabase.from('profiles').select('pricing_mode, company_name').eq('id', sanitizedId).single().then(({ data: prof }) => {
+    supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name').eq('id', sanitizedId).single().then(({ data: prof }) => {
       if (prof) {
         setPricingMode((prof as any).pricing_mode || 'single')
         setCompanyName((prof as any).company_name || '')
+        const full = [prof.first_name, prof.last_name].filter(Boolean).join(' ')
+        if (full) { setUserName(full); return }
       }
+      const meta = user.user_metadata
+      if (meta?.full_name) setUserName(meta.full_name)
+      else if (meta?.name) setUserName(meta.name)
+      else if (user.email) setUserName(user.email.split('@')[0])
     })
-    const meta = user.user_metadata
-    if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
-    else if (meta?.name) setUserName(meta.name.split(' ')[0])
-    else if (user.email) setUserName(user.email.split('@')[0])
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
@@ -453,7 +455,7 @@ export default function DashboardPage() {
 
           {/* Welcome row */}
           <div style={{ padding: 'max(20px, calc(env(safe-area-inset-top) + 16px)) 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
-            <div>
+            <div style={{ paddingLeft: 52 }}>
               {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
