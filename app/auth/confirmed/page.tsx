@@ -5,56 +5,74 @@ import { createBrowserClient } from '@supabase/ssr'
 
 export default function ConfirmedPage() {
   const router = useRouter()
-  const handled = useRef(false)
+  const finishedRef = useRef(false)
 
   useEffect(() => {
-    if (handled.current) return
-    handled.current = true
-
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
     async function finish(userId: string, email: string | undefined, meta: Record<string, unknown>) {
-      await supabase.from('profiles').upsert({
-        id: userId,
-        email,
-        first_name: (meta?.first_name as string) ?? null,
-        last_name:  (meta?.last_name as string) ?? null,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id', ignoreDuplicates: false })
+      if (finishedRef.current) return
+      finishedRef.current = true
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_done')
-        .eq('id', userId)
-        .single()
+      try {
+        await supabase.from('profiles').upsert({
+          id: userId,
+          email,
+          first_name: (meta?.first_name as string) ?? null,
+          last_name:  (meta?.last_name as string) ?? null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id', ignoreDuplicates: false })
 
-      router.replace(profile?.onboarding_done ? '/dashboard' : '/onboarding')
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_done')
+          .eq('id', userId)
+          .single()
+
+        router.replace(profile?.onboarding_done ? '/dashboard' : '/onboarding')
+      } catch {
+        // If anything fails, send to onboarding — safer than staying stuck
+        router.replace('/onboarding')
+      }
     }
 
-    // onAuthStateChange fires immediately with SIGNED_IN when the hash fragment
-    // is present — createBrowserClient with detectSessionInUrl:true (default)
-    // parses it automatically.
+    // Primary: onAuthStateChange fires with SIGNED_IN once the hash fragment
+    // is parsed by createBrowserClient (detectSessionInUrl: true by default).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          subscription.unsubscribe()
-          await finish(session.user.id, session.user.email, session.user.user_metadata)
+          finish(session.user.id, session.user.email, session.user.user_metadata)
         }
       }
     )
 
-    // Fallback: if the session is already set (e.g. page refreshed after sign-in)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Fallback A: session may already exist if the page was refreshed or
+    // Supabase parsed the hash before the listener was registered.
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        subscription.unsubscribe()
-        await finish(session.user.id, session.user.email, session.user.user_metadata)
+        finish(session.user.id, session.user.email, session.user.user_metadata)
       }
     })
 
-    return () => subscription.unsubscribe()
+    // Fallback B: after 2 s, check again in case the hash was parsed late.
+    const timer = setTimeout(async () => {
+      if (finishedRef.current) return
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        finish(session.user.id, session.user.email, session.user.user_metadata)
+      } else {
+        // No session after 2 s — link likely expired or already used.
+        router.replace('/auth?error=confirmation_expired')
+      }
+    }, 2000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timer)
+    }
   }, [router])
 
   return (
