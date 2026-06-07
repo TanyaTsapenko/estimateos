@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
 
   // Generate a magic link — clicking it logs the user in and confirms their email
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-    type: 'magiclink',
+    type: 'signup',
     email,
-    options: { redirectTo: `${baseUrl}/auth/confirmed` },
+    options: { redirectTo: `${baseUrl}/auth/callback` },
   })
 
   if (linkError || !linkData?.properties?.action_link) {

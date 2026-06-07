@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
   const baseUrl = 'https://useapexscale.com'
 
   const { data, error } = await admin.auth.admin.generateLink({
-    type: 'magiclink',
+    type: 'signup',
     email,
-    options: { redirectTo: `${baseUrl}/auth/confirmed` },
+    options: { redirectTo: `${baseUrl}/auth/callback` },
   })
 
   if (error || !data?.properties?.action_link) {
