@@ -58,6 +58,8 @@ export default function RegisterPage() {
   const [emailError, setEmailError]   = useState('')
   const [pwError, setPwError]         = useState('')
 
+  const canSubmit = !loading && firstName.trim().length > 0 && isValidEmail(email) && isValidPassword(password) && agreed
+
   async function handleRegister() {
     setError(''); setEmailError(''); setPwError('')
     if (!firstName.trim())              return setError('First name is required')
@@ -168,12 +170,12 @@ export default function RegisterPage() {
         {error && <p style={{ color: '#EF4444', fontSize: 13, marginBottom: 14 }}>{error}</p>}
 
         <button
-          onClick={handleRegister} disabled={loading}
+          onClick={handleRegister} disabled={!canSubmit}
           style={{
             width: '100%', height: 52, borderRadius: 12, border: 'none',
-            background: loading ? '#93C5FD' : '#2563EB', color: '#fff',
-            fontSize: 15, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer',
-            fontFamily: F, boxShadow: '0 4px 14px rgba(37,99,235,0.28)',
+            background: canSubmit ? '#2563EB' : '#93C5FD', color: '#fff',
+            fontSize: 15, fontWeight: 700, cursor: canSubmit ? 'pointer' : 'not-allowed',
+            fontFamily: F, boxShadow: canSubmit ? '0 4px 14px rgba(37,99,235,0.28)' : 'none',
           }}
         >
           {loading ? 'Creating account…' : 'Create account →'}
