@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apexscale-v2-2026-06-07';
+const CACHE_NAME = 'apexscale-v3-2026-06-07';
 
 self.addEventListener('install', () => self.skipWaiting());
 
@@ -16,5 +16,11 @@ self.addEventListener('message', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // Never cache auth routes — always hit the network so tokens/redirects are fresh
+  if (url.pathname.startsWith('/auth')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   event.respondWith(fetch(event.request));
 });
