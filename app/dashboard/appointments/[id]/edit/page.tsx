@@ -289,13 +289,13 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
           {/* WHEN */}
           <div style={secHdr}>When</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
               <label style={fldLbl}>Date</label>
               <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
                 style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <label style={fldLbl}>Time</label>
               <TimePickerDropdown
                 value={form.appointment_time}
