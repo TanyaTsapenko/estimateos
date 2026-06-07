@@ -172,6 +172,7 @@ function getTodayStr() {
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
+  const [companyName, setCompanyName] = useState('')
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [metrics, setMetrics] = useState<Metrics | null>(null)
   const [attention, setAttention] = useState<AttentionItem[]>([])
@@ -195,8 +196,11 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-    supabase.from('profiles').select('pricing_mode').eq('id', sanitizedId).single().then(({ data: prof }) => {
-      if (prof) setPricingMode((prof as any).pricing_mode || 'single')
+    supabase.from('profiles').select('pricing_mode, company_name').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      if (prof) {
+        setPricingMode((prof as any).pricing_mode || 'single')
+        setCompanyName((prof as any).company_name || '')
+      }
     })
     const meta = user.user_metadata
     if (meta?.full_name) setUserName(meta.full_name.split(' ')[0])
@@ -418,7 +422,7 @@ export default function DashboardPage() {
           position: 'sticky', top: 0, zIndex: 10,
         }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>WELCOME BACK</div>
+            {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>{companyName}</div>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
               <span style={{ color: '#CBD5E1' }}>·</span>
@@ -450,7 +454,7 @@ export default function DashboardPage() {
           {/* Welcome row */}
           <div style={{ padding: 'max(20px, calc(env(safe-area-inset-top) + 16px)) 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Welcome back</div>
+              {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
           </div>
