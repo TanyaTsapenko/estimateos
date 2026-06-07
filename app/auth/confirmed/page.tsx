@@ -34,50 +34,34 @@ export default function ConfirmedPage() {
 
         router.replace(profile?.onboarding_done ? '/dashboard' : '/onboarding')
       } catch {
-        // If anything fails, send to onboarding — safer than staying stuck
         router.replace('/onboarding')
       }
     }
 
-    // Primary: onAuthStateChange fires with SIGNED_IN once the hash fragment
-    // is parsed by createBrowserClient (detectSessionInUrl: true by default).
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          finish(session.user.id, session.user.email, session.user.user_metadata)
+          subscription.unsubscribe()
+          await finish(session.user.id, session.user.email, session.user.user_metadata)
         }
       }
     )
 
-    // Fallback A: session may already exist if the page was refreshed or
-    // Supabase parsed the hash before the listener was registered.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        finish(session.user.id, session.user.email, session.user.user_metadata)
-      }
-    })
-
-    // Fallback B: poll every 200 ms (up to 5 s) for Supabase to parse the hash.
-    let attempts = 0
-    const maxAttempts = 25
-    const interval = setInterval(async () => {
-      if (finishedRef.current) { clearInterval(interval); return }
-      attempts++
+    const timeout = setTimeout(async () => {
+      if (finishedRef.current) return
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
-        clearInterval(interval)
-        finish(session.user.id, session.user.email, session.user.user_metadata)
-      } else if (attempts >= maxAttempts) {
-        clearInterval(interval)
+        await finish(session.user.id, session.user.email, session.user.user_metadata)
+      } else {
         router.replace('/auth?error=confirmation_expired')
       }
-    }, 200)
+    }, 8000)
 
     return () => {
       subscription.unsubscribe()
-      clearInterval(interval)
+      clearTimeout(timeout)
     }
-  }, [router])
+  }, [])
 
   return (
     <div style={{
