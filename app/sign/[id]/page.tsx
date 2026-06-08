@@ -70,50 +70,52 @@ export default function PublicSignPage() {
   }
 
   async function submitSignature() {
+    if (saving) return
     if (!hasSignature) { setError('Please sign above'); return }
     const canvas = canvasRef.current; if (!canvas || !estimate) return
     setSaving(true); setError('')
+    try {
+      const dataUrl = canvas.toDataURL('image/png')
+      const blob = await (await fetch(dataUrl)).blob()
+      const sigPath = `${id}/sig-${Date.now()}.png`
 
-    const dataUrl = canvas.toDataURL('image/png')
-    const blob = await (await fetch(dataUrl)).blob()
-    const sigPath = `${id}/sig-${Date.now()}.png`
+      let sigUrl = ''
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const { error: upErr } = await supabase.storage.from('signatures').upload(sigPath, blob, { contentType: 'image/png' })
+        if (!upErr) {
+          sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
+          break
+        }
+        if (attempt === 3) {
+          setError('Failed to save signature. Please try again.')
+          return
+        }
+        await new Promise(r => setTimeout(r, 1000))
+      }
 
-    let sigUrl = ''
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const { error: upErr } = await supabase.storage.from('signatures').upload(sigPath, blob, { contentType: 'image/png' })
-      if (!upErr) {
-        sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
-        break
-      }
-      if (attempt === 3) {
-        setError('Failed to save signature. Please try again.')
-        setSaving(false)
-        return
-      }
-      await new Promise(r => setTimeout(r, 1000))
+      const { error: updateErr } = await supabase.from('estimates').update({
+        status: 'signed',
+        signed_at: new Date().toISOString(),
+        client_signature_url: sigUrl,
+      }).eq('id', id)
+
+      if (updateErr) { setError(updateErr.message); return }
+
+      await supabase.from('notifications').insert({
+        user_id: estimate.user_id,
+        type:    'estimate_signed',
+        title:   'Estimate signed',
+        body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
+        read:    false,
+        link:    `/dashboard/estimates/${estimate.id}`,
+      })
+
+      await fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' }, body: JSON.stringify({ estimateId: id }) })
+
+      setDone(true)
+    } finally {
+      setSaving(false)
     }
-
-    const { error: updateErr } = await supabase.from('estimates').update({
-      status: 'signed',
-      signed_at: new Date().toISOString(),
-      client_signature_url: sigUrl,
-    }).eq('id', id)
-
-    if (updateErr) { setError(updateErr.message); setSaving(false); return }
-
-    await supabase.from('notifications').insert({
-      user_id: estimate.user_id,
-      type:    'estimate_signed',
-      title:   'Estimate signed',
-      body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
-      read:    false,
-      link:    `/dashboard/estimates/${estimate.id}`,
-    })
-
-    await fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' }, body: JSON.stringify({ estimateId: id }) })
-
-    setDone(true)
-    setSaving(false)
   }
 
   async function handleDecline() {
@@ -135,6 +137,23 @@ export default function PublicSignPage() {
   if (!estimate) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
       <div style={{ fontSize: 13, color: '#94A3B8' }}>Loading…</div>
+    </div>
+  )
+
+  if (estimate.status === 'signed' || estimate.status === 'accepted') return (
+    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 24px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Apex<span style={{ color: '#2563EB' }}>Scale</span></div>
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#DCFCE7', border: '1.5px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', marginBottom: 8, textAlign: 'center' }}>Already Signed</div>
+        <div style={{ fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 1.6, maxWidth: 300 }}>
+          This estimate has already been signed. Contact {profile?.company_name || 'your contractor'} if you have questions.
+        </div>
+      </div>
     </div>
   )
 

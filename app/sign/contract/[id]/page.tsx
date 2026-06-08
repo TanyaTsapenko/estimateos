@@ -136,93 +136,94 @@ export default function SignContractPage() {
 
   // ── Sign ────────────────────────────────────────────────────────────────────
   async function handleSign() {
+    if (signing) return
     if (paths.length === 0) { alert('Please sign before submitting'); return }
     if (!contract) return
     setSigning(true)
-
-    const svgElement = svgRef.current
-    if (!svgElement) { setSigning(false); return }
-
-    // Render SVG paths to a canvas PNG
-    const svgData = new XMLSerializer().serializeToString(svgElement)
-    const offscreen = document.createElement('canvas')
-    offscreen.width = 600
-    offscreen.height = 200
-    const ctx = offscreen.getContext('2d')
-
-    let signatureBase64: string
     try {
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image()
-        img.onload = () => {
-          ctx?.drawImage(img, 0, 0)
-          resolve()
-        }
-        img.onerror = reject
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
-      })
-      signatureBase64 = offscreen.toDataURL('image/png')
-    } catch {
-      setSigning(false)
-      alert('Could not render signature. Please try again.')
-      return
-    }
+      const svgElement = svgRef.current
+      if (!svgElement) return
 
-    // Upload + save via server route (uses service key to bypass RLS)
-    const res = await fetch('/api/sign-contract', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contractId: contract.id,
-        signatureBase64,
-        clientName: estimate?.client_name,
-      }),
-    })
-    const result = await res.json()
-    if (!res.ok) {
-      setSigning(false)
-      alert('Signing failed: ' + (result.error || 'Unknown error'))
-      return
-    }
+      // Render SVG paths to a canvas PNG
+      const svgData = new XMLSerializer().serializeToString(svgElement)
+      const offscreen = document.createElement('canvas')
+      offscreen.width = 600
+      offscreen.height = 200
+      const ctx = offscreen.getContext('2d')
 
-    setClientSignatureUrl(result.signatureUrl)
+      let signatureBase64: string
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image()
+          img.onload = () => {
+            ctx?.drawImage(img, 0, 0)
+            resolve()
+          }
+          img.onerror = reject
+          img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
+        })
+        signatureBase64 = offscreen.toDataURL('image/png')
+      } catch {
+        alert('Could not render signature. Please try again.')
+        return
+      }
 
-    await Promise.allSettled([
-      fetch('/api/send-contract-signed', {
+      // Upload + save via server route (uses service key to bypass RLS)
+      const res = await fetch('/api/sign-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clientEmail: estimate?.client_email,
+          contractId: contract.id,
+          signatureBase64,
           clientName: estimate?.client_name,
-          companyName: contract?.company_name || 'Your Contractor',
-          companyPhone: contract?.company_phone || '',
-          companyEmail: contract?.company_email || '',
-          contractId: contractId,
-          total: estimate?.total,
         }),
-      }),
-      fetch('/api/notify-contractor-signed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contractorEmail: contract?.company_email || '',
-          contractorName: contract?.company_name || '',
-          clientName: estimate?.client_name || '',
-          companyName: contract?.company_name || 'Your Company',
-          total: estimate?.total || 0,
-          depositPercent: profile?.deposit_percent || 10,
-          contractId: contractId,
-        }),
-      }),
-      fetch('/api/deposit-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' },
-        body: JSON.stringify({ estimateId: contract.estimate_id }),
-      }),
-    ])
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        alert('Signing failed: ' + (result.error || 'Unknown error'))
+        return
+      }
 
-    setSigning(false)
-    setShowDeposit(true)
+      setClientSignatureUrl(result.signatureUrl)
+
+      await Promise.allSettled([
+        fetch('/api/send-contract-signed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientEmail: estimate?.client_email,
+            clientName: estimate?.client_name,
+            companyName: contract?.company_name || 'Your Contractor',
+            companyPhone: contract?.company_phone || '',
+            companyEmail: contract?.company_email || '',
+            contractId: contractId,
+            total: estimate?.total,
+          }),
+        }),
+        fetch('/api/notify-contractor-signed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contractorEmail: contract?.company_email || '',
+            contractorName: contract?.company_name || '',
+            clientName: estimate?.client_name || '',
+            companyName: contract?.company_name || 'Your Company',
+            total: estimate?.total || 0,
+            depositPercent: profile?.deposit_percent || 10,
+            contractId: contractId,
+          }),
+        }),
+        fetch('/api/deposit-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' },
+          body: JSON.stringify({ estimateId: contract.estimate_id }),
+        }),
+      ])
+
+      setShowDeposit(true)
+    } finally {
+      setSigning(false)
+    }
   }
 
   async function handleDecline() {
