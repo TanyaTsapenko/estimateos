@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2 } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 
 interface Appointment {
@@ -459,6 +459,12 @@ export default function DashboardPage() {
               {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
+            <button
+              onClick={() => router.push('/dashboard/settings')}
+              style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+            >
+              <Settings2 size={18} color="rgba(255,255,255,0.8)" strokeWidth={1.8} />
+            </button>
           </div>
 
           {/* Day + done count */}

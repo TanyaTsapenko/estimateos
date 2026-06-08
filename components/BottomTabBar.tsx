@@ -1,15 +1,15 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Home, Calendar, FileText, Settings2, Plus } from 'lucide-react'
+import { Home, Calendar, FileText, Users, Plus } from 'lucide-react'
 
 const LEFT_TABS = [
   { path: '/dashboard',              label: 'Home',     Icon: Home,     exact: true  },
   { path: '/dashboard/appointments', label: 'Schedule', Icon: Calendar, exact: false },
 ]
 const RIGHT_TABS = [
-  { path: '/dashboard/estimates', label: 'Estimates', Icon: FileText,  exact: false },
-  { path: '/dashboard/settings',  label: 'Settings',  Icon: Settings2, exact: false },
+  { path: '/dashboard/estimates', label: 'Estimates', Icon: FileText, exact: false },
+  { path: '/dashboard/clients',   label: 'Clients',   Icon: Users,    exact: false },
 ]
 
 export default function BottomTabBar() {
