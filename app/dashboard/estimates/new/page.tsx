@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
-import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
+import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, validateQuantity, validateDimension, validatePositiveNumber, type ClientErrors } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
@@ -257,7 +257,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
           <div style={{ position: 'relative' }}>
-            <input type="number" min="0" step="0.5"
+            <input type="number" min="1" step="0.5"
               placeholder={op.type?.includes('door') || op.type?.includes('entry') || op.type?.includes('patio') ? '36' : '32'}
               value={op.width_in || ''}
               onChange={e => updateOpening(op.id, 'width_in', e.target.value ? parseFloat(e.target.value) : 0)}
@@ -266,7 +266,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           </div></div>
         <div className="f"><label>Height</label>
           <div style={{ position: 'relative' }}>
-            <input type="number" min="0" step="0.5"
+            <input type="number" min="1" step="0.5"
               placeholder={op.type?.includes('door') || op.type?.includes('entry') || op.type?.includes('patio') ? '80' : '48'}
               value={op.height_in || ''}
               onChange={e => updateOpening(op.id, 'height_in', e.target.value ? parseFloat(e.target.value) : 0)}
@@ -861,6 +861,20 @@ function NewEstimateForm() {
     if (hasErrors(errs)) return
     const missingDimensions = openings.some(op => !op.width_in || !op.height_in)
     if (missingDimensions) { setError('Please enter width and height for all openings'); return }
+
+    for (const op of openings) {
+      const qtyErr = validateQuantity(op.qty)
+      if (qtyErr) { setError(qtyErr); return }
+      const wErr = validateDimension(op.width_in as number, 'Width')
+      if (wErr) { setError(wErr); return }
+      const hErr = validateDimension(op.height_in as number, 'Height')
+      if (hErr) { setError(hErr); return }
+    }
+    if (discountValue) {
+      const discErr = validatePositiveNumber(parseFloat(discountValue), 'Discount')
+      if (discErr) { setError(discErr); return }
+    }
+
     setSaving(true); setError('')
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }

@@ -24,6 +24,25 @@ export function validateAddress(v: string): string | null {
   return v.trim().length >= 5 ? null : 'Please enter a valid address'
 }
 
+export function validatePositiveNumber(value: number, fieldName: string): string | null {
+  if (value === null || value === undefined) return null
+  if (isNaN(value)) return `${fieldName} must be a number`
+  if (value < 0) return `${fieldName} cannot be negative`
+  return null
+}
+
+export function validateQuantity(value: number): string | null {
+  if (!value || value < 1) return 'Quantity must be at least 1'
+  if (value > 100) return 'Quantity cannot exceed 100'
+  return null
+}
+
+export function validateDimension(value: number, fieldName: string): string | null {
+  if (!value || value < 1) return `${fieldName} must be at least 1 inch`
+  if (value > 300) return `${fieldName} cannot exceed 300 inches`
+  return null
+}
+
 export type ClientErrors = Partial<Record<'client_name' | 'client_phone' | 'client_email' | 'client_address', string | null>>
 
 export function hasErrors(e: ClientErrors): boolean {
