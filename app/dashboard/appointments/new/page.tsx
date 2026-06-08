@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
 import { TAX_RATES } from '@/lib/pricing'
@@ -25,25 +25,27 @@ function formatPostal(v: string): string {
 }
 
 export default function NewAppointmentPage() {
-  const router = useRouter()
-  const supabase = createClient()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const supabase     = createClient()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [allMembers, setAllMembers] = useState<TeamMember[]>([])
   const [errors, setErrors] = useState<ClientErrors>({})
+  const [prefillClientId] = useState(searchParams.get('prefill_client_id') || '')
 
   const now   = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
   const [form, setForm] = useState({
-    client_name: '',
-    client_phone: '',
-    client_email: '',
-    client_address: '',
-    client_city: '',
-    client_province: 'AB',
-    postal_code: '',
+    client_name:     searchParams.get('prefill_name')     || '',
+    client_phone:    searchParams.get('prefill_phone')    || '',
+    client_email:    searchParams.get('prefill_email')    || '',
+    client_address:  searchParams.get('prefill_address')  || '',
+    client_city:     searchParams.get('prefill_city')     || '',
+    client_province: searchParams.get('prefill_province') || 'AB',
+    postal_code:     searchParams.get('prefill_postal')   || '',
     appointment_date: today,
     appointment_time: '09:00',
     lead_source: 'Phone call',
@@ -105,30 +107,32 @@ export default function NewAppointmentPage() {
       if (prof?.team_owner_id) ownerId = prof.team_owner_id
     } catch {}
 
-    // Find-or-create client record
-    let clientId: string | null = null
-    try {
-      const phone = form.client_phone.trim() || null
-      if (phone) {
-        const { data: existing } = await supabase
-          .from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
-        clientId = existing?.id ?? null
-      }
-      if (!clientId) {
-        const { data: created } = await supabase
-          .from('clients').insert({
-            owner_id:    ownerId,
-            name:        form.client_name.trim(),
-            phone:       form.client_phone.trim() || null,
-            email:       form.client_email.trim() || null,
-            address:     form.client_address.trim() || null,
-            city:        form.client_city.trim() || null,
-            province:    form.client_province || null,
-            postal_code: form.postal_code.trim() || null,
-          }).select('id').maybeSingle()
-        clientId = created?.id ?? null
-      }
-    } catch {}
+    // Find-or-create client record (skip lookup if pre-filled from client card)
+    let clientId: string | null = prefillClientId || null
+    if (!clientId) {
+      try {
+        const phone = form.client_phone.trim() || null
+        if (phone) {
+          const { data: existing } = await supabase
+            .from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
+          clientId = existing?.id ?? null
+        }
+        if (!clientId) {
+          const { data: created } = await supabase
+            .from('clients').insert({
+              owner_id:    ownerId,
+              name:        form.client_name.trim(),
+              phone:       form.client_phone.trim() || null,
+              email:       form.client_email.trim() || null,
+              address:     form.client_address.trim() || null,
+              city:        form.client_city.trim() || null,
+              province:    form.client_province || null,
+              postal_code: form.postal_code.trim() || null,
+            }).select('id').maybeSingle()
+          clientId = created?.id ?? null
+        }
+      } catch {}
+    }
 
     const { error: e } = await supabase.from('appointments').insert({
       user_id: sanitizedId,
@@ -149,7 +153,7 @@ export default function NewAppointmentPage() {
     })
 
     if (e) { setError(e.message); setSaving(false); return }
-    router.push('/dashboard/appointments')
+    router.push(prefillClientId ? `/dashboard/clients/${prefillClientId}` : '/dashboard/appointments')
   }
 
   return (
