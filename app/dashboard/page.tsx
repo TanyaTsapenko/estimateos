@@ -183,6 +183,7 @@ export default function DashboardPage() {
   const [pricingMode, setPricingMode] = useState<string | null>(null)
   const [dashToast, setDashToast] = useState('')
   const [reminderSending, setReminderSending] = useState(false)
+  const [paying, setPaying] = useState<string | null>(null)
   const [reminderModal, setReminderModal] = useState<{
     estimateId: string; estimateNumber: string; clientName: string
     clientEmail: string; address: string; message: string
@@ -345,9 +346,14 @@ export default function DashboardPage() {
   }, [])
 
   async function handleMarkPaid(invoiceId: string) {
+    setPaying(invoiceId)
     const supabase = createClient()
-    await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
-    setAttention(prev => prev.filter(i => i.id !== invoiceId))
+    try {
+      await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+      setAttention(prev => prev.filter(i => i.id !== invoiceId))
+    } finally {
+      setPaying(null)
+    }
   }
 
   async function handleOpenReminder(estimateId: string) {
@@ -686,8 +692,9 @@ export default function DashboardPage() {
                         else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
-                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {item.cta}
+                      disabled={item.actionType === 'mark_paid' && paying === item.id}
+                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: item.actionType === 'mark_paid' && paying === item.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
+                      {item.actionType === 'mark_paid' && paying === item.id ? 'Saving...' : item.cta}
                     </button>
                   </div>
                   )
@@ -777,8 +784,9 @@ export default function DashboardPage() {
                       else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                       else router.push(`/dashboard/estimates/${item.id}`)
                     }}
-                    style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 7, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {item.cta}
+                    disabled={item.actionType === 'mark_paid' && paying === item.id}
+                    style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 7, cursor: item.actionType === 'mark_paid' && paying === item.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
+                    {item.actionType === 'mark_paid' && paying === item.id ? 'Saving...' : item.cta}
                   </button>
                 </div>
                 )

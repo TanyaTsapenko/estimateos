@@ -42,6 +42,7 @@ export default function InvoicesPage() {
   const { role, loading: roleLoading } = useRole()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading,  setLoading]  = useState(true)
+  const [paying,   setPaying]   = useState<string | null>(null)
 
   useEffect(() => {
     if (!roleLoading && role !== 'owner') router.replace('/dashboard')
@@ -62,8 +63,13 @@ export default function InvoicesPage() {
   }, [])
 
   async function markPaid(invoiceId: string) {
-    await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
-    setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+    setPaying(invoiceId)
+    try {
+      await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+      setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+    } finally {
+      setPaying(null)
+    }
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -213,8 +219,9 @@ export default function InvoicesPage() {
                       {inv.status === 'pending' && (
                         <button
                           onClick={() => markPaid(inv.id)}
-                          style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: 'pointer', fontFamily: 'inherit' }}>
-                          Mark paid
+                          disabled={paying === inv.id}
+                          style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: paying === inv.id ? 0.6 : 1 }}>
+                          {paying === inv.id ? 'Saving...' : 'Mark paid'}
                         </button>
                       )}
                       <button
@@ -278,8 +285,9 @@ export default function InvoicesPage() {
                         {inv.status === 'pending' && (
                           <button
                             onClick={() => markPaid(inv.id)}
-                            style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: 'pointer' }}>
-                            Mark paid
+                            disabled={paying === inv.id}
+                            style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', opacity: paying === inv.id ? 0.6 : 1 }}>
+                            {paying === inv.id ? 'Saving...' : 'Mark paid'}
                           </button>
                         )}
                         <button

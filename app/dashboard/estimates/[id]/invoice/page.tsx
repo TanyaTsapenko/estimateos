@@ -65,42 +65,52 @@ export default function CreateInvoicePage() {
 
   async function createInvoice() {
     if (!estimate) return
+    if (saving) return
     if (!dueDate) return setError('Due date is required')
     if (invoiceAmount <= 0) return setError('Invoice amount must be greater than zero')
     setSaving(true); setError('')
+    try {
+      if (isFinal) {
+        const { data: existingFinal } = await supabase.from('invoices')
+          .select('id').eq('estimate_id', estimate.id).eq('invoice_type', 'final').maybeSingle()
+        if (existingFinal) { setError('Final invoice already sent'); return }
+      }
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/auth'); return }
-    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-    const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
-    const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
+      const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
 
-    const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
-      estimate_id:    estimate.id,
-      user_id:        sanitizedId,
-      invoice_number: num,
-      invoice_type:   isFinal ? 'final' : 'standard',
-      status:         'pending',
-      amount:         Math.round(invoiceAmount * 100) / 100,
-      due_date:       dueDate,
-      notes,
-      additional_charges: additionalCharges.filter(c => c.label.trim()).map(c => ({ label: c.label.trim(), amount: c.amount })),
-    }).select('id').single()
+      const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
+        estimate_id:    estimate.id,
+        user_id:        sanitizedId,
+        invoice_number: num,
+        invoice_type:   isFinal ? 'final' : 'standard',
+        status:         'pending',
+        amount:         Math.round(invoiceAmount * 100) / 100,
+        due_date:       dueDate,
+        notes,
+        additional_charges: additionalCharges.filter(c => c.label.trim()).map(c => ({ label: c.label.trim(), amount: c.amount })),
+      }).select('id').single()
 
-    if (invErr) { setError(invErr.message); setSaving(false); return }
+      if (invErr) { setError(invErr.message); return }
 
-    await supabase.from('estimates').update({ status: 'invoiced' }).eq('id', id)
+      await supabase.from('estimates').update({ status: 'invoiced' }).eq('id', id)
 
-    if (newInv && estimate.client_email) {
-      fetch('/api/send-invoice', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invoiceId: newInv.id }),
-      }).catch(() => {})
+      if (newInv && estimate.client_email) {
+        fetch('/api/send-invoice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoiceId: newInv.id }),
+        }).catch(() => {})
+      }
+
+      router.push('/dashboard/invoices')
+    } finally {
+      setSaving(false)
     }
-
-    router.push('/dashboard/invoices')
   }
 
   if (!estimate) return (
