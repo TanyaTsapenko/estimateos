@@ -9,9 +9,10 @@ import TimePickerDropdown from '@/components/TimePickerDropdown'
 
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
-  { key: 'scheduled', label: 'Scheduled' },
-  { key: 'completed', label: 'Completed' },
-  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'scheduled',   label: 'Scheduled'   },
+  { key: 'in_progress', label: 'In Progress'  },
+  { key: 'completed',   label: 'Completed'   },
+  { key: 'cancelled',   label: 'Cancelled'   },
 ]
 
 interface TeamMember { id: string; name: string }
