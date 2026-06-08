@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { rateLimit } from '@/lib/rateLimit'
+import { inviteRateLimit } from '@/lib/rateLimit'
 import { isValidEmail } from '@/lib/validation'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -13,11 +13,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  const allowed = rateLimit(`team-invite:${ip}`, 5, 60 * 60 * 1000) // 5 per hour per IP
-  if (!allowed) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
-  }
+  const ip = request.headers.get('x-forwarded-for') ?? '127.0.0.1'
+  const { success } = await inviteRateLimit.limit(ip)
+  if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
   console.log('[team-invite] START')
 

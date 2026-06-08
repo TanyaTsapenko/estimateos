@@ -1,16 +1,19 @@
-const requestCounts = new Map<string, { count: number; resetAt: number }>()
+import { Ratelimit } from '@upstash/ratelimit'
+import { Redis } from '@upstash/redis'
 
-export function rateLimit(key: string, limit: number, windowMs: number): boolean {
-  const now = Date.now()
-  const record = requestCounts.get(key)
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+})
 
-  if (!record || now > record.resetAt) {
-    requestCounts.set(key, { count: 1, resetAt: now + windowMs })
-    return true
-  }
+export const emailRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, '1 h'),
+  prefix: 'rl:email',
+})
 
-  if (record.count >= limit) return false
-
-  record.count++
-  return true
-}
+export const inviteRateLimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, '1 h'),
+  prefix: 'rl:invite',
+})
