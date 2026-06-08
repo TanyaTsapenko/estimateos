@@ -52,7 +52,7 @@ export default function BottomTabBar() {
           onClick={() => router.push('/dashboard/appointments/new')}
           style={{
             position: 'relative', top: -20,
-            width: 56, height: 56, borderRadius: '50%',
+            width: 56, height: 56, borderRadius: 16,
             background: '#2563EB', color: '#fff', border: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', boxShadow: '0 4px 12px rgba(37,99,235,0.4)', flexShrink: 0,
