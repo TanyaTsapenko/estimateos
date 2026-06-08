@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Webhook } from 'svix'
 import { createServiceClient } from '@/lib/supabase/service'
 
 export async function POST(req: NextRequest) {
-  const payload = await req.json()
+  const secret = process.env.RESEND_WEBHOOK_SECRET
+  if (!secret) return NextResponse.json({ error: 'No webhook secret' }, { status: 500 })
 
-  if (payload?.type !== 'email.opened') {
+  const wh = new Webhook(secret)
+  const body = await req.text()
+
+  let event: any
+  try {
+    event = wh.verify(body, {
+      'svix-id':        req.headers.get('svix-id')        ?? '',
+      'svix-timestamp': req.headers.get('svix-timestamp') ?? '',
+      'svix-signature': req.headers.get('svix-signature') ?? '',
+    })
+  } catch {
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  if (event?.type !== 'email.opened') {
     return NextResponse.json({ received: true })
   }
 
   // Tags come as either { estimate_id: 'value' } or [{ name, value }]
-  const tags = payload?.data?.tags
+  const tags = event?.data?.tags
   let estimateId: string | null = null
 
   if (Array.isArray(tags)) {
