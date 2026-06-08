@@ -76,10 +76,43 @@ export default function EstimateDetailPage() {
 
   useEffect(() => {
     async function load() {
+      // Resolve current user and role before loading estimate
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/auth'); return }
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('role, member_role, team_owner_id')
+        .eq('id', sanitizedId)
+        .single()
+
+      const r = (myProfile?.role ?? null) as string | null
+      const isTeamMember = !!myProfile?.team_owner_id
+      const isOwnerOrManager =
+        r === 'owner' || r === 'manager' ||
+        (!r && !isTeamMember) ||
+        (!r && myProfile?.member_role === 'owner') ||
+        (!r && myProfile?.member_role === 'manager')
+
+      // Ownership-scoped query: owner/manager sees own + team estimates; others see only own
+      let estQuery = supabase.from('estimates').select('*').eq('id', id)
+      if (isOwnerOrManager) {
+        estQuery = estQuery.or(`user_id.eq.${sanitizedId},team_owner_id.eq.${sanitizedId}`)
+      } else {
+        estQuery = estQuery.eq('user_id', sanitizedId)
+      }
+
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('*').eq('id', id).single(),
+        estQuery.maybeSingle(),
         supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type').eq('estimate_id', id).order('sort_order'),
       ])
+
+      if (!est) {
+        router.push('/dashboard/estimates')
+        return
+      }
+
       setEstimate(est)
       setOpenings(ops || [])
       const customTypes = (ops || []).map((o: any) => o.type).filter((t: string) => t?.startsWith('custom_'))
