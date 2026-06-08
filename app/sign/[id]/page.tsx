@@ -75,13 +75,23 @@ export default function PublicSignPage() {
     setSaving(true); setError('')
 
     const dataUrl = canvas.toDataURL('image/png')
-    let sigUrl = dataUrl
-    try {
-      const blob = await (await fetch(dataUrl)).blob()
-      const sigPath = `${id}/sig-${Date.now()}.png`
+    const blob = await (await fetch(dataUrl)).blob()
+    const sigPath = `${id}/sig-${Date.now()}.png`
+
+    let sigUrl = ''
+    for (let attempt = 1; attempt <= 3; attempt++) {
       const { error: upErr } = await supabase.storage.from('signatures').upload(sigPath, blob, { contentType: 'image/png' })
-      if (!upErr) sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
-    } catch {}
+      if (!upErr) {
+        sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
+        break
+      }
+      if (attempt === 3) {
+        setError('Failed to save signature. Please try again.')
+        setSaving(false)
+        return
+      }
+      await new Promise(r => setTimeout(r, 1000))
+    }
 
     const { error: updateErr } = await supabase.from('estimates').update({
       status: 'signed',
