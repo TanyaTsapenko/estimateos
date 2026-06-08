@@ -216,7 +216,7 @@ export default function SignContractPage() {
       }),
       fetch('/api/deposit-invoice', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' },
         body: JSON.stringify({ estimateId: contract.estimate_id }),
       }),
     ])

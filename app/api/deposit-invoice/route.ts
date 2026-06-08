@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { createClient } from '@/lib/supabase/server'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request: NextRequest) {
+  // Allow either: valid internal secret (sign pages) OR authenticated dashboard user
+  const internalSecret = process.env.INTERNAL_API_SECRET
+  const headerSecret   = request.headers.get('x-internal-secret')
+  const hasValidSecret = internalSecret && headerSecret === internalSecret
+
+  if (!hasValidSecret) {
+    try {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
   const { estimateId } = await request.json()
   if (!estimateId) return NextResponse.json({ error: 'Missing estimateId' }, { status: 400 })
 
