@@ -4,28 +4,46 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import {
-  ArrowLeft, Phone, MessageCircle, Mail, MapPin, Calendar,
-  ChevronDown, ChevronUp, Check, FileText, PenLine, CreditCard, Receipt,
+  ChevronLeft, ChevronRight, ChevronDown,
+  Phone, MessageCircle, Mail, MapPin, Calendar,
+  FileText, PenLine, DollarSign, Receipt,
+  Star, Plus, Pencil, Users, X,
 } from 'lucide-react'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
-  hero:        'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)',
-  bg:          '#F4F5F8',
+  bg:          '#F3F4F6',
   card:        '#FFFFFF',
-  border:      'rgba(10,22,40,0.06)',
-  borderMid:   'rgba(10,22,40,0.10)',
-  ink:         '#0A1628',
-  inkMid:      '#475569',
-  inkSoft:     '#94A3B8',
+  border:      'rgba(15,23,42,0.08)',
+  ink:         '#0B1220',
+  inkMid:      '#475467',
+  inkSoft:     '#8A94A6',
   blue:        '#2563EB',
-  green:       '#059669',
-  amber:       '#D97706',
-  amberBg:     '#FFFBEB',
-  amberBorder: 'rgba(217,119,6,0.18)',
+  blueDeep:    '#1D4ED8',
+  blueSoft:    '#EFF4FF',
+  green:       '#16A34A',
+  greenDeep:   '#0F8A4D',
+  red:         '#C0341A',
+  hero:        'linear-gradient(155deg, #2E6BF0 0%, #2152C9 55%, #1B43AE 100%)',
+  amberText:   '#9A7B2E',
+  amberBg:     '#FFFCF2',
+  amberBorder: '#FBF3E0',
 }
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+const PROJECT_STATUS = {
+  won:       { color: '#16A34A', bg: '#E7F6EE', text: '#0F8A4D', label: 'Won' },
+  lost:      { color: '#C0341A', bg: '#FBE9E4', text: '#C0341A', label: 'Lost' },
+  scheduled: { color: '#2563EB', bg: '#EFF4FF', text: '#1D4ED8', label: 'Scheduled' },
+} as const
+
+const TONE = {
+  blue:    { icon: '#2563EB', bg: 'rgba(37,99,235,0.15)',    line: 'rgba(37,99,235,0.3)' },
+  green:   { icon: '#16A34A', bg: 'rgba(22,163,74,0.15)',    line: 'rgba(22,163,74,0.3)' },
+  red:     { icon: '#C0341A', bg: 'rgba(192,52,26,0.15)',    line: 'rgba(192,52,26,0.3)' },
+  neutral: { icon: '#8A94A6', bg: 'rgba(138,148,166,0.12)',  line: '#E2E8F0' },
+} as const
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 interface Client {
   id: string; name: string; phone: string | null; email: string | null
   address: string | null; city: string | null; province: string | null
@@ -34,7 +52,7 @@ interface Client {
 interface Appointment {
   id: string; appointment_date: string; appointment_time: string | null
   status: string; notes: string | null; estimate_id: string | null
-  lead_source: string | null
+  lead_source: string | null; assigned_to: string | null
 }
 interface Estimate {
   id: string; estimate_number: string; status: string; total: number; created_at: string
@@ -49,7 +67,7 @@ interface Project  {
   finalInvoice: Invoice | null
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 function fmt12h(t: string) {
   const [h, m] = t.split(':').map(Number)
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`
@@ -57,37 +75,73 @@ function fmt12h(t: string) {
 function fmtDate(d: string) {
   return new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(d + 'T00:00:00'))
 }
-function isUpcoming(d: string) {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  return new Date(d + 'T00:00:00') >= today
+function fmtDayDate(d: string) {
+  return new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(d + 'T00:00:00'))
+}
+function getProjectStatus(est: Estimate | null): keyof typeof PROJECT_STATUS {
+  if (!est) return 'scheduled'
+  if (est.status === 'signed' || est.status === 'invoiced') return 'won'
+  if (est.status === 'declined' || est.status === 'expired') return 'lost'
+  return 'scheduled'
 }
 
-// ── Step timeline ─────────────────────────────────────────────────────────────
-function StepTimeline({ project }: { project: Project }) {
-  const steps = [
-    { key: 'estimate', label: 'Estimate', Icon: FileText,   done: !!project.estimate,                                             active: !!project.estimate },
-    { key: 'contract', label: 'Contract', Icon: PenLine,    done: project.contract?.status === 'signed',                          active: !!project.contract },
-    { key: 'deposit',  label: 'Deposit',  Icon: CreditCard, done: project.depositInvoice?.status === 'paid',                      active: !!project.depositInvoice },
-    { key: 'invoice',  label: 'Invoice',  Icon: Receipt,    done: project.finalInvoice?.status === 'paid',                        active: !!project.finalInvoice },
-  ]
+// ── Step timeline (vertical) ───────────────────────────────────────────────────
+function StepTimeline({ project, onCreateEstimate }: { project: Project; onCreateEstimate: () => void }) {
+  const { estimate, contract, depositInvoice, finalInvoice } = project
+  const status = getProjectStatus(estimate)
+
+  if (!estimate) {
+    return (
+      <div>
+        <div style={{ fontSize: 13, color: T.inkSoft, marginBottom: 12 }}>
+          Scheduled — no estimate yet.
+        </div>
+        <button
+          onClick={ev => { ev.stopPropagation(); onCreateEstimate() }}
+          style={{ background: T.blueSoft, border: '1px solid rgba(37,99,235,0.15)', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: T.blueDeep, cursor: 'pointer', fontFamily: 'inherit', width: '100%' }}
+        >
+          + Create estimate
+        </button>
+      </div>
+    )
+  }
+
+  type ToneKey = keyof typeof TONE
+  type Step = { icon: React.ReactNode; label: string; sub: string; tone: ToneKey }
+
+  const contractSigned = contract?.status === 'signed'
+  const depositPaid    = depositInvoice?.status === 'paid'
+  const finalPaid      = finalInvoice?.status === 'paid'
+
+  const steps: Step[] = status === 'lost'
+    ? [
+        { icon: <FileText size={13} strokeWidth={1.7} />, label: `EST-${estimate.estimate_number}`, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
+        { icon: <X size={13} strokeWidth={2} />, label: 'Declined', sub: 'Went with competitor', tone: 'red' },
+      ]
+    : [
+        { icon: <FileText size={13} strokeWidth={1.7} />, label: `EST-${estimate.estimate_number}`, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
+        { icon: <PenLine size={13} strokeWidth={1.7} />, label: 'Contract signed', sub: contractSigned ? 'Signed' : 'Pending', tone: contractSigned ? 'green' : 'neutral' },
+        { icon: <DollarSign size={13} strokeWidth={1.7} />, label: 'Deposit', sub: depositInvoice ? `${fmtCAD(depositInvoice.amount)} · ${depositPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: depositPaid ? 'green' : 'neutral' },
+        { icon: <Receipt size={13} strokeWidth={1.7} />, label: 'Invoice', sub: finalInvoice ? `${fmtCAD(finalInvoice.amount)} · ${finalPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: finalPaid ? 'green' : finalInvoice ? 'red' : 'neutral' },
+      ]
+
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', marginTop: 16 }}>
-      {steps.map((s, i) => {
-        const color = s.done ? T.green : s.active ? T.blue : T.inkSoft
-        const iconBg = s.done ? 'rgba(5,150,105,0.1)' : s.active ? 'rgba(37,99,235,0.1)' : '#F1F5F9'
+    <div>
+      {steps.map((step, i) => {
+        const tc = TONE[step.tone]
+        const isLast = i === steps.length - 1
         return (
-          <div key={s.key} style={{ display: 'flex', alignItems: 'flex-start', flex: 1 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ width: 32, height: 32, borderRadius: 9, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {s.done
-                  ? <Check size={15} color={T.green} strokeWidth={2.5} />
-                  : <s.Icon size={15} color={color} strokeWidth={1.7} />}
+          <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 28, flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: 9, background: tc.bg, color: tc.icon, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {step.icon}
               </div>
-              <div style={{ fontSize: 9, fontWeight: 600, color, marginTop: 4, textAlign: 'center', letterSpacing: '0.04em', textTransform: 'uppercase' }}>{s.label}</div>
+              {!isLast && <div style={{ width: 1.5, height: 16, background: tc.line, marginTop: 3, marginBottom: 3 }} />}
             </div>
-            {i < steps.length - 1 && (
-              <div style={{ height: 1.5, flex: 0.6, background: s.done ? T.green : '#E2E8F0', marginTop: 15, flexShrink: 0 }} />
-            )}
+            <div style={{ flex: 1, paddingBottom: isLast ? 0 : 6, paddingTop: 4 }}>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink, lineHeight: 1.2 }}>{step.label}</div>
+              <div style={{ fontSize: 12, color: step.tone === 'neutral' ? T.inkSoft : tc.icon, marginTop: 2 }}>{step.sub}</div>
+            </div>
           </div>
         )
       })}
@@ -95,108 +149,85 @@ function StepTimeline({ project }: { project: Project }) {
   )
 }
 
-// ── Status pill ───────────────────────────────────────────────────────────────
-const EST_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  draft:    { label: 'Draft',    color: '#64748B', bg: '#F1F5F9' },
-  sent:     { label: 'Sent',     color: '#D97706', bg: '#FFFBEB' },
-  signed:   { label: 'Accepted', color: '#059669', bg: 'rgba(5,150,105,.1)' },
-  invoiced: { label: 'Invoiced', color: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
-  declined: { label: 'Declined', color: '#DC2626', bg: '#FEF2F2' },
-}
-function Pill({ s }: { s: string }) {
-  const st = EST_STATUS[s] ?? EST_STATUS.draft
-  return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
-      color: st.color, background: st.bg, borderRadius: 6, padding: '3px 7px', flexShrink: 0,
-    }}>
-      {st.label}
-    </span>
-  )
-}
-
-// ── Project card ──────────────────────────────────────────────────────────────
-function ProjectCard({ project, onViewEstimate }: { project: Project; onViewEstimate: (id: string) => void }) {
+// ── Project card ───────────────────────────────────────────────────────────────
+function ProjectCard({ project, onViewEstimate, onCreateEstimate }: {
+  project: Project
+  onViewEstimate: (id: string) => void
+  onCreateEstimate: (apptId: string) => void
+}) {
   const [open, setOpen] = useState(false)
   const a = project.appointment
   const e = project.estimate
-  const upcoming = isUpcoming(a.appointment_date)
-
-  const apptStatusLabel = a.status === 'completed' ? 'Done' : a.status === 'cancelled' ? 'Cancelled' : 'Scheduled'
-  const dotColor = a.status === 'completed' ? T.green : a.status === 'cancelled' ? T.inkSoft : T.blue
+  const pStatus = getProjectStatus(e)
+  const sc = PROJECT_STATUS[pStatus]
+  const workTitle = a.notes?.split('\n')[0]?.trim().slice(0, 60) || fmtDate(a.appointment_date)
 
   return (
-    <div style={{ background: T.card, borderRadius: 14, boxShadow: `0 0 0 1px ${T.border}`, marginBottom: 10, overflow: 'hidden' }}>
-      <div
+    <div style={{ background: T.card, borderRadius: 16, border: `1px solid ${T.border}`, boxShadow: '0 1px 6px rgba(15,23,42,0.05)', overflow: 'hidden' }}>
+      {/* Header */}
+      <button
         onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}
+        style={{ width: '100%', display: 'flex', alignItems: 'stretch', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left', WebkitTapHighlightColor: 'transparent', padding: 0 }}
       >
-        {/* Date bubble */}
-        <div style={{
-          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-          background: upcoming ? 'rgba(37,99,235,0.08)' : '#F1F5F9',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Calendar size={19} color={upcoming ? T.blue : T.inkSoft} strokeWidth={1.7} />
-        </div>
+        {/* Status rail */}
+        <div style={{ width: 4, alignSelf: 'stretch', background: sc.color, flexShrink: 0 }} />
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>
-            {fmtDate(a.appointment_date)}
-            {a.appointment_time ? <span style={{ fontWeight: 500, color: T.inkMid }}> · {fmt12h(a.appointment_time)}</span> : ''}
+        {/* Content */}
+        <div style={{ flex: 1, minWidth: 0, padding: '13px 14px 13px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {workTitle}
+            </div>
+            <div style={{ fontSize: 12, color: T.inkSoft, marginTop: 3 }}>
+              {fmtDate(a.appointment_date)}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: T.inkSoft }}>
-              {[apptStatusLabel, a.lead_source].filter(Boolean).join(' · ')}
-            </span>
+
+          {/* Status pill + chevron */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 22, padding: '0 9px', borderRadius: 7, background: sc.bg }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: sc.color, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, fontWeight: 800, color: sc.text, letterSpacing: '0.03em', textTransform: 'uppercase' }}>{sc.label}</span>
+            </div>
+            <div style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.22s' }}>
+              <ChevronDown size={16} color={T.inkSoft} />
+            </div>
           </div>
         </div>
+      </button>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-          {e && <div style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>{fmtCAD(e.total || 0)}</div>}
-          {e && <Pill s={e.status} />}
-        </div>
+      {/* Expandable body */}
+      <div style={{ display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 0.26s ease' }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ borderTop: `1px solid ${T.border}`, padding: 14 }}>
+            {a.assigned_to && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+                <Users size={13} color={T.inkMid} strokeWidth={1.7} />
+                <span style={{ fontSize: 12.5, color: T.inkMid }}>{a.assigned_to}</span>
+              </div>
+            )}
 
-        <div style={{ marginLeft: 4 }}>
-          {open
-            ? <ChevronUp size={16} color={T.inkSoft} />
-            : <ChevronDown size={16} color={T.inkSoft} />}
+            <StepTimeline
+              project={project}
+              onCreateEstimate={() => onCreateEstimate(a.id)}
+            />
+
+            {e && (
+              <button
+                onClick={ev => { ev.stopPropagation(); onViewEstimate(e.id) }}
+                style={{ marginTop: 14, background: T.blueSoft, border: '1px solid rgba(37,99,235,0.12)', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: T.blueDeep, cursor: 'pointer', fontFamily: 'inherit', display: 'block', width: '100%', textAlign: 'center' }}
+              >
+                View estimate →
+              </button>
+            )}
+          </div>
         </div>
       </div>
-
-      {open && (
-        <div style={{ borderTop: `1px solid ${T.border}`, padding: '14px 16px' }}>
-          {e ? (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>#{e.estimate_number}</span>
-                <button
-                  onClick={ev => { ev.stopPropagation(); onViewEstimate(e.id) }}
-                  style={{ background: T.blue, border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', fontFamily: 'inherit' }}
-                >
-                  View estimate →
-                </button>
-              </div>
-              <StepTimeline project={project} />
-            </>
-          ) : (
-            <div style={{ fontSize: 13, color: T.inkSoft, textAlign: 'center', padding: '8px 0' }}>
-              No estimate linked to this appointment
-            </div>
-          )}
-          {a.notes && (
-            <div style={{ marginTop: 12, fontSize: 12, color: T.inkMid, background: '#F8FAFC', borderRadius: 9, padding: '10px 12px', lineHeight: 1.6 }}>
-              {a.notes}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── Page ───────────────────────────────────────────────────────────────────────
 export default function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: clientId } = use(params)
   const router   = useRouter()
@@ -207,15 +238,16 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading,      setLoading]      = useState(true)
   const [notes,        setNotes]        = useState('')
-  const [notesSaved,   setNotesSaved]   = useState(false)
+  const [editingNotes, setEditingNotes] = useState(false)
   const [notesSaving,  setNotesSaving]  = useState(false)
+  const [notesSaved,   setNotesSaved]   = useState(false)
 
   useEffect(() => {
     async function load() {
       const [{ data: cl }, { data: appts }, { data: ests }] = await Promise.all([
         supabase.from('clients').select('*').eq('id', clientId).single(),
         supabase.from('appointments')
-          .select('id, appointment_date, appointment_time, status, notes, estimate_id, lead_source')
+          .select('id, appointment_date, appointment_time, status, notes, estimate_id, lead_source, assigned_to')
           .eq('client_id', clientId)
           .order('appointment_date', { ascending: false }),
         supabase.from('estimates')
@@ -229,7 +261,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       const estList  = ests  || []
       setAppointments(apptList)
 
-      // Load contracts + invoices for all estimates
       const estimateIds = estList.map(e => e.id)
       const [{ data: contracts }, { data: invoices }] = estimateIds.length
         ? await Promise.all([
@@ -250,7 +281,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       }
 
       const estById = new Map(estList.map(e => [e.id, e]))
-
       const built: Project[] = apptList.map(a => {
         const estimate = a.estimate_id ? (estById.get(a.estimate_id) ?? null) : null
         const invs     = estimate ? (invoiceMap.get(estimate.id) ?? { deposit: null, final: null }) : { deposit: null, final: null }
@@ -274,16 +304,17 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     await supabase.from('clients').update({ notes }).eq('id', clientId)
     setNotesSaving(false)
     setNotesSaved(true)
+    setEditingNotes(false)
     setTimeout(() => setNotesSaved(false), 2500)
   }, [notes, clientId, client])
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.inkSoft, fontFamily: '"Inter", system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.inkSoft, fontFamily: 'system-ui, sans-serif' }}>
       Loading…
     </div>
   )
   if (!client) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.inkSoft, fontFamily: '"Inter", system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: T.inkSoft, fontFamily: 'system-ui, sans-serif' }}>
       Client not found.
     </div>
   )
@@ -291,7 +322,6 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   // Computed values
   const initials = client.name.trim().split(/\s+/).filter(Boolean)
     .reduce((acc, p, i, arr) => i === 0 || i === arr.length - 1 ? acc + p[0].toUpperCase() : acc, '')
-
   const isRepeat   = appointments.length > 1
   const fullAddr   = [client.address, client.city, client.province, client.postal_code].filter(Boolean).join(', ')
   const visits     = appointments.length
@@ -300,195 +330,250 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const signedEsts = projects.filter(p => ['signed', 'invoiced'].includes(p.estimate?.status || '')).length
   const winRate    = totalEsts > 0 ? Math.round(signedEsts / totalEsts * 100) : null
 
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0)
   const nextVisit = [...appointments]
-    .filter(a => new Date(a.appointment_date + 'T00:00:00') >= today && a.status !== 'cancelled')
+    .filter(a => new Date(a.appointment_date + 'T00:00:00') >= todayDate && a.status !== 'cancelled')
     .sort((a, b) => a.appointment_date.localeCompare(b.appointment_date))[0] ?? null
 
   const newApptParams = new URLSearchParams({
-    prefill_name:     client.name,
-    prefill_phone:    client.phone    || '',
-    prefill_email:    client.email    || '',
-    prefill_address:  client.address  || '',
-    prefill_city:     client.city     || '',
-    prefill_province: client.province || '',
-    prefill_postal:   client.postal_code || '',
+    prefill_name:      client.name,
+    prefill_phone:     client.phone       || '',
+    prefill_email:     client.email       || '',
+    prefill_address:   client.address     || '',
+    prefill_city:      client.city        || '',
+    prefill_province:  client.province    || '',
+    prefill_postal:    client.postal_code || '',
     prefill_client_id: clientId,
   })
 
+  const hasPhone = !!client.phone
+  const hasEmail = !!client.email
+  const hasAddr  = !!fullAddr
+
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: '"Inter", system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
-      {/* ── HERO ────────────────────────────────────────────────────── */}
-      <div style={{ background: T.hero, position: 'relative', overflow: 'hidden', paddingBottom: 28 }}>
-        {/* glow blobs */}
-        <div style={{ position: 'absolute', width: 320, height: 320, borderRadius: '50%', background: 'radial-gradient(circle, rgba(100,150,255,0.38) 0%, transparent 70%)', top: -130, right: -80, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -40, pointerEvents: 'none' }} />
+      {/* ── HERO ── */}
+      <div style={{ background: T.hero, paddingLeft: 18, paddingRight: 18, paddingBottom: 20, paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
 
-        {/* back */}
-        <div style={{ padding: 'max(20px, calc(env(safe-area-inset-top) + 12px)) 16px 0', position: 'relative', zIndex: 2 }}>
-          <button onClick={() => router.back()} style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <ArrowLeft size={18} color="#fff" />
+        {/* Top bar */}
+        <div style={{ height: 42, display: 'flex', alignItems: 'center', position: 'relative' }}>
+          <button
+            onClick={() => router.back()}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 4px 4px 0', color: '#fff' }}
+          >
+            <ChevronLeft size={22} color="#fff" strokeWidth={2} />
+          </button>
+          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', pointerEvents: 'none' }}>
+            Client
+          </div>
+          <button
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'rgba(255,255,255,0.75)', padding: '4px 0 4px 8px', letterSpacing: 3 }}
+          >
+            ···
           </button>
         </div>
 
-        {/* avatar + name + badge */}
-        <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'flex-end', gap: 16, position: 'relative', zIndex: 2 }}>
-          <div style={{ width: 66, height: 66, borderRadius: 22, background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, color: '#fff', flexShrink: 0, letterSpacing: '-0.5px' }}>
+        {/* Identity row */}
+        <div style={{ marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          {/* Avatar */}
+          <div style={{ width: 58, height: 58, borderRadius: 17, background: 'rgba(255,255,255,0.16)', border: '1.5px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 21, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>
             {initials || '?'}
           </div>
-          <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 2 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.4px', lineHeight: 1.15 }}>{client.name}</div>
+
+          {/* Name + badge + address */}
+          <div style={{ flex: 1, minWidth: 0, paddingTop: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', marginBottom: 4, overflow: 'hidden' }}>
+              <div style={{ fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                {client.name}
+              </div>
               {isRepeat && (
-                <div style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 20, padding: '2px 9px', fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: '0.12em', textTransform: 'uppercase', flexShrink: 0 }}>
-                  REPEAT
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 20, padding: '0 8px', borderRadius: 99, background: 'rgba(255,255,255,0.18)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                  <Star size={9} fill="#fff" strokeWidth={0} />
+                  <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', letterSpacing: '0.05em', textTransform: 'uppercase' }}>REPEAT CUSTOMER</span>
                 </div>
               )}
             </div>
             {fullAddr && (
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.58)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <MapPin size={11} color="rgba(255,255,255,0.45)" strokeWidth={2} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: 'rgba(255,255,255,0.62)' }}>
+                <MapPin size={11} color="rgba(255,255,255,0.62)" strokeWidth={2} style={{ flexShrink: 0 }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fullAddr}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* stats strip */}
-        <div style={{ margin: '20px 16px 0', background: 'rgba(0,0,0,0.18)', borderRadius: 16, padding: '14px 0', display: 'flex', position: 'relative', zIndex: 2 }}>
+        {/* Stats strip */}
+        <div style={{ marginTop: 16, background: 'rgba(255,255,255,0.12)', borderRadius: 14, display: 'flex' }}>
           {[
-            { label: 'Visits',    value: String(visits) },
-            { label: 'Lifetime',  value: fmtCAD(lifetime) },
-            { label: 'Win rate',  value: winRate !== null ? `${winRate}%` : '—' },
+            { label: 'Visits',   value: String(visits) },
+            { label: 'Lifetime', value: fmtCAD(lifetime) },
+            { label: 'Win rate', value: winRate !== null ? `${winRate}%` : '—' },
           ].map((s, i) => (
-            <div key={s.label} style={{ flex: 1, textAlign: 'center', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.1)' : 'none' }}>
+            <div key={s.label} style={{ flex: 1, textAlign: 'center', padding: '12px 8px', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.16)' : 'none' }}>
               <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px', lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 5 }}>{s.label}</div>
+              <div style={{ fontSize: 10.5, fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginTop: 5, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        {/* Call / Text / Email */}
-        <div style={{ margin: '14px 16px 0', display: 'flex', gap: 10, position: 'relative', zIndex: 2 }}>
-          {[
-            { label: 'Call',  href: `tel:${client.phone}`,    Icon: Phone,         show: !!client.phone  },
-            { label: 'Text',  href: `sms:${client.phone}`,    Icon: MessageCircle, show: !!client.phone  },
-            { label: 'Email', href: `mailto:${client.email}`, Icon: Mail,          show: !!client.email  },
-          ].filter(b => b.show).map(b => (
-            <a
-              key={b.label} href={b.href}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 13, padding: '10px 8px', textDecoration: 'none' }}
-            >
-              <b.Icon size={18} color="#fff" strokeWidth={1.7} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: '0.02em' }}>{b.label}</span>
-            </a>
-          ))}
-        </div>
+        {/* Quick comms */}
+        {(hasPhone || hasEmail) && (
+          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+            {hasPhone && (
+              <a href={`tel:${client.phone}`} style={{ flex: 1, height: 42, borderRadius: 11, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textDecoration: 'none' }}>
+                <Phone size={16} color={T.blueDeep} strokeWidth={1.8} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: T.blueDeep }}>Call</span>
+              </a>
+            )}
+            {hasPhone && (
+              <a href={`sms:${client.phone}`} style={{ flex: 1, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textDecoration: 'none' }}>
+                <MessageCircle size={16} color="#fff" strokeWidth={1.8} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Text</span>
+              </a>
+            )}
+            {hasEmail && (
+              <a href={`mailto:${client.email}`} style={{ width: 46, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
+                <Mail size={16} color="#fff" strokeWidth={1.8} />
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* ── BODY ──────────────────────────────────────────────────────── */}
-      <div style={{ padding: '14px 14px 120px' }}>
+      {/* ── BODY ── */}
+      <div>
 
-        {/* Next visit */}
+        {/* Next visit card */}
         {nextVisit && (
-          <div style={{ background: T.blue, borderRadius: 16, padding: '14px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ width: 42, height: 42, borderRadius: 13, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Calendar size={20} color="#fff" strokeWidth={1.7} />
+          <div
+            onClick={() => router.push(`/dashboard/appointments/${nextVisit.id}`)}
+            style={{ margin: '14px 16px 0', background: '#fff', border: `1px solid ${T.border}`, borderLeft: `3px solid ${T.blue}`, borderRadius: 14, padding: '13px 14px', boxShadow: '0 4px 14px -10px rgba(15,23,42,0.3)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+          >
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: T.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Calendar size={19} color={T.blue} strokeWidth={1.7} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 3 }}>NEXT VISIT</div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
-                {fmtDate(nextVisit.appointment_date)}
-                {nextVisit.appointment_time && (
-                  <span style={{ fontWeight: 500, color: 'rgba(255,255,255,0.75)' }}> · {fmt12h(nextVisit.appointment_time)}</span>
-                )}
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: T.blue, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 2 }}>NEXT VISIT</div>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: T.ink }}>
+                {fmtDayDate(nextVisit.appointment_date)}
+                {nextVisit.appointment_time && <span style={{ fontWeight: 500 }}> · {fmt12h(nextVisit.appointment_time)}</span>}
               </div>
+              {nextVisit.notes && (
+                <div style={{ fontSize: 12.5, color: T.inkSoft, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {nextVisit.notes}
+                </div>
+              )}
             </div>
-            <button
-              onClick={() => router.push(`/dashboard/appointments/${nextVisit.id}`)}
-              style={{ background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 9, padding: '7px 14px', fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
-            >
-              View
-            </button>
+            <ChevronRight size={16} color={T.inkSoft} strokeWidth={1.7} />
           </div>
         )}
 
-        {/* Contact details */}
-        <div style={{ background: T.card, borderRadius: 16, boxShadow: `0 0 0 1px ${T.border}`, marginBottom: 12, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.border}` }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.inkSoft }}>Contact</span>
-          </div>
-          <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 13 }}>
-            {client.phone && (
-              <a href={`tel:${client.phone}`} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#F0FDF4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Phone size={15} color={T.green} />
+        {/* Details card */}
+        {(hasPhone || hasEmail || hasAddr) && (
+          <div style={{ margin: '12px 16px 0', background: '#fff', borderRadius: 16, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
+            {hasPhone && (
+              <a
+                href={`tel:${client.phone}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', textDecoration: 'none', borderBottom: (hasEmail || hasAddr) ? `1px solid ${T.border}` : 'none' }}
+              >
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: T.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Phone size={16} color={T.blue} strokeWidth={1.7} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{client.phone}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: T.inkSoft, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>PHONE</div>
+                  <div style={{ fontSize: 14.5, color: T.ink }}>{client.phone}</div>
+                </div>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: T.blue, flexShrink: 0 }}>Call</span>
               </a>
             )}
-            {client.email && (
-              <a href={`mailto:${client.email}`} style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Mail size={15} color={T.blue} />
+            {hasEmail && (
+              <a
+                href={`mailto:${client.email}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', textDecoration: 'none', borderBottom: hasAddr ? `1px solid ${T.border}` : 'none' }}
+              >
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Mail size={16} color={T.inkMid} strokeWidth={1.7} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: T.inkSoft, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>EMAIL</div>
+                  <div style={{ fontSize: 14.5, color: T.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.email}</div>
+                </div>
               </a>
             )}
-            {fullAddr && (
+            {hasAddr && (
               <a
                 href={`https://maps.apple.com/?q=${encodeURIComponent(fullAddr)}`}
                 target="_blank" rel="noreferrer"
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textDecoration: 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', textDecoration: 'none' }}
               >
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFF7ED', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                  <MapPin size={15} color="#EA580C" />
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <MapPin size={16} color={T.inkSoft} strokeWidth={1.7} />
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 600, color: T.ink, lineHeight: 1.45 }}>{fullAddr}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: T.inkSoft, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>ADDRESS</div>
+                  <div style={{ fontSize: 14.5, color: T.ink }}>{fullAddr}</div>
+                </div>
               </a>
             )}
           </div>
-        </div>
+        )}
 
-        {/* Notes — amber */}
-        <div style={{ background: T.amberBg, borderRadius: 16, border: `1px solid ${T.amberBorder}`, marginBottom: 12, overflow: 'hidden' }}>
-          <div style={{ padding: '12px 16px', borderBottom: `1px solid ${T.amberBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.amber }}>Notes</span>
-            {notesSaved && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: T.green }}>
-                <Check size={13} strokeWidth={2.5} /> Saved
-              </span>
-            )}
+        {/* Notes card */}
+        <div style={{ margin: '12px 16px 0', background: T.amberBg, borderRadius: 16, border: `1px solid ${T.amberBorder}` }}>
+          <div style={{ padding: '14px 15px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 10.5, fontWeight: 800, color: T.amberText, textTransform: 'uppercase', letterSpacing: '0.07em' }}>NOTES</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {notesSaved && <span style={{ fontSize: 11, fontWeight: 600, color: T.green }}>Saved</span>}
+              {!editingNotes ? (
+                <button
+                  onClick={() => setEditingNotes(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                >
+                  <Pencil size={12} color={T.amberText} strokeWidth={2} />
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: T.amberText }}>Edit</span>
+                </button>
+              ) : (
+                <button
+                  onMouseDown={e => e.preventDefault()}
+                  onClick={saveNotes}
+                  disabled={notesSaving}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, color: T.amberText, fontFamily: 'inherit', opacity: notesSaving ? 0.6 : 1 }}
+                >
+                  {notesSaving ? 'Saving…' : 'Save'}
+                </button>
+              )}
+            </div>
           </div>
-          <textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            onBlur={saveNotes}
-            placeholder="Add notes about this client…"
-            style={{
-              width: '100%', minHeight: 96, border: 'none', outline: 'none', resize: 'vertical',
-              padding: '12px 16px', fontSize: 14, color: T.ink, lineHeight: 1.6,
-              fontFamily: 'inherit', background: 'transparent', boxSizing: 'border-box',
-            }}
-          />
-          <div style={{ padding: '0 14px 12px', display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              onClick={saveNotes} disabled={notesSaving}
-              style={{ background: T.amber, border: 'none', borderRadius: 9, padding: '7px 18px', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', opacity: notesSaving ? 0.6 : 1, fontFamily: 'inherit' }}
+          {editingNotes ? (
+            <textarea
+              autoFocus
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              onBlur={saveNotes}
+              placeholder="Gate codes, access info, preferences…"
+              style={{ width: '100%', minHeight: 88, border: 'none', outline: 'none', resize: 'none', padding: '0 15px 14px', fontSize: 13.5, color: T.ink, lineHeight: 1.55, fontFamily: 'inherit', background: 'transparent', boxSizing: 'border-box' }}
+            />
+          ) : (
+            <div
+              onClick={() => setEditingNotes(true)}
+              style={{ padding: '0 15px 14px', fontSize: 13.5, color: notes ? T.ink : T.inkSoft, lineHeight: 1.55, minHeight: 44, cursor: 'text' }}
             >
-              {notesSaving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
+              {notes || 'Add notes about this client…'}
+            </div>
+          )}
         </div>
 
-        {/* Project history */}
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: T.inkSoft, marginBottom: 10, paddingLeft: 2 }}>
-            Project History · {projects.length}
-          </div>
+        {/* Project history header */}
+        <div style={{ padding: '20px 18px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 13, fontWeight: 800, color: T.inkSoft, textTransform: 'uppercase', letterSpacing: '0.06em' }}>PROJECT HISTORY</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: T.inkSoft }}>{projects.length}</span>
+        </div>
+
+        {/* Project cards */}
+        <div style={{ padding: '0 16px 110px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           {projects.length === 0 ? (
-            <div style={{ background: T.card, borderRadius: 14, padding: '28px 16px', textAlign: 'center', fontSize: 13, color: T.inkSoft, boxShadow: `0 0 0 1px ${T.border}` }}>
+            <div style={{ background: T.card, borderRadius: 16, padding: '28px 16px', textAlign: 'center', fontSize: 13, color: T.inkSoft, border: `1px solid ${T.border}` }}>
               No projects yet
             </div>
           ) : (
@@ -497,36 +582,35 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 key={p.appointment.id}
                 project={p}
                 onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
+                onCreateEstimate={apptId => router.push(`/dashboard/appointments/${apptId}`)}
               />
             ))
           )}
         </div>
-
       </div>
 
-      {/* ── STICKY BUTTON ─────────────────────────────────────────────── */}
+      {/* ── STICKY CTA ── */}
       <div style={{
         position: 'fixed',
         bottom: 'calc(64px + env(safe-area-inset-bottom))',
         left: 0, right: 0,
-        padding: '10px 14px',
-        background: 'linear-gradient(to top, #F4F5F8 55%, rgba(244,245,248,0))',
+        background: 'linear-gradient(to top, #FFFFFF 72%, transparent)',
+        padding: '12px 16px 22px',
         zIndex: 20,
       }}>
         <button
           onClick={() => router.push(`/dashboard/appointments/new?${newApptParams}`)}
           style={{
-            width: '100%', background: T.blue, border: 'none', borderRadius: 14,
-            padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#fff',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 8, boxShadow: '0 4px 16px rgba(37,99,235,0.32)', fontFamily: 'inherit',
+            width: '100%', height: 52, background: T.blue, border: 'none', borderRadius: 14,
+            fontSize: 15.5, fontWeight: 700, color: '#fff', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: '0 10px 24px -8px rgba(37,99,235,0.6)', fontFamily: 'inherit',
           }}
         >
-          <Calendar size={16} strokeWidth={2} />
+          <Plus size={18} strokeWidth={2.5} />
           New Appointment
         </button>
       </div>
-
     </div>
   )
 }
