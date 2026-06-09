@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import chromium from '@sparticuz/chromium-min'
+import puppeteer from 'puppeteer-core'
 
 export const maxDuration = 60
 
@@ -26,19 +28,16 @@ export async function GET(request: NextRequest) {
 
   let browser: any
   try {
-    const chromium = await import('@sparticuz/chromium-min')
-    const puppeteer = await import('puppeteer-core')
-
-    const executablePath = await chromium.default.executablePath(
-      'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+    const executablePath = await chromium.executablePath(
+      'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
     )
     console.log('[estimate-pdf] executablePath:', executablePath)
 
-    browser = await puppeteer.default.launch({
-      args: [...chromium.default.args, '--no-sandbox', '--disable-setuid-sandbox'],
-      defaultViewport: { width: 794, height: 1123, deviceScaleFactor: 1 },
+    browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: true,
+      headless: chromium.headless,
     })
     console.log('[estimate-pdf] browser launched')
 
@@ -78,4 +77,10 @@ export async function GET(request: NextRequest) {
       await browser.close().catch((e: any) => console.error('[estimate-pdf] browser.close error:', e))
     }
   }
+}
+
+export const config = {
+  api: {
+    responseLimit: '10mb',
+  },
 }
