@@ -322,7 +322,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   // Computed values
   const initials = client.name.trim().split(/\s+/).filter(Boolean)
     .reduce((acc, p, i, arr) => i === 0 || i === arr.length - 1 ? acc + p[0].toUpperCase() : acc, '')
-  const isRepeat   = appointments.length > 1
+  const isRepeat   = projects.filter(p => ['signed', 'accepted', 'invoiced'].includes(p.estimate?.status || '')).length > 1
   const fullAddr   = [client.address, client.city, client.province, client.postal_code].filter(Boolean).join(', ')
   const visits     = appointments.length
   const lifetime   = projects.reduce((s, p) => s + (['signed', 'invoiced'].includes(p.estimate?.status || '') ? (p.estimate!.total || 0) : 0), 0)
