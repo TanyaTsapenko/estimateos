@@ -113,26 +113,41 @@ export default function NewAppointmentPage() {
     if (!clientId) {
       try {
         const phone = form.client_phone.trim() || null
+        const email = form.client_email.trim() || null
         if (phone) {
           const { data: existing } = await supabase
             .from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
           clientId = existing?.id ?? null
         }
+        if (!clientId && !phone && email) {
+          const { data: byEmail } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('owner_id', ownerId)
+            .eq('email', email)
+            .maybeSingle()
+          if (byEmail) clientId = byEmail.id
+        }
         if (!clientId) {
-          const { data: created } = await supabase
+          const { data: created, error: createErr } = await supabase
             .from('clients').insert({
               owner_id:    ownerId,
               name:        form.client_name.trim(),
-              phone:       form.client_phone.trim() || null,
-              email:       form.client_email.trim() || null,
+              phone:       phone,
+              email:       email,
               address:     form.client_address.trim() || null,
               city:        form.client_city.trim() || null,
               province:    form.client_province || null,
               postal_code: form.postal_code.trim() || null,
             }).select('id').maybeSingle()
+          if (createErr) {
+            console.error('[appointments/new] client insert error:', createErr)
+          }
           clientId = created?.id ?? null
         }
-      } catch {}
+      } catch (err) {
+        console.error('[appointments/new] client create error:', err)
+      }
     }
 
     const { error: e } = await supabase.from('appointments').insert({
