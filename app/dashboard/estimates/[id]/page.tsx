@@ -81,35 +81,19 @@ export default function EstimateDetailPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-      const { data: myProfile } = await supabase
-        .from('profiles')
-        .select('role, member_role, team_owner_id')
-        .eq('id', sanitizedId)
-        .single()
+      // Ownership-scoped query: filter by user_id (estimates table has no team_owner_id column)
+      const estQuery = supabase.from('estimates').select('*').eq('id', id).eq('user_id', sanitizedId)
 
-      const r = (myProfile?.role ?? null) as string | null
-      const isTeamMember = !!myProfile?.team_owner_id
-      const isOwnerOrManager =
-        r === 'owner' || r === 'manager' ||
-        (!r && !isTeamMember) ||
-        (!r && myProfile?.member_role === 'owner') ||
-        (!r && myProfile?.member_role === 'manager')
-
-      // Ownership-scoped query: owner/manager sees own + team estimates; others see only own
-      let estQuery = supabase.from('estimates').select('*').eq('id', id)
-      if (isOwnerOrManager) {
-        estQuery = estQuery.or(`user_id.eq.${sanitizedId},team_owner_id.eq.${sanitizedId}`)
-      } else {
-        estQuery = estQuery.eq('user_id', sanitizedId)
-      }
-
-      const [{ data: est }, { data: ops }] = await Promise.all([
+      const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
         supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type').eq('estimate_id', id).order('sort_order'),
       ])
 
+      if (estErr) console.error('[estimate-detail] query error:', estErr.message)
+
       if (!est) {
-        router.push('/dashboard/estimates')
+        if (!estErr) router.push('/dashboard/estimates')
+        setLoading(false)
         return
       }
 
