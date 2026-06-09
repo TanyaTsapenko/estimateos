@@ -142,10 +142,15 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
         </View>
         {openings.map((op: any, i: number) => (
           <View key={i} style={styles.tableRow}>
-            <View style={{ width: '60%' }}>
-              <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>
-              <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour ? ` · ${op.colour}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
-              {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
+            <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
+              {op.diagramPng ? (
+                <Image src={op.diagramPng} style={{ width: 36, height: 36, flexShrink: 0 }} />
+              ) : null}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>
+                <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour ? ` · ${op.colour}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
+                {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
+              </View>
             </View>
             <Text style={styles.col20}>{op.qty}</Text>
             <Text style={styles.col20Right}>{formatCurrency(op.total_cost)}</Text>

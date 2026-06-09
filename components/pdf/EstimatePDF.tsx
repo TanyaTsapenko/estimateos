@@ -133,17 +133,24 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           <Text style={styles.sectionTitle}>Scope of work — {openings.length} opening{openings.length !== 1 ? 's' : ''}</Text>
           {openings.map((op: any, i: number) => (
             <View key={i} style={styles.openingCard}>
-              <View style={styles.openingHeader}>
-                <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{WINDOW_TYPES[op.type] || op.type}{op.room ? ` — ${op.room}` : ''}</Text>
-                <Text style={styles.openingPrice}>{formatCurrency(op.total_cost)}</Text>
-              </View>
-              <View style={styles.openingDetails}>
-                <Text style={styles.openingDetail}>Size: {op.width_in}" × {op.height_in}"</Text>
-                {op.colour && <Text style={styles.openingDetail}>Colour: {op.colour}</Text>}
-                {op.material && <Text style={styles.openingDetail}>Material: {op.material}</Text>}
-                {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {op.glass}</Text>}
-                {op.floor && op.floor !== 'first' && <Text style={styles.openingDetail}>Floor: {op.floor}</Text>}
-                {op.notes && <Text style={styles.openingDetail}>Note: {op.notes}</Text>}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                {op.diagramPng ? (
+                  <Image src={op.diagramPng} style={{ width: 60, height: 60, flexShrink: 0 }} />
+                ) : null}
+                <View style={{ flex: 1 }}>
+                  <View style={styles.openingHeader}>
+                    <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{WINDOW_TYPES[op.type] || op.type}{op.room ? ` — ${op.room}` : ''}</Text>
+                    <Text style={styles.openingPrice}>{formatCurrency(op.total_cost)}</Text>
+                  </View>
+                  <View style={styles.openingDetails}>
+                    <Text style={styles.openingDetail}>Size: {op.width_in}" × {op.height_in}"</Text>
+                    {op.colour && <Text style={styles.openingDetail}>Colour: {op.colour}</Text>}
+                    {op.material && <Text style={styles.openingDetail}>Material: {op.material}</Text>}
+                    {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {op.glass}</Text>}
+                    {op.floor && op.floor !== 'first' && <Text style={styles.openingDetail}>Floor: {op.floor}</Text>}
+                    {op.notes && <Text style={styles.openingDetail}>Note: {op.notes}</Text>}
+                  </View>
+                </View>
               </View>
             </View>
           ))}
