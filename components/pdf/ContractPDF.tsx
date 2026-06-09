@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
+import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -143,9 +144,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
         {openings.map((op: any, i: number) => (
           <View key={i} style={styles.tableRow}>
             <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
-              {op.diagramPng ? (
-                <Image src={op.diagramPng} style={{ width: 160, height: 160, flexShrink: 0 }} />
-              ) : null}
+              <WindowDiagramPdf type={op.type} size={100} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>
                 <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour ? ` · ${op.colour}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>

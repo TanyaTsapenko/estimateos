@@ -7,8 +7,6 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { EstimatePDF } from '@/components/pdf/EstimatePDF'
-import { getWindowSvgString } from '@/lib/windowSvgString'
-import { svgToPngBase64 } from '@/lib/svgToPng'
 import React from 'react'
 
 export async function GET(req: NextRequest) {
@@ -40,19 +38,12 @@ export async function GET(req: NextRequest) {
     console.log('[estimate-pdf] estimate:', estimate?.id)
     console.log('[estimate-pdf] openings count:', openings?.length)
     console.log('[estimate-pdf] company:', company?.company_name)
-    const openingsWithDiagrams = await Promise.all(
-      (openings || []).map(async (op: any) => ({
-        ...op,
-        diagramPng: await svgToPngBase64(getWindowSvgString(op.type), 160, 160),
-      }))
-    )
-
     console.log('[estimate-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
       React.createElement(EstimatePDF, {
         estimate,
-        openings: openingsWithDiagrams,
+        openings: openings || [],
         company: company || {},
       }) as React.ReactElement<DocumentProps>
     )

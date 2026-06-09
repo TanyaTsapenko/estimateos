@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
+import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -134,9 +135,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           {openings.map((op: any, i: number) => (
             <View key={i} style={styles.openingCard}>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                {op.diagramPng ? (
-                  <Image src={op.diagramPng} style={{ width: 160, height: 160, flexShrink: 0 }} />
-                ) : null}
+                <WindowDiagramPdf type={op.type} size={100} />
                 <View style={{ flex: 1 }}>
                   <View style={styles.openingHeader}>
                     <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{WINDOW_TYPES[op.type] || op.type}{op.room ? ` — ${op.room}` : ''}</Text>

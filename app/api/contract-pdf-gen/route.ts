@@ -7,8 +7,6 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ContractPDF } from '@/components/pdf/ContractPDF'
-import { getWindowSvgString } from '@/lib/windowSvgString'
-import { svgToPngBase64 } from '@/lib/svgToPng'
 import React from 'react'
 
 export async function GET(req: NextRequest) {
@@ -66,20 +64,13 @@ export async function GET(req: NextRequest) {
     console.log('[contract-pdf] contract_clauses value:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] company contract_clauses:', JSON.stringify(company?.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] contract_terms_snapshot:', contractWithClauses.contract_terms_snapshot?.slice(0, 100))
-    const openingsWithDiagrams = await Promise.all(
-      (openings || []).map(async (op: any) => ({
-        ...op,
-        diagramPng: await svgToPngBase64(getWindowSvgString(op.type), 160, 160),
-      }))
-    )
-
     console.log('[contract-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
       React.createElement(ContractPDF, {
         contract: contractWithClauses,
         estimate,
-        openings: openingsWithDiagrams,
+        openings: openings || [],
         company: company || {},
       }) as React.ReactElement<DocumentProps>
     )
