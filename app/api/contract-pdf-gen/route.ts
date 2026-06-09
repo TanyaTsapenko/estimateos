@@ -1,9 +1,11 @@
+export const runtime = 'nodejs'
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import chromium from '@sparticuz/chromium-min'
 import puppeteer from 'puppeteer-core'
-
-export const maxDuration = 60
 
 export async function GET(request: NextRequest) {
   const contractId = request.nextUrl.searchParams.get('contractId')

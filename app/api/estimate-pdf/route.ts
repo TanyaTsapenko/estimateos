@@ -1,9 +1,11 @@
+export const runtime = 'nodejs'
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import chromium from '@sparticuz/chromium-min'
 import puppeteer from 'puppeteer-core'
-
-export const maxDuration = 60
 
 export async function GET(request: NextRequest) {
   const estimateId = request.nextUrl.searchParams.get('id')
