@@ -582,7 +582,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 key={p.appointment.id}
                 project={p}
                 onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
-                onCreateEstimate={apptId => router.push(`/dashboard/appointments/${apptId}/edit`)}
+                onCreateEstimate={apptId => router.push(`/dashboard/estimates/new?appointment_id=${apptId}`)}
               />
             ))
           )}
