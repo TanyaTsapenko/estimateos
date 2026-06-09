@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apexscale-v3-2026-06-07';
+const CACHE_NAME = 'apexscale-v4-2026-06-09';
 
 self.addEventListener('install', () => self.skipWaiting());
 
