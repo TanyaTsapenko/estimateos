@@ -89,7 +89,7 @@ interface ContractPDFProps {
 export function ContractPDF({ contract, estimate, openings, company }: ContractPDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
-  const clauses = contract.contract_clauses || []
+  const clauses = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
 
   return (
     <Document>
