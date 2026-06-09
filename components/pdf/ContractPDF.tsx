@@ -144,7 +144,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
           <View key={i} style={styles.tableRow}>
             <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
               {op.diagramPng ? (
-                <Image src={op.diagramPng} style={{ width: 100, height: 100, flexShrink: 0 }} />
+                <Image src={op.diagramPng} style={{ width: 160, height: 160, flexShrink: 0 }} />
               ) : null}
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>

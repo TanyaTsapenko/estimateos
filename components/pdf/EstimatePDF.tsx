@@ -135,7 +135,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
             <View key={i} style={styles.openingCard}>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 {op.diagramPng ? (
-                  <Image src={op.diagramPng} style={{ width: 120, height: 120, flexShrink: 0 }} />
+                  <Image src={op.diagramPng} style={{ width: 160, height: 160, flexShrink: 0 }} />
                 ) : null}
                 <View style={{ flex: 1 }}>
                   <View style={styles.openingHeader}>
