@@ -87,8 +87,8 @@ interface ContractPDFProps {
 }
 
 export function ContractPDF({ contract, estimate, openings, company }: ContractPDFProps) {
-  const depositAmount = estimate.total * (estimate.deposit_percent / 100)
-  const balanceAmount = estimate.total - depositAmount
+  const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
+  const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses = contract.contract_clauses || []
 
   return (
@@ -159,7 +159,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             <Text style={styles.totalValue}>{formatCurrency(estimate.subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax ({(estimate.tax_rate * 100).toFixed(0)}%)</Text>
+            <Text style={styles.totalLabel}>Tax ({((estimate.tax_rate || 0) * 100).toFixed(0)}%)</Text>
             <Text style={styles.totalValue}>{formatCurrency(estimate.tax_amount)}</Text>
           </View>
           <View style={styles.totalRow}>

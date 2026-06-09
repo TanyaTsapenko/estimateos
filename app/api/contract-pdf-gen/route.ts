@@ -45,6 +45,9 @@ export async function GET(req: NextRequest) {
       contract_clauses: contract.contract_clauses || company?.contract_clauses || [],
     }
 
+    console.log('[contract-pdf] estimate id:', estimate?.id)
+    console.log('[contract-pdf] openings count:', openings?.length)
+    console.log('[contract-pdf] company name:', company?.company_name)
     console.log('[contract-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(

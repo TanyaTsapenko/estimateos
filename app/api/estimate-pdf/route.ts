@@ -35,6 +35,9 @@ export async function GET(req: NextRequest) {
 
     console.log('[estimate-pdf] openings:', openings?.length, 'opErr:', opErr?.message)
     console.log('[estimate-pdf] company:', company?.company_name, 'compErr:', compErr?.message)
+    console.log('[estimate-pdf] estimate:', estimate?.id)
+    console.log('[estimate-pdf] openings count:', openings?.length)
+    console.log('[estimate-pdf] company:', company?.company_name)
     console.log('[estimate-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(

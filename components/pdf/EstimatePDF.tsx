@@ -88,8 +88,8 @@ interface EstimatePDFProps {
 }
 
 export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
-  const depositAmount = estimate.total * (estimate.deposit_percent / 100)
-  const balanceAmount = estimate.total - depositAmount
+  const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
+  const balanceAmount = (estimate.total || 0) - depositAmount
 
   return (
     <Document>
@@ -112,8 +112,8 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>ESTIMATE</Text>
             <Text style={styles.docNumber}>{estimate.estimate_number}</Text>
-            <Text style={styles.docDate}>Date: {formatDate(estimate.created_at)}</Text>
-            <Text style={styles.docDate}>Valid until: {formatDate(estimate.valid_until)}</Text>
+            <Text style={styles.docDate}>Date: {formatDate(estimate.created_at || new Date().toISOString())}</Text>
+            <Text style={styles.docDate}>Valid until: {formatDate(estimate.valid_until || new Date().toISOString())}</Text>
           </View>
         </View>
 
@@ -184,7 +184,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
             </View>
           )}
           <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tax ({(estimate.tax_rate * 100).toFixed(0)}%)</Text>
+            <Text style={styles.totalLabel}>Tax ({((estimate.tax_rate || 0) * 100).toFixed(0)}%)</Text>
             <Text style={styles.totalValue}>{formatCurrency(estimate.tax_amount)}</Text>
           </View>
           <View style={styles.totalRow}>
@@ -217,7 +217,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
 
         {/* Valid until */}
         <View style={styles.validBox}>
-          <Text style={styles.validText}>This estimate is valid for 30 days until {formatDate(estimate.valid_until)}. Prices subject to change after expiry.</Text>
+          <Text style={styles.validText}>This estimate is valid for 30 days until {formatDate(estimate.valid_until || new Date().toISOString())}. Prices subject to change after expiry.</Text>
         </View>
 
         {/* Footer */}
