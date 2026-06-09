@@ -56,6 +56,7 @@ interface Appointment {
 }
 interface Estimate {
   id: string; estimate_number: string; status: string; total: number; created_at: string
+  appointment_id: string | null
 }
 interface Contract { id: string; estimate_id: string; status: string }
 interface Invoice  { id: string; estimate_id: string; amount: number; status: string; invoice_type: string }
@@ -259,23 +260,31 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
   useEffect(() => {
     async function load() {
-      const [{ data: cl }, { data: appts }, { data: ests }] = await Promise.all([
+      // Phase 1: client + appointments in parallel
+      const [{ data: cl }, { data: appts }] = await Promise.all([
         supabase.from('clients').select('*').eq('id', clientId).single(),
         supabase.from('appointments')
           .select('id, appointment_date, appointment_time, status, notes, estimate_id, lead_source, assigned_to')
           .eq('client_id', clientId)
           .order('appointment_date', { ascending: false }),
-        supabase.from('estimates')
-          .select('id, estimate_number, status, total, created_at')
-          .eq('client_id', clientId)
-          .order('created_at', { ascending: false }),
       ])
 
       if (cl) { setClient(cl); setNotes(cl.notes || '') }
       const apptList = appts || []
-      const estList  = ests  || []
       setAppointments(apptList)
 
+      // Phase 2: estimates by appointment_id (estimates.client_id is not reliably set)
+      const apptIds = apptList.map(a => a.id)
+      const { data: ests } = apptIds.length
+        ? await supabase.from('estimates')
+            .select('id, estimate_number, status, total, created_at, appointment_id')
+            .in('appointment_id', apptIds)
+            .order('created_at', { ascending: false })
+        : { data: [] as Estimate[] }
+
+      const estList = ests || []
+
+      // Phase 3: contracts + invoices by estimate IDs
       const estimateIds = estList.map(e => e.id)
       const [{ data: contracts }, { data: invoices }] = estimateIds.length
         ? await Promise.all([
@@ -295,9 +304,16 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         invoiceMap.set(inv.estimate_id, cur)
       }
 
-      const estById = new Map(estList.map(e => [e.id, e]))
+      // Index estimates by appointment_id (primary) and by estimate id (fallback)
+      const estByApptId = new Map<string, Estimate>()
+      const estById     = new Map<string, Estimate>()
+      for (const e of estList) {
+        if (e.appointment_id) estByApptId.set(e.appointment_id, e)
+        estById.set(e.id, e)
+      }
+
       const built: Project[] = apptList.map(a => {
-        const estimate = a.estimate_id ? (estById.get(a.estimate_id) ?? null) : null
+        const estimate = estByApptId.get(a.id) ?? (a.estimate_id ? estById.get(a.estimate_id) ?? null : null)
         const invs     = estimate ? (invoiceMap.get(estimate.id) ?? { deposit: null, final: null }) : { deposit: null, final: null }
         return {
           appointment: a,
