@@ -4,6 +4,7 @@ export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
 import { renderToBuffer } from '@react-pdf/renderer'
+import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { EstimatePDF } from '@/components/pdf/EstimatePDF'
 import React from 'react'
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
       estimate,
       openings: openings || [],
       company: company || {},
-    })
+    }) as React.ReactElement<DocumentProps>
   )
 
   const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
