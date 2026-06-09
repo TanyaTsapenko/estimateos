@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
   const filename = `Estimate-${estimate.estimate_number}-${clientSlug}.pdf`
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(new Uint8Array(pdfBuffer), {
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,
