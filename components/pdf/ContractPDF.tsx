@@ -216,7 +216,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
       </Page>
 
       {/* Page 2 — Terms & Signatures */}
-      {(clauses.length > 0 || contract.client_signature_url) && (
+      {(clauses.length > 0 || contract.contract_terms_snapshot || contract.client_signature_url) && (
         <Page size="LETTER" style={styles.page}>
           {/* Header repeated */}
           <View style={[styles.header, { marginBottom: 16 }]}>
@@ -227,15 +227,19 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
           </View>
 
           {/* Terms */}
-          {clauses.length > 0 && (
+          {(clauses.length > 0 || contract.contract_terms_snapshot) && (
             <View>
               <Text style={styles.sectionTitle}>Terms & Conditions</Text>
-              {clauses.filter((c: any) => c.enabled !== false).map((clause: any, i: number) => (
-                <View key={i} style={styles.clauseItem}>
-                  <Text style={styles.clauseTitle}>{clause.title || clause.name}</Text>
-                  <Text style={styles.clauseText}>{clause.content || clause.text}</Text>
-                </View>
-              ))}
+              {clauses.length > 0 ? (
+                clauses.filter((c: any) => c.enabled !== false).map((clause: any, i: number) => (
+                  <View key={i} style={styles.clauseItem}>
+                    <Text style={styles.clauseTitle}>{clause.title || clause.name}</Text>
+                    <Text style={styles.clauseText}>{clause.content || clause.text}</Text>
+                  </View>
+                ))
+              ) : contract.contract_terms_snapshot ? (
+                <Text style={styles.clauseText}>{contract.contract_terms_snapshot}</Text>
+              ) : null}
             </View>
           )}
 

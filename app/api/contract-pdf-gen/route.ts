@@ -42,16 +42,21 @@ export async function GET(req: NextRequest) {
 
     const contractWithClauses = {
       ...contract,
-      contract_clauses: contract.contract_clauses || company?.contract_clauses || [],
+      contract_clauses: Array.isArray(company?.contract_clauses)
+        ? company.contract_clauses
+        : [],
+      contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 
     console.log('[contract-pdf] estimate id:', estimate?.id)
     console.log('[contract-pdf] openings count:', openings?.length)
     console.log('[contract-pdf] company name:', company?.company_name)
+    console.log('[contract-pdf] raw client_name:', JSON.stringify(estimate?.client_name))
     console.log('[contract-pdf] client_name:', estimate?.client_name)
     console.log('[contract-pdf] contract_clauses type:', typeof contractWithClauses.contract_clauses)
     console.log('[contract-pdf] contract_clauses value:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] company contract_clauses:', JSON.stringify(company?.contract_clauses)?.slice(0, 300))
+    console.log('[contract-pdf] contract_terms_snapshot:', contractWithClauses.contract_terms_snapshot?.slice(0, 100))
     console.log('[contract-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
@@ -65,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     console.log('[contract-pdf] renderToBuffer done, size:', pdfBuffer.length)
 
-    const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
+    const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '-') || 'Client'
     const filename = `Contract-${estimate.estimate_number}-${clientSlug}.pdf`
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
