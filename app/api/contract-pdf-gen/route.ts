@@ -48,8 +48,10 @@ export async function GET(req: NextRequest) {
     console.log('[contract-pdf] estimate id:', estimate?.id)
     console.log('[contract-pdf] openings count:', openings?.length)
     console.log('[contract-pdf] company name:', company?.company_name)
+    console.log('[contract-pdf] client_name:', estimate?.client_name)
     console.log('[contract-pdf] contract_clauses type:', typeof contractWithClauses.contract_clauses)
-    console.log('[contract-pdf] contract_clauses:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 200))
+    console.log('[contract-pdf] contract_clauses value:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 300))
+    console.log('[contract-pdf] company contract_clauses:', JSON.stringify(company?.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
