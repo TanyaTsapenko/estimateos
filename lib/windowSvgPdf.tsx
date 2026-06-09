@@ -1,3 +1,4 @@
+import React from 'react'
 import { Svg, Path, Rect, Line, Polygon, Circle } from '@react-pdf/renderer'
 
 const GLASS = '#EEF4FF'
@@ -6,7 +7,7 @@ const SEC = '#94A3B8'
 const MOV = '#2563EB'
 
 export function WindowDiagramPdf({ type, size = 80 }: { type: string; size?: number }) {
-  const diagrams: Record<string, JSX.Element> = {
+  const diagrams: Record<string, React.ReactElement> = {
 
     window_dh: (
       <Svg viewBox="0 0 215 255" width={size} height={size}>
