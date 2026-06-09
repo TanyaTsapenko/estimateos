@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: chromium.headless,
+      headless: 'shell' as const,
     })
     console.log('[contract-pdf] browser launched')
 
