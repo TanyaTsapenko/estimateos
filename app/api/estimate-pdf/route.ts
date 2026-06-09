@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath,
-      headless: 'shell' as const,
+      headless: true,
     })
     console.log('[estimate-pdf] browser launched')
 
