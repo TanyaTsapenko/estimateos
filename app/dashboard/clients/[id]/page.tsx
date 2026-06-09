@@ -447,7 +447,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         {/* Next visit card */}
         {nextVisit && (
           <div
-            onClick={() => router.push(`/dashboard/appointments/${nextVisit.id}`)}
+            onClick={() => router.push(`/dashboard/appointments/${nextVisit.id}/edit`)}
             style={{ margin: '14px 16px 0', background: '#fff', border: `1px solid ${T.border}`, borderLeft: `3px solid ${T.blue}`, borderRadius: 14, padding: '13px 14px', boxShadow: '0 4px 14px -10px rgba(15,23,42,0.3)', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
           >
             <div style={{ width: 42, height: 42, borderRadius: 12, background: T.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -582,7 +582,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 key={p.appointment.id}
                 project={p}
                 onViewEstimate={id => router.push(`/dashboard/estimates/${id}`)}
-                onCreateEstimate={apptId => router.push(`/dashboard/appointments/${apptId}`)}
+                onCreateEstimate={apptId => router.push(`/dashboard/appointments/${apptId}/edit`)}
               />
             ))
           )}
