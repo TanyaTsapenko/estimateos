@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback, use } from 'react'
+import { useEffect, useState, useCallback, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
@@ -241,6 +241,21 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesSaving,  setNotesSaving]  = useState(false)
   const [notesSaved,   setNotesSaved]   = useState(false)
+  const [menuOpen,     setMenuOpen]     = useState(false)
+  const [editOpen,     setEditOpen]     = useState(false)
+  const [deleteOpen,   setDeleteOpen]   = useState(false)
+  const [editSaving,   setEditSaving]   = useState(false)
+  const [deleting,     setDeleting]     = useState(false)
+  const [editForm,     setEditForm]     = useState({ name: '', phone: '', email: '', address: '', city: '', province: '', postal_code: '' })
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -296,6 +311,29 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       setLoading(false)
     }
     load()
+  }, [clientId])
+
+  const saveClient = useCallback(async () => {
+    if (!client) return
+    setEditSaving(true)
+    await supabase.from('clients').update({
+      name:        editForm.name.trim()        || client.name,
+      phone:       editForm.phone.trim()       || null,
+      email:       editForm.email.trim()       || null,
+      address:     editForm.address.trim()     || null,
+      city:        editForm.city.trim()        || null,
+      province:    editForm.province.trim()    || null,
+      postal_code: editForm.postal_code.trim() || null,
+    }).eq('id', clientId)
+    setClient(prev => prev ? { ...prev, ...editForm, name: editForm.name.trim() || prev.name } : prev)
+    setEditSaving(false)
+    setEditOpen(false)
+  }, [editForm, clientId, client])
+
+  const deleteClient = useCallback(async () => {
+    setDeleting(true)
+    await supabase.from('clients').delete().eq('id', clientId)
+    router.push('/dashboard/clients')
   }, [clientId])
 
   const saveNotes = useCallback(async () => {
@@ -367,11 +405,32 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', pointerEvents: 'none' }}>
             Client
           </div>
-          <button
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'rgba(255,255,255,0.75)', padding: '4px 0 4px 8px', letterSpacing: 3 }}
-          >
-            ···
-          </button>
+          <div ref={menuRef} style={{ marginLeft: 'auto', position: 'relative' }}>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'rgba(255,255,255,0.75)', padding: '4px 0 4px 8px', letterSpacing: 3, fontFamily: 'inherit' }}
+            >
+              ···
+            </button>
+            {menuOpen && (
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.18)', border: `1px solid ${T.border}`, overflow: 'hidden', minWidth: 180, zIndex: 50 }}>
+                <button
+                  onClick={() => { setMenuOpen(false); setEditForm({ name: client.name, phone: client.phone || '', email: client.email || '', address: client.address || '', city: client.city || '', province: client.province || '', postal_code: client.postal_code || '' }); setEditOpen(true) }}
+                  style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.ink, textAlign: 'left', borderBottom: `1px solid ${T.border}` }}
+                >
+                  <Pencil size={15} color={T.inkMid} strokeWidth={1.8} />
+                  Edit client
+                </button>
+                <button
+                  onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
+                  style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.red, textAlign: 'left' }}
+                >
+                  <X size={15} color={T.red} strokeWidth={2} />
+                  Delete client
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Identity row */}
@@ -417,7 +476,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           ))}
         </div>
 
-        {/* Quick comms */}
+        {/* Quick comms: Call / Email / Text */}
         {(hasPhone || hasEmail) && (
           <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
             {hasPhone && (
@@ -426,15 +485,15 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 <span style={{ fontSize: 14, fontWeight: 700, color: T.blueDeep }}>Call</span>
               </a>
             )}
+            {hasEmail && (
+              <a href={`mailto:${client.email}`} style={{ width: 46, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
+                <Mail size={16} color="#fff" strokeWidth={1.8} />
+              </a>
+            )}
             {hasPhone && (
               <a href={`sms:${client.phone}`} style={{ flex: 1, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, textDecoration: 'none' }}>
                 <MessageCircle size={16} color="#fff" strokeWidth={1.8} />
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>Text</span>
-              </a>
-            )}
-            {hasEmail && (
-              <a href={`mailto:${client.email}`} style={{ width: 46, height: 42, borderRadius: 11, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', flexShrink: 0 }}>
-                <Mail size={16} color="#fff" strokeWidth={1.8} />
               </a>
             )}
           </div>
@@ -611,6 +670,78 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           New Appointment
         </button>
       </div>
+
+      {/* ── EDIT CLIENT MODAL ── */}
+      {editOpen && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setEditOpen(false) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 540, padding: '20px 20px calc(20px + env(safe-area-inset-bottom))', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <span style={{ fontSize: 17, fontWeight: 700, color: T.ink }}>Edit Client</span>
+              <button onClick={() => setEditOpen(false)} style={{ background: '#F3F4F6', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <X size={16} color={T.inkMid} />
+              </button>
+            </div>
+            {([
+              { key: 'name',        label: 'Name',        placeholder: 'Jane Smith',     type: 'text'  },
+              { key: 'phone',       label: 'Phone',       placeholder: '(403) 555-0100', type: 'tel'   },
+              { key: 'email',       label: 'Email',       placeholder: 'jane@email.com', type: 'email' },
+              { key: 'address',     label: 'Address',     placeholder: '123 Maple St',   type: 'text'  },
+              { key: 'city',        label: 'City',        placeholder: 'Calgary',        type: 'text'  },
+              { key: 'province',    label: 'Province',    placeholder: 'AB',             type: 'text'  },
+              { key: 'postal_code', label: 'Postal Code', placeholder: 'A1A 1A1',        type: 'text'  },
+            ] as { key: keyof typeof editForm; label: string; placeholder: string; type: string }[]).map(f => (
+              <div key={f.key} style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 11, fontWeight: 700, color: T.inkSoft, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5 }}>{f.label}</label>
+                <input
+                  type={f.type}
+                  value={editForm[f.key]}
+                  placeholder={f.placeholder}
+                  onChange={e => setEditForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  style={{ width: '100%', border: `1px solid ${T.border}`, borderRadius: 10, padding: '11px 13px', fontSize: 15, color: T.ink, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+                />
+              </div>
+            ))}
+            <button
+              onClick={saveClient}
+              disabled={editSaving || !editForm.name.trim()}
+              style={{ width: '100%', height: 48, background: T.blue, border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', opacity: editSaving ? 0.7 : 1, marginTop: 4 }}
+            >
+              {editSaving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE CONFIRMATION ── */}
+      {deleteOpen && (
+        <div
+          onClick={e => { if (e.target === e.currentTarget) setDeleteOpen(false) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Delete this client?</div>
+            <div style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.5, marginBottom: 24 }}>This cannot be undone.</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setDeleteOpen(false)}
+                style={{ flex: 1, height: 44, background: '#F3F4F6', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: T.ink, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={deleteClient}
+                disabled={deleting}
+                style={{ flex: 1, height: 44, background: T.red, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.7 : 1 }}
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
