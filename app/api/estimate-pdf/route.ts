@@ -1,94 +1,48 @@
 export const runtime = 'nodejs'
-export const maxDuration = 60
 export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
+import { renderToBuffer } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
-import chromium from '@sparticuz/chromium-min'
-import puppeteer from 'puppeteer-core'
+import { EstimatePDF } from '@/components/pdf/EstimatePDF'
+import React from 'react'
 
-export async function GET(request: NextRequest) {
-  const estimateId = request.nextUrl.searchParams.get('id')
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const estimateId = searchParams.get('id')
   if (!estimateId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
   const admin = createServiceClient()
 
-  const { data: est, error: estError } = await admin
+  const { data: estimate } = await admin
     .from('estimates')
-    .select('id, estimate_number, client_name')
+    .select('*')
     .eq('id', estimateId)
-    .single()
+    .maybeSingle()
 
-  if (!est) return NextResponse.json({ error: 'Estimate not found', dbError: estError?.message }, { status: 404 })
+  if (!estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
-  const clientSlug = (est.client_name || 'Client')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-zA-Z0-9\s]/g, '')
-    .trim()
-    .replace(/\s+/g, '-') || 'Client'
+  const [{ data: openings }, { data: company }] = await Promise.all([
+    admin.from('estimate_openings').select('*').eq('estimate_id', estimateId).order('sort_order'),
+    admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal_code, website, licence_number, insurance_number, logo_url, signature_url, warranty_period, completion_timeframe, project_manager, interac_email').eq('id', estimate.user_id).maybeSingle(),
+  ])
 
-  let browser: any
-  try {
-    const executablePath = await chromium.executablePath(
-      'https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar'
-    )
-    console.log('[estimate-pdf] executablePath:', executablePath)
-
-    browser = await puppeteer.launch({
-      args: [
-        ...chromium.args,
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--single-process',
-      ],
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: true,
+  const pdfBuffer = await renderToBuffer(
+    React.createElement(EstimatePDF, {
+      estimate,
+      openings: openings || [],
+      company: company || {},
     })
-    console.log('[estimate-pdf] browser launched')
+  )
 
-    const page = await browser.newPage()
+  const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
+  const filename = `Estimate-${estimate.estimate_number}-${clientSlug}.pdf`
 
-    await page.setRequestInterception(true)
-    page.on('request', (req: any) => {
-      if (req.url().includes('sw.js')) { req.abort() } else { req.continue() }
-    })
-
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://useapexscale.com'
-    const targetUrl = `${baseUrl}/estimate/${estimateId}?pdf=true`
-    console.log('[estimate-pdf] navigating to:', targetUrl)
-
-    await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 })
-    console.log('[estimate-pdf] page loaded')
-
-    const pdf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' },
-    })
-    console.log('[estimate-pdf] pdf generated, size:', pdf.length)
-
-    return new NextResponse(Buffer.from(pdf) as unknown as BodyInit, {
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="Estimate-${est.estimate_number}-${clientSlug}.pdf"`,
-      },
-    })
-
-  } catch (err: any) {
-    console.error('[estimate-pdf] error:', err?.message, err?.stack)
-    return NextResponse.json({ error: 'PDF generation failed', details: String(err) }, { status: 500 })
-  } finally {
-    if (browser) {
-      await browser.close().catch((e: any) => console.error('[estimate-pdf] browser.close error:', e))
-    }
-  }
-}
-
-export const config = {
-  api: {
-    responseLimit: '10mb',
-  },
+  return new NextResponse(pdfBuffer, {
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    },
+  })
 }
