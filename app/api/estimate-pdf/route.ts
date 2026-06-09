@@ -29,12 +29,18 @@ export async function GET(request: NextRequest) {
   let browser: any
   try {
     const executablePath = await chromium.executablePath(
-      'https://github.com/Sparticuz/chromium/releases/download/v131.0.0/chromium-v131.0.0-pack.tar'
+      'https://github.com/Sparticuz/chromium/releases/download/v123.0.1/chromium-v123.0.1-pack.tar'
     )
     console.log('[estimate-pdf] executablePath:', executablePath)
 
     browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process',
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath,
       headless: true,
