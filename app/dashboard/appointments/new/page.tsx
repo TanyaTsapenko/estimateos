@@ -84,6 +84,7 @@ export default function NewAppointmentPage() {
   }, [])
 
   async function save() {
+    console.log('[appointments/new] save() called')
     setError('')
     const nameErr = validateName(form.client_name)
     const phoneErr = validatePhone(form.client_phone)
@@ -91,6 +92,9 @@ export default function NewAppointmentPage() {
     const addrErr = validateAddress(form.client_address)
     const newErrors: ClientErrors = { client_name: nameErr, client_phone: phoneErr, client_email: emailErr, client_address: addrErr }
     setErrors(newErrors)
+    console.log('[appointments/new] form:', JSON.stringify({ client_name: form.client_name, client_phone: form.client_phone, client_email: form.client_email }))
+    console.log('[appointments/new] validation errors:', JSON.stringify(newErrors))
+    console.log('[appointments/new] hasErrors:', hasErrors(newErrors))
     if (hasErrors(newErrors)) return
     if (!form.appointment_date) return setError('Date is required')
     const apptDateTime = new Date(`${form.appointment_date}T${form.appointment_time || '00:00'}`)
@@ -99,6 +103,7 @@ export default function NewAppointmentPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push('/auth'); return }
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    console.log('[appointments/new] sanitizedId:', sanitizedId)
 
     // Resolve team owner ID so all team members share the same client list
     let ownerId = sanitizedId
@@ -107,17 +112,21 @@ export default function NewAppointmentPage() {
         .from('profiles').select('team_owner_id').eq('id', sanitizedId).single()
       if (prof?.team_owner_id) ownerId = prof.team_owner_id
     } catch {}
+    console.log('[appointments/new] ownerId:', ownerId)
 
     // Find-or-create client record (skip lookup if pre-filled from client card)
     let clientId: string | null = prefillClientId || null
+    console.log('[appointments/new] prefillClientId:', prefillClientId, '→ clientId:', clientId)
     if (!clientId) {
       try {
         const phone = form.client_phone.trim() || null
         const email = form.client_email.trim() || null
+        console.log('[appointments/new] looking up client by phone:', phone, 'email:', email)
         if (phone) {
           const { data: existing } = await supabase
             .from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
           clientId = existing?.id ?? null
+          console.log('[appointments/new] lookup by phone result:', clientId)
         }
         if (!clientId && !phone && email) {
           const { data: byEmail } = await supabase
@@ -127,8 +136,11 @@ export default function NewAppointmentPage() {
             .eq('email', email)
             .maybeSingle()
           if (byEmail) clientId = byEmail.id
+          console.log('[appointments/new] lookup by email result:', clientId)
         }
+        console.log('[appointments/new] clientId before insert:', clientId)
         if (!clientId) {
+          console.log('[appointments/new] about to insert client')
           const { data: created, error: createErr } = await supabase
             .from('clients').insert({
               owner_id:    sanitizedId,
@@ -144,11 +156,13 @@ export default function NewAppointmentPage() {
             console.error('[appointments/new] client insert error:', createErr)
           }
           clientId = created?.id ?? null
+          console.log('[appointments/new] client created, id:', clientId)
         }
       } catch (err) {
         console.error('[appointments/new] client create error:', err)
       }
     }
+    console.log('[appointments/new] final clientId:', clientId)
 
     const { error: e } = await supabase.from('appointments').insert({
       user_id: sanitizedId,
