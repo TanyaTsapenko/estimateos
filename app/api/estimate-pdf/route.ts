@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     const openingsWithDiagrams = await Promise.all(
       (openings || []).map(async (op: any) => ({
         ...op,
-        diagramPng: await svgToPngBase64(getWindowSvgString(op.type)),
+        diagramPng: await svgToPngBase64(getWindowSvgString(op.type), 120, 120),
       }))
     )
 
