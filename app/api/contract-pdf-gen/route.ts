@@ -40,11 +40,18 @@ export async function GET(req: NextRequest) {
 
     if (!estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
+    const parsedClauses = (() => {
+      try {
+        const raw = company?.contract_clauses
+        if (Array.isArray(raw)) return raw
+        if (typeof raw === 'string') return JSON.parse(raw)
+        return []
+      } catch { return [] }
+    })()
+
     const contractWithClauses = {
       ...contract,
-      contract_clauses: Array.isArray(company?.contract_clauses)
-        ? company.contract_clauses
-        : [],
+      contract_clauses: parsedClauses.filter((c: any) => c.enabled !== false),
       contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 
