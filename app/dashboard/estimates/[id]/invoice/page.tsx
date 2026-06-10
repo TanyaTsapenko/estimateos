@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { ArrowLeft, Info, Send } from 'lucide-react'
 
-interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string }
+interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string; deposit_percent: number | null }
 interface DepositInvoice { id: string; amount: number; status: string }
 
 export default function CreateInvoicePage() {
@@ -38,7 +38,7 @@ export default function CreateInvoicePage() {
       const { data: { user } } = await supabase.auth.getUser()
       const sanitizedId = user ? user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '') : null
       const [{ data: est }, { data: dep }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status').eq('id', id).single(),
+        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status, deposit_percent').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').single(),
         sanitizedId ? supabase.from('profiles').select('interac_email').eq('id', sanitizedId).single() : Promise.resolve({ data: null }),
       ])
@@ -55,7 +55,13 @@ export default function CreateInvoicePage() {
 
   const isFinal = !!depositInvoice
   const additionalTotal = additionalCharges.reduce((s, c) => s + (c.amount || 0), 0)
-  const invoiceAmount = estimate ? (isFinal ? estimate.total - depositInvoice!.amount : estimate.total) + additionalTotal : 0
+  const depositAmount = estimate && isFinal
+    ? Math.round(estimate.total * ((estimate.deposit_percent || 0) / 100) * 100) / 100
+    : 0
+  const balanceAmount = estimate && isFinal
+    ? Math.round((estimate.total - depositAmount) * 100) / 100
+    : (estimate?.total ?? 0)
+  const invoiceAmount = (isFinal ? balanceAmount : (estimate?.total ?? 0)) + additionalTotal
 
   function setNet(days: number) {
     const d = new Date()
@@ -201,7 +207,7 @@ export default function CreateInvoicePage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 12, color: '#94A3B8' }}>Deposit paid</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtCAD(depositInvoice!.amount)}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtCAD(depositAmount)}</div>
               </div>
               <div style={{ height: 1, background: '#F1F3F7', margin: '2px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
