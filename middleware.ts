@@ -1,5 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+async function getOnboardingDone(userId: string): Promise<boolean> {
+  const sanitizedId = userId.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+  const admin = createAdminClient()
+  const { data } = await admin.from('profiles').select('onboarding_done').eq('id', sanitizedId).single()
+  return data?.onboarding_done === true
+}
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -36,8 +44,26 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic) {
     return NextResponse.redirect(new URL('/auth', request.url))
   }
-  if (user && pathname === '/auth') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+
+  if (user) {
+    // Already on onboarding — let through, no loop
+    if (pathname.startsWith('/onboarding')) {
+      return supabaseResponse
+    }
+
+    // Auth page: redirect to /onboarding or /dashboard based on onboarding_done
+    if (pathname === '/auth') {
+      const done = await getOnboardingDone(user.id)
+      return NextResponse.redirect(new URL(done ? '/dashboard' : '/onboarding', request.url))
+    }
+
+    // Dashboard: guard against skipped onboarding
+    if (pathname.startsWith('/dashboard')) {
+      const done = await getOnboardingDone(user.id)
+      if (!done) {
+        return NextResponse.redirect(new URL('/onboarding', request.url))
+      }
+    }
   }
 
   return supabaseResponse
