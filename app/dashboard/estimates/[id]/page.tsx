@@ -173,6 +173,8 @@ export default function EstimateDetailPage() {
       client_email: estimate.client_email,
       client_phone: estimate.client_phone,
       client_address: estimate.client_address,
+      client_city: estimate.client_city,
+      postal_code: estimate.postal_code,
       client_province: estimate.client_province,
       tier: estimate.tier,
       status: 'draft',
@@ -180,6 +182,13 @@ export default function EstimateDetailPage() {
       tax_rate: estimate.tax_rate,
       tax_amount: estimate.tax_amount,
       total: estimate.total,
+      scope_notes: estimate.scope_notes,
+      discount_type: estimate.discount_type,
+      discount_value: estimate.discount_value,
+      discount_amount: estimate.discount_amount,
+      payment_method: estimate.payment_method,
+      valid_until: estimate.valid_until,
+      additional_charges: estimate.additional_charges,
     }).select().single()
 
     if (newEst) {
