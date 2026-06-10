@@ -27,7 +27,7 @@ interface Profile {
   customer_responsibilities: string | null; buyer_right_to_cancel: string | null
   damage_disclaimer: string | null; permits_responsibility: string | null; project_manager: string | null
   logo_url: string | null; phone: string | null; website: string | null
-  city: string | null; province: string | null; address: string | null; postal_code: string | null
+  city: string | null; province: string | null; address: string | null; postal: string | null
   contract_clauses: string | null
   deposit_timing: string | null
   deposit_required: boolean | null
@@ -114,7 +114,7 @@ export default function SignContractPage() {
       const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
         supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, deposit_required, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal_code, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
+        supabase.from('profiles').select('deposit_percent, deposit_required, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
       ])
       if (est) setEstimate(est)
       setOpenings(ops || [])

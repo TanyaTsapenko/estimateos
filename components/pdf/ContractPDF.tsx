@@ -122,8 +122,8 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             {company.phone && <Text style={styles.colDetail}>{company.phone}</Text>}
             {company.email && <Text style={styles.colDetail}>{company.email}</Text>}
             {company.address && <Text style={styles.colDetail}>{company.address}, {company.city}, {company.province}</Text>}
-            {company.licence_number && <Text style={styles.colDetail}>Lic# {company.licence_number}</Text>}
-            {company.insurance_number && <Text style={styles.colDetail}>Ins# {company.insurance_number}</Text>}
+            {company.licence && <Text style={styles.colDetail}>Lic# {company.licence}</Text>}
+            {company.insurance && <Text style={styles.colDetail}>Ins# {company.insurance}</Text>}
           </View>
           <View style={styles.col}>
             <Text style={styles.colTitle}>Client</Text>

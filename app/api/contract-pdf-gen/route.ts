@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const [{ data: estimate, error: estErr }, { data: openings, error: opErr }, { data: company, error: compErr }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', contract.estimate_id).maybeSingle(),
       admin.from('estimate_openings').select('*').eq('estimate_id', contract.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal_code, website, licence_number, insurance_number, logo_url, signature_url, warranty_period, completion_timeframe, project_manager, contract_clauses, interac_email').eq('id', contract.profile_id).maybeSingle(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, insurance, logo_url, signature_url, warranty_period, completion_timeframe, project_manager, contract_clauses, interac_email').eq('id', contract.profile_id).maybeSingle(),
     ])
 
     console.log('[contract-pdf] estimate:', { found: !!estimate, error: estErr?.message })

@@ -39,7 +39,7 @@ interface Opening {
   glass_type: string | null; core_type: string | null; handle_type: string | null
 }
 interface Profile {
-  company_name: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null
+  company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
   phone: string | null; logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
   deposit_percent: number | null
 }
@@ -108,7 +108,7 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, address, city, province, postal_code, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, address, city, province, postal, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)

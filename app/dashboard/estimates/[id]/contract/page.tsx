@@ -19,8 +19,8 @@ interface Opening {
 interface Profile {
   id: string
   company_name: string | null; phone: string | null; email: string | null
-  address: string | null; city: string | null; postal_code: string | null; website: string | null
-  licence_number: string | null
+  address: string | null; city: string | null; postal: string | null; website: string | null
+  licence: string | null
   contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
   warranty_period: string | null
@@ -116,7 +116,7 @@ export default function ContractPage() {
       const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof, error: profError } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal_code, website, licence_number, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses')
+        .select('id, company_name, phone, email, address, city, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses')
         .eq('id', estOwnerId)
         .single()
       console.log('[contract page] prof:', prof, 'error:', profError)
@@ -394,10 +394,10 @@ export default function ContractPage() {
                 {profile?.address && <div style={{ fontSize: 13, color: '#475569' }}>{profile.address}</div>}
                 {profile?.city && <div>{profile.city}</div>}
               </div>
-              {profile?.licence_number && (
+              {profile?.licence && (
                 <div style={{ marginTop: 8 }}>
                   <span style={{ background: '#EEF2FF', color: '#2045B8', fontSize: 9, borderRadius: 6, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    LIC #{profile.licence_number}
+                    LIC #{profile.licence}
                   </span>
                 </div>
               )}

@@ -108,7 +108,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
             {company.email && <Text style={styles.companyContact}>{company.email}</Text>}
             {company.website && <Text style={styles.companyContact}>{company.website}</Text>}
             {company.address && <Text style={styles.companyContact}>{company.address}{company.city ? `, ${company.city}` : ''}{company.province ? `, ${company.province}` : ''}</Text>}
-            {company.licence_number && <Text style={styles.companyContact}>Lic# {company.licence_number}</Text>}
+            {company.licence && <Text style={styles.companyContact}>Lic# {company.licence}</Text>}
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>ESTIMATE</Text>
