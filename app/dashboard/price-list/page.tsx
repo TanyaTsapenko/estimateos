@@ -145,6 +145,8 @@ export default function PriceListPage() {
     frame_repair: 0, frame_rotted: 0,
   })
   const [savingSurcharges, setSavingSurcharges] = useState(false)
+  const [isOwner, setIsOwner] = useState(true)
+  const [search, setSearch] = useState('')
 
   // Modal — base fields
   const [showModal,           setShowModal]           = useState(false)
@@ -168,15 +170,18 @@ export default function PriceListPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
+      const { data: profData } = await supabase.from('profiles').select('role, team_owner_id, surcharges').eq('id', sanitizedId).single()
+      const ownerFlag = profData?.role === 'owner'
+      setIsOwner(ownerFlag)
+      const queryUserId = ownerFlag ? sanitizedId : (profData?.team_owner_id || sanitizedId)
       let { data } = await supabase
         .from('price_lists')
         .select('*')
-        .eq('user_id', sanitizedId)
+        .eq('user_id', queryUserId)
         .neq('opening_type', '_sizes')
         .order('category', { ascending: true, nullsFirst: false })
         .order('custom_label', { ascending: true, nullsFirst: false })
-      console.log('price list userId:', sanitizedId, 'data length:', data?.length)
-      if (data && data.length === 0) {
+      if (data && data.length === 0 && ownerFlag) {
         const seeds = Object.entries(OPENING_TYPES).map(([key, val]) => ({
           user_id:      sanitizedId,
           type:         key,
@@ -186,8 +191,7 @@ export default function PriceListPage() {
           labour_price: val.lab,
           category:     key.startsWith('window') ? 'Windows' : 'Doors',
         }))
-        const { error: seedError } = await supabase.from('price_lists').insert(seeds)
-        console.log('seed error:', seedError)
+        await supabase.from('price_lists').insert(seeds)
         const { data: refetched } = await supabase
           .from('price_lists')
           .select('*')
@@ -210,9 +214,15 @@ export default function PriceListPage() {
           tier_best:   r.tier_best    || null,
         })))
       }
-      const { data: profData } = await supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single()
-      if (profData?.surcharges && Object.keys(profData.surcharges).length > 0) {
-        setSurcharges(prev => ({ ...prev, ...profData.surcharges }))
+      if (ownerFlag) {
+        if (profData?.surcharges && Object.keys(profData.surcharges).length > 0) {
+          setSurcharges(prev => ({ ...prev, ...profData.surcharges }))
+        }
+      } else {
+        const { data: ownerProf } = await supabase.from('profiles').select('surcharges').eq('id', queryUserId).single()
+        if (ownerProf?.surcharges && Object.keys(ownerProf.surcharges).length > 0) {
+          setSurcharges(prev => ({ ...prev, ...ownerProf.surcharges }))
+        }
       }
       setLoading(false)
     }
@@ -340,6 +350,14 @@ export default function PriceListPage() {
   }, {})
 
   const hasItems = Object.keys(grouped).length > 0
+
+  const displayGrouped = search.trim()
+    ? Object.fromEntries(
+        Object.entries(grouped)
+          .map(([cat, catItems]) => [cat, catItems.filter(i => i.label.toLowerCase().includes(search.toLowerCase()))] as [string, PriceItem[]])
+          .filter(([, catItems]) => catItems.length > 0)
+      )
+    : grouped
 
   return (
     <>
@@ -518,9 +536,10 @@ export default function PriceListPage() {
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
+              {!isOwner && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Only the account owner can edit the price list.</div>}
             </div>
           </div>
-          {hasItems && (
+          {hasItems && isOwner && (
             <button
               onClick={() => openAddModal()}
               style={{ padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
@@ -567,16 +586,38 @@ export default function PriceListPage() {
               <div style={{ fontSize: 13, color: '#64748B', marginBottom: 24, lineHeight: 1.6 }}>
                 Add the windows, doors, and other products you install. They'll appear in your estimate form.
               </div>
-              <button
-                onClick={() => openAddModal()}
-                style={{ padding: '12px 28px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
-              >
-                + Add First Item
-              </button>
+              {isOwner && (
+                <button
+                  onClick={() => openAddModal()}
+                  style={{ padding: '12px 28px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
+                >
+                  + Add First Item
+                </button>
+              )}
             </div>
           )}
 
-          {!loading && hasItems && Object.entries(grouped).map(([category, catItems]) => {
+          {!loading && hasItems && (
+            <div style={{ position: 'relative', marginBottom: 4 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search items..."
+                style={{ ...inputStyle, paddingLeft: 36, marginBottom: 0 }}
+              />
+            </div>
+          )}
+
+          {!loading && hasItems && search.trim() && Object.keys(displayGrouped).length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8', fontSize: 13 }}>
+              No items match &ldquo;{search}&rdquo;
+            </div>
+          )}
+
+          {!loading && hasItems && Object.entries(displayGrouped).map(([category, catItems]) => {
             const isHardware = category === 'Hardware'
             return (
             <div key={category} style={{ marginBottom: 4 }}>
@@ -587,12 +628,14 @@ export default function PriceListPage() {
                     {category}
                   </span>
                 </div>
-                <button
-                  onClick={() => openAddModal(category)}
-                  style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '4px 0' }}
-                >
-                  + Add item
-                </button>
+                {isOwner && (
+                  <button
+                    onClick={() => openAddModal(category)}
+                    style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '4px 0' }}
+                  >
+                    + Add item
+                  </button>
+                )}
               </div>
 
               <div style={{ background: '#fff', borderRadius: 14, border: isHardware ? '1.5px dashed #CBD5E1' : '0.5px solid #E5E7EB', overflow: 'hidden' }}>
@@ -605,12 +648,12 @@ export default function PriceListPage() {
                       borderBottom: i < catItems.length - 1 ? (isHardware ? '1px dashed #E2E8F0' : '1px solid #F1F5F9') : 'none',
                     }}
                   >
-                    <div onClick={() => openEditModal(item)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+                    <div onClick={() => isOwner && openEditModal(item)} style={{ flex: 1, minWidth: 0, cursor: isOwner ? 'pointer' : 'default' }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: isHardware ? '#64748B' : '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.label}
                       </div>
                     </div>
-                    <div style={{ marginRight: 14, flexShrink: 0 }}>
+                    <div style={{ marginRight: isOwner ? 14 : 0, flexShrink: 0 }}>
                       {item.is_tiered ? (
                         <span style={{ fontSize: 11, fontWeight: 700, color: '#3B6CFF', background: 'rgba(59,108,255,0.1)', borderRadius: 6, padding: '3px 8px' }}>
                           3 Tiers
@@ -619,18 +662,20 @@ export default function PriceListPage() {
                         <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(item.base + item.lab)}</span>
                       )}
                     </div>
-                    <button
-                      onClick={() => setDeletingItem(item)}
-                      style={{
-                        background: 'rgba(220,38,38,0.08)', border: 'none', borderRadius: 8,
-                        width: 32, height: 32, display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
+                    {isOwner && (
+                      <button
+                        onClick={() => setDeletingItem(item)}
+                        style={{
+                          background: 'rgba(220,38,38,0.08)', border: 'none', borderRadius: 8,
+                          width: 32, height: 32, display: 'flex', alignItems: 'center',
+                          justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
+                        }}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round">
+                          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -696,10 +741,12 @@ export default function PriceListPage() {
                 </div>
               </div>
             ))}
-            <button onClick={saveSurchargesHandler} disabled={savingSurcharges}
-              style={{ width: '100%', marginTop: 16, background: savingSurcharges ? '#93C5FD' : '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
-              {savingSurcharges ? 'Saving…' : 'Save surcharges'}
-            </button>
+            {isOwner && (
+              <button onClick={saveSurchargesHandler} disabled={savingSurcharges}
+                style={{ width: '100%', marginTop: 16, background: savingSurcharges ? '#93C5FD' : '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: F }}>
+                {savingSurcharges ? 'Saving…' : 'Save surcharges'}
+              </button>
+            )}
           </div>
         )}
 
