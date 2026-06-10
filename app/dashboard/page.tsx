@@ -185,6 +185,8 @@ export default function DashboardPage() {
   const [dashToast, setDashToast] = useState('')
   const [reminderSending, setReminderSending] = useState(false)
   const [paying, setPaying] = useState<string | null>(null)
+  const [checklistDismissed, setChecklistDismissed] = useState(false)
+  const [checklistData, setChecklistData] = useState<{ logoUrl: string | null; contractTerms: string | null; hasPriceList: boolean } | null>(null)
   const [reminderModal, setReminderModal] = useState<{
     estimateId: string; estimateNumber: string; clientName: string
     clientEmail: string; address: string; message: string
@@ -198,17 +200,30 @@ export default function DashboardPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-    supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name').eq('id', sanitizedId).single().then(({ data: prof }) => {
+    supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
       if (prof) {
         setPricingMode((prof as any).pricing_mode || 'single')
         setCompanyName((prof as any).company_name || '')
         const full = [prof.first_name, prof.last_name].filter(Boolean).join(' ')
-        if (full) { setUserName(full); return }
+        if (full) setUserName(full)
+        else {
+          const meta = user.user_metadata
+          if (meta?.full_name) setUserName(meta.full_name)
+          else if (meta?.name) setUserName(meta.name)
+          else if (user.email) setUserName(user.email.split('@')[0])
+        }
+      } else {
+        const meta = user.user_metadata
+        if (meta?.full_name) setUserName(meta.full_name)
+        else if (meta?.name) setUserName(meta.name)
+        else if (user.email) setUserName(user.email.split('@')[0])
       }
-      const meta = user.user_metadata
-      if (meta?.full_name) setUserName(meta.full_name)
-      else if (meta?.name) setUserName(meta.name)
-      else if (user.email) setUserName(user.email.split('@')[0])
+      const { data: pl } = await supabase.from('price_list').select('id').eq('user_id', sanitizedId).limit(1)
+      setChecklistData({
+        logoUrl: (prof as any)?.logo_url ?? null,
+        contractTerms: (prof as any)?.contract_terms ?? null,
+        hasPriceList: (pl?.length ?? 0) > 0,
+      })
     })
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
@@ -348,6 +363,10 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => { loadAll() }, [loadAll])
+
+  useEffect(() => {
+    setChecklistDismissed(localStorage.getItem('checklist_dismissed') === '1')
+  }, [])
 
   useEffect(() => {
     const handleVisible = () => { if (!document.hidden) loadAll() }
@@ -526,10 +545,66 @@ export default function DashboardPage() {
           {/* Next appointment card */}
           <div style={{ margin: '14px 16px 0', position: 'relative', zIndex: 1 }}>
             {appointments.length === 0 ? (
-              <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 16, padding: '20px 16px', textAlign: 'center' }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>No visits today</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Tap + to add an appointment</div>
-              </div>
+              (() => {
+                if (role === 'owner' && !checklistDismissed && checklistData) {
+                  const clItems = [
+                    { label: 'Company info',          done: true,                                    path: null as string | null },
+                    { label: 'Add your logo',          done: !!checklistData.logoUrl,                path: '/dashboard/settings/company' },
+                    { label: 'Set up contract terms',  done: !!(checklistData.contractTerms?.trim()), path: '/dashboard/settings/contract' },
+                    { label: 'Build your price list',  done: checklistData.hasPriceList,             path: '/dashboard/price-list' },
+                  ]
+                  const clDone = clItems.filter(i => i.done).length
+                  if (clDone < clItems.length) {
+                    return (
+                      <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 16, padding: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>Set up your business</div>
+                          <button
+                            onClick={() => { localStorage.setItem('checklist_dismissed', '1'); setChecklistDismissed(true) }}
+                            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 99, height: 4, marginBottom: 14 }}>
+                          <div style={{ background: '#fff', borderRadius: 99, height: 4, width: `${clDone / clItems.length * 100}%`, transition: 'width 0.3s' }} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {clItems.map(item => (
+                            <div
+                              key={item.label}
+                              onClick={() => item.path && !item.done && router.push(item.path)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: item.path && !item.done ? 'pointer' : 'default' }}
+                            >
+                              <div style={{ width: 20, height: 20, borderRadius: 10, flexShrink: 0, border: item.done ? 'none' : '1.5px solid rgba(255,255,255,0.4)', background: item.done ? '#fff' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {item.done && (
+                                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#2563EB" strokeWidth="2.2" strokeLinecap="round">
+                                    <polyline points="1.5 6 4.5 9 10.5 3"/>
+                                  </svg>
+                                )}
+                              </div>
+                              <span style={{ fontSize: 13, color: item.done ? 'rgba(255,255,255,0.45)' : '#fff', textDecoration: item.done ? 'line-through' : 'none', fontWeight: item.done ? 400 : 600, flex: 1 }}>
+                                {item.label}
+                              </span>
+                              {!item.done && item.path && (
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  }
+                }
+                return (
+                  <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 16, padding: '20px 16px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>No visits today</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Tap + to add an appointment</div>
+                  </div>
+                )
+              })()
             ) : nextAppt ? (
               <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', padding: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
