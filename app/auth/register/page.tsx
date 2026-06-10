@@ -68,12 +68,20 @@ export default function RegisterPage() {
     if (!isValidPassword(password))     { setPwError('Password must be at least 8 characters'); return }
     if (!agreed)                        return setError('Please agree to the Terms and Privacy Policy')
     setLoading(true)
-    const { error: e } = await supabase.auth.signUp({
+    const { data: signUpData, error: e } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: { data: { first_name: firstName, last_name: lastName } },
     })
     if (e) { setError(e.message || 'Registration failed. Please try again.'); setLoading(false); return }
+
+    if (signUpData.user?.id) {
+      await fetch('/api/register-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: signUpData.user.id, firstName: firstName.trim(), lastName: lastName.trim() }),
+      })
+    }
 
     router.push('/onboarding')
   }
