@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   let invoice: any = null
   let openings: any[] = []
 
-  if (type === 'invoice' && invoiceId) {
+  if ((type === 'invoice' || type === 'deposit_receipt') && invoiceId) {
     const { data: inv } = await supabase.from('invoices').select('*').eq('id', invoiceId).single()
     invoice = inv
     if (!estimateId && inv) estimateId = inv.estimate_id
@@ -410,6 +410,71 @@ ${hdrBlock('Following up', est.client_name || 'Client',
 
 </body>
 </html>`
+  }
+
+  // ── DEPOSIT RECEIPT ──────────────────────────────────────────────────────────
+  if (type === 'deposit_receipt' && invoice) {
+    const amountPaid = invoice.amount
+    const balance = Math.max(0, (est.total || 0) - amountPaid)
+    const paidDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+      .format(invoice.paid_at ? new Date(invoice.paid_at) : new Date())
+
+    subject = `Payment received — ${invoice.invoice_number}`
+    html = outerWrap(`
+${hdrBlock('Payment received for', est.client_name || 'Client',
+  greenPill('&#10003; Received') + pill(invoice.invoice_number) + pill(paidDateFmt)
+)}
+      <!-- BODY -->
+      <tr><td style="${bodyStyle}">
+
+        <!-- Amount Received -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BBF7D0">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Amount Received</div>
+            <div style="font-size:32px;font-weight:800;color:#059669;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(amountPaid)}</div>
+            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Received ${paidDateFmt}</div>
+          </td></tr>
+        </table>
+
+        <!-- Payment Details -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Payment Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="${dkeyStyle}">Invoice</td>
+                <td style="${dvalStyle}">${invoice.invoice_number}</td>
+              </tr>
+              <tr>
+                <td style="${dkeyStyle}">Related estimate</td>
+                <td style="${dvalStyle}">${est.estimate_number}</td>
+              </tr>
+              <tr>
+                <td style="${dkeyStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">Balance remaining</td>
+                <td style="${dvalStyle.replace('color:#0A1628', balance > 0 ? 'color:#2563EB' : 'color:#059669').replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">${balance > 0 ? fmtCAD(balance) : 'Paid in full'}</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+
+        <!-- Message -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
+            Thank you for your payment${est.client_name ? `, <strong style="color:#0A1628">${est.client_name}</strong>` : ''}. ${balance > 0 ? `The remaining balance of <strong style="color:#0A1628">${fmtCAD(balance)}</strong> will be due upon completion.` : 'Your account is fully paid. We appreciate your business!'}
+          </td></tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+          <tr><td align="center" style="padding:8px 0">
+            <a href="${clientLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
+          </td></tr>
+        </table>
+
+        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
+
+      </td></tr>
+`)
   }
 
   const emailPayload: any = {

@@ -67,6 +67,11 @@ export default function InvoicesPage() {
     try {
       await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
       setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'deposit_receipt', invoiceId }),
+      }).catch(() => {})
     } finally {
       setPaying(null)
     }
