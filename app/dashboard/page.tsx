@@ -241,7 +241,7 @@ export default function DashboardPage() {
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
@@ -324,16 +324,17 @@ export default function DashboardPage() {
       }
       // Stale sent estimate → blue, reminder
       const threeDaysAgo = new Date(Date.now() - 3*86400000).toISOString()
-      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && e.created_at < threeDaysAgo)
-      if (stale.length) {
-        const daysSince = Math.floor((Date.now() - new Date(stale[0].updated_at).getTime()) / 86400000)
+      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && (e.sent_at || e.created_at) < threeDaysAgo)
+      stale.forEach((e: any) => {
+        const sentDate = e.sent_at || e.updated_at
+        const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
         attItems.push({
           icon: SendIcon, color: '#2563EB',
-          title: `${stale[0].client_name} hasn't opened ${stale[0].estimate_number}`,
+          title: `${e.client_name} hasn't opened ${e.estimate_number}`,
           desc: `Sent ${daysSince} day${daysSince !== 1 ? 's' : ''} ago`,
-          cta: 'Send reminder', id: stale[0].id, actionType: 'reminder',
+          cta: 'Send reminder', id: e.id, actionType: 'reminder',
         })
-      }
+      })
       setAttention(attItems)
 
       if (estAll) {
