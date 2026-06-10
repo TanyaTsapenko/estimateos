@@ -64,6 +64,17 @@ export default function OnboardingPage() {
     }, { onConflict: 'id' })
     setLoading(false)
     if (err) { setError(err.message); return }
+    if (user?.email) {
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'welcome',
+          firstName: user.user_metadata?.first_name || '',
+          email: user.email,
+        }),
+      }).catch(() => {})
+    }
     router.push('/onboarding/welcome')
   }
 

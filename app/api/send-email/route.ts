@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import { emailRateLimit } from '@/lib/rateLimit'
 import { isValidEmail } from '@/lib/validation'
+import { welcomeEmailHtml } from '@/emails/WelcomeEmail'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -12,7 +13,26 @@ export async function POST(request: NextRequest) {
   const { success } = await emailRateLimit.limit(ip)
   if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { estimateId: rawEstimateId, invoiceId, type, sendMode, message: customMessage } = await request.json()
+  const { estimateId: rawEstimateId, invoiceId, type, sendMode, message: customMessage, firstName, email: recipientEmail } = await request.json()
+
+  // ── WELCOME ───────────────────────────────────────────────────────────────────
+  if (type === 'welcome') {
+    if (!recipientEmail || !isValidEmail(recipientEmail)) {
+      return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
+    }
+    const { html, subject } = welcomeEmailHtml(firstName || '')
+    try {
+      await resend.emails.send({
+        from: 'ApexScale <noreply@useapexscale.com>',
+        to: [recipientEmail],
+        subject,
+        html,
+      })
+    } catch (e: any) {
+      console.error('[send-email/welcome] resend error:', e.message)
+    }
+    return NextResponse.json({ success: true })
+  }
 
   const supabase = createServiceClient()
   let estimateId = rawEstimateId
