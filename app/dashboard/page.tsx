@@ -20,6 +20,7 @@ interface Metrics {
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
+  invoiceType?: 'deposit' | 'final'
 }
 interface ActivityItem {
   dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
@@ -304,6 +305,7 @@ export default function DashboardPage() {
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
+            invoiceType: 'deposit' as const,
           })
         })
       }
@@ -316,6 +318,7 @@ export default function DashboardPage() {
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Final invoice pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
+            invoiceType: 'final' as const,
           })
         })
       }
@@ -361,12 +364,13 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  async function handleMarkPaid(invoiceId: string) {
+  async function handleMarkPaid(invoiceId: string, invoiceType?: string) {
     setPaying(invoiceId)
     const supabase = createClient()
     try {
       await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
+      const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {
         const res = await fetch('/api/send-email', {
           method: 'POST',
@@ -374,12 +378,12 @@ export default function DashboardPage() {
             'Content-Type': 'application/json',
             'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '',
           },
-          body: JSON.stringify({ type: 'deposit_receipt', invoiceId }),
+          body: JSON.stringify({ type: emailType, invoiceId }),
         })
         const data = await res.json()
-        console.log('[mark-paid] deposit receipt email result:', res.status, data)
+        console.log('[mark-paid] receipt email result:', res.status, data)
       } catch (err) {
-        console.error('[mark-paid] deposit receipt email error:', err)
+        console.error('[mark-paid] receipt email error:', err)
       }
     } finally {
       setPaying(null)
@@ -718,7 +722,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                        else if (item.actionType === 'mark_paid') handleMarkPaid(item.id)
+                        else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType)
                         else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
@@ -810,7 +814,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => {
                       if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                      else if (item.actionType === 'mark_paid') handleMarkPaid(item.id)
+                      else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType)
                       else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                       else router.push(`/dashboard/estimates/${item.id}`)
                     }}

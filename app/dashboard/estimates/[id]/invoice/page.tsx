@@ -194,12 +194,20 @@ export default function CreateInvoicePage() {
               <div style={{ fontSize: 12, color: '#94A3B8', fontWeight: 600, letterSpacing: '.04em' }}>{estimate.estimate_number}</div>
             </div>
             <div style={{ height: 1, background: '#F1F3F7' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 4 }}>Invoice Amount</div>
-                <div style={{ fontSize: 12, color: '#64748B' }}>Balance due after deposit</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>Project total</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(estimate.total)}</div>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>Deposit paid</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtCAD(depositInvoice!.amount)}</div>
+              </div>
+              <div style={{ height: 1, background: '#F1F3F7', margin: '2px 0' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' as const, color: '#94A3B8' }}>Balance due</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</div>
+              </div>
             </div>
           </div>
         </div>

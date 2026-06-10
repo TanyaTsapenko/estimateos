@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
   let estimateId = rawEstimateId
   let invoice: any = null
   let openings: any[] = []
+  let depositInvForEmail: any = null
 
-  if ((type === 'invoice' || type === 'deposit_receipt') && invoiceId) {
+  if ((type === 'invoice' || type === 'deposit_receipt' || type === 'final_receipt') && invoiceId) {
     const { data: inv } = await supabase.from('invoices').select('*').eq('id', invoiceId).single()
     invoice = inv
     if (!estimateId && inv) estimateId = inv.estimate_id
@@ -80,6 +81,11 @@ export async function POST(request: NextRequest) {
     const { data: ops } = await supabase.from('estimate_openings')
       .select('*').eq('estimate_id', estimateId).order('sort_order')
     openings = ops || []
+    if (invoice?.invoice_type === 'final') {
+      const { data: dep } = await supabase.from('invoices')
+        .select('amount').eq('estimate_id', estimateId).eq('invoice_type', 'deposit').maybeSingle()
+      depositInvForEmail = dep
+    }
   }
 
   const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
@@ -158,9 +164,20 @@ ${hdrBlock('Invoice for', est.client_name || 'Client',
         <!-- Amount Due -->
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
           <tr><td style="padding:16px">
-            <div style="${slbl}">Amount Due</div>
-            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(invoice.amount)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">${dueDateFmt ? `Due ${dueDateFmt} &middot; ` : ''}Net 14</div>
+            <div style="${slbl}">${depositInvForEmail ? 'Balance Due' : 'Amount Due'}</div>
+            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:${depositInvForEmail ? 12 : 6}px;font-family:Arial,sans-serif">${fmtCAD(invoice.amount)}</div>
+            ${depositInvForEmail ? `
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="font-size:12px;color:#94A3B8;padding:5px 0;border-bottom:1px solid #EEF0F4;font-family:Arial,sans-serif">Project total</td>
+                <td style="font-size:12px;font-weight:600;color:#475467;padding:5px 0;border-bottom:1px solid #EEF0F4;text-align:right;font-family:Arial,sans-serif">${fmtCAD(est.total)}</td>
+              </tr>
+              <tr>
+                <td style="font-size:12px;color:#94A3B8;padding:5px 0;font-family:Arial,sans-serif">Deposit paid</td>
+                <td style="font-size:12px;font-weight:600;color:#059669;padding:5px 0;text-align:right;font-family:Arial,sans-serif">&minus;${fmtCAD(depositInvForEmail.amount)}</td>
+              </tr>
+            </table>
+            ` : `<div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">${dueDateFmt ? `Due ${dueDateFmt} &middot; ` : ''}Net 14</div>`}
           </td></tr>
         </table>
 
@@ -461,6 +478,79 @@ ${hdrBlock('Payment received for', est.client_name || 'Client',
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
             Thank you for your payment${est.client_name ? `, <strong style="color:#0A1628">${est.client_name}</strong>` : ''}. ${balance > 0 ? `The remaining balance of <strong style="color:#0A1628">${fmtCAD(balance)}</strong> will be due upon completion.` : 'Your account is fully paid. We appreciate your business!'}
+          </td></tr>
+        </table>
+
+        <!-- CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
+          <tr><td align="center" style="padding:8px 0">
+            <a href="${clientLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
+          </td></tr>
+        </table>
+
+        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
+
+      </td></tr>
+`)
+  }
+
+  // ── FINAL RECEIPT ────────────────────────────────────────────────────────────
+  if (type === 'final_receipt' && invoice) {
+    const amountPaid = invoice.amount
+    const paidDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+      .format(invoice.paid_at ? new Date(invoice.paid_at) : new Date())
+
+    subject = `Payment complete — ${est.estimate_number}`
+    html = outerWrap(`
+${hdrBlock('Payment complete for', est.client_name || 'Client',
+  greenPill('&#10003; Paid in full') + pill(invoice.invoice_number) + pill(paidDateFmt)
+)}
+      <!-- BODY -->
+      <tr><td style="${bodyStyle}">
+
+        <!-- Amount Received -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BBF7D0">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Final Payment Received</div>
+            <div style="font-size:32px;font-weight:800;color:#059669;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(amountPaid)}</div>
+            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Received ${paidDateFmt}</div>
+          </td></tr>
+        </table>
+
+        <!-- Project Complete -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ECFDF5;border:1.5px solid #BBF7D0;border-radius:16px;margin-bottom:10px">
+          <tr><td style="padding:20px;text-align:center">
+            <table cellpadding="0" cellspacing="0" style="margin:0 auto 12px">
+              <tr><td width="40" height="40" style="width:40px;height:40px;background:#059669;border-radius:20px;text-align:center;vertical-align:middle">
+                <span style="color:#ffffff;font-size:20px;font-weight:700;font-family:Arial,sans-serif;line-height:40px;display:block">&#10003;</span>
+              </td></tr>
+            </table>
+            <div style="font-size:15px;font-weight:700;color:#065F46;margin-bottom:4px;font-family:Arial,sans-serif">Your project is now complete</div>
+            <div style="font-size:13px;color:#34D399;font-family:Arial,sans-serif">Thank you for choosing ${companyName}</div>
+          </td></tr>
+        </table>
+
+        <!-- Payment Details -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px">
+            <div style="${slbl}">Payment Details</div>
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="${dkeyStyle}">Invoice</td>
+                <td style="${dvalStyle}">${invoice.invoice_number}</td>
+              </tr>
+              <tr>
+                <td style="${dkeyStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">Related estimate</td>
+                <td style="${dvalStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">${est.estimate_number}</td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+
+        <!-- Message -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
+          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
+            Thank you${est.client_name ? `, <strong style="color:#0A1628">${est.client_name}</strong>` : ''}! Your final payment of <strong style="color:#0A1628">${fmtCAD(amountPaid)}</strong> has been received. It was a pleasure working with you — we appreciate your business!
           </td></tr>
         </table>
 

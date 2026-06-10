@@ -62,11 +62,12 @@ export default function InvoicesPage() {
     load()
   }, [])
 
-  async function markPaid(invoiceId: string) {
+  async function markPaid(invoiceId: string, invoiceType?: string | null) {
     setPaying(invoiceId)
     try {
       await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
       setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+      const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {
         const res = await fetch('/api/send-email', {
           method: 'POST',
@@ -74,12 +75,12 @@ export default function InvoicesPage() {
             'Content-Type': 'application/json',
             'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '',
           },
-          body: JSON.stringify({ type: 'deposit_receipt', invoiceId }),
+          body: JSON.stringify({ type: emailType, invoiceId }),
         })
         const data = await res.json()
-        console.log('[mark-paid] deposit receipt email result:', res.status, data)
+        console.log('[mark-paid] receipt email result:', res.status, data)
       } catch (err) {
-        console.error('[mark-paid] deposit receipt email error:', err)
+        console.error('[mark-paid] receipt email error:', err)
       }
     } finally {
       setPaying(null)
@@ -232,7 +233,7 @@ export default function InvoicesPage() {
                     <span style={{ display: 'flex', gap: 6 }}>
                       {inv.status === 'pending' && (
                         <button
-                          onClick={() => markPaid(inv.id)}
+                          onClick={() => markPaid(inv.id, inv.invoice_type)}
                           disabled={paying === inv.id}
                           style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: paying === inv.id ? 0.6 : 1 }}>
                           {paying === inv.id ? 'Saving...' : 'Mark paid'}
@@ -298,7 +299,7 @@ export default function InvoicesPage() {
                       <div style={{ display: 'flex', gap: 6 }}>
                         {inv.status === 'pending' && (
                           <button
-                            onClick={() => markPaid(inv.id)}
+                            onClick={() => markPaid(inv.id, inv.invoice_type)}
                             disabled={paying === inv.id}
                             style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', opacity: paying === inv.id ? 0.6 : 1 }}>
                             {paying === inv.id ? 'Saving...' : 'Mark paid'}
