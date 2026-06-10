@@ -14,7 +14,6 @@ const SETUP_ROWS = [
 export default function WelcomePage() {
   const router = useRouter()
   const [name, setName] = useState('')
-  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -22,8 +21,6 @@ export default function WelcomePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       if (user.user_metadata?.first_name) setName(user.user_metadata.first_name)
-      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-      setUserId(sanitizedId)
     }
     load()
   }, [])
@@ -75,13 +72,7 @@ export default function WelcomePage() {
         </div>
 
         <button
-          onClick={async () => {
-            if (userId) {
-              const supabase = createClient()
-              await supabase.from('profiles').update({ onboarding_done: true }).eq('id', userId)
-            }
-            router.push('/dashboard')
-          }}
+          onClick={() => router.push('/dashboard')}
           style={{ width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer' }}
         >
           Go to dashboard
