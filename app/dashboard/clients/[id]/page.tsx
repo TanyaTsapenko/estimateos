@@ -81,7 +81,7 @@ function fmtDayDate(d: string) {
 }
 function getProjectStatus(est: Estimate | null): keyof typeof PROJECT_STATUS {
   if (!est) return 'scheduled'
-  if (est.status === 'signed' || est.status === 'invoiced') return 'won'
+  if (est.status === 'signed' || est.status === 'invoiced' || est.status === 'paid') return 'won'
   if (est.status === 'declined' || est.status === 'expired') return 'lost'
   return 'scheduled'
 }
@@ -378,12 +378,12 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   // Computed values
   const initials = client.name.trim().split(/\s+/).filter(Boolean)
     .reduce((acc, p, i, arr) => i === 0 || i === arr.length - 1 ? acc + p[0].toUpperCase() : acc, '')
-  const isRepeat   = projects.filter(p => ['signed', 'accepted', 'invoiced'].includes(p.estimate?.status || '')).length > 1
+  const isRepeat   = projects.filter(p => ['signed', 'accepted', 'invoiced', 'paid'].includes(p.estimate?.status || '')).length > 1
   const fullAddr   = [client.address, client.city, client.province, client.postal_code].filter(Boolean).join(', ')
   const visits     = appointments.length
-  const lifetime   = projects.reduce((s, p) => s + (['signed', 'invoiced'].includes(p.estimate?.status || '') ? (p.estimate!.total || 0) : 0), 0)
+  const lifetime   = projects.reduce((s, p) => s + (['signed', 'invoiced', 'paid'].includes(p.estimate?.status || '') ? (p.estimate!.total || 0) : 0), 0)
   const totalEsts  = projects.filter(p => p.estimate).length
-  const signedEsts = projects.filter(p => ['signed', 'invoiced'].includes(p.estimate?.status || '')).length
+  const signedEsts = projects.filter(p => ['signed', 'invoiced', 'paid'].includes(p.estimate?.status || '')).length
   const winRate    = totalEsts > 0 ? Math.round(signedEsts / totalEsts * 100) : null
 
   const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0)

@@ -9,6 +9,7 @@ import { ChevronRight } from 'lucide-react'
 interface Invoice {
   id: string; invoice_number: string; status: string; amount: number
   invoice_type: string | null; due_date: string | null; created_at: string
+  estimate_id: string | null
   estimates: { client_name: string | null; estimate_number: string } | null
 }
 
@@ -54,7 +55,7 @@ export default function InvoicesPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data } = await supabase.from('invoices')
-        .select('id, invoice_number, status, amount, invoice_type, due_date, created_at, estimates!invoices_estimate_id_fkey(client_name, estimate_number)')
+        .select('id, invoice_number, status, amount, invoice_type, due_date, created_at, estimate_id, estimates!invoices_estimate_id_fkey(client_name, estimate_number)')
         .eq('user_id', sanitizedId).order('created_at', { ascending: false })
       setInvoices((data as unknown as Invoice[]) || [])
       setLoading(false)
@@ -62,10 +63,13 @@ export default function InvoicesPage() {
     load()
   }, [])
 
-  async function markPaid(invoiceId: string, invoiceType?: string | null) {
+  async function markPaid(invoiceId: string, invoiceType?: string | null, estimateId?: string | null) {
     setPaying(invoiceId)
     try {
       await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+      if (invoiceType === 'final' && estimateId) {
+        await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
+      }
       setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
       const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {
@@ -232,7 +236,7 @@ export default function InvoicesPage() {
                     <span style={{ display: 'flex', gap: 6 }}>
                       {inv.status === 'pending' && (
                         <button
-                          onClick={() => markPaid(inv.id, inv.invoice_type)}
+                          onClick={() => markPaid(inv.id, inv.invoice_type, inv.estimate_id)}
                           disabled={paying === inv.id}
                           style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 7, padding: '5px 11px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: paying === inv.id ? 0.6 : 1 }}>
                           {paying === inv.id ? 'Saving...' : 'Mark paid'}
@@ -298,7 +302,7 @@ export default function InvoicesPage() {
                       <div style={{ display: 'flex', gap: 6 }}>
                         {inv.status === 'pending' && (
                           <button
-                            onClick={() => markPaid(inv.id, inv.invoice_type)}
+                            onClick={() => markPaid(inv.id, inv.invoice_type, inv.estimate_id)}
                             disabled={paying === inv.id}
                             style={{ background: 'rgba(5,150,105,.1)', border: 'none', borderRadius: 8, padding: '5px 12px', fontSize: 11, fontWeight: 600, color: '#059669', cursor: paying === inv.id ? 'not-allowed' : 'pointer', opacity: paying === inv.id ? 0.6 : 1 }}>
                             {paying === inv.id ? 'Saving...' : 'Mark paid'}

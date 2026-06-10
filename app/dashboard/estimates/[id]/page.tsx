@@ -38,11 +38,11 @@ interface Estimate {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  draft: '#6b7280', sent: '#2563eb', opened: '#d97706', signed: '#16a34a', declined: '#dc2626', invoiced: '#9333ea',
+  draft: '#6b7280', sent: '#2563eb', opened: '#d97706', signed: '#16a34a', declined: '#dc2626', invoiced: '#9333ea', paid: '#059669',
 }
 const STATUS_BG: Record<string, string> = {
   draft: 'rgba(107,114,128,.1)', sent: 'rgba(37,99,235,.1)', opened: 'rgba(217,119,6,.1)',
-  signed: 'rgba(22,163,74,.1)', declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)',
+  signed: 'rgba(22,163,74,.1)', declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)', paid: 'rgba(5,150,105,.1)',
 }
 
 const SL: React.CSSProperties = {
@@ -113,7 +113,7 @@ export default function EstimateDetailPage() {
         const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, pricing_mode, email, phone, signature_url').eq('id', est.user_id).single()
         setProfile(prof)
       }
-      if (est?.status === 'signed' || est?.status === 'invoiced') {
+      if (est?.status === 'signed' || est?.status === 'invoiced' || est?.status === 'paid') {
         const [{ data: dep }, { data: con }] = await Promise.all([
           supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').maybeSingle(),
           supabase.from('contracts').select('id, status').eq('estimate_id', id).eq('status', 'signed').order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -252,7 +252,7 @@ export default function EstimateDetailPage() {
 
   const [, taxLabel]  = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
   const isSigned      = estimate.status === 'signed'
-  const isInvoiced    = estimate.status === 'invoiced'
+  const isInvoiced    = estimate.status === 'invoiced' || estimate.status === 'paid'
   const isDeclined    = estimate.status === 'declined'
   const canEmail      = !!estimate.client_email && !isSigned && !isInvoiced && !isDeclined
   const tierLabel     = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'
@@ -505,7 +505,7 @@ export default function EstimateDetailPage() {
               return (
               <div style={{ background: depositPending ? '#fff' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '0.5px solid #E2E8F0' : 'none' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: depositPending ? '0.1em' : '.12em', textTransform: 'uppercase', color: depositPending ? '#94A3B8' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
-                  {isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
+                  {estimate.status === 'paid' ? 'PAID' : isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
                 </div>
                 <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#0A1628' : '#fff', marginBottom: 16 }}>
                   {estimate.client_name || 'Client'} accepted this estimate

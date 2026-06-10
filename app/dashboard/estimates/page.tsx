@@ -21,6 +21,7 @@ const SC: Record<string, { text: string; bg: string }> = {
   signed:   { text: '#059669', bg: 'rgba(5,150,105,.1)'   },
   declined: { text: '#DC2626', bg: 'rgba(220,38,38,.1)'   },
   invoiced: { text: '#7C3AED', bg: 'rgba(124,58,237,.1)'  },
+  paid:     { text: '#059669', bg: 'rgba(5,150,105,.1)'   },
   expired:  { text: '#92400E', bg: '#FEF3C7'               },
 }
 

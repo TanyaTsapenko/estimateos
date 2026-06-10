@@ -23,6 +23,7 @@ const SC: Record<string, { text: string; bg: string }> = {
   sent:     { text: '#D97706', bg: '#FFFBEB' },
   signed:   { text: '#059669', bg: 'rgba(5,150,105,.1)' },
   invoiced: { text: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
+  paid:     { text: '#059669', bg: 'rgba(5,150,105,.1)'  },
   declined: { text: '#DC2626', bg: '#FEF2F2' },
 }
 
@@ -91,7 +92,7 @@ export default function ClientsPage() {
         if (!e.client_id) continue
         const cur = estMap.get(e.client_id) ?? { count: 0, signedCount: 0, totalValue: 0 }
         cur.count++
-        if (e.status === 'signed' || e.status === 'invoiced') {
+        if (e.status === 'signed' || e.status === 'invoiced' || e.status === 'paid') {
           cur.signedCount++
           cur.totalValue += e.total || 0
         }

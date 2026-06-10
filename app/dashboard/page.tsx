@@ -20,7 +20,7 @@ interface Metrics {
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
-  invoiceType?: 'deposit' | 'final'
+  invoiceType?: 'deposit' | 'final'; estimateId?: string
 }
 interface ActivityItem {
   dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
@@ -319,6 +319,7 @@ export default function DashboardPage() {
             desc: `Final invoice pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
             invoiceType: 'final' as const,
+            estimateId: inv.estimate_id,
           })
         })
       }
@@ -340,8 +341,8 @@ export default function DashboardPage() {
       if (estAll) {
         const now = Date.now()
         const actTimeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
-        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED'}
-        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced'}
+        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED',paid:'#059669'}
+        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced',paid:'paid'}
         setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: actTimeAgo(e.updated_at), estimateId: e.id })))
       }
   }, [])
@@ -365,11 +366,14 @@ export default function DashboardPage() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  async function handleMarkPaid(invoiceId: string, invoiceType?: string) {
+  async function handleMarkPaid(invoiceId: string, invoiceType?: string, estimateId?: string) {
     setPaying(invoiceId)
     const supabase = createClient()
     try {
       await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+      if (invoiceType === 'final' && estimateId) {
+        await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
+      }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
       const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {
@@ -722,7 +726,7 @@ export default function DashboardPage() {
                     <button
                       onClick={() => {
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                        else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType)
+                        else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType, item.estimateId)
                         else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
@@ -814,7 +818,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => {
                       if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
-                      else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType)
+                      else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType, item.estimateId)
                       else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                       else router.push(`/dashboard/estimates/${item.id}`)
                     }}
