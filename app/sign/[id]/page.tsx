@@ -110,7 +110,7 @@ export default function PublicSignPage() {
         link:    `/dashboard/estimates/${estimate.id}`,
       })
 
-      await fetch('/api/deposit-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' }, body: JSON.stringify({ estimateId: id }) })
+      await fetch('/api/create-deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })
 
       setDone(true)
     } finally {

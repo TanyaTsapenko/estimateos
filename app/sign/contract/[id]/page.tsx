@@ -213,9 +213,9 @@ export default function SignContractPage() {
             contractId: contractId,
           }),
         }),
-        fetch('/api/deposit-invoice', {
+        fetch('/api/create-deposit', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '' },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ estimateId: contract.estimate_id }),
         }),
       ])

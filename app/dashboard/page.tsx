@@ -376,7 +376,6 @@ export default function DashboardPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-internal-secret': process.env.NEXT_PUBLIC_INTERNAL_API_SECRET || '',
           },
           body: JSON.stringify({ type: emailType, invoiceId }),
         })
