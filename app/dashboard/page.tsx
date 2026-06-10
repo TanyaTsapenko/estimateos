@@ -239,19 +239,23 @@ export default function DashboardPage() {
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(5),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
       ])
-      const estimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
+      const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
+      const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
+      const allInvoiceEstimateIds = [...new Set([...depositEstimateIds, ...finalEstimateIds])]
       let clientNames: Record<string, string> = {}
-      if (estimateIds.length) {
-        const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', estimateIds)
+      if (allInvoiceEstimateIds.length) {
+        const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', allInvoiceEstimateIds)
         ests?.forEach((e: any) => { clientNames[e.id] = e.client_name })
       }
+      const estimateIds = depositEstimateIds
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
@@ -300,6 +304,18 @@ export default function DashboardPage() {
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
+          })
+        })
+      }
+      // Final invoices unpaid
+      if (finalPendingInvoices?.length) {
+        finalPendingInvoices.forEach((inv: any) => {
+          const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
+          attItems.push({
+            icon: CheckIcon, color: '#059669',
+            title: clientNames[inv.estimate_id] || 'Client',
+            desc: `Final invoice pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
+            cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
           })
         })
       }
