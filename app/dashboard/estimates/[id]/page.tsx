@@ -28,7 +28,7 @@ const INSTALL_LABELS: Record<string, string> = {
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
   client_phone: string | null; client_address: string | null; client_city: string | null
-  client_province: string | null; scope_notes: string | null; status: string
+  postal_code: string | null; client_province: string | null; scope_notes: string | null; status: string
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
