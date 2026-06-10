@@ -963,7 +963,21 @@ export default function AppointmentsPage() {
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
           <div style={{ width: 420, flexShrink: 0, background: T.surface, borderRight: `1px solid ${T.border}`, overflowY: 'auto' }}>
             {loading && <div style={{ textAlign: 'center', padding: '48px 0', color: T.inkSoft, fontSize: 13 }}>Loading…</div>}
-            {!loading && deskFiltered.length === 0 && <div style={{ textAlign: 'center', padding: '40px 16px', color: T.inkSoft, fontSize: 13 }}>No appointments.</div>}
+            {!loading && deskFiltered.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No visits yet</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Schedule your first appointment to get started.</div>
+                <button
+                  onClick={() => router.push('/dashboard/appointments/new')}
+                  style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  + Schedule one
+                </button>
+              </div>
+            )}
             {!loading && deskGroups.map(({ label, items }) => (
               <div key={label}>
                 <DesktopSectionHeader label={label} color={sectionColor(label)} count={`${items.length} ${items.length === 1 ? 'visit' : 'visits'}`} />
@@ -1078,15 +1092,14 @@ export default function AppointmentsPage() {
 
             {!dayLoading && dayAppts.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(37,99,235,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                  <Calendar size={28} color="#2563EB" strokeWidth={1.7} />
+                <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
                 </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#0B1220', marginBottom: 6 }}>
-                  No visits {dayTitle.toLowerCase()}
-                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No visits yet</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Schedule your first appointment to get started.</div>
                 <button
                   onClick={() => router.push('/dashboard/appointments/new')}
-                  style={{ marginTop: 4, height: 44, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+                  style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
                 >
                   + Schedule one
                 </button>
