@@ -95,7 +95,6 @@ export default function CompanySettingsPage() {
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
   const valid = dirty && !!values.companyName
   const set = (k: string) => (v: string) => setValues(s => ({ ...s, [k]: v }))
-  const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [userId, setUserId] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoUploading, setLogoUploading] = useState(false)
@@ -113,7 +112,7 @@ export default function CompanySettingsPage() {
       setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email, pricing_mode')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email')
         .eq('id', sanitizedId)
         .single()
       if (prof) {
@@ -133,7 +132,6 @@ export default function CompanySettingsPage() {
         setValues(loaded)
         setInitial(loaded)
         if ((prof as any).logo_url) setLogoUrl((prof as any).logo_url)
-        if ((prof as any).pricing_mode === 'gbb') setPricingMode('gbb')
       }
     })
   }, [])
@@ -151,7 +149,6 @@ export default function CompanySettingsPage() {
       licence:       values.licence       || null,
       insurance:     values.insurance     || null,
       interac_email: values.interacEmail  || null,
-      pricing_mode:  pricingMode,
     }).eq('id', userId)
     if (error) { flash('Error saving: ' + error.message); return }
     setInitial({ ...values })
@@ -304,28 +301,6 @@ export default function CompanySettingsPage() {
               <option value="USD">USD — US Dollar</option>
               <option value="EUR">EUR — Euro</option>
             </select>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best pricing</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options on estimates</div>
-            </div>
-            <div
-              onClick={() => setPricingMode(prev => prev === 'gbb' ? 'single' : 'gbb')}
-              style={{
-                width: 44, height: 24, borderRadius: 999, flexShrink: 0,
-                background: pricingMode === 'gbb' ? '#2563EB' : '#E2E5EA',
-                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
-              }}
-            >
-              <div style={{
-                position: 'absolute', top: 3,
-                left: pricingMode === 'gbb' ? 23 : 3,
-                width: 18, height: 18, borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-              }} />
-            </div>
           </div>
         </Card>
 

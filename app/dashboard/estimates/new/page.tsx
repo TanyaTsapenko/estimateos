@@ -666,7 +666,7 @@ function NewEstimateForm() {
   const [tier, setTier] = useState('better')
   const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [useGBB, setUseGBB] = useState(false)
-  const [profile, setProfile] = useState<{ province: string } | null>(null)
+  const [profile, setProfile] = useState<{ province: string; default_valid_days?: number } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
@@ -726,7 +726,7 @@ function NewEstimateForm() {
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
       const [{ data: prof }, { data: priceRows }, { data: profSurcharges }] = await Promise.all([
-        supabase.from('profiles').select('province, pricing_mode, role, team_owner_id').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('province, pricing_mode, role, team_owner_id, default_valid_days').eq('id', sanitizedId).single(),
         supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
         supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single(),
       ])
@@ -922,7 +922,7 @@ function NewEstimateForm() {
         estimate_number: num,
         ...estimateFields,
         status: 'draft',
-        valid_until: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10),
+        valid_until: new Date(Date.now() + (profile?.default_valid_days || 30) * 86400000).toISOString().slice(0, 10),
         appointment_id: apptId || null,
       }).select('id').single()
       if (estErr || !est) { setError(estErr?.message || 'Failed to save'); setSaving(false); return }

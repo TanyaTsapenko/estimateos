@@ -10,7 +10,7 @@ import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { usePermissions } from '@/lib/usePermissions'
 import ConfirmModal from '@/components/ConfirmModal'
 // ── TYPES ────────────────────────────────────────
-type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
+type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'quote' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
 
 // ── NAV GROUPS ───────────────────────────────────
 const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: string; desc: string }[] }[] = [
@@ -25,8 +25,9 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
   {
     title: 'BUSINESS',
     items: [
-      { id: 'company',  icon: 'company',  label: 'Company',    desc: 'Logo, address, defaults' },
-      { id: 'team',     icon: 'team',     label: 'Team',       desc: 'Manage team members' },
+      { id: 'company',  icon: 'company',  label: 'Company',      desc: 'Logo, address, defaults' },
+      { id: 'quote',    icon: 'quote',    label: 'Quote Settings', desc: 'Pricing mode & defaults' },
+      { id: 'team',     icon: 'team',     label: 'Team',         desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
     ],
@@ -1542,6 +1543,7 @@ const SECTIONS: Record<SectionId, (props: { flash: (m: string) => void }) => Rea
   password:      (p) => <PasswordSection {...p} />,
   notifications: (p) => <NotificationsSection {...p} />,
   company:       (p) => <CompanySection {...p} />,
+  quote:         () => <></>,
   team:          (p) => <TeamSection {...p} />,
   contract:      (p) => <ContractSection {...p} />,
   price:         () => <PriceListSection />,
@@ -1597,7 +1599,7 @@ export default function SettingsPage() {
       if (isEstimator) return ['profile', 'password'].includes(item.id)
       if (role === 'admin') return !['billing', 'invoices', 'notifications'].includes(item.id)
       if (item.id === 'team' && role !== 'owner') return false
-      if ((item.id === 'company' || item.id === 'contract') && !permissions.settings) return false
+      if ((item.id === 'company' || item.id === 'quote' || item.id === 'contract') && !permissions.settings) return false
       if (item.id === 'price' && !permissions.price_list) return false
       return true
     }),
@@ -1619,6 +1621,7 @@ export default function SettingsPage() {
   const ActiveSection = SECTIONS[active]
 
   const handleNavClick = (id: SectionId) => {
+    if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
     setActive(id)
     if (isMobile) setMobileDetail(true)
   }

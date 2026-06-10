@@ -17,6 +17,7 @@ const MAP = {
   'invoice':    Receipt,
   'price':      Tag,
   'contract':   FileText,
+  'quote':      FileText,
   'lock':       Lock,
   'card':       CreditCard,
   'user':       User,
