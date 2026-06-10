@@ -61,6 +61,7 @@ export default function EstimatesPage() {
         .select('id, estimate_number, client_name, client_city, status, total, tier, created_at, viewed_at')
         .eq('user_id', sanitizedId)
         .order('created_at', { ascending: false })
+        .limit(50)
       setEstimates(data || [])
       setLoading(false)
     }

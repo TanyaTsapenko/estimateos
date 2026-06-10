@@ -214,7 +214,7 @@ export default function DashboardPage() {
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
         .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id')
-        .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true })
+        .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
           const t = a.appointment_time || ''
@@ -241,8 +241,8 @@ export default function DashboardPage() {
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId),
-        supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,estimate_number,client_name').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(5),

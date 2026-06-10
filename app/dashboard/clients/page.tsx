@@ -77,11 +77,12 @@ export default function ClientsPage() {
       }
 
       const [{ data: clientRows }, { data: estimates }] = await Promise.all([
-        clientsQuery,
+        clientsQuery.limit(50),
         supabase.from('estimates')
           .select('id, client_id, status, total')
           .eq('user_id', estimatesOwnerId)
-          .not('client_id', 'is', null),
+          .not('client_id', 'is', null)
+          .limit(20),
       ])
 
       // Build per-client estimate stats

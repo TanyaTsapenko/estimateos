@@ -266,7 +266,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         supabase.from('appointments')
           .select('id, appointment_date, appointment_time, status, notes, estimate_id, lead_source, assigned_to')
           .eq('client_id', clientId)
-          .order('appointment_date', { ascending: false }),
+          .order('appointment_date', { ascending: false })
+          .limit(20),
       ])
 
       if (cl) { setClient(cl); setNotes(cl.notes || '') }
@@ -280,6 +281,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             .select('id, estimate_number, status, total, created_at, appointment_id')
             .in('appointment_id', apptIds)
             .order('created_at', { ascending: false })
+            .limit(20)
         : { data: [] as Estimate[] }
 
       const estList = ests || []

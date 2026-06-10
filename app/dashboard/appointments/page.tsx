@@ -765,6 +765,7 @@ export default function AppointmentsPage() {
       .from('appointments').select('*').eq('user_id', sanitizedId)
       .order('appointment_date', { ascending: true })
       .order('appointment_time', { ascending: true, nullsFirst: false })
+      .limit(50)
     const apptList = rows || []
     const estIds = apptList.flatMap(a => a.estimate_id ? [a.estimate_id as string] : [])
     let estMap = new Map<string, string>()
@@ -814,6 +815,7 @@ export default function AppointmentsPage() {
         .eq('user_id', userId)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
+        .limit(50)
 
       const rowList = rows || []
       const estIds = rowList.filter(a => a.estimate_id).map(a => a.estimate_id!)
