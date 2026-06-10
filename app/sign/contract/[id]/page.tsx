@@ -246,7 +246,7 @@ export default function SignContractPage() {
 
   const depositPct = profile?.deposit_percent ?? contract?.deposit_percent ?? 10
   const depositRequired = profile?.deposit_required !== false
-  const depositAmt = Math.round((estimate?.total || 0) * depositPct / 100)
+  const depositAmt = Math.round((estimate?.total || 0) * depositPct) / 100
   const balanceAmt = (estimate?.total || 0) - depositAmt
   const contractorEmail = contract?.company_email
 

@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
 
   const depositPct: number = (prof as any)?.deposit_percent ?? 30
-  const depositOnSigning = Math.round(est.total * depositPct / 100)
+  const depositOnSigning = Math.round(est.total * depositPct) / 100
   const depositOnDelivery = est.total - depositOnSigning
 
   const validUntil = est.valid_until

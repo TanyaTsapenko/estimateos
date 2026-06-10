@@ -6,7 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function POST(req: Request) {
   const { contractorEmail, contractorName, clientName, companyName, total, depositPercent, contractId } = await req.json()
 
-  const depositAmount = Math.round(total * depositPercent / 100)
+  const depositAmount = Math.round(total * depositPercent) / 100
   const viewUrl = `https://useapexscale.com/sign/contract/${contractId}`
 
   await resend.emails.send({

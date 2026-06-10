@@ -231,7 +231,7 @@ ${hdrBlock('Invoice for', est.client_name || 'Client',
       : ''
     const tierLabel = (est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)
     const depositPct = (prof as any)?.deposit_percent ?? 30
-    const depositOnSigning = Math.round(est.total * depositPct / 100)
+    const depositOnSigning = Math.round(est.total * depositPct) / 100
     const depositOnDelivery = est.total - depositOnSigning
 
     subject = `Signed — ${est.estimate_number} · ${fmtCAD(est.total)}`

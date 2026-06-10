@@ -163,7 +163,7 @@ export default function ClientEstimatePage() {
   const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
   const issuedDate  = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
   const depositPct  = profile?.deposit_percent ?? 30
-  const depositAmt  = Math.round(estimate.total * depositPct / 100)
+  const depositAmt  = Math.round(estimate.total * depositPct) / 100
   const balanceAmt  = estimate.total - depositAmt
   const hasClientDetails = !!(estimate.client_email || estimate.client_phone || estimate.client_address)
 
