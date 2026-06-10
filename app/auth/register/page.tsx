@@ -83,7 +83,11 @@ export default function RegisterPage() {
       })
     }
 
-    router.push('/onboarding')
+    if (signUpData.session) {
+      router.push('/onboarding')
+    } else {
+      router.push('/auth/check-email')
+    }
   }
 
   async function handleGoogle() {
