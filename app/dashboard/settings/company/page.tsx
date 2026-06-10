@@ -305,7 +305,7 @@ export default function CompanySettingsPage() {
               <option value="EUR">EUR — Euro</option>
             </select>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '2px solid red' }}>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best pricing</div>
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options on estimates</div>
