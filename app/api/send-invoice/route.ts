@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { logActivity } from '@/lib/activity'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -146,6 +148,17 @@ export async function POST(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
+
+  logActivity(createServiceClient(), {
+    user_id: user.id,
+    event_type: 'final_invoice_sent',
+    actor_type: 'contractor',
+    entity_type: 'invoice',
+    entity_id: invoiceId,
+    entity_number: est?.estimate_number,
+    client_name: est?.client_name,
+    amount: inv.amount,
+  }).catch(() => {})
 
   return NextResponse.json({ success: true })
 }
