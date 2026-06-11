@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, validateQuantity, validateDimension, validatePositiveNumber, type ClientErrors } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import { SHOW_GBB } from '@/lib/flags'
 
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
@@ -1116,6 +1117,7 @@ function NewEstimateForm() {
                 <input placeholder="A1A 1A1" value={client.client_postal_code}
                   onChange={e => setClient(p => ({ ...p, client_postal_code: formatPostal(e.target.value) }))} />
               </div></div>
+              {SHOW_GBB && (<>
               <div className="sl" style={{ marginTop: 20 }}>Good / Better / Best</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
                 <div style={{ fontSize: 13, color: '#64748B' }}>Show clients three pricing options</div>
@@ -1130,6 +1132,7 @@ function NewEstimateForm() {
                     boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
                 </div>
               </div>
+              </>)}
               {!useGBB && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                   {TIERS.map(t => (
@@ -1177,7 +1180,7 @@ function NewEstimateForm() {
                     }
                   </div>
                 ))}
-                {showGBB ? (
+                {SHOW_GBB && showGBB ? (
                   <>
                     <div className="sum-row" style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
                       <span style={{ color: '#64748B' }}>Good total</span>

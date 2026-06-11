@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { SHOW_GBB } from '@/lib/flags'
 import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
@@ -156,7 +157,7 @@ export default function ClientEstimatePage() {
   )
 
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const showGBB    = !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
+  const showGBB    = SHOW_GBB && !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
   const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
   const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
   const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')

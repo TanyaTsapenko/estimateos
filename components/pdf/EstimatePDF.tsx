@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
+import { SHOW_GBB } from '@/lib/flags'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -156,7 +157,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
         </View>
 
         {/* Tier pricing if applicable */}
-        {estimate.has_tiers && estimate.total_good && (() => {
+        {SHOW_GBB && estimate.has_tiers && estimate.total_good && (() => {
           const selectedTier = estimate.tier || 'better'
           const badge = estimate.tier ? '★ Selected' : '★ Recommended'
           return (

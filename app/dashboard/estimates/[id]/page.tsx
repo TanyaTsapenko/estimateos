@@ -6,6 +6,7 @@ import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 import WindowDiagram from '@/components/WindowDiagram'
+import { SHOW_GBB } from '@/lib/flags'
 
 interface Opening {
   id: string; type: string; qty: number; width: string | null
@@ -357,7 +358,7 @@ export default function EstimateDetailPage() {
           {/* ── LEFT COLUMN: tier + client in one card ── */}
           <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
             {/* Tier */}
-            {estimate.has_tiers ? (
+            {SHOW_GBB && (estimate.has_tiers ? (
               <div style={{ marginBottom: 16 }}>
                 <div style={SL}>Select tier</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -388,7 +389,7 @@ export default function EstimateDetailPage() {
               </div>
             ) : (
               profile?.pricing_mode === 'gbb' && estimate.tier && estimate.tier !== 'single' && <div style={SL}>{tierLabel} Tier</div>
-            )}
+            ))}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
               {fmtCAD(estimate.total)}
             </div>

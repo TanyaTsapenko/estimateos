@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
+import { SHOW_GBB } from '@/lib/flags'
 import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
@@ -26,7 +27,7 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     title: 'BUSINESS',
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',      desc: 'Logo, address, defaults' },
-      { id: 'quote',    icon: 'quote',    label: 'Quote Settings', desc: 'Pricing mode & defaults' },
+      ...(SHOW_GBB ? [{ id: 'quote' as const, icon: 'quote' as const, label: 'Quote Settings', desc: 'Pricing mode & defaults' }] : []),
       { id: 'team',     icon: 'team',     label: 'Team',         desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
