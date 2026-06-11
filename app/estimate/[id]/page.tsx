@@ -160,6 +160,9 @@ export default function ClientEstimatePage() {
   const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
   const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
   const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')
+  const goodDisplayName   = priceListItems.find(p => p.is_tiered && p.tier_good?.display_name)?.tier_good?.display_name || null
+  const betterDisplayName = priceListItems.find(p => p.is_tiered && p.tier_better?.display_name)?.tier_better?.display_name || null
+  const bestDisplayName   = priceListItems.find(p => p.is_tiered && p.tier_best?.display_name)?.tier_best?.display_name || null
   const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
   const issuedDate  = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
   const depositPct  = profile?.deposit_percent ?? 30
@@ -168,12 +171,12 @@ export default function ClientEstimatePage() {
   const hasClientDetails = !!(estimate.client_email || estimate.client_phone || estimate.client_address)
 
   const tiers: Array<{
-    label: string; specs: string[]; price: number; border: string
+    label: string; displayName: string | null; specs: string[]; price: number; border: string
     bg: string; lc: string; pc: string; badge?: string
   }> = [
-    { label: 'Good',   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',    lc: INK_SOFT, pc: INK  },
-    { label: 'Better', specs: betterSpecs, price: estimate.total_better!, border: `2px solid ${BLUE}`,   bg: BLUE_SOFT, lc: BLUE,     pc: BLUE, badge: 'Recommended' },
-    { label: 'Best',   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',    lc: '#D97706', pc: INK  },
+    { label: 'Good',   displayName: goodDisplayName,   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',    lc: INK_SOFT, pc: INK  },
+    { label: 'Better', displayName: betterDisplayName, specs: betterSpecs, price: estimate.total_better!, border: `2px solid ${BLUE}`,   bg: BLUE_SOFT, lc: BLUE,     pc: BLUE, badge: 'Recommended' },
+    { label: 'Best',   displayName: bestDisplayName,   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',    lc: '#D97706', pc: INK  },
   ]
 
   const statusPill = estimate.status === 'signed'
@@ -366,12 +369,13 @@ export default function ClientEstimatePage() {
 
               {showGBB && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                  {tiers.map(({ label, specs, price, border, bg, lc, pc, badge }) => (
+                  {tiers.map(({ label, displayName, specs, price, border, bg, lc, pc, badge }) => (
                     <div key={label} style={{ border, borderRadius: 12, padding: '14px 16px', background: bg }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: specs.length ? 8 : 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: displayName || specs.length ? 4 : 0 }}>
                         <span style={{ fontSize: 11, fontWeight: 700, color: lc, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
                         {badge && <span style={{ fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff', borderRadius: 20, padding: '2px 8px' }}>{badge}</span>}
                       </div>
+                      {displayName && <div style={{ fontSize: 12, color: INK_SOFT, marginBottom: specs.length ? 6 : 0 }}>{displayName}</div>}
                       {specs.map((s, i) => <div key={i} style={{ fontSize: 12, color: lc, marginBottom: 3 }}>• {s}</div>)}
                       <div style={{ fontSize: 22, fontWeight: 800, color: pc, marginTop: 10, fontFamily: MONO }}>{fmtCAD(price)}</div>
                       <div style={{ fontSize: 11, color: INK_SOFT, marginTop: 2 }}>inc. {taxLabel}</div>
