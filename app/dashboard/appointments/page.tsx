@@ -1000,7 +1000,7 @@ export default function AppointmentsPage() {
   }
 
   // ── Mobile timeline render ───────────────────────────────────────────────────
-  const dayTitle = selectedDay === 'today' ? 'Today' : selectedDay === 'yesterday' ? 'Yesterday' : 'Tomorrow'
+  const dayTitle = selectedDay === 'today' ? 'Today' : selectedDay === 'yesterday' ? 'Yesterday' : selectedDay === 'tomorrow' ? 'Tomorrow' : new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })
 
   return (
     <>
