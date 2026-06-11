@@ -20,7 +20,7 @@ interface Metrics {
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
-  invoiceType?: 'deposit' | 'final'; estimateId?: string; createdAt?: string
+  invoiceType?: 'deposit' | 'final'; estimateId?: string; createdAt?: string; priority: number
 }
 interface ActivityItem {
   event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
@@ -256,7 +256,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             icon: FileText, color: '#7C3AED',
             title: e.client_name,
             desc: `Ready for final invoice · ${e.estimate_number}`,
-            cta: 'Send final invoice', id: e.id, actionType: 'invoice',
+            cta: 'Send final invoice', id: e.id, actionType: 'invoice', priority: 2,
           })
         })
       }
@@ -264,12 +264,13 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       if (pendingInvoices?.length) {
         pendingInvoices.forEach((inv: any) => {
           const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
+          const daysOld = Math.floor((Date.now() - new Date(inv.created_at).getTime()) / 86400000)
           attItems.push({
             icon: ClockIcon, color: '#D97706',
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
-            invoiceType: 'deposit' as const, createdAt: inv.created_at,
+            invoiceType: 'deposit' as const, createdAt: inv.created_at, priority: daysOld > 7 ? 0 : 3,
           })
         })
       }
@@ -283,7 +284,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             desc: `Final invoice pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
             invoiceType: 'final' as const,
-            estimateId: inv.estimate_id,
+            estimateId: inv.estimate_id, priority: 1,
           })
         })
       }
@@ -297,9 +298,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           icon: SendIcon, color: '#2563EB',
           title: e.client_name,
           desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, no reply`,
-          cta: 'Send reminder', id: e.id, actionType: 'reminder',
+          cta: 'Send reminder', id: e.id, actionType: 'reminder', priority: 4,
         })
       })
+      attItems.sort((a, b) => a.priority - b.priority)
       setAttention(attItems)
 
       {
