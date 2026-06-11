@@ -20,7 +20,7 @@ interface Metrics {
 interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
-  invoiceType?: 'deposit' | 'final'; estimateId?: string
+  invoiceType?: 'deposit' | 'final'; estimateId?: string; createdAt?: string
 }
 interface ActivityItem {
   event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
@@ -205,7 +205,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
         supabase.from('activity_log').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
       ])
@@ -269,7 +269,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
-            invoiceType: 'deposit' as const,
+            invoiceType: 'deposit' as const, createdAt: inv.created_at,
           })
         })
       }
@@ -765,7 +765,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                       <item.icon size={14} color={item.color} strokeWidth={1.7} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                        {item.createdAt && (() => { const d = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000); return d > 7 ? <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#DC2626', background: '#FEE2E2', borderRadius: 5, padding: '2px 6px', whiteSpace: 'nowrap' }}>{d} days overdue</span> : null })()}
+                      </div>
                       <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                     </div>
                     <button
@@ -876,7 +879,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                     <item.icon size={14} color={item.color} strokeWidth={1.7} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</div>
+                      {item.createdAt && (() => { const d = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000); return d > 7 ? <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#DC2626', background: '#FEE2E2', borderRadius: 5, padding: '2px 6px', whiteSpace: 'nowrap' }}>{d} days overdue</span> : null })()}
+                    </div>
                     <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{item.desc}</div>
                   </div>
                   <button
