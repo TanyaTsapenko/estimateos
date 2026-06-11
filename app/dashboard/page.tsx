@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 
 interface Appointment {
@@ -14,7 +14,7 @@ interface Metrics {
   revenueThisMonth: string; revenueDelta: string; revenueUp: boolean | null
   pipelineTotal: string; pipelineCount: string
   signedTodayTotal: string; signedTodayCount: number
-  signaturesNeeded: number
+  signaturesNeeded: number; conversionRate: number
   sparklines: { revenue: number[]; pipeline: number[]; signed: number[] }
 }
 interface AttentionItem {
@@ -206,7 +206,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
-        supabase.from('estimates').select('total,created_at').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
+        supabase.from('estimates').select('total,created_at,status').eq('user_id', sanitizedId).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
@@ -223,7 +223,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         ests?.forEach((e: any) => { clientNames[e.id] = e.client_name })
       }
       const estimateIds = depositEstimateIds
-      const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
+      const signedThisMonth = (estThisMonth||[]).filter((e:any)=>['signed','invoiced','paid'].includes(e.status))
+      const revenueThis = signedThisMonth.reduce((s:number,e:any)=>s+(e.total||0),0)
+      const conversionRate = (estThisMonth||[]).length > 0 ? Math.round(signedThisMonth.length / (estThisMonth||[]).length * 100) : 0
       const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
       const openEstimates = estPipeline || []
@@ -240,8 +242,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
         signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); return (estSigned || []).filter((e: any) => ['signed','accepted'].includes(e.status) && !pendingEstimateIdsForMetrics.has(e.id)).length })(),
+        conversionRate,
         sparklines: {
-          revenue: [...(estThisMonth||[])].sort((a:any,b:any)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime()).map((e:any)=>e.total||0).slice(-8),
+          revenue: [...signedThisMonth].sort((a:any,b:any)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime()).map((e:any)=>e.total||0).slice(-8),
           pipeline: [...(estPipeline||[])].sort((a:any,b:any)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime()).map((e:any)=>e.total||0).slice(-6),
           signed: [...(estSignedToday||[])].sort((a:any,b:any)=>new Date(a.updated_at).getTime()-new Date(b.updated_at).getTime()).map((e:any)=>e.total||0).slice(-6),
         },
@@ -744,6 +747,13 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             value={metrics?.signedTodayTotal ?? ''} delta={`${metrics?.signedTodayCount ?? 0} today`} deltaUp={metrics ? (metrics.signedTodayCount > 0 ? true : null) : null}
             accent="#0F8A6B" Icon={CheckIcon} sparkData={metrics?.sparklines.signed ?? []} empty={!metrics}
             onClick={() => router.push('/dashboard/estimates?status=signed')}
+          />
+          <KpiCard
+            label="CONVERSION" period="This month"
+            value={metrics ? `${metrics.conversionRate}%` : ''} delta="" deltaUp={metrics ? (metrics.conversionRate > 50 ? true : metrics.conversionRate < 25 ? false : null) : null}
+            accent={metrics ? (metrics.conversionRate > 50 ? '#0F8A6B' : metrics.conversionRate < 25 ? '#DC2626' : '#D97706') : '#94A3B8'}
+            Icon={TrendingUp} sparkData={[]} empty={!metrics}
+            onClick={() => router.push('/dashboard/estimates')}
           />
         </div>
         )}
