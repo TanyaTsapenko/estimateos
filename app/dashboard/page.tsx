@@ -295,8 +295,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
         attItems.push({
           icon: SendIcon, color: '#2563EB',
-          title: `${e.client_name} hasn't opened ${e.estimate_number}`,
-          desc: `Sent ${daysSince} day${daysSince !== 1 ? 's' : ''} ago`,
+          title: e.client_name,
+          desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, no reply`,
           cta: 'Send reminder', id: e.id, actionType: 'reminder',
         })
       })
