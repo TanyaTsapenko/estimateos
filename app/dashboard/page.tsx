@@ -168,7 +168,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         else if (meta?.name) setUserName(meta.name)
         else if (user.email) setUserName(user.email.split('@')[0])
       }
-      const { data: pl } = await supabase.from('price_list').select('id').eq('user_id', sanitizedId).limit(1)
+      const { data: pl } = await supabase.from('price_lists').select('id').eq('user_id', sanitizedId).limit(1)
       setChecklistData({
         logoUrl: (prof as any)?.logo_url ?? null,
         contractTerms: (prof as any)?.contract_terms ?? null,
