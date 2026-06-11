@@ -123,7 +123,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           <Text style={styles.sectionTitle}>Prepared for</Text>
           <View style={styles.infoBox}>
             <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0A1628', marginBottom: 4 }}>{estimate.client_name}</Text>
-            {estimate.client_address && <Text style={styles.companyContact}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.client_postal_code}</Text>}
+            {estimate.client_address && <Text style={styles.companyContact}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.postal_code}</Text>}
             {estimate.client_phone && <Text style={styles.companyContact}>{estimate.client_phone}</Text>}
             {estimate.client_email && <Text style={styles.companyContact}>{estimate.client_email}</Text>}
           </View>
@@ -156,26 +156,32 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
         </View>
 
         {/* Tier pricing if applicable */}
-        {estimate.has_tiers && estimate.total_good && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Options</Text>
-            <View style={styles.tierTable}>
-              <View style={styles.tierBox}>
-                <Text style={styles.tierLabel}>Good</Text>
-                <Text style={styles.tierPrice}>{formatCurrency(estimate.total_good)}</Text>
-              </View>
-              <View style={styles.tierBoxBetter}>
-                <Text style={styles.tierLabel}>Better</Text>
-                <Text style={styles.tierPriceBetter}>{formatCurrency(estimate.total_better)}</Text>
-                <Text style={styles.tierRecommended}>★ Recommended</Text>
-              </View>
-              <View style={styles.tierBox}>
-                <Text style={styles.tierLabel}>Best</Text>
-                <Text style={styles.tierPrice}>{formatCurrency(estimate.total_best)}</Text>
+        {estimate.has_tiers && estimate.total_good && (() => {
+          const selectedTier = estimate.tier || 'better'
+          const badge = estimate.tier ? '★ Selected' : '★ Recommended'
+          return (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Pricing Options</Text>
+              <View style={styles.tierTable}>
+                <View style={selectedTier === 'good' ? styles.tierBoxBetter : styles.tierBox}>
+                  <Text style={styles.tierLabel}>Good</Text>
+                  <Text style={selectedTier === 'good' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_good)}</Text>
+                  {selectedTier === 'good' && <Text style={styles.tierRecommended}>{badge}</Text>}
+                </View>
+                <View style={selectedTier === 'better' ? styles.tierBoxBetter : styles.tierBox}>
+                  <Text style={styles.tierLabel}>Better</Text>
+                  <Text style={selectedTier === 'better' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_better)}</Text>
+                  {selectedTier === 'better' && <Text style={styles.tierRecommended}>{badge}</Text>}
+                </View>
+                <View style={selectedTier === 'best' ? styles.tierBoxBetter : styles.tierBox}>
+                  <Text style={styles.tierLabel}>Best</Text>
+                  <Text style={selectedTier === 'best' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_best)}</Text>
+                  {selectedTier === 'best' && <Text style={styles.tierRecommended}>{badge}</Text>}
+                </View>
               </View>
             </View>
-          </View>
-        )}
+          )
+        })()}
 
         {/* Totals */}
         <View style={styles.totalsSection}>
@@ -214,10 +220,10 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
         )}
 
         {/* Notes */}
-        {estimate.notes && (
+        {estimate.scope_notes && (
           <View style={{ marginTop: 16 }}>
             <Text style={styles.sectionTitle}>Notes</Text>
-            <Text style={{ fontSize: 9, color: '#374151', lineHeight: 1.5 }}>{estimate.notes}</Text>
+            <Text style={{ fontSize: 9, color: '#374151', lineHeight: 1.5 }}>{estimate.scope_notes}</Text>
           </View>
         )}
 
