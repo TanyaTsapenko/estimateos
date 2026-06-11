@@ -30,6 +30,8 @@ interface Estimate {
   client_phone: string | null; client_address: string | null; client_city: string | null
   postal_code: string | null; client_province: string | null; scope_notes: string | null; status: string
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
+  has_tiers: boolean | null
+  total_good: number | null; total_better: number | null; total_best: number | null
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
@@ -129,6 +131,14 @@ export default function EstimateDetailPage() {
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(''), 2500)
+  }
+
+  async function selectTier(t: 'good' | 'better' | 'best') {
+    if (!estimate) return
+    const newTotal = t === 'good' ? estimate.total_good : t === 'better' ? estimate.total_better : estimate.total_best
+    if (newTotal === null) return
+    await supabase.from('estimates').update({ tier: t, total: newTotal }).eq('id', id)
+    setEstimate(p => p ? { ...p, tier: t, total: newTotal } : p)
   }
 
   async function handleSendEmail() {
@@ -347,7 +357,38 @@ export default function EstimateDetailPage() {
           {/* ── LEFT COLUMN: tier + client in one card ── */}
           <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
             {/* Tier */}
-            {profile?.pricing_mode === 'gbb' && estimate.tier && estimate.tier !== 'single' && <div style={SL}>{tierLabel} Tier</div>}
+            {estimate.has_tiers ? (
+              <div style={{ marginBottom: 16 }}>
+                <div style={SL}>Select tier</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {(['good', 'better', 'best'] as const).map(t => {
+                    const amt = t === 'good' ? estimate.total_good : t === 'better' ? estimate.total_better : estimate.total_best
+                    if (amt === null) return null
+                    const selected = estimate.tier === t
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => selectTier(t)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+                          border: selected ? '2px solid #2563EB' : '1.5px solid #E5E7EB',
+                          background: selected ? '#EFF4FF' : '#fff',
+                        }}
+                      >
+                        <span style={{ fontSize: 13, fontWeight: 700, color: selected ? '#2563EB' : '#0A1628', textTransform: 'capitalize' }}>{t}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: selected ? '#2563EB' : '#0A1628', fontFamily: 'monospace' }}>{fmtCAD(amt)}</span>
+                          {selected && <Check size={14} color="#2563EB" strokeWidth={2.5} />}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : (
+              profile?.pricing_mode === 'gbb' && estimate.tier && estimate.tier !== 'single' && <div style={SL}>{tierLabel} Tier</div>
+            )}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
               {fmtCAD(estimate.total)}
             </div>
