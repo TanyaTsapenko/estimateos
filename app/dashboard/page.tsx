@@ -253,7 +253,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           if (pendingEstimateIds.has(e.id)) return // deposit still pending, skip
           if (finalEstimateIdSet.has(e.id)) return // final invoice already exists
           attItems.push({
-            icon: CheckIcon, color: '#059669',
+            icon: FileText, color: '#7C3AED',
             title: e.client_name,
             desc: `Ready for final invoice · ${e.estimate_number}`,
             cta: 'Send final invoice', id: e.id, actionType: 'invoice',
@@ -278,7 +278,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         finalPendingInvoices.forEach((inv: any) => {
           const amt = typeof inv.amount === 'number' ? `CA$${inv.amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ''
           attItems.push({
-            icon: CheckIcon, color: '#059669',
+            icon: ClockIcon, color: '#059669',
             title: clientNames[inv.estimate_id] || 'Client',
             desc: `Final invoice pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
