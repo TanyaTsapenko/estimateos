@@ -54,7 +54,7 @@ interface TimelineAppt {
   hour: number
   phone: string
   address: string
-  status: 'upcoming' | 'completed'
+  status: 'upcoming' | 'completed' | 'cancelled'
   estimateId: string | null
   estTotal: string | null
   notes: string | null
@@ -843,7 +843,7 @@ export default function AppointmentsPage() {
           hour: toHour(a.appointment_time),
           phone: a.client_phone || '',
           address: a.client_address || '',
-          status: (isPast || a.status === 'completed') ? 'completed' : 'upcoming',
+          status: a.status === 'cancelled' ? 'cancelled' : (isPast || a.status === 'completed') ? 'completed' : 'upcoming',
           estimateId: a.estimate_id || null,
           estTotal: total !== null ? `CA$${total.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null,
           notes: a.notes || null,
@@ -861,8 +861,9 @@ export default function AppointmentsPage() {
   const todayCount = appts.filter(a => a.appointment_date === todayStr).length
   const NOW        = nowDate.getHours() + nowDate.getMinutes() / 60
 
-  const upcomingCount = dayAppts.filter(a => a.status === 'upcoming').length
-  const doneCount     = dayAppts.filter(a => a.status === 'completed').length
+  const upcomingCount   = dayAppts.filter(a => a.status !== 'completed' && a.status !== 'cancelled').length
+  const doneCount       = dayAppts.filter(a => a.status === 'completed').length
+  const cancelledCount  = dayAppts.filter(a => a.status === 'cancelled').length
 
   const nowInsertIdx = selectedDay === 'today'
     ? (() => { const i = dayAppts.findIndex(a => a.hour >= NOW); return i === -1 ? dayAppts.length : i })()
@@ -1029,7 +1030,7 @@ export default function AppointmentsPage() {
               </div>
               <div style={{ fontSize: 13, color: '#8A94A6', marginTop: 3 }}>
                 <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
-                {' · '}{doneCount} done
+                {' · '}{doneCount} done{cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
