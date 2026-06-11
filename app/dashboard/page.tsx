@@ -90,7 +90,7 @@ function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData
 
 function apptPillStyle(status: string): React.CSSProperties {
   if (status === 'IN PROGRESS') return {
-    background: 'rgba(37,99,235,.28)', border: '1px solid rgba(255,255,255,.4)', color: '#fff',
+    background: 'rgba(249,115,22,.25)', border: '1px solid rgba(249,115,22,.5)', color: '#FED7AA',
   }
   if (status === 'AWAITING SIGN') return {
     background: 'rgba(217,119,6,.3)', border: '1px solid rgba(217,119,6,.55)', color: '#FCD34D',
@@ -444,17 +444,27 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
   const now = new Date()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
+  const parseApptMinutes = (time: string): number | null => {
+    const m = time.match(/(\d+):(\d+)\s*(AM|PM)/i)
+    if (!m) return null
+    let h = parseInt(m[1])
+    const min = parseInt(m[2])
+    const ampm = m[3].toUpperCase()
+    if (ampm === 'PM' && h !== 12) h += 12
+    if (ampm === 'AM' && h === 12) h = 0
+    return h * 60 + min
+  }
+  const effectivePill = (appt: Appointment): string => {
+    if (appt.pillStatus === 'DONE' || appt.pillStatus === 'IN PROGRESS') return appt.pillStatus
+    const apptMin = parseApptMinutes(appt.time)
+    if (apptMin !== null && apptMin < currentMinutes - 30) return 'IN PROGRESS'
+    return appt.pillStatus
+  }
   const nextAppt = appointments.find(a => {
     if (a.pillStatus === 'DONE') return false
-    const timeParts = a.time.match(/(\d+):(\d+)\s*(AM|PM)/i)
-    if (!timeParts) return true
-    let hours = parseInt(timeParts[1])
-    const minutes = parseInt(timeParts[2])
-    const ampm = timeParts[3].toUpperCase()
-    if (ampm === 'PM' && hours !== 12) hours += 12
-    if (ampm === 'AM' && hours === 12) hours = 0
-    const apptMinutes = hours * 60 + minutes
-    return apptMinutes >= currentMinutes - 30
+    const apptMin = parseApptMinutes(a.time)
+    if (apptMin === null) return true
+    return apptMin >= currentMinutes - 30
   }) ?? null
   const otherAppts = appointments.filter(a => a.id !== nextAppt?.id)
 
@@ -714,7 +724,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
                 <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
-                <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(appt.pillStatus) }}>{appt.pillStatus}</div>
+                <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(effectivePill(appt)) }}>{effectivePill(appt)}</div>
                 <button
                   onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
                   style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
