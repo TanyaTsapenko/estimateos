@@ -56,9 +56,10 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
     client_city:      '',
     client_province:  '',
     postal_code:      '',
-    appointment_date: '',
-    appointment_time: '',
-    lead_source:      '',
+    appointment_date:     '',
+    appointment_time:     '',
+    appointment_end_time: '',
+    lead_source:          '',
     notes:            '',
     status:           'scheduled',
     assigned_to:      '',
@@ -100,9 +101,10 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
         client_city:      appt.client_city ?? '',
         client_province:  appt.client_province ?? '',
         postal_code:      appt.postal_code ?? '',
-        appointment_date: appt.appointment_date ?? '',
-        appointment_time: appt.appointment_time ?? '',
-        lead_source:      appt.lead_source ?? '',
+        appointment_date:     appt.appointment_date     ?? '',
+        appointment_time:     appt.appointment_time     ?? '',
+        appointment_end_time: appt.appointment_end_time ?? '',
+        lead_source:          appt.lead_source          ?? '',
         notes:            appt.notes ?? '',
         status:           appt.status ?? 'scheduled',
         assigned_to:      appt.assigned_to ?? '',
@@ -130,8 +132,9 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
       client_province:  form.client_province        || null,
       postal_code:      form.postal_code.trim()     || null,
       appointment_date: form.appointment_date,
-      appointment_time: form.appointment_time       || null,
-      lead_source:      form.lead_source            || null,
+      appointment_time:     form.appointment_time     || null,
+      appointment_end_time: form.appointment_end_time || null,
+      lead_source:          form.lead_source          || null,
       notes:            form.notes.trim()           || null,
       status:           form.status,
       assigned_to:      form.assigned_to            || null,
@@ -290,7 +293,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
           {/* WHEN */}
           <div style={secHdr}>When</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
             <div style={{ minWidth: 0 }}>
               <label style={fldLbl}>Date</label>
               <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
@@ -302,6 +305,14 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                 value={form.appointment_time}
                 date={form.appointment_date}
                 onChange={v => set('appointment_time', v)}
+              />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <label style={fldLbl}>Until (optional)</label>
+              <TimePickerDropdown
+                value={form.appointment_end_time}
+                date={form.appointment_date}
+                onChange={v => set('appointment_end_time', v)}
               />
             </div>
           </div>

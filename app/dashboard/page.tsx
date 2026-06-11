@@ -7,7 +7,7 @@ import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, Cre
 import { usePermissions } from '@/lib/usePermissions'
 
 interface Appointment {
-  id: string; time: string; client: string; address: string; phone: string
+  id: string; time: string; endTime: string; client: string; address: string; phone: string
   pillStatus: string; estimateId: string | null; duration: string
 }
 interface Metrics {
@@ -178,7 +178,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id,estimates(status)')
+        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates(status)')
         .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
@@ -193,9 +193,14 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           else if (a.estimate_id && ['signed', 'invoiced', 'paid'].includes(estStatus)) pillStatus = 'SIGNED'
           else if (a.estimate_id && ['draft', 'sent'].includes(estStatus)) pillStatus = 'AWAITING SIGN'
           else if (a.estimate_id && !estStatus) pillStatus = 'AWAITING SIGN'
+          const et = a.appointment_end_time || ''
+          const [eh, em] = et ? et.split(':').map(Number) : [0, 0]
+          const eAmpm = eh >= 12 ? 'PM' : 'AM'
+          const eh12 = eh % 12 || 12
           return {
             id: a.id,
             time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--',
+            endTime: et ? `${eh12}:${String(em).padStart(2,'0')} ${eAmpm}` : '',
             client: a.client_name || 'Client',
             address: a.client_address || '',
             phone: a.client_phone || '',
@@ -605,7 +610,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', display: 'inline-block', textTransform: 'uppercase', marginBottom: 8 }}>NEXT</span>
-                    <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums', letterSpacing: '-1.5px' }}>{nextAppt.time}</div>
+                    <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums', letterSpacing: '-1.5px' }}>
+                      {nextAppt.time}{nextAppt.endTime ? <span style={{ fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.5px' }}> – {nextAppt.endTime}</span> : null}
+                    </div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: nextAppt.address ? 8 : 0 }}>{nextAppt.client}</div>
                     {nextAppt.address && (
                       <a href={`https://maps.apple.com/?q=${encodeURIComponent(nextAppt.address)}`} target="_blank" rel="noreferrer"
@@ -652,7 +659,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 const isDone = appt.pillStatus === 'DONE'
                 return (
                   <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.08)', opacity: isDone ? 0.5 : 1 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>{appt.time}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>{appt.time}{appt.endTime ? ` – ${appt.endTime}` : ''}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>·</span>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</span>
                   </div>
@@ -719,7 +726,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             {appointments.map(appt => (
               <div key={appt.id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}{appt.endTime ? <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}> – {appt.endTime}</span> : null}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,.55)', fontWeight: 500, marginTop: 4 }}>{appt.duration}</div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>

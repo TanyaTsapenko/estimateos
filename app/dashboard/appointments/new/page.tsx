@@ -49,6 +49,7 @@ export default function NewAppointmentPage() {
     postal_code:     searchParams.get('prefill_postal')   || '',
     appointment_date: today,
     appointment_time: '09:00',
+    appointment_end_time: '',
     lead_source: 'Phone call',
     notes: '',
     assigned_to: '',
@@ -176,6 +177,7 @@ export default function NewAppointmentPage() {
       postal_code: form.postal_code.trim() || null,
       appointment_date: form.appointment_date,
       appointment_time: form.appointment_time || null,
+      appointment_end_time: form.appointment_end_time || null,
       lead_source: form.lead_source || null,
       notes: form.notes.trim() || null,
       assigned_to: form.assigned_to.trim() || null,
@@ -311,7 +313,7 @@ export default function NewAppointmentPage() {
 
         <div className="sl">When</div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 8 }}>
           <div className="f">
             <label>Date</label>
             <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
@@ -323,6 +325,14 @@ export default function NewAppointmentPage() {
               value={form.appointment_time}
               date={form.appointment_date}
               onChange={v => set('appointment_time', v)}
+            />
+          </div>
+          <div className="f">
+            <label>Until (optional)</label>
+            <TimePickerDropdown
+              value={form.appointment_end_time}
+              date={form.appointment_date}
+              onChange={v => set('appointment_end_time', v)}
             />
           </div>
         </div>

@@ -51,6 +51,7 @@ interface TimelineAppt {
   id: string
   name: string
   rawTime: string | null
+  endTime: string | null
   hour: number
   phone: string
   address: string
@@ -176,6 +177,7 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate }: {
   onNavigate: (path: string) => void
 }) {
   const { time, ampm } = fmtTimeParts(appt.rawTime)
+  const endFmt = appt.endTime ? fmt12h(appt.endTime) : null
   const dotColor = appt.status === 'completed' ? '#16A34A' : '#2563EB'
 
   return (
@@ -183,10 +185,17 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate }: {
       {/* Time col */}
       <div style={{ width: 52, flexShrink: 0, paddingTop: 13, paddingRight: 8, textAlign: 'right' }}>
         {appt.rawTime ? (
-          <>
-            <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.15 }}>{time}</div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#B3BAC6', marginTop: 1 }}>{ampm}</div>
-          </>
+          endFmt ? (
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.4 }}>
+              {time}<span style={{ fontSize: 9, color: '#B3BAC6' }}>{ampm}</span>
+              <div style={{ fontSize: 9, fontWeight: 600, color: '#8A94A6', lineHeight: 1.2 }}>– {endFmt}</div>
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.15 }}>{time}</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#B3BAC6', marginTop: 1 }}>{ampm}</div>
+            </>
+          )
         ) : (
           <div style={{ fontSize: 11, fontWeight: 700, color: '#B3BAC6' }}>—</div>
         )}
@@ -820,7 +829,7 @@ export default function AppointmentsPage() {
 
       const { data: rows } = await supabase
         .from('appointments')
-        .select('id, client_name, client_phone, client_address, appointment_time, status, estimate_id, notes')
+        .select('id, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
         .eq('user_id', userId)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
@@ -840,6 +849,7 @@ export default function AppointmentsPage() {
           id: a.id,
           name: a.client_name,
           rawTime: a.appointment_time ?? null,
+          endTime: (a as any).appointment_end_time || null,
           hour: toHour(a.appointment_time),
           phone: a.client_phone || '',
           address: a.client_address || '',
