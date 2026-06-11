@@ -903,9 +903,17 @@ function NewEstimateForm() {
       subtotal_good:   gbbGood   !== null ? Math.round(gbbGood   * 100) / 100 : null,
       subtotal_better: gbbBetter !== null ? Math.round(gbbBetter * 100) / 100 : null,
       subtotal_best:   gbbBest   !== null ? Math.round(gbbBest   * 100) / 100 : null,
-      total_good:      gbbGood   !== null ? Math.round(gbbGood   * (1 + taxRate) * 100) / 100 : null,
-      total_better:    gbbBetter !== null ? Math.round(gbbBetter * (1 + taxRate) * 100) / 100 : null,
-      total_best:      gbbBest   !== null ? Math.round(gbbBest   * (1 + taxRate) * 100) / 100 : null,
+      ...(() => {
+        const dv = parseFloat(discountValue) || 0
+        const discountGood   = discountType === 'percent' ? (gbbGood   || 0) * (dv / 100) : Math.min(dv, gbbGood   || 0)
+        const discountBetter = discountType === 'percent' ? (gbbBetter || 0) * (dv / 100) : Math.min(dv, gbbBetter || 0)
+        const discountBest   = discountType === 'percent' ? (gbbBest   || 0) * (dv / 100) : Math.min(dv, gbbBest   || 0)
+        return {
+          total_good:   gbbGood   !== null ? Math.round(Math.max(0, gbbGood   - discountGood)   * (1 + taxRate) * 100) / 100 : null,
+          total_better: gbbBetter !== null ? Math.round(Math.max(0, gbbBetter - discountBetter) * (1 + taxRate) * 100) / 100 : null,
+          total_best:   gbbBest   !== null ? Math.round(Math.max(0, gbbBest   - discountBest)   * (1 + taxRate) * 100) / 100 : null,
+        }
+      })(),
     }
 
     let savedId: string
