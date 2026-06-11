@@ -138,7 +138,23 @@ function calcTierTotal(ops: Opening[], tierKey: 'good' | 'better' | 'best', cust
       const unit = t.pricing_type === 'per_sqft'
         ? t.price * ((op.width_in || 0) / 12) * ((op.height_in || 0) / 12)
         : t.price
-      return sum + unit * op.qty
+      const s = customPrices?.surcharges || {}
+      const shapeMult = op.shape === 'arch' ? 1 + (s.arch_pct || 0) / 100
+        : op.shape === 'custom' ? 1 + (s.custom_shape_pct || 0) / 100 : 1.0
+      const colourAdd = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey || 0)
+        : op.colour === 'custom' ? (s.custom_colour || 0) : 0
+      const glassAdd = op.glass === 'lowe' ? (s.lowe || 0)
+        : op.glass === 'frosted' ? (s.frosted || 0)
+        : op.glass === 'tinted' ? (s.tinted || 0)
+        : op.glass === 'tempered' ? (s.tempered || 0) : 0
+      const installAdd = op.install === 'fullframe' ? (s.fullframe || 0)
+        : op.install === 'stud_to_stud' ? (s.stud_to_stud || 0) : 0
+      const floorAdd = op.floor === 'second' ? (s.second_floor || 0)
+        : op.floor === 'third' ? (s.third_floor || 0) : 0
+      const frameAdd = op.frame === 'repair' ? (s.frame_repair || 0)
+        : op.frame === 'rotted' ? (s.frame_rotted || 0) : 0
+      const unitWithSurcharges = unit * shapeMult + colourAdd + glassAdd + installAdd + floorAdd + frameAdd
+      return sum + unitWithSurcharges * op.qty
     }
     return sum + opCost(op, 1.0, customPrices)
   }, 0)
