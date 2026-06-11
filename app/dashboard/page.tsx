@@ -202,7 +202,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
-        supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(5),
@@ -235,7 +235,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         pipelineCount: `${openEstimates.length} est.`,
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
-        signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); return (estSigned || []).filter((e: any) => !pendingEstimateIdsForMetrics.has(e.id)).length })(),
+        signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); return (estSigned || []).filter((e: any) => ['signed','accepted'].includes(e.status) && !pendingEstimateIdsForMetrics.has(e.id)).length })(),
         sparklines: {
           revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8),
           pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6),
@@ -245,10 +245,13 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
 
       const attItems: AttentionItem[] = []
       const pendingEstimateIds = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id))
-      // Signed/accepted estimates with no invoice yet
+      const finalEstimateIdSet = new Set((finalPendingInvoices || []).map((inv: any) => inv.estimate_id))
+      // Signed/accepted estimates ready for final invoice (no pending final invoice yet)
       if (estSigned?.length) {
         estSigned.forEach((e: any) => {
+          if (e.status === 'paid') return
           if (pendingEstimateIds.has(e.id)) return // deposit still pending, skip
+          if (finalEstimateIdSet.has(e.id)) return // final invoice already exists
           attItems.push({
             icon: CheckIcon, color: '#059669',
             title: e.client_name,
