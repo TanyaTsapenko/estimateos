@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2 } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 
 interface Appointment {
@@ -23,7 +23,8 @@ interface AttentionItem {
   invoiceType?: 'deposit' | 'final'; estimateId?: string
 }
 interface ActivityItem {
-  dot: string; actor: string; verb: string; item: string; clientName: string; time: string; estimateId: string
+  event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
+  entity_id: string; entity_number: string; client_name: string; amount: number | null; time: string
 }
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -99,6 +100,21 @@ function getTodayStr() {
   return new Intl.DateTimeFormat('en-CA', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 }
 
+const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color: string; label: string }> = {
+  estimate_sent:        { icon: SendIcon,    bg: '#EFF6FF', color: '#2563EB', label: 'sent estimate' },
+  contract_signed:      { icon: FileCheck,   bg: '#ECFDF5', color: '#059669', label: 'signed contract' },
+  deposit_invoice_sent: { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent deposit invoice' },
+  deposit_paid:         { icon: DollarSign,  bg: '#ECFDF5', color: '#059669', label: 'paid deposit' },
+  final_paid:           { icon: CheckCircle, bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
+}
+
+function fmtAmt(n: number) {
+  return `CA$${n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
+const PAYMENT_EVENTS  = new Set(['deposit_paid', 'final_paid'])
+
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
   const [companyName, setCompanyName] = useState('')
@@ -108,6 +124,7 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [showAllAttention, setShowAllAttention] = useState(false)
   const [showAllActivity, setShowAllActivity] = useState(false)
+  const [activityFilter, setActivityFilter] = useState<'all' | 'estimates' | 'payments'>('all')
   const [isMobile, setIsMobile] = useState(false)
 const [pricingMode, setPricingMode] = useState<string | null>(null)
   const [dashToast, setDashToast] = useState('')
@@ -183,13 +200,14 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(5),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
+        supabase.from('activity_log').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
       ])
       const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
@@ -281,12 +299,19 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       })
       setAttention(attItems)
 
-      if (estAll) {
+      {
         const now = Date.now()
-        const actTimeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
-        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8'}
-        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created'}
-        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: e.status==='signed'?(e.client_name||'Client'):'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', clientName: e.client_name||'', time: actTimeAgo(e.updated_at), estimateId: e.id })))
+        const actTimeAgo = (iso: string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
+        setActivity((activityLog || []).map((e: any) => ({
+          event_type: e.event_type,
+          actor_type: e.actor_type,
+          actor_name: e.actor_name || (e.actor_type === 'contractor' ? 'You' : 'Client'),
+          entity_id: e.entity_id || '',
+          entity_number: e.entity_number || '',
+          client_name: e.client_name || '',
+          amount: e.amount ?? null,
+          time: actTimeAgo(e.created_at),
+        })))
       }
   }, [])
 
@@ -754,32 +779,52 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Live Feed</div>
               <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>Recent activity</div>
               <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
-                {activity.length === 0 ? (
-                  <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                    No activity yet. Send your first estimate to get started.
-                  </div>
-                ) : activity.slice(0, showAllActivity ? activity.length : 5).map((item, i, arr) => (
-                  <div key={i} style={{ padding: '11px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
-                    onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}>
-                    <div style={{ width: 7, height: 7, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
-                    <div style={{ flex: 1, fontSize: 13, color: '#475569' }}>
-                      <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
-                      {' '}{item.verb}{' '}
-                      <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
-                      {item.clientName && item.actor !== item.clientName && <span style={{ color: '#94A3B8' }}> · {item.clientName}</span>}
-                    </div>
-                    <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                    <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
-                  </div>
-                ))}
-                {activity.length > 5 && (
-                  <div style={{ padding: '8px 12px 12px' }}>
-                    <button onClick={() => setShowAllActivity(v => !v)}
-                      style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                      {showAllActivity ? 'Show less' : `Show all (${activity.length})`}
+                {/* Filter tabs */}
+                <div style={{ display: 'flex', gap: 4, padding: '12px 16px 0' }}>
+                  {(['all', 'estimates', 'payments'] as const).map(tab => (
+                    <button key={tab} onClick={() => setActivityFilter(tab)} style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', background: activityFilter === tab ? '#2045B8' : '#F1F5F9', color: activityFilter === tab ? '#fff' : '#64748B' }}>
+                      {tab === 'all' ? 'All' : tab === 'estimates' ? 'Estimates' : 'Payments'}
                     </button>
-                  </div>
-                )}
+                  ))}
+                </div>
+                {(() => {
+                  const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
+                  if (filtered.length === 0) return (
+                    <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13, marginTop: 8 }}>
+                      No activity yet. Send your first estimate to get started.
+                    </div>
+                  )
+                  return (<>
+                    <div style={{ marginTop: 8 }}>
+                      {filtered.slice(0, showAllActivity ? filtered.length : 5).map((item, i, arr) => {
+                        const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                        const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
+                        const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                        return (
+                          <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
+                            onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
+                              {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                            <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    {filtered.length > 5 && (
+                      <div style={{ padding: '8px 12px 12px' }}>
+                        <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          {showAllActivity ? 'Show less' : `Show all (${filtered.length})`}
+                        </button>
+                      </div>
+                    )}
+                  </>)
+                })()}
               </div>
             </section>
 
@@ -847,34 +892,54 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Live Feed</div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Recent activity</div>
               </div>
-              {activity.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                  No activity yet. Send your first estimate to get started.
-                </div>
-              ) : activity.slice(0, showAllActivity ? activity.length : 5).map((item, i, arr) => (
-                <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
-                  onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}
-                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
-                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-                  <div style={{ width: 7, height: 7, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
-                  <div style={{ flex: 1, fontSize: 12, color: '#475569' }}>
-                    <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
-                    {' '}{item.verb}{' '}
-                    <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
-                    {item.clientName && item.actor !== item.clientName && <span style={{ color: '#94A3B8' }}> · {item.clientName}</span>}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                  <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
-                </div>
-              ))}
-              {activity.length > 5 && (
-                <div style={{ padding: '8px 12px 12px' }}>
-                  <button onClick={() => setShowAllActivity(v => !v)}
-                    style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {showAllActivity ? 'Show less' : `Show all (${activity.length})`}
+              {/* Filter tabs */}
+              <div style={{ display: 'flex', gap: 4, padding: '10px 16px 0' }}>
+                {(['all', 'estimates', 'payments'] as const).map(tab => (
+                  <button key={tab} onClick={() => setActivityFilter(tab)} style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', background: activityFilter === tab ? '#2045B8' : '#F1F5F9', color: activityFilter === tab ? '#fff' : '#64748B' }}>
+                    {tab === 'all' ? 'All' : tab === 'estimates' ? 'Estimates' : 'Payments'}
                   </button>
-                </div>
-              )}
+                ))}
+              </div>
+              {(() => {
+                const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
+                if (filtered.length === 0) return (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13, marginTop: 8 }}>
+                    No activity yet. Send your first estimate to get started.
+                  </div>
+                )
+                return (<>
+                  <div style={{ marginTop: 8 }}>
+                    {filtered.slice(0, showAllActivity ? filtered.length : 5).map((item, i, arr) => {
+                      const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                      const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
+                      const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                      return (
+                        <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
+                          onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}
+                          onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
+                          onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+                          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
+                            {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                          <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {filtered.length > 5 && (
+                    <div style={{ padding: '8px 12px 12px' }}>
+                      <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {showAllActivity ? 'Show less' : `Show all (${filtered.length})`}
+                      </button>
+                    </div>
+                  )}
+                </>)
+              })()}
             </div>
 
 

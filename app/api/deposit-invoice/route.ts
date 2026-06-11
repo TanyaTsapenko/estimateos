@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { logActivity } from '@/lib/activity'
 import { createClient } from '@/lib/supabase/server'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
 
@@ -69,6 +70,17 @@ export async function POST(request: NextRequest) {
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
 
   await admin.from('estimates').update({ invoice_id: invoice.id }).eq('id', estimateId)
+
+  logActivity(admin, {
+    user_id: est.user_id,
+    event_type: 'deposit_invoice_sent',
+    actor_type: 'contractor',
+    entity_type: 'estimate',
+    entity_id: estimateId,
+    entity_number: est.estimate_number,
+    client_name: est.client_name,
+    amount: depositAmount,
+  }).catch((e: any) => console.error('[deposit-invoice] logActivity error:', e))
 
   if (est.client_email) {
     const { data: con } = await admin.from('contracts').select('id').eq('estimate_id', estimateId).order('created_at', { ascending: false }).limit(1).maybeSingle()

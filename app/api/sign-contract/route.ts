@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { logActivity } from '@/lib/activity'
 
 export async function POST(request: NextRequest) {
   const { contractId, signatureBase64, clientName } = await request.json()
@@ -49,6 +50,24 @@ export async function POST(request: NextRequest) {
     body: `${clientName || 'Client'} signed the contract`,
     link: `/dashboard/estimates/${contract.estimate_id}`,
   })
+
+  try {
+    const { data: estForLog } = await supabase.from('estimates')
+      .select('estimate_number, total, client_name').eq('id', contract.estimate_id).single()
+    await logActivity(supabase, {
+      user_id: contract.profile_id,
+      event_type: 'contract_signed',
+      actor_type: 'client',
+      actor_name: clientName || estForLog?.client_name || 'Client',
+      entity_type: 'estimate',
+      entity_id: contract.estimate_id,
+      entity_number: estForLog?.estimate_number,
+      client_name: clientName || estForLog?.client_name,
+      amount: estForLog?.total,
+    })
+  } catch (logErr) {
+    console.error('[sign-contract] logActivity error:', logErr)
+  }
 
   return NextResponse.json({ success: true, signatureUrl })
 }

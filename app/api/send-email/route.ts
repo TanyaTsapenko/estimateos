@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createServiceClient } from '@/lib/supabase/service'
+import { logActivity } from '@/lib/activity'
 import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import { emailRateLimit } from '@/lib/rateLimit'
 import { isValidEmail } from '@/lib/validation'
@@ -606,6 +607,17 @@ ${hdrBlock('Payment complete for', est.client_name || 'Client',
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     console.log('RESEND SUCCESS:', data?.id, '→ to:', est.client_email)
+    try {
+      if (type === 'send') {
+        await logActivity(supabase, { user_id: est.user_id, event_type: 'estimate_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: est.total })
+      } else if (type === 'deposit_receipt' && invoice) {
+        await logActivity(supabase, { user_id: est.user_id, event_type: 'deposit_paid', actor_type: 'client', actor_name: est.client_name, entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: invoice.amount })
+      } else if (type === 'final_receipt' && invoice) {
+        await logActivity(supabase, { user_id: est.user_id, event_type: 'final_paid', actor_type: 'client', actor_name: est.client_name, entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: invoice.amount })
+      }
+    } catch (logErr) {
+      console.error('[send-email] logActivity error:', logErr)
+    }
     return NextResponse.json({ success: true, id: data?.id, sentTo: est.client_email, subject })
   } catch (e: any) {
     console.error('RESEND EXCEPTION:', e.message)
