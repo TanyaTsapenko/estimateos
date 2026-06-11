@@ -347,6 +347,20 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
       }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (!user) return
+        fetch('/api/log-activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            event_type: invoiceType === 'final' ? 'final_paid' : 'deposit_paid',
+            actor_type: 'client',
+            entity_type: 'estimate',
+            entity_id: estimateId || invoiceId,
+          }),
+        })
+      }).catch(() => {})
       const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {
         const res = await fetch('/api/send-email', {
