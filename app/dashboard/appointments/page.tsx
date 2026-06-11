@@ -57,6 +57,7 @@ interface TimelineAppt {
   status: 'upcoming' | 'completed'
   estimateId: string | null
   estTotal: string | null
+  notes: string | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -308,6 +309,14 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate }: {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, fontSize: 12.5, color: '#8A94A6' }}>
                   <Phone size={13} strokeWidth={1.7} />
                   {fmtPhone(appt.phone)}
+                </div>
+              )}
+
+              {/* Notes */}
+              {appt.notes && (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#B3BAC6', marginBottom: 3 }}>Notes</div>
+                  <div style={{ fontSize: 12.5, color: '#475467', lineHeight: 1.55 }}>{appt.notes}</div>
                 </div>
               )}
 
@@ -811,7 +820,7 @@ export default function AppointmentsPage() {
 
       const { data: rows } = await supabase
         .from('appointments')
-        .select('id, client_name, client_phone, client_address, appointment_time, status, estimate_id')
+        .select('id, client_name, client_phone, client_address, appointment_time, status, estimate_id, notes')
         .eq('user_id', userId)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
@@ -837,6 +846,7 @@ export default function AppointmentsPage() {
           status: (isPast || a.status === 'completed') ? 'completed' : 'upcoming',
           estimateId: a.estimate_id || null,
           estTotal: total !== null ? `CA$${total.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null,
+          notes: a.notes || null,
         }
       })
 
