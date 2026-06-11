@@ -203,8 +203,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
-        supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
-        supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
+        supabase.from('estimates').select('total').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
+        supabase.from('estimates').select('total').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
         supabase.from('activity_log').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
