@@ -648,9 +648,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           {/* Action buttons */}
           <div style={{ padding: '16px 16px 0', display: 'flex', gap: 8, position: 'relative', zIndex: 1 }}>
             {signaturesNeeded > 0 && (
-              <button onClick={() => router.push('/dashboard/estimates')}
+              <button onClick={() => router.push('/dashboard/estimates?status=signed')}
                 style={{ flex: 1, padding: '10px 14px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.35)', background: 'transparent', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-                {signaturesNeeded} signature{signaturesNeeded !== 1 ? 's' : ''} pending
+                {signaturesNeeded} ready to invoice
               </button>
             )}
             <button onClick={() => router.push('/dashboard/appointments')}
