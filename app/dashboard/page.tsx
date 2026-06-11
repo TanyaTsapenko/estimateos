@@ -200,7 +200,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const thisMonthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }] = await Promise.all([
+      const todayUTC = new Date().toISOString().slice(0, 10)
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
@@ -208,6 +209,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
         supabase.from('activity_log').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,status').eq('user_id', sanitizedId).in('status', ['draft', 'sent']),
+        supabase.from('estimates').select('id,total,status').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('updated_at', todayUTC + 'T00:00:00.000Z'),
       ])
       const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
@@ -221,11 +224,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const revenueThis = (estThisMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueLast = (estLastMonth||[]).reduce((s:number,e:any)=>s+(e.total||0),0)
       const revenueDelta = revenueLast > 0 ? ((revenueThis-revenueLast)/revenueLast*100).toFixed(0) : null
-      const openEstimates = (estAll||[]).filter((e:any)=>['draft','sent'].includes(e.status))
+      const openEstimates = estPipeline || []
       const pipelineTotal = openEstimates.reduce((s:number,e:any)=>s+(e.total||0),0)
-      const signedToday = (estAll||[]).filter((e:any)=>e.status==='signed'&&e.updated_at>=today+'T00:00:00')
-      const signedTodayCount = signedToday.length
-      const signedTodayTotal = signedToday.reduce((s:number,e:any)=>s+(e.total||0),0)
+      const signedTodayCount = (estSignedToday || []).length
+      const signedTodayTotal = (estSignedToday || []).reduce((s:number,e:any)=>s+(e.total||0),0)
       const fmt = (n:number) => n===0?'CA$0':n>=1000?`CA$${(n/1000).toFixed(1)}k`:`CA$${n.toFixed(0)}`
       setMetrics({
         revenueThisMonth: fmt(revenueThis),
@@ -239,7 +241,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         sparklines: {
           revenue: (estThisMonth||[]).map((e:any)=>e.total||0).slice(-8),
           pipeline: openEstimates.map((e:any)=>e.total||0).slice(-6),
-          signed: (estAll||[]).filter((e:any)=>e.status==='signed').map((e:any)=>e.total||0).slice(-6),
+          signed: (estSignedToday||[]).map((e:any)=>e.total||0).slice(-6),
         },
       })
 
