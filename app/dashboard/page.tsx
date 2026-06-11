@@ -47,15 +47,17 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   )
 }
 
-function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData, empty }: {
+function KpiCard({ label, period, value, delta, deltaUp, accent, Icon, sparkData, empty, onClick }: {
   label: string; period: string; value: string; delta: string
   deltaUp?: boolean | null; accent: string; Icon: React.ElementType
-  sparkData: number[]; empty?: boolean
+  sparkData: number[]; empty?: boolean; onClick?: () => void
 }) {
   const deltaColor = deltaUp === true ? '#0F8A6B' : deltaUp === false ? '#DC2626' : '#64748B'
   const deltaPrefix = deltaUp === true ? '↑ ' : deltaUp === false ? '↓ ' : ''
   return (
-    <div className="db-kpi-card" style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', flex: 1, overflow: 'hidden', minWidth: 150 }}>
+    <div className="db-kpi-card" onClick={onClick} style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', flex: 1, overflow: 'hidden', minWidth: 150, cursor: onClick ? 'pointer' : undefined, transition: 'box-shadow 0.15s' }}
+      onMouseEnter={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 1.5px rgba(10,22,40,0.14), 0 2px 8px rgba(10,22,40,0.07)' }}
+      onMouseLeave={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.boxShadow = '0 0 0 1px rgba(10,22,40,0.06)' }}>
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
           width: 32, height: 32, borderRadius: 9, flexShrink: 0,
@@ -729,16 +731,19 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             label="REVENUE" period="This month"
             value={metrics?.revenueThisMonth ?? ''} delta={metrics?.revenueDelta ?? ''} deltaUp={metrics?.revenueUp ?? null}
             accent="#2045B8" Icon={CreditCard} sparkData={metrics?.sparklines.revenue ?? []} empty={!metrics}
+            onClick={() => router.push('/dashboard/estimates?status=paid')}
           />
           <KpiCard
-            label="IN PIPELINE" period="Open visits"
+            label="IN PIPELINE" period="Open estimates"
             value={metrics?.pipelineTotal ?? ''} delta={metrics?.pipelineCount ?? ''} deltaUp={null}
             accent="#7C3AED" Icon={SendIcon} sparkData={metrics?.sparklines.pipeline ?? []} empty={!metrics}
+            onClick={() => router.push('/dashboard/estimates?status=draft,sent')}
           />
           <KpiCard
-            label="SIGNED TODAY" period="From visits"
+            label="SIGNED TODAY" period="This month"
             value={metrics?.signedTodayTotal ?? ''} delta={`${metrics?.signedTodayCount ?? 0} today`} deltaUp={metrics ? (metrics.signedTodayCount > 0 ? true : null) : null}
             accent="#0F8A6B" Icon={CheckIcon} sparkData={metrics?.sparklines.signed ?? []} empty={!metrics}
+            onClick={() => router.push('/dashboard/estimates?status=signed')}
           />
         </div>
         )}
