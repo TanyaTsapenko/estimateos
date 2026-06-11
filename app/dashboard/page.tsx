@@ -23,7 +23,7 @@ interface AttentionItem {
   invoiceType?: 'deposit' | 'final'; estimateId?: string
 }
 interface ActivityItem {
-  dot: string; actor: string; verb: string; item: string; time: string; estimateId: string
+  dot: string; actor: string; verb: string; item: string; clientName: string; time: string; estimateId: string
 }
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -107,6 +107,7 @@ export default function DashboardPage() {
   const [attention, setAttention] = useState<AttentionItem[]>([])
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [showAllAttention, setShowAllAttention] = useState(false)
+  const [showAllActivity, setShowAllActivity] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 const [pricingMode, setPricingMode] = useState<string | null>(null)
   const [dashToast, setDashToast] = useState('')
@@ -183,7 +184,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,invoice_id').eq('user_id', sanitizedId).in('status', ['signed', 'accepted']).is('invoice_id', null).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').eq('user_id', sanitizedId).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
@@ -283,9 +284,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       if (estAll) {
         const now = Date.now()
         const actTimeAgo = (iso:string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
-        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8',invoiced:'#7C3AED',paid:'#059669'}
-        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created',invoiced:'invoiced',paid:'paid'}
-        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).slice(0,5).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: 'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', time: actTimeAgo(e.updated_at), estimateId: e.id })))
+        const dotMap:Record<string,string> = {signed:'#0F8A6B',sent:'#2563EB',draft:'#94A3B8'}
+        const verbMap:Record<string,string> = {signed:'signed',sent:'sent',draft:'created'}
+        setActivity((estAll as any[]).sort((a,b)=>new Date(b.updated_at).getTime()-new Date(a.updated_at).getTime()).map((e:any)=>({ dot: dotMap[e.status]||'#94A3B8', actor: e.status==='signed'?(e.client_name||'Client'):'You', verb: verbMap[e.status]||'updated', item: e.estimate_number||'—', clientName: e.client_name||'', time: actTimeAgo(e.updated_at), estimateId: e.id })))
       }
   }, [])
 
@@ -757,19 +758,28 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                   <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
                     No activity yet. Send your first estimate to get started.
                   </div>
-                ) : activity.map((item, i) => (
-                  <div key={i} style={{ padding: '11px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < activity.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
+                ) : activity.slice(0, showAllActivity ? activity.length : 5).map((item, i, arr) => (
+                  <div key={i} style={{ padding: '11px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
                     onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}>
                     <div style={{ width: 7, height: 7, borderRadius: 999, background: item.dot, flexShrink: 0 }} />
                     <div style={{ flex: 1, fontSize: 13, color: '#475569' }}>
                       <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
                       {' '}{item.verb}{' '}
                       <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
+                      {item.clientName && item.actor !== item.clientName && <span style={{ color: '#94A3B8' }}> · {item.clientName}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
                     <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                   </div>
                 ))}
+                {activity.length > 5 && (
+                  <div style={{ padding: '8px 12px 12px' }}>
+                    <button onClick={() => setShowAllActivity(v => !v)}
+                      style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {showAllActivity ? 'Show less' : `Show all (${activity.length})`}
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -841,8 +851,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
                   No activity yet. Send your first estimate to get started.
                 </div>
-              ) : activity.map((item, i) => (
-                <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < activity.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
+              ) : activity.slice(0, showAllActivity ? activity.length : 5).map((item, i, arr) => (
+                <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
                   onClick={() => router.push(`/dashboard/estimates/${item.estimateId}`)}
                   onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
                   onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
@@ -851,11 +861,20 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                     <span style={{ fontWeight: 700, color: '#0A1628' }}>{item.actor}</span>
                     {' '}{item.verb}{' '}
                     <span style={{ fontFamily: 'ui-monospace, monospace', fontWeight: 600, color: '#2045B8' }}>{item.item}</span>
+                    {item.clientName && item.actor !== item.clientName && <span style={{ color: '#94A3B8' }}> · {item.clientName}</span>}
                   </div>
                   <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
                   <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                 </div>
               ))}
+              {activity.length > 5 && (
+                <div style={{ padding: '8px 12px 12px' }}>
+                  <button onClick={() => setShowAllActivity(v => !v)}
+                    style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {showAllActivity ? 'Show less' : `Show all (${activity.length})`}
+                  </button>
+                </div>
+              )}
             </div>
 
 
