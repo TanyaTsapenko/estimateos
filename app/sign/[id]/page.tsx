@@ -9,6 +9,8 @@ import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
   user_id: string; total: number; status: string; valid_until: string | null
+  has_tiers: boolean | null; tier: string | null
+  total_good: number | null; total_better: number | null; total_best: number | null
 }
 interface Profile { company_name: string | null; contract_terms: string | null }
 
@@ -132,6 +134,13 @@ export default function PublicSignPage() {
     setDeclined(true)
   }
 
+  function getTierTotal(est: Estimate): number {
+    if (!est.has_tiers) return est.total
+    if (est.tier === 'good') return est.total_good ?? est.total
+    if (est.tier === 'best') return est.total_best ?? est.total
+    return est.total_better ?? est.total
+  }
+
   const today = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
 
   if (!estimate) return (
@@ -180,7 +189,7 @@ export default function PublicSignPage() {
       <div style={{ padding: '22px 18px 32px', flex: 1 }}>
         <div style={{ background: '#fff', border: '1px solid #E8E8E8', borderRadius: 14, padding: 16, marginBottom: 20 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#2045B8', marginBottom: 4 }}>{estimate.estimate_number}</div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A0E1A', marginBottom: 8 }}>{fmtCAD(estimate.total)}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A0E1A', marginBottom: 8 }}>{fmtCAD(getTierTotal(estimate))}</div>
           <div style={{ fontSize: 13, color: '#8892b0', lineHeight: 1.55 }}>
             {estimate.client_email && 'A copy has been sent to your email. '}
             {profile?.company_name || 'Your contractor'} will be in touch shortly to confirm next steps.
@@ -241,7 +250,7 @@ export default function PublicSignPage() {
             <span style={{ fontSize: 12, color: '#94A3B8' }}>{today}</span>
           </div>
           <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 10 }}>
-            Total: <span style={{ color: '#2563EB' }}>{fmtCAD(estimate.total)}</span>
+            Total: <span style={{ color: '#2563EB' }}>{fmtCAD(getTierTotal(estimate))}</span>
           </div>
           {profile?.contract_terms && profile.contract_terms !== 'тут компанія щось напише' && (
             <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.75, whiteSpace: 'pre-wrap', maxHeight: 120, overflowY: 'auto', marginBottom: 10 }}>
@@ -249,9 +258,15 @@ export default function PublicSignPage() {
             </div>
           )}
           <div style={{ fontSize: 12, color: '#94A3B8', lineHeight: 1.6 }}>
-            By signing below, you agree to this estimate for {fmtCAD(estimate.total)} including all applicable taxes.
+            By signing below, you agree to this estimate for {fmtCAD(getTierTotal(estimate))} including all applicable taxes.
           </div>
         </div>
+
+        {estimate.has_tiers && !estimate.tier && (
+          <div style={{ background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#92400E', marginBottom: 16 }}>
+            Please select a pricing tier before signing. Contact {profile?.company_name || 'your contractor'} to confirm which option you&apos;d like.
+          </div>
+        )}
 
         {error && (
           <div style={{ background: 'rgba(220,38,38,.06)', border: '1px solid rgba(220,38,38,.2)', borderRadius: 10, padding: '10px 14px', fontSize: 12, color: '#DC2626', marginBottom: 16 }}>
@@ -324,8 +339,8 @@ export default function PublicSignPage() {
           <div>
             <button
               onClick={submitSignature}
-              disabled={saving || !hasSignature}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52, background: !hasSignature || saving ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s', marginBottom: 8 }}>
+              disabled={saving || !hasSignature || (!!estimate.has_tiers && !estimate.tier)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: 52, background: !hasSignature || saving || (!!estimate.has_tiers && !estimate.tier) ? '#CBD5E1' : '#2563EB', color: '#fff', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: !hasSignature || saving || (!!estimate.has_tiers && !estimate.tier) ? 'not-allowed' : 'pointer', fontFamily: 'inherit', transition: 'background .15s', marginBottom: 8 }}>
               {saving ? 'Saving…' : `I Agree — Sign ${estimate.estimate_number}`}
             </button>
             <button onClick={() => setShowDeclineConfirm(true)}
