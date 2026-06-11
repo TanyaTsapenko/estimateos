@@ -95,6 +95,9 @@ function apptPillStyle(status: string): React.CSSProperties {
   if (status === 'AWAITING SIGN') return {
     background: 'rgba(217,119,6,.3)', border: '1px solid rgba(217,119,6,.55)', color: '#FCD34D',
   }
+  if (status === 'SIGNED') return {
+    background: 'rgba(5,150,105,.3)', border: '1px solid rgba(5,150,105,.55)', color: '#6EE7B7',
+  }
   return { background: 'rgba(255,255,255,.15)', color: 'rgba(255,255,255,.8)' }
 }
 
@@ -175,7 +178,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id')
+        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,status,estimate_id,estimates(status)')
         .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
@@ -183,10 +186,13 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           const [h, m] = t.split(':').map(Number)
           const ampm = h >= 12 ? 'PM' : 'AM'
           const h12 = h % 12 || 12
+          const estStatus = (a.estimates as any)?.status || null
           let pillStatus = 'CONSULTATION'
           if (a.status === 'completed') pillStatus = 'DONE'
           else if (a.status === 'in_progress') pillStatus = 'IN PROGRESS'
-          else if (a.estimate_id) pillStatus = 'AWAITING SIGN'
+          else if (a.estimate_id && ['signed', 'invoiced', 'paid'].includes(estStatus)) pillStatus = 'SIGNED'
+          else if (a.estimate_id && ['draft', 'sent'].includes(estStatus)) pillStatus = 'AWAITING SIGN'
+          else if (a.estimate_id && !estStatus) pillStatus = 'AWAITING SIGN'
           return {
             id: a.id,
             time: t ? `${h12}:${String(m).padStart(2,'0')} ${ampm}` : '--',
