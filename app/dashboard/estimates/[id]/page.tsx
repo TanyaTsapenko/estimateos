@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock } from 'lucide-react'
+import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 import WindowDiagram from '@/components/WindowDiagram'
 
@@ -567,6 +567,16 @@ export default function EstimateDetailPage() {
               </div>
               )
             })()}
+
+            {/* Present to client */}
+            {!isSigned && !isInvoiced && !isDeclined && (
+              <button
+                onClick={() => window.open(`/estimate/${estimate.id}`, '_blank')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '14px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                <Tablet size={16} />
+                Present to client
+              </button>
+            )}
 
             {/* Step cards — only when not signed/invoiced */}
             {!isSigned && !isInvoiced && !isDeclined && (
