@@ -255,7 +255,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           attItems.push({
             icon: FileText, color: '#7C3AED',
             title: e.client_name,
-            desc: `Ready for final invoice · ${e.estimate_number}`,
+            desc: `Ready for final invoice · ${e.estimate_number}${typeof e.total === 'number' ? ` · ${fmtAmt(e.total)}` : ''}`,
             cta: 'Send final invoice', id: e.id, actionType: 'invoice', priority: 2,
           })
         })
@@ -297,7 +297,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         attItems.push({
           icon: SendIcon, color: '#2563EB',
           title: e.client_name,
-          desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, no reply`,
+          desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, no reply${typeof e.total === 'number' ? ` · ${fmtAmt(e.total)}` : ''}`,
           cta: 'Send reminder', id: e.id, actionType: 'reminder', priority: 4,
         })
       })
