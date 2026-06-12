@@ -75,8 +75,8 @@ export default function BellButton({ notifications, onMarkRead, onMarkAllRead, v
           position: 'absolute', top: 'calc(100% + 8px)', right: 0,
           width: 320, maxHeight: 420, overflowY: 'auto',
           background: '#fff', borderRadius: 14,
-          boxShadow: '0 8px 40px rgba(10,22,40,0.14), 0 0 0 1px rgba(10,22,40,0.06)',
-          zIndex: 200,
+          boxShadow: '0 8px 40px rgba(10,22,40,0.18), 0 0 0 1px rgba(10,22,40,0.08)',
+          zIndex: 9999,
         }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid #EEF0F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>Notifications</span>
