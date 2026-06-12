@@ -10,6 +10,7 @@ import { getTeamUserIds } from '@/lib/teamScope'
 interface Appointment {
   id: string; time: string; endTime: string; client: string; address: string; phone: string
   pillStatus: string; estimateId: string | null; duration: string
+  userId: string; repName: string
 }
 interface Metrics {
   revenueThisMonth: string; revenueDelta: string; revenueUp: boolean | null
@@ -145,6 +146,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
   const { role, permissions } = usePermissions()
   const isRestrictedRole = role === 'estimator' || role === 'admin'
   const [isOwnerOrManager, setIsOwnerOrManager] = useState(false)
+  const [repFilter, setRepFilter] = useState<string>('all')
+  const [repNames, setRepNames] = useState<Record<string, string>>({})
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -154,6 +157,15 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
     setIsOwnerOrManager(ownerOrManager)
+    const nameMap: Record<string, string> = {}
+    if (ownerOrManager && userIds.length > 1) {
+      const { data: teamProfs } = await supabase
+        .from('profiles').select('id, first_name, last_name, company_name').in('id', userIds)
+      for (const p of teamProfs || []) {
+        nameMap[p.id] = p.first_name || p.company_name || 'Rep'
+      }
+      setRepNames(nameMap)
+    }
     supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
       if (prof) {
         setPricingMode((prof as any).pricing_mode || 'single')
@@ -182,7 +194,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
-        .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates!appointments_estimate_id_fkey(status)')
+        .from('appointments').select('id,user_id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates!appointments_estimate_id_fkey(status)')
         .in('user_id', userIds).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
@@ -211,6 +223,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             pillStatus,
             estimateId: a.estimate_id || null,
             duration: a.duration_minutes ? `${a.duration_minutes}m` : '60m',
+            userId: a.user_id || '',
+            repName: nameMap[a.user_id] || '',
           }
         }))
       }
@@ -449,9 +463,15 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
   }
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
-  const doneCount          = appointments.filter(a => a.pillStatus === 'DONE').length
-  const allDone            = appointments.length > 0 && appointments.every(a => a.pillStatus === 'DONE')
-  const needFollowUpCount  = appointments.filter(a => a.pillStatus !== 'DONE').length
+  const isTeamView = isOwnerOrManager && Object.keys(repNames).length > 1
+  const filteredAppts = repFilter === 'all' ? appointments : appointments.filter(a => a.userId === repFilter)
+  const repPills = isTeamView
+    ? [{ id: 'all', name: `All (${appointments.length})` },
+       ...Object.entries(repNames).map(([id, name]) => ({ id, name: `${name} (${appointments.filter(a => a.userId === id).length})` }))]
+    : []
+  const doneCount          = filteredAppts.filter(a => a.pillStatus === 'DONE').length
+  const allDone            = filteredAppts.length > 0 && filteredAppts.every(a => a.pillStatus === 'DONE')
+  const needFollowUpCount  = filteredAppts.filter(a => a.pillStatus !== 'DONE').length
   const now = new Date()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
@@ -471,13 +491,13 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     if (apptMin !== null && apptMin < currentMinutes - 30) return 'IN PROGRESS'
     return appt.pillStatus
   }
-  const nextAppt = appointments.find(a => {
+  const nextAppt = filteredAppts.find(a => {
     if (a.pillStatus === 'DONE') return false
     const apptMin = parseApptMinutes(a.time)
     if (apptMin === null) return true
     return apptMin >= currentMinutes - 30
   }) ?? null
-  const otherAppts = appointments.filter(a => a.id !== nextAppt?.id)
+  const otherAppts = filteredAppts.filter(a => a.id !== nextAppt?.id)
 
   return (
     <div style={{
@@ -539,18 +559,31 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           {/* Day + done count */}
           <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
-              YOUR DAY · {todayStr.toUpperCase()}
+              {isTeamView ? 'TEAM DAY' : 'YOUR DAY'} · {todayStr.toUpperCase()}
             </div>
-            {appointments.length > 0 && (
+            {filteredAppts.length > 0 && (
               <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>
-                {doneCount}/{appointments.length} done
+                {doneCount}/{filteredAppts.length} done
               </div>
             )}
           </div>
+          {isTeamView && repPills.length > 0 && (
+            <div style={{ padding: '10px 16px 0', display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', position: 'relative', zIndex: 1 }}>
+              {repPills.map(p => (
+                <button key={p.id} onClick={() => setRepFilter(p.id)} style={{
+                  flexShrink: 0, padding: '4px 12px', borderRadius: 99,
+                  border: repFilter === p.id ? 'none' : '1px solid rgba(255,255,255,0.3)',
+                  background: repFilter === p.id ? '#fff' : 'rgba(255,255,255,0.1)',
+                  color: repFilter === p.id ? '#2045B8' : 'rgba(255,255,255,0.8)',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                }}>{p.name}</button>
+              ))}
+            </div>
+          )}
 
           {/* Next appointment card */}
           <div style={{ margin: '14px 16px 0', position: 'relative', zIndex: 1 }}>
-            {appointments.length === 0 ? (
+            {filteredAppts.length === 0 ? (
               (() => {
                 if (role === 'owner' && !checklistDismissed && checklistData) {
                   const clItems = [
@@ -615,7 +648,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', padding: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', display: 'inline-block', textTransform: 'uppercase', marginBottom: 8 }}>NEXT</span>
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', textTransform: 'uppercase' }}>NEXT</span>
+                      {isTeamView && nextAppt.repName && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.18)', borderRadius: 99, padding: '2px 8px' }}>{nextAppt.repName}</span>}
+                    </div>
                     <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums', letterSpacing: '-1.5px' }}>
                       {nextAppt.time}{nextAppt.endTime ? <span style={{ fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.5px' }}> – {nextAppt.endTime}</span> : null}
                     </div>
@@ -674,7 +710,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                   <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.08)', opacity: isDone ? 0.5 : 1 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>{appt.time}{appt.endTime ? ` – ${appt.endTime}` : ''}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>·</span>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.client}</span>
+                    {isTeamView && appt.repName && <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 7px' }}>{appt.repName}</span>}
                   </div>
                 )
               })}
@@ -704,10 +741,20 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           <div style={{ position: 'absolute', width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.4) 0%, transparent 70%)', top: -180, right: -120, pointerEvents: 'none' }} />
           <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start', position: 'relative', zIndex: 1 }}>
             <div style={{ flex: 1 }}>
-              <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
-                YOUR DAY · {todayStr.toUpperCase()}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
+                  {isTeamView ? 'TEAM DAY' : 'YOUR DAY'} · {todayStr.toUpperCase()}
+                </div>
+                {isTeamView && repPills.map(p => (
+                  <button key={p.id} onClick={() => setRepFilter(p.id)} style={{
+                    padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                    border: repFilter === p.id ? 'none' : '1px solid rgba(255,255,255,0.3)',
+                    background: repFilter === p.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.1)',
+                    color: repFilter === p.id ? '#2045B8' : 'rgba(255,255,255,0.75)',
+                  }}>{p.name}</button>
+                ))}
               </div>
-              {appointments.length === 0 ? (
+              {filteredAppts.length === 0 ? (
                 <>
                   <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
                     No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
@@ -720,7 +767,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 <>
                   <div style={{ marginTop: 6 }}>
                     <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', color: '#fff' }}>
-                      {appointments.length} visit{appointments.length !== 1 ? 's' : ''} today
+                      {filteredAppts.length} visit{filteredAppts.length !== 1 ? 's' : ''} today
                     </div>
                     {signaturesNeeded > 0 && (
                       <div style={{ fontSize: 16, fontWeight: 600, letterSpacing: '-0.3px', color: '#FCD34D', marginTop: 2 }}>
@@ -729,14 +776,14 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                     )}
                   </div>
                   <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.85, marginTop: 4 }}>
-                    {appointments.length} stop{appointments.length !== 1 ? 's' : ''} · first at {appointments[0].time}, last at {appointments[appointments.length - 1].time}.{signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
+                    {filteredAppts.length} stop{filteredAppts.length !== 1 ? 's' : ''} · first at {filteredAppts[0].time}, last at {filteredAppts[filteredAppts.length - 1].time}.{signaturesNeeded > 0 ? ` ${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : ''}
                   </div>
                 </>
               )}
             </div>
           </div>
           <div className="db-appt-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 18, position: 'relative', zIndex: 1 }}>
-            {appointments.map(appt => (
+            {filteredAppts.map(appt => (
               <div key={appt.id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 12, display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
                   <div style={{ fontSize: 18, fontWeight: 700 }}>{appt.time}{appt.endTime ? <span style={{ fontSize: 12, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}> – {appt.endTime}</span> : null}</div>
@@ -744,7 +791,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{appt.client}</div>
                 <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
-                <div style={{ display: 'inline-block', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', alignSelf: 'flex-start', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(effectivePill(appt)) }}>{effectivePill(appt)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(effectivePill(appt)) }}>{effectivePill(appt)}</div>
+                  {isTeamView && appt.repName && <div style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.8)' }}>{appt.repName}</div>}
+                </div>
                 <button
                   onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
                   style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
