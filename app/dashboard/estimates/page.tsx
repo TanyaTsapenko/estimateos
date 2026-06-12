@@ -17,7 +17,6 @@ const FILTERS = ['All', 'Draft', 'Sent', 'Signed', 'Invoiced', 'Paid']
 const SC: Record<string, { text: string; bg: string }> = {
   draft:    { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
   sent:     { text: '#2563EB', bg: 'rgba(37,99,235,.1)'   },
-  opened:   { text: '#7C3AED', bg: '#EDE9FE'               },
   signed:   { text: '#059669', bg: 'rgba(5,150,105,.1)'   },
   declined: { text: '#DC2626', bg: 'rgba(220,38,38,.1)'   },
   invoiced: { text: '#7C3AED', bg: 'rgba(124,58,237,.1)'  },
