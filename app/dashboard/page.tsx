@@ -550,7 +550,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
             </div>
           </div>
-          <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="light" />
+          <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="light" isMobile={false} />
           <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
             display: 'flex', alignItems: 'center', gap: 6, background: '#2045B8',
             color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
@@ -580,7 +580,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" />
+              <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />
               <button
                 onClick={() => router.push('/dashboard/settings')}
                 style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}

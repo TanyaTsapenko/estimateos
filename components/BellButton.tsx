@@ -31,9 +31,10 @@ interface BellButtonProps {
   onMarkRead: (id: string) => void
   onMarkAllRead: () => void
   variant?: 'light' | 'dark'
+  isMobile?: boolean
 }
 
-export default function BellButton({ notifications, onMarkRead, onMarkAllRead, variant = 'light' }: BellButtonProps) {
+export default function BellButton({ notifications, onMarkRead, onMarkAllRead, variant = 'light', isMobile = false }: BellButtonProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -70,8 +71,24 @@ export default function BellButton({ notifications, onMarkRead, onMarkAllRead, v
         )}
       </button>
 
+      {open && isMobile && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.3)', zIndex: 9998,
+          }}
+        />
+      )}
+
       {open && (
-        <div style={{
+        <div style={isMobile ? {
+          position: 'fixed', top: 70, left: 16, right: 16,
+          maxHeight: 420, overflowY: 'auto',
+          background: '#fff', borderRadius: 14,
+          boxShadow: '0 8px 40px rgba(10,22,40,0.18), 0 0 0 1px rgba(10,22,40,0.08)',
+          zIndex: 9999,
+        } : {
           position: 'absolute', top: 'calc(100% + 8px)', right: 0,
           width: 320, maxHeight: 420, overflowY: 'auto',
           background: '#fff', borderRadius: 14,
