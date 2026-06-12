@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
+import { usePermissions } from '@/lib/usePermissions'
 
 function Card({ children, padding = 22 }: { children: React.ReactNode; padding?: number }) {
   return (
@@ -48,6 +49,7 @@ const VALID_DAY_OPTIONS = [15, 30, 45, 60]
 export default function QuoteSettingsPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { role, loading: roleLoading } = usePermissions()
 
   const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [validDays, setValidDays] = useState(30)
@@ -94,6 +96,25 @@ export default function QuoteSettingsPage() {
     setInitialValidDays(validDays)
     flash('Saved')
   }
+
+  if (roleLoading) return null
+  if (role === 'estimator') return (
+    <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
+      <div className="page-hd" style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
+        <button onClick={() => router.push('/dashboard/settings')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0A1628', fontFamily: 'inherit' }}>
+          <ArrowLeft size={18} strokeWidth={2} color="#0A1628" />
+          <span style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>Quote Settings</span>
+        </button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center' }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Access restricted</div>
+        <div style={{ fontSize: 14, color: '#64748B', marginBottom: 24, maxWidth: 280, lineHeight: 1.6 }}>Quote Settings is managed by your account owner or manager.</div>
+        <button onClick={() => router.push('/dashboard/settings')} style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          Back to Settings
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
