@@ -155,7 +155,7 @@ function Toast({ text }: { text: string }) {
 const INIT = {
   companyName: '', phone: '', website: '', addressLine: '', city: '',
   province: 'AB', postal: '', licence: '', insurance: '', interacEmail: '',
-  gstHstNumber: '', companyContactEmail: '',
+  gstHstNumber: '', companyContactEmail: '', financingInfo: '', googleReviewLink: '',
   licenceIssuingProvince: '', licenceExpiry: '',
   insuranceProvider: '', insuranceExpiry: '',
   wsibNumber: '', signingRepName: '', signingRepTitle: '', warrantySummary: '',
@@ -184,7 +184,7 @@ export default function CompanySettingsPage() {
       setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email, gst_hst_number, company_contact_email, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email, gst_hst_number, company_contact_email, financing_info, google_review_link, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary')
         .eq('id', sanitizedId)
         .single()
       if (prof) {
@@ -201,6 +201,8 @@ export default function CompanySettingsPage() {
           interacEmail:          (prof as any).interac_email             || '',
           gstHstNumber:          (prof as any).gst_hst_number            || '',
           companyContactEmail:   (prof as any).company_contact_email     || '',
+          financingInfo:         (prof as any).financing_info            || '',
+          googleReviewLink:      (prof as any).google_review_link        || '',
           licenceIssuingProvince:(prof as any).licence_issuing_province  || '',
           licenceExpiry:         (prof as any).licence_expiry_date       || '',
           insuranceProvider:     (prof as any).insurance_provider        || '',
@@ -232,6 +234,8 @@ export default function CompanySettingsPage() {
       interac_email:            values.interacEmail           || null,
       gst_hst_number:           values.gstHstNumber           || null,
       company_contact_email:    values.companyContactEmail    || null,
+      financing_info:           values.financingInfo           || null,
+      google_review_link:       values.googleReviewLink        || null,
       licence_issuing_province: values.licenceIssuingProvince || null,
       licence_expiry_date:      values.licenceExpiry          || null,
       insurance_provider:       values.insuranceProvider      || null,
@@ -356,6 +360,8 @@ export default function CompanySettingsPage() {
           <SectionLabel>Tax &amp; Compliance</SectionLabel>
           <Field label="GST / HST Number" value={values.gstHstNumber} onChange={set('gstHstNumber')} hint="Shown on invoices" />
           <Field label="Company Contact Email" value={values.companyContactEmail} onChange={set('companyContactEmail')} type="email" placeholder="contact@yourcompany.ca" hint="Used as reply-to on emails sent to clients, and shown on PDFs" />
+          <TextArea label="Financing Info" value={values.financingInfo} onChange={set('financingInfo')} placeholder="e.g. Financing available — as low as $150/month, OAC" hint="Shown to clients on estimates as a financing option (e.g. 'Financing available — as low as $150/month, OAC')" />
+          <Field label="Google Review Link" value={values.googleReviewLink} onChange={set('googleReviewLink')} placeholder="https://g.page/r/..." hint="Link to your Google Business Profile review page — used for review request automation" />
         </Card>
 
         {/* Defaults */}
