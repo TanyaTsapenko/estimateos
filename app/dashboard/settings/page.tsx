@@ -262,6 +262,10 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
 
   async function saveProfile() {
     if (!userId || saving) return
+    if (values.phone && values.phone.replace(/\D/g, '').length < 10) {
+      flash('Please enter a valid phone number')
+      return
+    }
     setSaving(true)
 
     if (pendingAvatarFile) {
@@ -346,7 +350,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
             <Field label="Last name"  value={values.lastName}  onChange={v => setValues(s => ({ ...s, lastName: v }))}  required />
           </div>
           <Field label="Email" value={values.email} onChange={() => {}} type="email" required readOnly hint="Contact support to change your email" />
-          <Field label="Phone" value={values.phone} onChange={v => setValues(s => ({ ...s, phone: v }))} placeholder="+1 (555) 000-0000" />
+          <Field label="Phone" value={values.phone} onChange={v => { const filtered = v.replace(/[^0-9()\s\-+]/g, '').slice(0, 14); setValues(s => ({ ...s, phone: filtered })) }} placeholder="+1 (555) 000-0000" />
         </Card>
       </div>
 
