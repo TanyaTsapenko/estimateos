@@ -156,6 +156,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
+    console.log('Team userIds:', userIds, 'isOwnerOrManager:', ownerOrManager)
     setIsOwnerOrManager(ownerOrManager)
     const nameMap: Record<string, string> = {}
     if (ownerOrManager && userIds.length > 1) {
