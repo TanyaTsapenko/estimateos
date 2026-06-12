@@ -76,10 +76,10 @@ function SectionHeader({ kicker, title, subtitle, action }: { kicker?: string; t
   )
 }
 
-function Field({ label, value, onChange, type = 'text', placeholder, hint, error, required, prefix, suffix }: {
+function Field({ label, value, onChange, type = 'text', placeholder, hint, error, required, prefix, suffix, readOnly }: {
   label: string; value: string; onChange: (v: string) => void
   type?: string; placeholder?: string; hint?: string; error?: string
-  required?: boolean; prefix?: string; suffix?: string
+  required?: boolean; prefix?: string; suffix?: string; readOnly?: boolean
 }) {
   const [focused, setFocused] = useState(false)
   return (
@@ -91,8 +91,9 @@ function Field({ label, value, onChange, type = 'text', placeholder, hint, error
         {prefix && <span style={{ position: 'absolute', left: 13, fontSize: 14, color: '#64748B' }}>{prefix}</span>}
         <input
           type={type} value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={e => !readOnly && onChange(e.target.value)}
           placeholder={placeholder}
+          readOnly={readOnly}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={{
@@ -101,9 +102,10 @@ function Field({ label, value, onChange, type = 'text', placeholder, hint, error
             paddingRight: suffix ? 28 : 13,
             border: `1px solid ${error ? '#DC2626' : focused ? '#2563EB' : '#E2E5EA'}`,
             borderRadius: 10, fontSize: 14, fontFamily: 'inherit',
-            color: '#0A1628', background: '#fff', outline: 'none',
+            color: readOnly ? '#94A3B8' : '#0A1628', background: readOnly ? '#F8F9FC' : '#fff', outline: 'none',
             boxShadow: focused ? (error ? '0 0 0 3px rgba(220,38,38,0.12)' : '0 0 0 3px rgba(37,99,235,0.12)') : 'none',
             transition: 'border-color 0.15s, box-shadow 0.15s',
+            cursor: readOnly ? 'default' : undefined,
           }}
         />
         {suffix && <span style={{ position: 'absolute', right: 13, fontSize: 14, color: '#64748B' }}>{suffix}</span>}
@@ -263,7 +265,8 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
     setSaving(true)
 
     if (pendingAvatarFile) {
-      const path = `${userId}/avatar.jpg`
+      const ext = pendingAvatarFile.type === 'image/png' ? 'png' : pendingAvatarFile.type === 'image/webp' ? 'webp' : pendingAvatarFile.type === 'image/gif' ? 'gif' : 'jpg'
+      const path = `${userId}/avatar.${ext}`
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, pendingAvatarFile, { upsert: true, contentType: pendingAvatarFile.type })
       if (upErr) { flash('Avatar upload failed'); setSaving(false); return }
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
@@ -275,11 +278,13 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
       setPendingAvatarFile(null)
     }
 
-    await supabase.from('profiles').update({
+    const { error: profErr } = await supabase.from('profiles').update({
       first_name: values.firstName,
       last_name:  values.lastName,
       phone:      values.phone,
     }).eq('id', userId)
+
+    if (profErr) { flash('Failed to save profile'); setSaving(false); return }
 
     setInitial({ ...values })
     setSaving(false)
@@ -340,7 +345,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
             <Field label="First name" value={values.firstName} onChange={v => setValues(s => ({ ...s, firstName: v }))} required />
             <Field label="Last name"  value={values.lastName}  onChange={v => setValues(s => ({ ...s, lastName: v }))}  required />
           </div>
-          <Field label="Email" value={values.email} onChange={v => setValues(s => ({ ...s, email: v }))} type="email" required />
+          <Field label="Email" value={values.email} onChange={() => {}} type="email" required readOnly hint="Contact support to change your email" />
           <Field label="Phone" value={values.phone} onChange={v => setValues(s => ({ ...s, phone: v }))} placeholder="+1 (555) 000-0000" />
         </Card>
       </div>
