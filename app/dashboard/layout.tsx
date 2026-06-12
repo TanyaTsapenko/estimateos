@@ -10,10 +10,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('trade')
+    .select('trade, team_owner_id')
     .eq('id', user.id)
     .single()
-  if (!profile?.trade) redirect('/onboarding')
+  if (!profile?.trade && !profile?.team_owner_id) redirect('/onboarding')
 
   return (
     <div className="app-shell">
