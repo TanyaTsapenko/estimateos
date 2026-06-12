@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
   }
 
   logActivity(createServiceClient(), {
-    user_id: user.id,
+    user_id: est?.user_id || user.id,
     event_type: 'final_invoice_sent',
     actor_type: 'contractor',
     entity_type: 'invoice',
