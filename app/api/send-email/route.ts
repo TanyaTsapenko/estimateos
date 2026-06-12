@@ -610,10 +610,6 @@ ${hdrBlock('Payment complete for', est.client_name || 'Client',
     try {
       if (type === 'send') {
         await logActivity(supabase, { user_id: est.user_id, event_type: 'estimate_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: est.total })
-      } else if (type === 'deposit_receipt' && invoice) {
-        await logActivity(supabase, { user_id: est.user_id, event_type: 'deposit_paid', actor_type: 'client', actor_name: est.client_name, entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: invoice.amount })
-      } else if (type === 'final_receipt' && invoice) {
-        await logActivity(supabase, { user_id: est.user_id, event_type: 'final_paid', actor_type: 'client', actor_name: est.client_name, entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: invoice.amount })
       }
     } catch (logErr) {
       console.error('[send-email] logActivity error:', logErr)

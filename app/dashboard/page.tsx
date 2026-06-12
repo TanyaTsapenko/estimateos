@@ -23,6 +23,7 @@ interface AttentionItem {
   icon: React.ElementType; color: string; title: string; desc: string; cta: string
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
   invoiceType?: 'deposit' | 'final'; estimateId?: string; createdAt?: string; priority: number
+  amount?: number; entityNumber?: string
 }
 interface ActivityItem {
   event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
@@ -249,9 +250,10 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const allInvoiceEstimateIds = [...new Set([...depositEstimateIds, ...finalEstimateIds])]
       let clientNames: Record<string, string> = {}
+      let entityNumbers: Record<string, string> = {}
       if (allInvoiceEstimateIds.length) {
-        const { data: ests } = await supabase.from('estimates').select('id, client_name').in('id', allInvoiceEstimateIds)
-        ests?.forEach((e: any) => { clientNames[e.id] = e.client_name })
+        const { data: ests } = await supabase.from('estimates').select('id, client_name, estimate_number').in('id', allInvoiceEstimateIds)
+        ests?.forEach((e: any) => { clientNames[e.id] = e.client_name; entityNumbers[e.id] = e.estimate_number })
       }
       const estimateIds = depositEstimateIds
       const signedThisMonth = (estThisMonth||[]).filter((e:any)=>['signed','invoiced','paid'].includes(e.status))
@@ -309,6 +311,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             desc: `Deposit pending · ${inv.invoice_number}${amt ? ` · ${amt}` : ''}`,
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
             invoiceType: 'deposit' as const, createdAt: inv.created_at, priority: daysOld > 7 ? 0 : 3,
+            amount: inv.amount, entityNumber: entityNumbers[inv.estimate_id],
           })
         })
       }
@@ -323,6 +326,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             cta: 'Mark final as paid', id: inv.id, actionType: 'mark_paid',
             invoiceType: 'final' as const,
             estimateId: inv.estimate_id, priority: 1,
+            amount: inv.amount, entityNumber: entityNumbers[inv.estimate_id],
           })
         })
       }
@@ -391,6 +395,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
       loadAll()
+      const attItem = attention.find(i => i.id === invoiceId)
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (!user) return
         fetch('/api/log-activity', {
@@ -402,6 +407,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
             actor_type: 'client',
             entity_type: 'estimate',
             entity_id: estimateId || invoiceId,
+            entity_number: attItem?.entityNumber,
+            client_name: attItem?.title,
+            amount: attItem?.amount,
           }),
         })
       }).catch(() => {})
