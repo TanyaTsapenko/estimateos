@@ -248,7 +248,7 @@ export default function EstimatesPage() {
                       }}>
                         {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
                       </span>
-                      {e.viewed_at && (() => {
+                      {e.viewed_at && e.status !== 'draft' && (() => {
                         const d = new Date(e.viewed_at)
                         const isToday = d.toDateString() === new Date().toDateString()
                         const color = isToday ? '#16A34A' : '#D97706'
@@ -296,7 +296,7 @@ export default function EstimatesPage() {
                         {e.client_city ? ` · ${e.client_city}` : ''}
                         {` · ${new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric' }).format(new Date(e.created_at))}`}
                       </div>
-                      {e.viewed_at && (() => {
+                      {e.viewed_at && e.status !== 'draft' && (() => {
                         const d = new Date(e.viewed_at)
                         const isToday = d.toDateString() === new Date().toDateString()
                         const color = isToday ? '#16A34A' : '#D97706'
