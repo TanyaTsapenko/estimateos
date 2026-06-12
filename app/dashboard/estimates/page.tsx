@@ -12,7 +12,7 @@ interface Estimate {
   tier: string | null; created_at: string; viewed_at: string | null
 }
 
-const FILTERS = ['All', 'Draft', 'Sent', 'Accepted', 'Signed', 'Invoiced']
+const FILTERS = ['All', 'Draft', 'Sent', 'Signed', 'Invoiced', 'Paid']
 
 const SC: Record<string, { text: string; bg: string }> = {
   draft:    { text: '#64748B', bg: 'rgba(100,116,139,.1)' },
@@ -77,8 +77,7 @@ export default function EstimatesPage() {
   }, [])
 
   const visible = estimates.filter(e => {
-    const matchFilter = filter === 'All'
-      || (filter === 'Accepted' || filter === 'Signed' ? e.status === 'signed' : e.status === filter.toLowerCase())
+    const matchFilter = filter === 'All' || e.status === filter.toLowerCase()
     const matchSearch = !search ||
       (e.client_name || '').toLowerCase().includes(search.toLowerCase()) ||
       e.estimate_number.toLowerCase().includes(search.toLowerCase())
