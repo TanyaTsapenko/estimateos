@@ -859,7 +859,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         {isMobile ? (
           <>
             {/* Needs Attention */}
-            <section style={{ marginBottom: 24 }}>
+            {permissions.payments && <section style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Needs Attention</div>
               <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>
                 {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
@@ -908,7 +908,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                   {showAllAttention ? 'Show less' : `Show all (${attention.length})`}
                 </button>
               )}
-            </section>
+            </section>}
 
             {/* Live Feed */}
             <section style={{ marginBottom: 24 }}>
@@ -970,7 +970,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
           <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
             {/* Needs attention */}
-            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+            {permissions.payments && <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
               <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
                 <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Needs Attention</div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
@@ -1023,7 +1023,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                   </button>
                 </div>
               )}
-            </div>
+            </div>}
 
             {/* Live Feed / Recent activity */}
             <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
