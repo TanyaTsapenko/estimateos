@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 interface Appointment {
   id: string; time: string; endTime: string; client: string; address: string; phone: string
@@ -143,6 +144,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
   } | null>(null)
   const { role, permissions } = usePermissions()
   const isRestrictedRole = role === 'estimator' || role === 'admin'
+  const [isOwnerOrManager, setIsOwnerOrManager] = useState(false)
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -150,6 +152,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
+    setIsOwnerOrManager(ownerOrManager)
     supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
       if (prof) {
         setPricingMode((prof as any).pricing_mode || 'single')
@@ -179,7 +183,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
         .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates!appointments_estimate_id_fkey(status)')
-        .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
+        .in('user_id', userIds).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
           const t = a.appointment_time || ''
@@ -215,15 +219,15 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const todayUTC = new Date().toISOString().slice(0, 10)
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').eq('user_id', sanitizedId).order('updated_at', { ascending: false }).limit(20),
-        supabase.from('estimates').select('id,total,estimate_number,client_name,status').eq('user_id', sanitizedId).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
-        supabase.from('estimates').select('total,created_at,status').eq('user_id', sanitizedId).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
-        supabase.from('estimates').select('total').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
-        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').eq('user_id', sanitizedId).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
-        supabase.from('activity_log').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20),
-        supabase.from('estimates').select('id,total,status,created_at').eq('user_id', sanitizedId).in('status', ['draft', 'sent']),
-        supabase.from('estimates').select('id,total,status,updated_at').eq('user_id', sanitizedId).in('status', ['signed', 'invoiced', 'paid']).gte('updated_at', todayUTC + 'T00:00:00.000Z'),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,estimate_number,client_name,status').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
+        supabase.from('estimates').select('total,created_at,status').in('user_id', userIds).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
+        supabase.from('estimates').select('total').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').in('user_id', userIds).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
+        supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id').in('user_id', userIds).eq('status', 'pending').eq('invoice_type', 'final').order('created_at', { ascending: false }).limit(10),
+        supabase.from('activity_log').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,status,created_at').in('user_id', userIds).in('status', ['draft', 'sent']),
+        supabase.from('estimates').select('id,total,status,updated_at').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('updated_at', todayUTC + 'T00:00:00.000Z'),
       ])
       const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
