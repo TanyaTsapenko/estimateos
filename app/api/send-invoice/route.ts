@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { logActivity } from '@/lib/activity'
+import { getCompanyName } from '@/lib/getCompanyName'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -47,9 +49,8 @@ export async function POST(request: NextRequest) {
     depositInv = data
   }
 
-  const companyName = prof?.company_name
-    || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim()
-    || 'Contractor'
+  const adminClient = createAdminClient()
+  const companyName = await getCompanyName(adminClient, est?.user_id || inv.user_id)
 
   const [, taxLabel] = TAX_RATES[est?.client_province || 'AB'] || [0.05, 'Tax']
 

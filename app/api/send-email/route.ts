@@ -6,6 +6,7 @@ import { TAX_RATES, fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import { emailRateLimit } from '@/lib/rateLimit'
 import { isValidEmail } from '@/lib/validation'
 import { welcomeEmailHtml } from '@/emails/WelcomeEmail'
+import { getCompanyName } from '@/lib/getCompanyName'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
   }
 
   const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
-  const companyName = prof?.company_name || 'Your contractor'
+  const companyName = await getCompanyName(supabase, est.user_id)
   const clientLink = `${request.nextUrl.origin}/estimate/${estimateId}`
   const logoHtml = (prof as any)?.logo_url
     ? `<img src="${(prof as any).logo_url}" style="max-width:120px;max-height:40px;display:block" alt="${companyName}" />`

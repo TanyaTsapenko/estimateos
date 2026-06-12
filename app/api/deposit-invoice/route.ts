@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logActivity } from '@/lib/activity'
 import { createClient } from '@/lib/supabase/server'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getCompanyName } from '@/lib/getCompanyName'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -51,9 +52,7 @@ export async function POST(request: NextRequest) {
     .select('*', { count: 'exact', head: true }).eq('user_id', est.user_id)
   const invoiceNum = `INV-${String((count || 0) + 1).padStart(4, '0')}`
 
-  const companyName = prof?.company_name
-    || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim()
-    || 'Contractor'
+  const companyName = await getCompanyName(admin, est.user_id)
   const interacEmail = (prof as any)?.interac_email || prof?.email || null
 
   const { data: invoice, error: invErr } = await admin.from('invoices').insert({
