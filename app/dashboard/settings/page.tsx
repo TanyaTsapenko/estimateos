@@ -799,7 +799,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
             const name = [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || '—'
             return (
               <div key={m.id} onClick={() => {
-                const memberPerms = (m as any).permissions || { estimates: true, schedule: true, clients: true, price_list: false, reports: false, settings: false }
+                const memberPerms = (m as any).permissions || { estimates: true, schedule: true, clients: true, price_list: false, reports: false, payments: false, settings: false }
                 setEditingMember({ id: m.id, name, role: m.member_role || 'estimator', permissions: memberPerms })
                 setEditingMemberOriginal({ role: m.member_role || 'estimator', permissions: memberPerms })
               }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: i < members.length - 1 ? '1px solid #EEF0F4' : 'none', cursor: 'pointer' }}>
@@ -840,6 +840,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     { key: 'clients',    label: 'Clients',          desc: 'Add, edit, and view client profiles' },
                     { key: 'price_list', label: 'Price List',       desc: 'View and edit product pricing' },
                     { key: 'reports',    label: 'Reports',          desc: 'Access sales and revenue reports' },
+                    { key: 'payments',   label: 'Payments',         desc: 'View and manage invoices and payments' },
                     { key: 'settings',   label: 'Company Settings', desc: 'Manage branding, contracts, and billing' },
                   ].map(({ key, label, desc }, i, arr) => {
                     const val = editingMember.permissions[key as keyof typeof invitePerms]
