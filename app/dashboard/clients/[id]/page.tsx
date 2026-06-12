@@ -116,11 +116,11 @@ function StepTimeline({ project, onCreateEstimate }: { project: Project; onCreat
 
   const steps: Step[] = status === 'lost'
     ? [
-        { icon: <FileText size={13} strokeWidth={1.7} />, label: `EST-${estimate.estimate_number}`, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
+        { icon: <FileText size={13} strokeWidth={1.7} />, label: estimate.estimate_number, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
         { icon: <X size={13} strokeWidth={2} />, label: 'Declined', sub: 'Went with competitor', tone: 'red' },
       ]
     : [
-        { icon: <FileText size={13} strokeWidth={1.7} />, label: `EST-${estimate.estimate_number}`, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
+        { icon: <FileText size={13} strokeWidth={1.7} />, label: estimate.estimate_number, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
         { icon: <PenLine size={13} strokeWidth={1.7} />, label: 'Contract signed', sub: contractSigned ? 'Signed' : 'Pending', tone: contractSigned ? 'green' : 'neutral' },
         { icon: <DollarSign size={13} strokeWidth={1.7} />, label: 'Deposit', sub: depositInvoice ? `${fmtCAD(depositInvoice.amount)} · ${depositPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: depositPaid ? 'green' : 'neutral' },
         { icon: <Receipt size={13} strokeWidth={1.7} />, label: 'Invoice', sub: finalInvoice ? `${fmtCAD(finalInvoice.amount)} · ${finalPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: finalPaid ? 'green' : finalInvoice ? 'red' : 'neutral' },
