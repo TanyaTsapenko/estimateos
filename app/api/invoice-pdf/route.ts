@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       ? supabase.from('estimates').select('*').eq('id', inv.estimate_id).single()
       : Promise.resolve({ data: null }),
     supabase.from('profiles')
-      .select('company_name, first_name, last_name, email, phone, city, province, website, licence, insurance, logo_url, signature_url')
+      .select('company_name, first_name, last_name, email, phone, city, province, website, licence, insurance, logo_url, signature_url, gst_hst_number')
       .eq('id', user.id)
       .single(),
   ])
@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
     prof?.phone,
     prof?.email,
     prof?.licence ? `Lic. ${prof.licence}` : null,
+    (prof as any)?.gst_hst_number ? `GST/HST #: ${(prof as any).gst_hst_number}` : null,
   ].filter(Boolean).join('<br>')
 
   const clientDetail = [

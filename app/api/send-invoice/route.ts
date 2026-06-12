@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       ? supabase.from('estimates').select('*').eq('id', inv.estimate_id).single()
       : Promise.resolve({ data: null }),
     supabase.from('profiles')
-      .select('company_name, first_name, last_name, email, phone, company_contact_email, interac_email')
+      .select('company_name, first_name, last_name, email, phone, company_contact_email, interac_email, gst_hst_number')
       .eq('id', user.id)
       .single(),
   ])
@@ -116,6 +116,11 @@ export async function POST(request: NextRequest) {
         <span style="color:#6b7280">Reference / message</span>
         <span style="font-weight:600;color:#1A1A1A">${inv.invoice_number}</span>
       </div>
+      ${(prof as any)?.gst_hst_number ? `
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
+        <span style="color:#6b7280">GST/HST #</span>
+        <span style="font-weight:600;color:#1A1A1A">${(prof as any).gst_hst_number}</span>
+      </div>` : ''}
       ${prof?.phone ? `
       <div style="display:flex;justify-content:space-between;font-size:12px">
         <span style="color:#6b7280">Questions</span>

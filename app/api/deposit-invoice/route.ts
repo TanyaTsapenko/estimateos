@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email, gst_hst_number')
     .eq('id', est.user_id).single()
 
   const depositPct = est.deposit_percent ?? (prof as any)?.deposit_percent ?? 30
@@ -164,6 +164,10 @@ export async function POST(request: NextRequest) {
                 <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">${depositPct === 100 ? 'Payment' : 'Deposit rate'}</td>
                 <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct === 100 ? 'Full payment' : `${depositPct}% of ${fmtCAD(est.total)}`}</td>
               </tr>
+              ${(prof as any)?.gst_hst_number ? `<tr>
+                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">GST/HST #</td>
+                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${(prof as any).gst_hst_number}</td>
+              </tr>` : ''}
             </table>
           </td></tr>
         </table>
