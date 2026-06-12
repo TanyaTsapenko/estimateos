@@ -65,6 +65,31 @@ export async function POST(request: NextRequest) {
       client_name: clientName || estForLog?.client_name,
       amount: estForLog?.total,
     })
+    // Team activity notification for owner when a team member's estimate is signed
+    const { data: memberProf } = await supabase
+      .from('profiles')
+      .select('team_owner_id, first_name, last_name')
+      .eq('id', contract.profile_id)
+      .single()
+    if (memberProf?.team_owner_id) {
+      const { data: ownerProf } = await supabase
+        .from('profiles')
+        .select('notification_settings')
+        .eq('id', memberProf.team_owner_id)
+        .single()
+      const ns = (ownerProf?.notification_settings as any)
+      if (ns?.inapp?.pushTeam === true) {
+        const repName = [memberProf.first_name, memberProf.last_name].filter(Boolean).join(' ') || 'Team member'
+        await supabase.from('notifications').insert({
+          user_id: memberProf.team_owner_id,
+          type: 'team_activity',
+          title: 'Team activity',
+          body: `${repName}'s estimate ${estForLog?.estimate_number || ''} was signed by ${clientName || estForLog?.client_name || 'Client'}`,
+          link: `/dashboard/estimates/${contract.estimate_id}`,
+          read: false,
+        })
+      }
+    }
   } catch (logErr) {
     console.error('[sign-contract] logActivity error:', logErr)
   }

@@ -88,6 +88,20 @@ export default function InvoicesPage() {
             amount: invData?.amount,
           }),
         })
+        void (async () => {
+            const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', user.id).single()
+            const ns = (prof?.notification_settings as any)
+            if (ns?.inapp?.pushPayment !== false) {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid',
+                title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
+                body: `${invData?.estimates?.client_name || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${invData?.estimates?.estimate_number || ''} · ${fmtCAD(invData?.amount || 0)}`,
+                link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
+                read: false,
+              })
+            }
+          })().catch(() => {})
       }).catch(() => {})
       const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
       try {

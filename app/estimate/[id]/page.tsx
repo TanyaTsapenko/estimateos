@@ -98,10 +98,11 @@ export default function ClientEstimatePage() {
       setEstimate(est)
       // Track view
       if (est.status !== 'signed' && est.status !== 'declined') {
-        supabase.from('estimates').update({
-          viewed_at: new Date().toISOString(),
-          view_count: (est.view_count || 0) + 1,
-        }).eq('id', id).then(() => {})
+        fetch('/api/track-estimate-view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estimateId: id }),
+        }).catch(() => {})
       }
       if (est.status === 'signed') setDocStatus('signed')
       else if (est.status === 'declined') setDocStatus('declined')

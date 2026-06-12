@@ -412,9 +412,25 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       if (invoiceType === 'final' && estimateId) {
         await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
       }
+      const attItem = attention.find(i => i.id === invoiceId)
+      if (currentUserId) {
+        void (async () => {
+          const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', currentUserId).single()
+          const ns = (prof?.notification_settings as any)
+          if (ns?.inapp?.pushPayment !== false) {
+            await supabase.from('notifications').insert({
+              user_id: currentUserId,
+              type: invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid',
+              title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
+              body: `${attItem?.title || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${attItem?.entityNumber || ''} · CA$${(attItem?.amount || 0).toFixed(2)}`,
+              link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
+              read: false,
+            })
+          }
+        })().catch(() => {})
+      }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
       loadAll()
-      const attItem = attention.find(i => i.id === invoiceId)
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (!user) return
         fetch('/api/log-activity', {
