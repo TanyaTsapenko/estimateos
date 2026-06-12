@@ -45,9 +45,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Field({ label, value, onChange, type = 'text', placeholder, hint, error, required, prefix, suffix }: {
+function Field({ label, value, onChange, type = 'text', placeholder, hint, error, warning, required, prefix, suffix }: {
   label: string; value: string; onChange: (v: string) => void
-  type?: string; placeholder?: string; hint?: string; error?: string
+  type?: string; placeholder?: string; hint?: string; error?: string; warning?: string
   required?: boolean; prefix?: string; suffix?: string
 }) {
   const [focused, setFocused] = useState(false)
@@ -78,7 +78,8 @@ function Field({ label, value, onChange, type = 'text', placeholder, hint, error
         {suffix && <span style={{ position: 'absolute', right: 13, fontSize: 14, color: '#64748B' }}>{suffix}</span>}
       </div>
       {error && <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>{error}</div>}
-      {hint && !error && <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>{hint}</div>}
+      {warning && !error && <div style={{ fontSize: 12, color: '#D97706', marginTop: 4 }}>{warning}</div>}
+      {hint && !error && !warning && <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>{hint}</div>}
     </div>
   )
 }
@@ -127,15 +128,15 @@ function TextArea({ label, value, onChange, placeholder, hint }: {
   )
 }
 
-function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: boolean; onSave: () => void; onDiscard: () => void }) {
+function SaveBar({ dirty, valid, saving, onSave, onDiscard }: { dirty: boolean; valid: boolean; saving?: boolean; onSave: () => void; onDiscard: () => void }) {
   return (
     <div style={{ background: '#fff', borderRadius: 14, padding: 16, marginTop: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
       <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={onDiscard} disabled={!dirty} style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: dirty ? '#475467' : '#94A3B8', fontSize: 15, fontWeight: 500, cursor: dirty ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+        <button onClick={onDiscard} disabled={!dirty || saving} style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: dirty && !saving ? '#475467' : '#94A3B8', fontSize: 15, fontWeight: 500, cursor: dirty && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
           Discard
         </button>
-        <button onClick={onSave} disabled={!valid} style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: dirty && valid ? '#2563EB' : '#93aef5', color: '#fff', fontSize: 15, fontWeight: 600, cursor: dirty && valid ? 'pointer' : 'default', fontFamily: 'inherit' }}>
-          Save changes
+        <button onClick={onSave} disabled={!valid || saving} style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: dirty && valid && !saving ? '#2563EB' : '#93aef5', color: '#fff', fontSize: 15, fontWeight: 600, cursor: dirty && valid && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+          {saving ? 'Saving...' : 'Save changes'}
         </button>
       </div>
     </div>
@@ -168,11 +169,13 @@ export default function CompanySettingsPage() {
   const [values, setValues] = useState(INIT)
   const [initial, setInitial] = useState(INIT)
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = dirty && !!values.companyName
+  const valid = dirty && !!values.companyName && !!values.city
   const set = (k: keyof typeof INIT) => (v: string) => setValues(s => ({ ...s, [k]: v }))
   const [userId, setUserId] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [logoKey, setLogoKey] = useState(() => Date.now())
   const [logoUploading, setLogoUploading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [toast, setToast] = useState('')
 
   function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
@@ -184,7 +187,7 @@ export default function CompanySettingsPage() {
       setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('company_name, phone, website, address, city, province, postal, licence, insurance, logo_url, interac_email, gst_hst_number, company_contact_email, financing_info, google_review_link, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, insurance_policy_number, logo_url, interac_email, gst_hst_number, company_contact_email, financing_info, google_review_link, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary')
         .eq('id', sanitizedId)
         .single()
       if (prof) {
@@ -197,7 +200,7 @@ export default function CompanySettingsPage() {
           province:              (prof as any).province                  || 'AB',
           postal:                (prof as any).postal                    || '',
           licence:               (prof as any).licence                   || '',
-          insurance:             (prof as any).insurance                 || '',
+          insurance:             ((prof as any).insurance_policy_number ?? (prof as any).insurance) || '',
           interacEmail:          (prof as any).interac_email             || '',
           gstHstNumber:          (prof as any).gst_hst_number            || '',
           companyContactEmail:   (prof as any).company_contact_email     || '',
@@ -221,33 +224,40 @@ export default function CompanySettingsPage() {
 
   async function saveCompany() {
     if (!userId) return
+    setIsSaving(true)
+    const website = values.website && !/^https?:\/\//i.test(values.website)
+      ? 'https://' + values.website
+      : values.website
+    const normalized = { ...values, website }
     const { error } = await supabase.from('profiles').update({
-      company_name:             values.companyName,
-      phone:                    values.phone                  || null,
-      website:                  values.website                || null,
-      address:                  values.addressLine            || null,
-      city:                     values.city                   || null,
-      province:                 values.province               || null,
-      postal:                   values.postal                 || null,
-      licence:                  values.licence                || null,
-      insurance:                values.insurance              || null,
-      interac_email:            values.interacEmail           || null,
-      gst_hst_number:           values.gstHstNumber           || null,
-      company_contact_email:    values.companyContactEmail    || null,
-      financing_info:           values.financingInfo           || null,
-      google_review_link:       values.googleReviewLink        || null,
-      licence_issuing_province: values.licenceIssuingProvince || null,
-      licence_expiry_date:      values.licenceExpiry          || null,
-      insurance_provider:       values.insuranceProvider      || null,
-      insurance_expiry_date:    values.insuranceExpiry        || null,
-      insurance_policy_number:  values.insurance              || null,
-      wsib_number:              values.wsibNumber             || null,
-      signing_rep_name:         values.signingRepName         || null,
-      signing_rep_title:        values.signingRepTitle        || null,
-      warranty_summary:         values.warrantySummary        || null,
+      company_name:             normalized.companyName,
+      phone:                    normalized.phone                  || null,
+      website:                  normalized.website                || null,
+      address:                  normalized.addressLine            || null,
+      city:                     normalized.city                   || null,
+      province:                 normalized.province               || null,
+      postal:                   normalized.postal                 || null,
+      licence:                  normalized.licence                || null,
+      insurance:                normalized.insurance              || null,
+      interac_email:            normalized.interacEmail           || null,
+      gst_hst_number:           normalized.gstHstNumber           || null,
+      company_contact_email:    normalized.companyContactEmail    || null,
+      financing_info:           normalized.financingInfo           || null,
+      google_review_link:       normalized.googleReviewLink        || null,
+      licence_issuing_province: normalized.licenceIssuingProvince || null,
+      licence_expiry_date:      normalized.licenceExpiry          || null,
+      insurance_provider:       normalized.insuranceProvider      || null,
+      insurance_expiry_date:    normalized.insuranceExpiry        || null,
+      insurance_policy_number:  normalized.insurance              || null,
+      wsib_number:              normalized.wsibNumber             || null,
+      signing_rep_name:         normalized.signingRepName         || null,
+      signing_rep_title:        normalized.signingRepTitle        || null,
+      warranty_summary:         normalized.warrantySummary        || null,
     }).eq('id', userId)
-    if (error) { flash('Error saving: ' + error.message); return }
-    setInitial({ ...values })
+    if (error) { flash('Error saving: ' + error.message); setIsSaving(false); return }
+    if (website !== values.website) setValues(normalized)
+    setInitial(normalized)
+    setIsSaving(false)
     flash('Company saved')
   }
 
@@ -263,12 +273,21 @@ export default function CompanySettingsPage() {
     const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
     if (error) { flash('Upload failed'); setLogoUploading(false); return }
     const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
-    await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
+    const url = urlData.publicUrl
+    const { error: urlErr } = await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
+    if (urlErr) { flash('Error saving logo: ' + urlErr.message); setLogoUploading(false); return }
     setLogoUrl(url)
+    setLogoKey(Date.now())
     setLogoUploading(false)
     flash('Logo uploaded')
   }
+
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const postalRe = /^[A-Za-z]\d[A-Za-z]\s?\d[A-Za-z]\d$/
+  const contactEmailWarn = values.companyContactEmail && !emailRe.test(values.companyContactEmail) ? 'Looks like an invalid email' : undefined
+  const interacEmailWarn = values.interacEmail && !emailRe.test(values.interacEmail) ? 'Looks like an invalid email' : undefined
+  const postalWarn = values.postal && !postalRe.test(values.postal.trim()) ? 'Format: A1A 1A1' : undefined
+  const googleLinkWarn = values.googleReviewLink && !/^https?:\/\//i.test(values.googleReviewLink) ? 'Should be a full URL (https://...)' : undefined
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
@@ -292,7 +311,7 @@ export default function CompanySettingsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <label style={{ width: 80, height: 80, borderRadius: 16, flexShrink: 0, border: logoUrl ? '1px solid #E5E7EB' : '2px dashed #E5E7EB', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: logoUploading ? 'not-allowed' : 'pointer', opacity: logoUploading ? 0.7 : 1 }}>
                 {logoUrl
-                  ? <img src={logoUrl} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ? <img src={`${logoUrl}?v=${logoKey}`} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <><ImagePlus size={24} color="#9CA3AF" strokeWidth={1.5} /><span style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Logo</span></>
                 }
                 <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={logoUploading} />
@@ -335,7 +354,7 @@ export default function CompanySettingsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 12px' }}>
             <Field label="City" value={values.city} onChange={set('city')} required />
             <ProvinceSelect label="Province" value={values.province} onChange={set('province')} required />
-            <Field label="Postal Code" value={values.postal} onChange={set('postal')} />
+            <Field label="Postal Code" value={values.postal} onChange={set('postal')} warning={postalWarn} />
           </div>
         </Card>
 
@@ -359,15 +378,15 @@ export default function CompanySettingsPage() {
         <Card>
           <SectionLabel>Tax &amp; Compliance</SectionLabel>
           <Field label="GST / HST Number" value={values.gstHstNumber} onChange={set('gstHstNumber')} hint="Shown on invoices" />
-          <Field label="Company Contact Email" value={values.companyContactEmail} onChange={set('companyContactEmail')} type="email" placeholder="contact@yourcompany.ca" hint="Used as reply-to on emails sent to clients, and shown on PDFs" />
+          <Field label="Company Contact Email" value={values.companyContactEmail} onChange={set('companyContactEmail')} type="email" placeholder="contact@yourcompany.ca" hint="Used as reply-to on emails sent to clients, and shown on PDFs" warning={contactEmailWarn} />
           <TextArea label="Financing Info" value={values.financingInfo} onChange={set('financingInfo')} placeholder="e.g. Financing available — as low as $150/month, OAC" hint="Shown to clients on estimates as a financing option (e.g. 'Financing available — as low as $150/month, OAC')" />
-          <Field label="Google Review Link" value={values.googleReviewLink} onChange={set('googleReviewLink')} placeholder="https://g.page/r/..." hint="Link to your Google Business Profile review page — used for review request automation" />
+          <Field label="Google Review Link" value={values.googleReviewLink} onChange={set('googleReviewLink')} placeholder="https://g.page/r/..." hint="Link to your Google Business Profile review page — used for review request automation" warning={googleLinkWarn} />
         </Card>
 
         {/* Defaults */}
         <Card>
           <SectionLabel>Defaults</SectionLabel>
-          <Field label="Interac e-Transfer Email" value={values.interacEmail} onChange={set('interacEmail')} placeholder="payments@yourcompany.ca" hint="Shown on deposit invoice emails sent to clients" />
+          <Field label="Interac e-Transfer Email" value={values.interacEmail} onChange={set('interacEmail')} placeholder="payments@yourcompany.ca" hint="Shown on deposit invoice emails sent to clients" warning={interacEmailWarn} />
         </Card>
 
         {/* Documents & Signature */}
@@ -380,7 +399,7 @@ export default function CompanySettingsPage() {
           <TextArea label="Warranty Summary" value={values.warrantySummary} onChange={set('warrantySummary')} placeholder="Describe your warranty terms..." hint="Appears in the Warranty section of contracts" />
         </Card>
 
-        <SaveBar dirty={dirty} valid={valid} onSave={saveCompany} onDiscard={() => setValues({ ...initial })} />
+        <SaveBar dirty={dirty} valid={valid} saving={isSaving} onSave={saveCompany} onDiscard={() => setValues({ ...initial })} />
       </div>
 
       {toast && <Toast text={toast} />}
