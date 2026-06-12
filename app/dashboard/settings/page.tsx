@@ -1634,6 +1634,7 @@ export default function SettingsPage() {
   const handleNavClick = (id: SectionId) => {
     if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
     setActive(id)
+    router.replace(`/dashboard/settings?section=${id}`, { scroll: false })
     if (isMobile) setMobileDetail(true)
   }
 
