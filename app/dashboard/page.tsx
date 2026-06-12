@@ -271,7 +271,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         pipelineCount: `${openEstimates.length} est.`,
         signedTodayTotal: fmt(signedTodayTotal),
         signedTodayCount,
-        signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); return (estSigned || []).filter((e: any) => ['signed','accepted'].includes(e.status) && !pendingEstimateIdsForMetrics.has(e.id)).length })(),
+        signaturesNeeded: (() => { const pendingEstimateIdsForMetrics = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id)); const finalEstimateIdsForMetrics = new Set(finalEstimateIds); return (estSigned || []).filter((e: any) => ['signed','accepted'].includes(e.status) && !pendingEstimateIdsForMetrics.has(e.id) && !finalEstimateIdsForMetrics.has(e.id)).length })(),
         conversionRate,
         sparklines: {
           revenue: [...signedThisMonth].sort((a:any,b:any)=>new Date(a.created_at).getTime()-new Date(b.created_at).getTime()).map((e:any)=>e.total||0).slice(-8),
