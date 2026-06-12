@@ -52,18 +52,25 @@ export default function EstimatesPage() {
   const [loading,   setLoading]   = useState(true)
   const [filter,    setFilter]    = useState('All')
   const [search,    setSearch]    = useState('')
+  const [statsData, setStatsData] = useState<{ total: number; status: string }[]>([])
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-      const { data } = await supabase.from('estimates')
-        .select('id, estimate_number, client_name, client_city, status, total, tier, created_at, viewed_at')
-        .eq('user_id', sanitizedId)
-        .order('created_at', { ascending: false })
-        .limit(50)
+      const [{ data }, { data: stats }] = await Promise.all([
+        supabase.from('estimates')
+          .select('id, estimate_number, client_name, client_city, status, total, tier, created_at, viewed_at')
+          .eq('user_id', sanitizedId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase.from('estimates')
+          .select('total, status')
+          .eq('user_id', sanitizedId),
+      ])
       setEstimates(data || [])
+      setStatsData(stats || [])
       setLoading(false)
     }
     load()
@@ -78,9 +85,9 @@ export default function EstimatesPage() {
     return matchFilter && matchSearch
   })
 
-  const totalValue  = estimates.reduce((s, e) => s + (e.total || 0), 0)
-  const signedCount = estimates.filter(e => e.status === 'signed').length
-  const openCount   = estimates.filter(e => e.status === 'draft' || e.status === 'sent').length
+  const totalValue  = statsData.filter(e => ['signed', 'invoiced', 'paid'].includes(e.status)).reduce((s, e) => s + (e.total || 0), 0)
+  const signedCount = statsData.filter(e => e.status === 'signed').length
+  const openCount   = statsData.filter(e => e.status === 'draft' || e.status === 'sent').length
 
   return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
@@ -125,7 +132,7 @@ export default function EstimatesPage() {
         {!isRestrictedRole && (
         <div className="est-stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
           <StatBox label="Total value" value={fmtCAD(totalValue)} />
-          <StatBox label="Accepted"     value={signedCount}        />
+          <StatBox label="Signed"       value={signedCount}        />
           <StatBox label="Open"        value={openCount}          />
         </div>
         )}
