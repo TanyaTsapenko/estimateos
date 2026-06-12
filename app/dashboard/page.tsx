@@ -112,6 +112,7 @@ const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color:
   contract_signed:      { icon: FileCheck,   bg: '#ECFDF5', color: '#059669', label: 'signed contract' },
   deposit_invoice_sent: { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent deposit invoice' },
   deposit_paid:         { icon: DollarSign,  bg: '#ECFDF5', color: '#059669', label: 'paid deposit' },
+  final_invoice_sent:   { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent final invoice' },
   final_paid:           { icon: CheckCircle, bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
 }
 
