@@ -933,6 +933,39 @@ function NewEstimateForm() {
       })(),
     }
 
+    // Resolve client_id — from appointment or find-or-create
+    let clientId: string | null = null
+    if (apptId) {
+      const { data: apptRow } = await supabase.from('appointments').select('client_id').eq('id', apptId).single()
+      clientId = (apptRow as any)?.client_id || null
+    } else {
+      try {
+        const phone = client.client_phone.trim() || null
+        const email = client.client_email.trim() || null
+        if (phone) {
+          const { data: byPhone } = await supabase.from('clients').select('id').eq('owner_id', sanitizedId).eq('phone', phone).maybeSingle()
+          clientId = byPhone?.id ?? null
+        }
+        if (!clientId && email) {
+          const { data: byEmail } = await supabase.from('clients').select('id').eq('owner_id', sanitizedId).eq('email', email).maybeSingle()
+          clientId = byEmail?.id ?? null
+        }
+        if (!clientId) {
+          const { data: created } = await supabase.from('clients').insert({
+            owner_id:    sanitizedId,
+            name:        client.client_name.trim(),
+            phone:       phone,
+            email:       email,
+            address:     client.client_address.trim() || null,
+            city:        client.client_city.trim() || null,
+            province:    client.client_province || null,
+            postal_code: client.client_postal_code.trim() || null,
+          }).select('id').maybeSingle()
+          clientId = created?.id ?? null
+        }
+      } catch {}
+    }
+
     let savedId: string
 
     if (editId) {
@@ -946,6 +979,7 @@ function NewEstimateForm() {
         user_id: sanitizedId,
         estimate_number: num,
         ...estimateFields,
+        client_id: clientId,
         status: 'draft',
         valid_until: new Date(Date.now() + (profile?.default_valid_days || 30) * 86400000).toISOString().slice(0, 10),
         appointment_id: apptId || null,
