@@ -389,6 +389,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
         await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
       }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
+      loadAll()
       supabase.auth.getUser().then(({ data: { user } }) => {
         if (!user) return
         fetch('/api/log-activity', {
