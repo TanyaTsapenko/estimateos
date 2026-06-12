@@ -1567,10 +1567,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
-  const [active, setActive] = useState<SectionId>(() => {
-    const s = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('section') : null
-    return (s as SectionId) || 'profile'
-  })
+  const [active, setActive] = useState<SectionId>('profile')
   const [toast, setToast] = useState('')
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
@@ -1585,6 +1582,11 @@ export default function SettingsPage() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  useEffect(() => {
+    const s = searchParams.get('section')
+    if (s) setActive(s as SectionId)
+  }, [searchParams])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -1625,7 +1627,6 @@ export default function SettingsPage() {
 
   // If current section is restricted, fall back to profile
   useEffect(() => {
-    console.log('Settings effect:', { active, role, permLoading, hiddenIds })
     if (!permLoading && hiddenIds.includes(active)) {
       setActive('profile')
       router.replace('/dashboard/settings?section=profile', { scroll: false })
