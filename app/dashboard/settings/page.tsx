@@ -1625,7 +1625,10 @@ export default function SettingsPage() {
 
   // If current section is restricted, fall back to profile
   useEffect(() => {
-    if (!permLoading && hiddenIds.includes(active)) setActive('profile')
+    if (!permLoading && hiddenIds.includes(active)) {
+      setActive('profile')
+      router.replace('/dashboard/settings?section=profile', { scroll: false })
+    }
   }, [permLoading, active])
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000) }
