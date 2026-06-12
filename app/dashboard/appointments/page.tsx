@@ -169,16 +169,17 @@ function NowRow() {
 }
 
 // ─── TimelineRow ──────────────────────────────────────────────────────────────
-function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate }: {
+function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp }: {
   appt: TimelineAppt
   isLast: boolean
   expanded: boolean
   onToggle: () => void
   onNavigate: (path: string) => void
+  isFollowUp?: boolean
 }) {
   const { time, ampm } = fmtTimeParts(appt.rawTime)
   const endFmt = appt.endTime ? fmt12h(appt.endTime) : null
-  const dotColor = appt.status === 'completed' ? '#16A34A' : '#2563EB'
+  const dotColor = appt.status === 'completed' ? '#16A34A' : isFollowUp ? '#F97316' : '#2563EB'
 
   return (
     <div style={{ display: 'flex', marginBottom: 10 }}>
@@ -236,6 +237,9 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate }: {
             <div style={{ fontSize: 12.5, color: '#8A94A6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
               {appt.address || 'No address'}
             </div>
+            {isFollowUp && (
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#F97316', marginTop: 3 }}>Needs follow-up</div>
+            )}
           </div>
           {!expanded && (
             appt.estimateId ? (
@@ -871,9 +875,19 @@ export default function AppointmentsPage() {
   const todayCount = appts.filter(a => a.appointment_date === todayStr).length
   const NOW        = nowDate.getHours() + nowDate.getMinutes() / 60
 
-  const upcomingCount   = dayAppts.filter(a => a.status !== 'completed' && a.status !== 'cancelled').length
-  const doneCount       = dayAppts.filter(a => a.status === 'completed').length
-  const cancelledCount  = dayAppts.filter(a => a.status === 'cancelled').length
+  const followUpEnd = (a: TimelineAppt): number =>
+    a.endTime ? toHour(a.endTime) : a.hour + 0.5
+
+  const needsFollowUpCount = selectedDay === 'today'
+    ? dayAppts.filter(a => a.status === 'upcoming' && followUpEnd(a) < NOW).length
+    : 0
+
+  const upcomingCount  = dayAppts.filter(a => {
+    if (a.status !== 'upcoming') return false
+    return selectedDay !== 'today' || followUpEnd(a) >= NOW
+  }).length
+  const doneCount      = dayAppts.filter(a => a.status === 'completed').length
+  const cancelledCount = dayAppts.filter(a => a.status === 'cancelled').length
 
   const nowInsertIdx = selectedDay === 'today'
     ? (() => { const i = dayAppts.findIndex(a => a.hour >= NOW); return i === -1 ? dayAppts.length : i })()
@@ -1040,7 +1054,9 @@ export default function AppointmentsPage() {
               </div>
               <div style={{ fontSize: 13, color: '#8A94A6', marginTop: 3 }}>
                 <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
-                {' · '}{doneCount} done{cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
+                {' · '}{doneCount} done
+                {cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
+                {needsFollowUpCount > 0 ? <span style={{ color: '#F97316', fontWeight: 700 }}> · {needsFollowUpCount} needs follow-up</span> : ''}
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
@@ -1140,6 +1156,7 @@ export default function AppointmentsPage() {
                   expanded={expandedId === appt.id}
                   onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)}
                   onNavigate={path => router.push(path)}
+                  isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW}
                 />
               )
               return rows
