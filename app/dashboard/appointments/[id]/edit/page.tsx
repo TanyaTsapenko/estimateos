@@ -69,6 +69,13 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
   const setErr = (k: keyof ClientErrors, v: string | null) => setErrors(p => ({ ...p, [k]: v }))
   const clearErr = (k: keyof ClientErrors) => setErr(k, null)
 
+  // Reset end time if start time changes and end is no longer after start
+  useEffect(() => {
+    if (form.appointment_end_time && form.appointment_time && form.appointment_end_time <= form.appointment_time) {
+      set('appointment_end_time', '')
+    }
+  }, [form.appointment_time])
+
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -313,6 +320,8 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                 value={form.appointment_end_time}
                 date={form.appointment_date}
                 onChange={v => set('appointment_end_time', v)}
+                allowNone
+                minAfter={form.appointment_time}
               />
             </div>
           </div>

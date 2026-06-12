@@ -14,6 +14,8 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
+const NONE_SLOT = { value: '', label: '—' }
+
 function todayStr() {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -31,25 +33,34 @@ interface Props {
   date: string         // "YYYY-MM-DD" or ""
   onChange: (v: string) => void
   style?: React.CSSProperties
+  allowNone?: boolean  // show "—" as first option; value="" means no selection
+  minAfter?: string    // "HH:MM" — only show slots strictly after this time
 }
 
-export default function TimePickerDropdown({ value, date, onChange, style }: Props) {
+export default function TimePickerDropdown({ value, date, onChange, style, allowNone, minAfter }: Props) {
   const [open, setOpen] = useState(false)
   const ref     = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   const isToday = date === todayStr()
-  const slots = isToday
+  const baseSlots = isToday
     ? ALL_SLOTS.filter(s => {
         const [h, m] = s.value.split(':').map(Number)
         return h * 60 + m >= nextSlotMins()
       })
     : ALL_SLOTS
 
-  // If current value is not in the filtered slot list, snap to the first available slot
+  const filteredSlots = minAfter
+    ? baseSlots.filter(s => s.value > minAfter)
+    : baseSlots
+
+  const visibleSlots = allowNone ? [NONE_SLOT, ...filteredSlots] : filteredSlots
+
+  // Snap to first available slot (only for non-allowNone pickers; allowNone parent handles reset)
   useEffect(() => {
-    if (slots.length > 0 && !slots.some(s => s.value === value)) {
-      onChange(slots[0].value)
+    if (allowNone) return
+    if (filteredSlots.length > 0 && !filteredSlots.some(s => s.value === value)) {
+      onChange(filteredSlots[0].value)
     }
   }, [date])
 
@@ -65,12 +76,13 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
 
   // Scroll selected slot into view
   useEffect(() => {
-    if (!open || !value) return
-    const el = listRef.current?.querySelector(`[data-value="${value}"]`) as HTMLElement | null
+    if (!open) return
+    const target = value || ''
+    const el = listRef.current?.querySelector(`[data-value="${target}"]`) as HTMLElement | null
     if (el) el.scrollIntoView({ block: 'nearest' })
   }, [open, value])
 
-  const displayLabel = ALL_SLOTS.find(s => s.value === value)?.label ?? ''
+  const displayLabel = (allowNone && value === '') ? '—' : ALL_SLOTS.find(s => s.value === value)?.label ?? ''
 
   return (
     <div ref={ref} style={{ position: 'relative', ...style }}>
@@ -81,7 +93,7 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
           width: '100%', border: '1px solid #E8E8E8', borderRadius: 12,
           padding: '12px 36px 12px 14px', fontSize: 15, background: '#fff',
           boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer',
-          color: displayLabel ? '#0A1628' : '#9CA3AF',
+          color: (displayLabel && displayLabel !== '—') ? '#0A1628' : '#9CA3AF',
           position: 'relative', userSelect: 'none',
         }}
       >
@@ -106,22 +118,22 @@ export default function TimePickerDropdown({ value, date, onChange, style }: Pro
             boxShadow: '0 8px 24px rgba(15,23,42,0.10)',
           }}
         >
-          {slots.length === 0 && (
+          {visibleSlots.length === 0 && (
             <div style={{ padding: '10px 14px', fontSize: 14, color: '#9CA3AF', fontFamily: 'inherit' }}>
-              No available times today
+              No available times
             </div>
           )}
-          {slots.map(slot => {
+          {visibleSlots.map(slot => {
             const selected = slot.value === value
             return (
               <div
-                key={slot.value}
+                key={slot.value === '' ? '__none__' : slot.value}
                 data-value={slot.value}
                 onClick={() => { onChange(slot.value); setOpen(false) }}
                 style={{
                   padding: '10px 14px', fontSize: 14, fontFamily: 'inherit',
                   cursor: 'pointer',
-                  color: selected ? '#2563EB' : '#0A1628',
+                  color: selected ? '#2563EB' : slot.value === '' ? '#9CA3AF' : '#0A1628',
                   fontWeight: selected ? 700 : 400,
                   background: selected ? '#EFF6FF' : 'transparent',
                   transition: 'background 0.1s',
