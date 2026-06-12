@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
+import BellButton, { type AppNotification } from '@/components/BellButton'
 
 interface Appointment {
   id: string; time: string; endTime: string; client: string; address: string; phone: string
@@ -145,6 +146,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     estimateId: string; estimateNumber: string; clientName: string
     clientEmail: string; address: string; message: string
   } | null>(null)
+  const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [currentUserId, setCurrentUserId] = useState('')
   const { role, permissions } = usePermissions()
   const isRestrictedRole = role === 'estimator' || role === 'admin'
   const [isOwnerOrManager, setIsOwnerOrManager] = useState(false)
@@ -157,6 +160,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    setCurrentUserId(sanitizedId)
+    supabase.from('notifications').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => { if (data) setNotifications(data as AppNotification[]) })
     const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
     console.log('Team userIds:', userIds, 'isOwnerOrManager:', ownerOrManager)
     setIsOwnerOrManager(ownerOrManager)
@@ -385,6 +391,18 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  async function handleMarkRead(id: string) {
+    const supabase = createClient()
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    await supabase.from('notifications').update({ read: true }).eq('id', id)
+  }
+
+  async function handleMarkAllRead() {
+    const supabase = createClient()
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    if (currentUserId) await supabase.from('notifications').update({ read: true }).eq('user_id', currentUserId).eq('read', false)
+  }
+
   async function handleMarkPaid(invoiceId: string, invoiceType?: string, estimateId?: string) {
     setPaying(invoiceId)
     const supabase = createClient()
@@ -531,6 +549,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
             </div>
           </div>
+          <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="light" />
           <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
             display: 'flex', alignItems: 'center', gap: 6, background: '#2045B8',
             color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
@@ -559,12 +578,15 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
               {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
             </div>
-            <button
-              onClick={() => router.push('/dashboard/settings')}
-              style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-            >
-              <Settings2 size={18} color="rgba(255,255,255,0.8)" strokeWidth={1.8} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" />
+              <button
+                onClick={() => router.push('/dashboard/settings')}
+                style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              >
+                <Settings2 size={18} color="rgba(255,255,255,0.8)" strokeWidth={1.8} />
+              </button>
+            </div>
           </div>
 
           {/* Day + done count */}
