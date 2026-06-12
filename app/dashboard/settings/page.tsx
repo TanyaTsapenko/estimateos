@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import { SHOW_GBB } from '@/lib/flags'
 import type { IconName } from '@/components/SIcon'
-import { Camera, ImagePlus } from 'lucide-react'
+import { Camera, ImagePlus, Eye, EyeOff } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 import { usePermissions } from '@/lib/usePermissions'
@@ -76,10 +76,11 @@ function SectionHeader({ kicker, title, subtitle, action }: { kicker?: string; t
   )
 }
 
-function Field({ label, value, onChange, type = 'text', placeholder, hint, error, required, prefix, suffix, readOnly }: {
+function Field({ label, value, onChange, type = 'text', placeholder, hint, error, required, prefix, suffix, readOnly, rightElement }: {
   label: string; value: string; onChange: (v: string) => void
   type?: string; placeholder?: string; hint?: string; error?: string
   required?: boolean; prefix?: string; suffix?: string; readOnly?: boolean
+  rightElement?: React.ReactNode
 }) {
   const [focused, setFocused] = useState(false)
   return (
@@ -99,7 +100,7 @@ function Field({ label, value, onChange, type = 'text', placeholder, hint, error
           style={{
             width: '100%', padding: '11px 13px',
             paddingLeft: prefix ? 28 : 13,
-            paddingRight: suffix ? 28 : 13,
+            paddingRight: rightElement ? 40 : suffix ? 28 : 13,
             border: `1px solid ${error ? '#DC2626' : focused ? '#2563EB' : '#E2E5EA'}`,
             borderRadius: 10, fontSize: 14, fontFamily: 'inherit',
             color: readOnly ? '#94A3B8' : '#0A1628', background: readOnly ? '#F8F9FC' : '#fff', outline: 'none',
@@ -108,7 +109,8 @@ function Field({ label, value, onChange, type = 'text', placeholder, hint, error
             cursor: readOnly ? 'default' : undefined,
           }}
         />
-        {suffix && <span style={{ position: 'absolute', right: 13, fontSize: 14, color: '#64748B' }}>{suffix}</span>}
+        {rightElement && <div style={{ position: 'absolute', right: 10, display: 'flex', alignItems: 'center' }}>{rightElement}</div>}
+        {!rightElement && suffix && <span style={{ position: 'absolute', right: 13, fontSize: 14, color: '#64748B' }}>{suffix}</span>}
       </div>
       {error && <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>{error}</div>}
       {hint && !error && <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>{hint}</div>}
@@ -363,18 +365,30 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
   const supabase = createClient()
   const router = useRouter()
   const [values, setValues] = useState({ current: '', next: '', confirm: '' })
+  const [show, setShow] = useState({ current: false, next: false, confirm: false })
   const [saving, setSaving] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const dirty = !!values.current || !!values.next || !!values.confirm
   const valid = !!values.current && values.next.length >= 8 && values.next === values.confirm
+
+  const eyeBtn = (field: keyof typeof show) => (
+    <button type="button" onClick={() => setShow(s => ({ ...s, [field]: !s[field] }))}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+      {show[field] ? <EyeOff size={16} strokeWidth={1.8} /> : <Eye size={16} strokeWidth={1.8} />}
+    </button>
+  )
 
   async function handleSave() {
     if (!valid || saving) return
     setSaving(true)
-    // Re-authenticate with current password first
     const { data: { user } } = await supabase.auth.getUser()
     if (!user?.email) { flash('Could not get user email'); setSaving(false); return }
     const { error: signInErr } = await supabase.auth.signInWithPassword({ email: user.email, password: values.current })
-    if (signInErr) { flash('Current password is incorrect'); setSaving(false); return }
+    if (signInErr) {
+      flash('Current password is incorrect. If you signed up with Google, use Forgot password to set one.')
+      setSaving(false)
+      return
+    }
     const { error } = await supabase.auth.updateUser({ password: values.next })
     setSaving(false)
     if (error) { flash('Error: ' + error.message); return }
@@ -393,10 +407,12 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         <Card>
           <SectionLabel>Change password</SectionLabel>
-          <Field label="Current password" value={values.current} onChange={v => setValues(s => ({ ...s, current: v }))} type="password" required />
-          <Field label="New password" value={values.next} onChange={v => setValues(s => ({ ...s, next: v }))} type="password" hint="At least 8 characters" required />
-          <Field label="Confirm new password" value={values.confirm} onChange={v => setValues(s => ({ ...s, confirm: v }))} type="password"
-            error={values.confirm && values.next !== values.confirm ? 'Passwords do not match' : undefined} required />
+          <Field label="Current password" value={values.current} onChange={v => setValues(s => ({ ...s, current: v }))} type={show.current ? 'text' : 'password'} required rightElement={eyeBtn('current')} />
+          <Field label="New password" value={values.next} onChange={v => setValues(s => ({ ...s, next: v }))} type={show.next ? 'text' : 'password'} required rightElement={eyeBtn('next')}
+            error={values.next.length > 0 && values.next.length < 8 ? 'Password must be at least 8 characters' : undefined}
+            hint={values.next.length === 0 ? 'At least 8 characters' : undefined} />
+          <Field label="Confirm new password" value={values.confirm} onChange={v => setValues(s => ({ ...s, confirm: v }))} type={show.confirm ? 'text' : 'password'} required rightElement={eyeBtn('confirm')}
+            error={values.confirm && values.next !== values.confirm ? 'Passwords do not match' : undefined} />
         </Card>
         <Card>
           <SectionLabel>Sessions</SectionLabel>
@@ -406,7 +422,7 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
               <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Ends all active sessions including this one</div>
             </div>
             <button
-              onClick={handleSignOutAll}
+              onClick={() => setShowSignOutConfirm(true)}
               style={{ fontSize: 12, fontWeight: 600, color: '#DC2626', background: '#FEF2F2', border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontFamily: 'inherit' }}
             >
               Sign out all
@@ -415,6 +431,15 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
         </Card>
       </div>
       <SaveBar dirty={dirty} valid={valid && !saving} onSave={handleSave} onDiscard={() => setValues({ current: '', next: '', confirm: '' })} />
+      <ConfirmModal
+        open={showSignOutConfirm}
+        icon="alert"
+        title="Sign out all devices"
+        body="This will sign you out of all devices, including this one. Continue?"
+        confirmLabel="Sign out all"
+        onConfirm={handleSignOutAll}
+        onCancel={() => setShowSignOutConfirm(false)}
+      />
     </div>
   )
 }
