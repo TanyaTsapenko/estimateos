@@ -445,7 +445,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
   }
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
-  const doneCount  = appointments.filter(a => a.pillStatus === 'DONE').length
+  const doneCount          = appointments.filter(a => a.pillStatus === 'DONE').length
+  const allDone            = appointments.length > 0 && appointments.every(a => a.pillStatus === 'DONE')
+  const needFollowUpCount  = appointments.filter(a => a.pillStatus !== 'DONE').length
   const now = new Date()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
@@ -642,12 +644,19 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
                   ) : <div style={{ width: 40, flexShrink: 0 }} />}
                 </div>
               </div>
-            ) : (
+            ) : allDone ? (
               <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 16, padding: '16px', display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div style={{ width: 32, height: 32, borderRadius: 99, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>All visits complete for today!</div>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(249,115,22,0.18)', borderRadius: 16, padding: '16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: 'rgba(249,115,22,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(249,115,22,0.9)' }}>{needFollowUpCount} visit{needFollowUpCount !== 1 ? 's' : ''} need follow-up</div>
               </div>
             )}
           </div>
