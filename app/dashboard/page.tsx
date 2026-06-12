@@ -177,9 +177,11 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     })
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
-    const { data: appts } = await supabase
+    const { data: appts, error: apptsError } = await supabase
         .from('appointments').select('id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates(status)')
         .eq('user_id', sanitizedId).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
+      if (apptsError) console.error('Appointments load error:', apptsError)
+      console.log('Appointments loaded:', appts)
       if (appts) {
         setAppointments(appts.map((a: any) => {
           const t = a.appointment_time || ''
