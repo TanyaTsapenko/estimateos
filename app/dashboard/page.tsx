@@ -825,7 +825,7 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       <main className="db-main-body" style={{ padding: isMobile ? '16px 16px' : '20px 28px', paddingBottom: isMobile ? 'calc(88px + env(safe-area-inset-bottom))' : '32px', flex: 1 }}>
 
         {/* KPI row */}
-        {!isRestrictedRole && (
+        {permissions.reports && (
         <div className="db-kpi-row" style={{ display: 'flex', gap: 10, marginBottom: 20, overflowX: 'auto', scrollbarWidth: 'none' } as React.CSSProperties}>
           <KpiCard
             label="REVENUE" period="This month"
