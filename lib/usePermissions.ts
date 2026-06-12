@@ -9,22 +9,23 @@ export interface Permissions {
   clients:    boolean
   price_list: boolean
   reports:    boolean
+  payments:   boolean
   settings:   boolean
 }
 
 export const OWNER_PERMISSIONS: Permissions = {
   estimates: true, schedule: true, clients: true,
-  price_list: true, reports: true, settings: true,
+  price_list: true, reports: true, payments: true, settings: true,
 }
 
 export const DEFAULT_ESTIMATOR_PERMISSIONS: Permissions = {
   estimates: true, schedule: true, clients: true,
-  price_list: false, reports: false, settings: false,
+  price_list: false, reports: false, payments: false, settings: false,
 }
 
 export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
   estimates: true, schedule: true, clients: true,
-  price_list: true, reports: false, settings: true,
+  price_list: true, reports: false, payments: true, settings: true,
 }
 
 export function usePermissions(): { role: AppRole; permissions: Permissions; loading: boolean } {
