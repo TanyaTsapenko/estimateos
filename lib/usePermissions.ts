@@ -20,7 +20,7 @@ export const OWNER_PERMISSIONS: Permissions = {
 
 export const DEFAULT_ESTIMATOR_PERMISSIONS: Permissions = {
   estimates: true, schedule: true, clients: true,
-  price_list: false, reports: false, payments: false, settings: false,
+  price_list: false, reports: true, payments: false, settings: false,
 }
 
 export const DEFAULT_ADMIN_PERMISSIONS: Permissions = {
