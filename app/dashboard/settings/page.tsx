@@ -454,7 +454,7 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
   const [email, setEmail] = useState(DEFAULT_EMAIL)
   const [digest, setDigest] = useState<'off' | 'weekly' | 'daily'>(DEFAULT_DIGEST)
   const [inapp, setInapp] = useState(DEFAULT_INAPP)
-  const [saved, setSaved] = useState({ email: DEFAULT_EMAIL, digest: DEFAULT_DIGEST, inapp: DEFAULT_INAPP })
+  const [saved, setSaved] = useState<{ email: typeof DEFAULT_EMAIL; digest: 'off' | 'weekly' | 'daily'; inapp: typeof DEFAULT_INAPP }>({ email: DEFAULT_EMAIL, digest: DEFAULT_DIGEST, inapp: DEFAULT_INAPP })
   const dirty = JSON.stringify({ email, digest, inapp }) !== JSON.stringify(saved)
 
   useEffect(() => {
