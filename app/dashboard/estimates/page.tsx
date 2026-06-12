@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { usePermissions } from '@/lib/usePermissions'
@@ -44,12 +44,19 @@ function StatBox({ label, value }: { label: string; value: string | number }) {
 
 export default function EstimatesPage() {
   const router  = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   const { role } = usePermissions()
   const isRestrictedRole = role === 'estimator' || role === 'admin'
   const [estimates, setEstimates] = useState<Estimate[]>([])
   const [loading,   setLoading]   = useState(true)
-  const [filter,    setFilter]    = useState('All')
+  const initialFilter = (() => {
+    const s = searchParams.get('status')
+    if (!s) return 'All'
+    const match = FILTERS.find(f => f.toLowerCase() === s.toLowerCase())
+    return match ?? 'All'
+  })()
+  const [filter,    setFilter]    = useState(initialFilter)
   const [search,    setSearch]    = useState('')
   const [statsData, setStatsData] = useState<{ total: number; status: string }[]>([])
 
