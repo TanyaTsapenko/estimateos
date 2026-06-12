@@ -161,11 +161,11 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     setCurrentUserId(sanitizedId)
-    supabase.from('notifications').select('*').eq('user_id', sanitizedId).order('created_at', { ascending: false }).limit(20)
-      .then(({ data }) => { if (data) setNotifications(data as AppNotification[]) })
     const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
     console.log('Team userIds:', userIds, 'isOwnerOrManager:', ownerOrManager)
     setIsOwnerOrManager(ownerOrManager)
+    supabase.from('notifications').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(20)
+      .then(({ data }) => { if (data) setNotifications(data as AppNotification[]) })
     const nameMap: Record<string, string> = {}
     if (ownerOrManager && userIds.length > 1) {
       const { data: teamProfs } = await supabase
@@ -399,8 +399,9 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
 
   async function handleMarkAllRead() {
     const supabase = createClient()
+    const unreadIds = notifications.filter(n => !n.read).map(n => n.id)
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-    if (currentUserId) await supabase.from('notifications').update({ read: true }).eq('user_id', currentUserId).eq('read', false)
+    if (unreadIds.length > 0) await supabase.from('notifications').update({ read: true }).in('id', unreadIds)
   }
 
   async function handleMarkPaid(invoiceId: string, invoiceType?: string, estimateId?: string) {
