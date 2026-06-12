@@ -445,27 +445,61 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
 }
 
 function NotificationsSection({ flash }: { flash: (m: string) => void }) {
-  const [email, setEmail] = useState({ estimateViewed: true, estimateSigned: true, depositPaid: true, invoiceOverdue: true, teamInvite: false, estimateDeclined: true, estimateExpired: true })
-  const [digest, setDigest] = useState<'off' | 'weekly' | 'daily'>('weekly')
-  const [push, setPush] = useState({ pushNew: true, pushPayment: true, pushTeam: false, pushDeclined: true, pushExpired: true })
-  const [initial] = useState({ email: { ...email }, digest, push: { ...push } })
-  const dirty = JSON.stringify({ email, digest, push }) !== JSON.stringify(initial)
+  const supabase = createClient()
+
+  const DEFAULT_EMAIL = { estimateViewed: true, estimateSigned: true, depositPaid: true, invoiceOverdue: true, teamInvite: false, estimateDeclined: true, estimateExpired: true }
+  const DEFAULT_DIGEST: 'off' | 'weekly' | 'daily' = 'weekly'
+  const DEFAULT_INAPP = { pushNew: true, pushPayment: true, pushTeam: false, pushDeclined: true, pushExpired: true }
+
+  const [email, setEmail] = useState(DEFAULT_EMAIL)
+  const [digest, setDigest] = useState<'off' | 'weekly' | 'daily'>(DEFAULT_DIGEST)
+  const [inapp, setInapp] = useState(DEFAULT_INAPP)
+  const [saved, setSaved] = useState({ email: DEFAULT_EMAIL, digest: DEFAULT_DIGEST, inapp: DEFAULT_INAPP })
+  const dirty = JSON.stringify({ email, digest, inapp }) !== JSON.stringify(saved)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', sanitizedId).single()
+      const ns = (prof as any)?.notification_settings
+      if (ns) {
+        const e = { ...DEFAULT_EMAIL, ...(ns.email || {}) }
+        const d: 'off' | 'weekly' | 'daily' = ns.digest || DEFAULT_DIGEST
+        const i = { ...DEFAULT_INAPP, ...(ns.inapp || {}) }
+        setEmail(e); setDigest(d); setInapp(i)
+        setSaved({ email: e, digest: d, inapp: i })
+      }
+    })
+  }, [])
+
+  async function handleSave() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+    const { error } = await supabase.from('profiles').update({
+      notification_settings: { email, digest, inapp }
+    }).eq('id', sanitizedId)
+    if (error) { flash('Failed to save notifications'); return }
+    setSaved({ email, digest, inapp })
+    flash('Notifications saved')
+  }
 
   const emailLabels: Record<string, { label: string; desc: string }> = {
-    estimateViewed:  { label: 'Estimate viewed',   desc: 'Client opened your estimate' },
-    estimateSigned:  { label: 'Estimate signed',   desc: 'Client signed your estimate' },
-    estimateDeclined:{ label: 'Estimate declined', desc: 'Client declined your estimate' },
-    estimateExpired: { label: 'Estimate expired',  desc: 'Estimate passed 30 days without response' },
-    depositPaid:     { label: 'Deposit paid',      desc: 'Client paid the deposit' },
-    invoiceOverdue:  { label: 'Invoice overdue',   desc: 'Invoice payment is overdue' },
-    teamInvite:      { label: 'Team invite',        desc: 'Someone invited you to a team' },
+    estimateViewed:   { label: 'Estimate viewed',   desc: 'Client opened your estimate' },
+    estimateSigned:   { label: 'Estimate signed',   desc: 'Client signed your estimate' },
+    estimateDeclined: { label: 'Estimate declined', desc: 'Client declined your estimate' },
+    estimateExpired:  { label: 'Estimate expired',  desc: 'Estimate passed 30 days without response' },
+    depositPaid:      { label: 'Deposit paid',      desc: 'Client paid the deposit' },
+    invoiceOverdue:   { label: 'Invoice overdue',   desc: 'Invoice payment is overdue' },
+    teamInvite:       { label: 'Team invite',       desc: 'Someone invited you to a team' },
   }
-  const pushLabels: Record<string, { label: string; desc: string }> = {
-    pushNew:      { label: 'New estimates',      desc: 'Notify on new estimate activity' },
-    pushPayment:  { label: 'Payments',           desc: 'Deposits and invoice payments' },
-    pushDeclined: { label: 'Estimate declined',  desc: 'Client declined your estimate' },
-    pushExpired:  { label: 'Estimate expired',   desc: 'Estimate passed 30 days without response' },
-    pushTeam:     { label: 'Team activity',      desc: 'Team member actions' },
+  const inappLabels: Record<string, { label: string; desc: string }> = {
+    pushNew:      { label: 'New estimates',     desc: 'Notify on new estimate activity' },
+    pushPayment:  { label: 'Payments',          desc: 'Deposits and invoice payments' },
+    pushDeclined: { label: 'Estimate declined', desc: 'Client declined your estimate' },
+    pushExpired:  { label: 'Estimate expired',  desc: 'Estimate passed 30 days without response' },
+    pushTeam:     { label: 'Team activity',     desc: 'Team member actions' },
   }
 
   return (
@@ -499,19 +533,19 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
           </div>
         </Card>
         <Card>
-          <SectionLabel>Push notifications</SectionLabel>
-          {Object.entries(pushLabels).map(([key, { label, desc }]) => (
+          <SectionLabel>In-app Notifications</SectionLabel>
+          {Object.entries(inappLabels).map(([key, { label, desc }]) => (
             <div key={key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #EEF0F4' }}>
               <div>
                 <div style={{ fontSize: 14, color: '#0A1628' }}>{label}</div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 1 }}>{desc}</div>
               </div>
-              <Toggle on={push[key as keyof typeof push]} onChange={v => setPush(s => ({ ...s, [key]: v }))} />
+              <Toggle on={inapp[key as keyof typeof inapp]} onChange={v => setInapp(s => ({ ...s, [key]: v }))} />
             </div>
           ))}
         </Card>
       </div>
-      <SaveBar dirty={dirty} valid={true} onSave={() => flash('Notifications saved')} onDiscard={() => { setEmail(initial.email); setDigest(initial.digest); setPush(initial.push) }} />
+      <SaveBar dirty={dirty} valid={true} onSave={handleSave} onDiscard={() => { setEmail(saved.email); setDigest(saved.digest); setInapp(saved.inapp) }} />
     </div>
   )
 }
