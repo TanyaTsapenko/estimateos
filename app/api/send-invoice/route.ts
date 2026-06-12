@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       ? supabase.from('estimates').select('*').eq('id', inv.estimate_id).single()
       : Promise.resolve({ data: null }),
     supabase.from('profiles')
-      .select('company_name, first_name, last_name, email, phone')
+      .select('company_name, first_name, last_name, email, phone, company_contact_email, interac_email')
       .eq('id', user.id)
       .single(),
   ])
@@ -138,12 +138,14 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
+  const invoiceReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
   try {
     const { error } = await resend.emails.send({
       from: `${companyName} <noreply@useapexscale.com>`,
       to: [clientEmail],
       subject,
       html,
+      ...(invoiceReplyTo ? { reply_to: invoiceReplyTo } : {}),
     })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   } catch (e: any) {

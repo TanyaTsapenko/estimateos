@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     from: `${companyName} <noreply@useapexscale.com>`,
     to: clientEmail,
     subject: `Your signed contract from ${companyName}`,
+    ...(companyEmail ? { reply_to: companyEmail } : {}),
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
         <h2 style="color: #0A0E1A; margin-bottom: 8px;">Hi ${clientName},</h2>

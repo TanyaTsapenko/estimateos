@@ -589,11 +589,13 @@ ${hdrBlock('Payment complete for', est.client_name || 'Client',
 `)
   }
 
+  const replyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
   const emailPayload: any = {
     from: `${companyName} <noreply@useapexscale.com>`,
     to: [est.client_email],
     subject,
     html,
+    ...(replyTo ? { reply_to: replyTo } : {}),
     ...(type === 'send' && estimateId ? {
       tags: [{ name: 'estimate_id', value: estimateId }],
       open_tracking: true,

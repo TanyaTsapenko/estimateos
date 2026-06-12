@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email')
     .eq('id', est.user_id).single()
 
   const depositPct = est.deposit_percent ?? (prof as any)?.deposit_percent ?? 30
@@ -200,12 +200,14 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
+    const depositReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
     try {
       await resend.emails.send({
         from: `${companyName} <noreply@useapexscale.com>`,
         to: [est.client_email],
         subject: `${depositPct === 100 ? 'Payment' : 'Deposit'} Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
         html,
+        ...(depositReplyTo ? { reply_to: depositReplyTo } : {}),
       })
     } catch (emailError) {
       console.error('[deposit-invoice] Failed to send email:', emailError)

@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase/service'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -11,11 +12,24 @@ export async function POST(req: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
   const signUrl = `${appUrl}/sign/contract/${contractId}`
 
+  let contractReplyTo: string | undefined
+  if (estimateId) {
+    const svc = createServiceClient()
+    const { data: est } = await svc.from('estimates').select('user_id').eq('id', estimateId).single()
+    if (est?.user_id) {
+      const { data: prof } = await svc.from('profiles')
+        .select('company_contact_email, interac_email')
+        .eq('id', est.user_id).single()
+      contractReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
+    }
+  }
+
   try {
     await resend.emails.send({
       from: `${companyName} <noreply@useapexscale.com>`,
       to: clientEmail,
       subject: `Contract from ${companyName} — Ready to Sign`,
+      ...(contractReplyTo ? { reply_to: contractReplyTo } : {}),
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
           <h2 style="color: #0A0E1A; margin-bottom: 8px;">Hi ${clientName || 'there'},</h2>

@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, plan')
+    .select('company_name, first_name, last_name, plan, company_contact_email, interac_email')
     .eq('id', user.id)
     .single()
 
@@ -151,12 +151,14 @@ export async function POST(request: NextRequest) {
 </body>
 </html>`
 
+  const inviteReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
   console.log('[team-invite] sending email to:', inviteeEmail)
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: `${companyName} <noreply@useapexscale.com>`,
     to:   [inviteeEmail],
     subject: `You're invited to join ${companyName}`,
     html,
+    ...(inviteReplyTo ? { reply_to: inviteReplyTo } : {}),
   })
 
   if (emailError) {
