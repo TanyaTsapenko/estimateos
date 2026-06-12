@@ -1625,6 +1625,7 @@ export default function SettingsPage() {
 
   // If current section is restricted, fall back to profile
   useEffect(() => {
+    console.log('Settings effect:', { active, role, permLoading, hiddenIds })
     if (!permLoading && hiddenIds.includes(active)) {
       setActive('profile')
       router.replace('/dashboard/settings?section=profile', { scroll: false })
