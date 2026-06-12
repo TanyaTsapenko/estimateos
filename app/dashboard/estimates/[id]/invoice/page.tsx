@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { ArrowLeft, Info, Send } from 'lucide-react'
 
-interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string }
+interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string; user_id: string }
 interface DepositInvoice { id: string; amount: number; status: string }
 
 export default function CreateInvoicePage() {
@@ -38,7 +38,7 @@ export default function CreateInvoicePage() {
       const { data: { user } } = await supabase.auth.getUser()
       const sanitizedId = user ? user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '') : null
       const [{ data: est }, { data: dep }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status').eq('id', id).single(),
+        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status, user_id').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').maybeSingle(),
         sanitizedId ? supabase.from('profiles').select('interac_email').eq('id', sanitizedId).single() : Promise.resolve({ data: null }),
       ])
@@ -94,7 +94,7 @@ export default function CreateInvoicePage() {
 
       const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
         estimate_id:    estimate.id,
-        user_id:        sanitizedId,
+        user_id:        estimate.user_id,
         invoice_number: num,
         invoice_type:   isFinal ? 'final' : 'standard',
         status:         'pending',
