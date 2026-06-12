@@ -266,8 +266,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         supabase.from('appointments')
           .select('id, appointment_date, appointment_time, status, notes, estimate_id, lead_source, assigned_to')
           .eq('client_id', clientId)
-          .order('appointment_date', { ascending: false })
-          .limit(20),
+          .order('appointment_date', { ascending: false }),
       ])
 
       if (cl) { setClient(cl); setNotes(cl.notes || '') }
@@ -380,7 +379,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     .reduce((acc, p, i, arr) => i === 0 || i === arr.length - 1 ? acc + p[0].toUpperCase() : acc, '')
   const isRepeat   = projects.filter(p => ['signed', 'accepted', 'invoiced', 'paid'].includes(p.estimate?.status || '')).length > 1
   const fullAddr   = [client.address, client.city, client.province, client.postal_code].filter(Boolean).join(', ')
-  const visits     = appointments.length
+  const visits     = appointments.filter(a => a.status !== 'cancelled').length
   const lifetime   = projects.reduce((s, p) => s + (['signed', 'invoiced', 'paid'].includes(p.estimate?.status || '') ? (p.estimate!.total || 0) : 0), 0)
   const totalEsts  = projects.filter(p => p.estimate).length
   const signedEsts = projects.filter(p => ['signed', 'invoiced', 'paid'].includes(p.estimate?.status || '')).length
