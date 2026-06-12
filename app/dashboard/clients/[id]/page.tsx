@@ -40,6 +40,7 @@ const TONE = {
   blue:    { icon: '#2563EB', bg: 'rgba(37,99,235,0.15)',    line: 'rgba(37,99,235,0.3)' },
   green:   { icon: '#16A34A', bg: 'rgba(22,163,74,0.15)',    line: 'rgba(22,163,74,0.3)' },
   red:     { icon: '#C0341A', bg: 'rgba(192,52,26,0.15)',    line: 'rgba(192,52,26,0.3)' },
+  amber:   { icon: '#D97706', bg: 'rgba(217,119,6,0.12)',    line: 'rgba(217,119,6,0.3)' },
   neutral: { icon: '#8A94A6', bg: 'rgba(138,148,166,0.12)',  line: '#E2E8F0' },
 } as const
 
@@ -123,7 +124,7 @@ function StepTimeline({ project, onCreateEstimate }: { project: Project; onCreat
         { icon: <FileText size={13} strokeWidth={1.7} />, label: estimate.estimate_number, sub: fmtCAD(estimate.total || 0), tone: 'blue' },
         { icon: <PenLine size={13} strokeWidth={1.7} />, label: 'Contract signed', sub: contractSigned ? 'Signed' : 'Pending', tone: contractSigned ? 'green' : 'neutral' },
         { icon: <DollarSign size={13} strokeWidth={1.7} />, label: 'Deposit', sub: depositInvoice ? `${fmtCAD(depositInvoice.amount)} · ${depositPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: depositPaid ? 'green' : 'neutral' },
-        { icon: <Receipt size={13} strokeWidth={1.7} />, label: 'Invoice', sub: finalInvoice ? `${fmtCAD(finalInvoice.amount)} · ${finalPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: finalPaid ? 'green' : finalInvoice ? 'red' : 'neutral' },
+        { icon: <Receipt size={13} strokeWidth={1.7} />, label: 'Invoice', sub: finalInvoice ? `${fmtCAD(finalInvoice.amount)} · ${finalPaid ? 'Paid' : 'Unpaid'}` : 'Pending', tone: finalPaid ? 'green' : finalInvoice ? 'amber' : 'neutral' },
       ]
 
   return (
