@@ -51,7 +51,9 @@ export async function GET(req: NextRequest) {
 
     const contractWithClauses = {
       ...contract,
-      contract_clauses: parsedClauses.filter((c: any) => c.enabled !== false),
+      contract_clauses: parsedClauses
+        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+        .filter((c: any) => c.enabled !== false),
       contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 

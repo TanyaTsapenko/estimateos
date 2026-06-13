@@ -235,7 +235,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             <View>
               <Text style={styles.sectionTitle}>Terms & Conditions</Text>
               {clauses.length > 0 ? (
-                clauses.filter((c: any) => c.enabled !== false).map((clause: any, i: number) => (
+                [...clauses].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)).filter((c: any) => c.enabled !== false).map((clause: any, i: number) => (
                   <View key={i} style={styles.clauseItem}>
                     <Text style={styles.clauseTitle}>{clause.title || clause.name}</Text>
                     <Text style={styles.clauseText}>{clause.content || clause.text}</Text>

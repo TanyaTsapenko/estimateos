@@ -9,7 +9,7 @@ import { type ContractClause, DEFAULT_CLAUSES } from '@/lib/contractClauses'
 
 // ── CONSTANTS ────────────────────────────────────
 
-const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-transfer', 'Cheque', 'Financing']
+const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-Transfer', 'Cheque', 'Financing']
 
 // ── SHARED PRIMITIVES ────────────────────────────
 
@@ -115,7 +115,7 @@ export default function ContractSettingsPage() {
   const [clauseToDelete,     setClauseToDelete]     = useState<string | null>(null)
   const [projectManager,     setProjectManager]     = useState('')
   const [completionTimeframe, setCompletionTimeframe] = useState('10-16 weeks from the date of signed contract')
-  const [paymentMethods,     setPaymentMethods]     = useState<string[]>(['E-transfer', 'Cheque'])
+  const [paymentMethods,     setPaymentMethods]     = useState<string[]>(['E-Transfer', 'Cheque'])
 
   const [savedClauses,              setSavedClauses]              = useState('')
   const [savedWarrantyPeriod,       setSavedWarrantyPeriod]       = useState('1 year')
@@ -138,6 +138,7 @@ export default function ContractSettingsPage() {
 
   const [userId,      setUserId]      = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
+  const [sigKey,      setSigKey]      = useState(0)
   const canvasRef     = useRef<HTMLCanvasElement>(null)
   const [isDrawing,   setIsDrawing]   = useState(false)
   const [redrawMode,  setRedrawMode]  = useState(false)
@@ -166,7 +167,8 @@ export default function ContractSettingsPage() {
           const dp  = (prof as any)?.deposit_percent     || 10
           const pm  = (prof as any)?.project_manager     ?? ''
           const ct  = (prof as any)?.completion_timeframe || '10-16 weeks from the date of signed contract'
-          const pms = (prof as any)?.payment_methods?.length ? (prof as any).payment_methods : ['E-transfer', 'Cheque']
+          const rawPms: string[] = (prof as any)?.payment_methods?.length ? (prof as any).payment_methods : ['E-Transfer', 'Cheque']
+          const pms = rawPms.map(m => m.toLowerCase() === 'e-transfer' ? 'E-Transfer' : m)
           const dt  = (prof as any)?.deposit_timing || 'signing'
           setWarrantyPeriod(wp);      setSavedWarrantyPeriod(wp)
           setDepositRequired(dr);     setSavedDepositRequired(dr)
@@ -291,9 +293,10 @@ export default function ContractSettingsPage() {
     const { error } = await supabase.storage.from('signatures').upload(path, blob, { upsert: true, contentType: 'image/png' })
     if (error) { flash('Save failed'); return }
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path)
-    const url = urlData.publicUrl + '?t=' + Date.now()
+    const url = urlData.publicUrl
     await supabase.from('profiles').update({ signature_url: url }).eq('id', userId)
     setSignatureUrl(url)
+    setSigKey(Date.now())
     setRedrawMode(false)
     flash('Signature saved')
   }
@@ -586,7 +589,7 @@ export default function ContractSettingsPage() {
           {signatureUrl && !redrawMode ? (
             <>
               <div style={{ background: '#F8FAFC', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, minHeight: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                <img src={signatureUrl} alt="Signature" style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain' }} />
+                <img src={`${signatureUrl}?v=${sigKey}`} alt="Signature" style={{ maxHeight: 100, maxWidth: '100%', objectFit: 'contain' }} />
               </div>
               <button
                 onClick={() => setRedrawMode(true)}

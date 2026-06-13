@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, cancellation_policy, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
@@ -219,7 +219,7 @@ ${(() => {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, contract_clauses, deposit_timing')
+    .select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing')
     .eq('id', user.id)
     .single()
 
@@ -237,10 +237,6 @@ ${(() => {
   const p = prof as any
   const completionTimeframe: string | null = p?.completion_timeframe || null
   const paymentMethods: string[] = p?.payment_methods || []
-  const customerResponsibilities: string | null = p?.customer_responsibilities || null
-  const buyerRightToCancel: string | null = p?.buyer_right_to_cancel || null
-  const damageDisclaimer: string | null = p?.damage_disclaimer || null
-  const permitsResponsibility: string | null = p?.permits_responsibility || null
   const projectManager: string | null = p?.project_manager || null
 
   function clauseBlock(title: string, body: string | null): string {
