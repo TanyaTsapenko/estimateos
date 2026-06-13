@@ -105,6 +105,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             {company.phone && <Text style={styles.companyContact}>{company.phone}</Text>}
             {company.email && <Text style={styles.companyContact}>{company.email}</Text>}
             {company.address && <Text style={styles.companyContact}>{company.address}{company.city ? `, ${company.city}` : ''}{company.province ? `, ${company.province}` : ''}</Text>}
+            {company.gst_hst_number && <Text style={styles.companyContact}>GST/HST #: {company.gst_hst_number}</Text>}
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>SIGNED CONTRACT</Text>
@@ -124,6 +125,8 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             {company.address && <Text style={styles.colDetail}>{company.address}, {company.city}, {company.province}</Text>}
             {company.licence && <Text style={styles.colDetail}>Lic# {company.licence}</Text>}
             {company.insurance && <Text style={styles.colDetail}>Ins# {company.insurance}</Text>}
+            {company.wsib_number && <Text style={styles.colDetail}>WSIB/WCB #: {company.wsib_number}</Text>}
+            {company.gst_hst_number && <Text style={styles.colDetail}>GST/HST #: {company.gst_hst_number}</Text>}
           </View>
           <View style={styles.col}>
             <Text style={styles.colTitle}>Client</Text>
@@ -258,6 +261,8 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
               <View style={styles.signatureLine} />
               <Text style={styles.signatureName}>{company.company_name}</Text>
               <Text style={styles.signatureDate}>{formatDate(contract.signed_at || contract.created_at)}</Text>
+              {company.signing_rep_name && <Text style={styles.signatureName}>{company.signing_rep_name}</Text>}
+              {company.signing_rep_title && <Text style={styles.signatureDate}>{company.signing_rep_title}</Text>}
             </View>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Client</Text>

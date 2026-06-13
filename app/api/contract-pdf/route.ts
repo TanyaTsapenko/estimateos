@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
       admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing, wsib_number, gst_hst_number, signing_rep_name, signing_rep_title').eq('id', con.profile_id).single(),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 <div class="header">
   <div>
     ${p?.logo_url ? `<img src="${p.logo_url}" alt="${companyName}" class="logo-img" />` : `<div class="logo-text">Apex<span>Scale</span></div>`}
-    <div class="company-meta">${companyName}${location ? `<br>${location}` : ''}${p?.phone ? `<br>${p.phone}` : ''}${p?.website ? `<br>${p.website}` : ''}${p?.licence ? `<br>Lic. ${p.licence}` : ''}${p?.insurance ? `<br>Ins. ${p.insurance}` : ''}</div>
+    <div class="company-meta">${companyName}${location ? `<br>${location}` : ''}${p?.phone ? `<br>${p.phone}` : ''}${p?.website ? `<br>${p.website}` : ''}${p?.licence ? `<br>Lic. ${p.licence}` : ''}${p?.insurance ? `<br>Ins. ${p.insurance}` : ''}${p?.wsib_number ? `<br>WSIB/WCB #: ${p.wsib_number}` : ''}${p?.gst_hst_number ? `<br>GST/HST #: ${p.gst_hst_number}` : ''}</div>
   </div>
   <div class="doc-info">
     <div class="doc-title">Signed Contract</div>
@@ -186,6 +186,8 @@ ${(() => {
       <div style="border-bottom:1.5px solid #0A0E1A;margin-bottom:6px"></div>
       <div class="sig-name">${con.company_name || companyName}</div>
       <div class="sig-name">${createdFmt}</div>
+      ${p?.signing_rep_name ? `<div class="sig-name" style="margin-top:4px">${p.signing_rep_name}</div>` : ''}
+      ${p?.signing_rep_title ? `<div class="sig-label">${p.signing_rep_title}</div>` : ''}
     </div>
     <div>
       <div class="sig-label">Client</div>
@@ -198,7 +200,7 @@ ${(() => {
 </div>
 
 <div class="footer">
-  <span>${companyName}${p?.licence ? ` · Lic. ${p.licence}` : ''}</span>
+  <span>${companyName}${p?.licence ? ` · Lic. ${p.licence}` : ''}${p?.gst_hst_number ? ` · GST/HST #: ${p.gst_hst_number}` : ''}</span>
   <span>Powered by ApexScale &middot; useapexscale.com</span>
 </div>
 <script>window.onload = function(){ window.print(); }</script>
@@ -219,7 +221,7 @@ ${(() => {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing')
+    .select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, contract_terms, signature_url, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing, wsib_number, gst_hst_number, signing_rep_name, signing_rep_title')
     .eq('id', user.id)
     .single()
 
@@ -299,7 +301,7 @@ ${(() => {
       ? `<img src="${prof.logo_url}" alt="${companyName}" class="logo-img" />`
       : `<div class="logo-text">Apex<span>Scale</span></div>`}
     <div class="company-meta">
-      ${companyName}${location ? `<br>${location}` : ''}${prof.phone ? `<br>${prof.phone}` : ''}${prof.website ? `<br>${prof.website}` : ''}${prof.licence ? `<br>Lic. ${prof.licence}` : ''}${prof.insurance ? `<br>Ins. ${prof.insurance}` : ''}
+      ${companyName}${location ? `<br>${location}` : ''}${prof.phone ? `<br>${prof.phone}` : ''}${prof.website ? `<br>${prof.website}` : ''}${prof.licence ? `<br>Lic. ${prof.licence}` : ''}${prof.insurance ? `<br>Ins. ${prof.insurance}` : ''}${p?.wsib_number ? `<br>WSIB/WCB #: ${p.wsib_number}` : ''}${p?.gst_hst_number ? `<br>GST/HST #: ${p.gst_hst_number}` : ''}
     </div>
   </div>
   <div class="doc-info">
@@ -360,10 +362,12 @@ ${(prof as any)?.signature_url ? `
   <div style="font-size:10px;color:#94A3B8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">Authorized by</div>
   <img src="${(prof as any).signature_url}" style="max-height:50px;max-width:180px;object-fit:contain" alt="Contractor signature" />
   <div style="font-size:12px;color:#475569;margin-top:6px">${companyName || ''}</div>
+  ${p?.signing_rep_name ? `<div style="font-size:12px;color:#475569;margin-top:2px">${p.signing_rep_name}</div>` : ''}
+  ${p?.signing_rep_title ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">${p.signing_rep_title}</div>` : ''}
 </div>` : ''}
 
 <div class="footer">
-  <span>${companyName}${prof.licence ? ` · Lic. ${prof.licence}` : ''}${prof.insurance ? ` · Ins. ${prof.insurance}` : ''}</span>
+  <span>${companyName}${prof.licence ? ` · Lic. ${prof.licence}` : ''}${prof.insurance ? ` · Ins. ${prof.insurance}` : ''}${p?.gst_hst_number ? ` · GST/HST #: ${p.gst_hst_number}` : ''}</span>
   <span style="font-size:10px;color:#CBD5E1">Powered by ApexScale &middot; useapexscale.com</span>
 </div>
 <script>window.onload = function(){ window.print(); }</script>
