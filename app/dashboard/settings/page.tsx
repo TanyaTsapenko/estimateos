@@ -1295,10 +1295,22 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
           {/* Warranty period */}
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Warranty Period</div>
-            <select value={warrantyPeriod} onChange={e => setWarrantyPeriod(e.target.value)}
+            <select
+              value={['1 year', '2 years', '5 years', '10 years'].includes(warrantyPeriod) ? warrantyPeriod : '__custom__'}
+              onChange={e => setWarrantyPeriod(e.target.value === '__custom__' ? '' : e.target.value)}
               style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}>
               {['1 year', '2 years', '5 years', '10 years'].map(o => <option key={o} value={o}>{o}</option>)}
+              <option value="__custom__">Custom...</option>
             </select>
+            {!['1 year', '2 years', '5 years', '10 years'].includes(warrantyPeriod) && (
+              <input
+                type="text"
+                value={warrantyPeriod}
+                onChange={e => setWarrantyPeriod(e.target.value)}
+                placeholder="e.g. Lifetime, 6 months, 3 years on parts"
+                style={{ marginTop: 8, width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+              />
+            )}
           </div>
 
           {/* Deposit */}
