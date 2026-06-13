@@ -35,6 +35,7 @@ interface Opening {
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
   glass_type: string | null; core_type: string | null; handle_type: string | null
+  custom_shape_label: string | null; custom_colour_label: string | null
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
@@ -88,7 +89,7 @@ export default function ClientEstimatePage() {
       else setDocStatus('active')
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type, custom_shape_label, custom_colour_label').eq('estimate_id', id).order('sort_order'),
         supabase.from('profiles').select('company_name, address, city, province, postal, phone, logo_url, contract_terms, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
@@ -269,12 +270,12 @@ export default function ClientEstimatePage() {
                     {/* Specs */}
                     <div style={{ flex: 1, padding: '10px 12px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
-                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{COLOUR_LABELS[op.colour] || op.colour}</span></div>}
+                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.colour === 'custom' ? (op.custom_colour_label || 'Custom colour') : (COLOUR_LABELS[op.colour] || op.colour)}</span></div>}
                         {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
                         {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
                         {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
                         {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{SHAPE_LABELS[op.shape] || op.shape}</span></div>}
+                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.shape === 'custom' ? (op.custom_shape_label || 'Custom shape') : (SHAPE_LABELS[op.shape] || op.shape)}</span></div>}
                         {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
                         {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.brand}</span></div>}
                         {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.width_in}" × {op.height_in}"</span></div>}

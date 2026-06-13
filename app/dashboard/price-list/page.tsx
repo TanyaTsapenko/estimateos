@@ -13,6 +13,7 @@ interface PriceItem {
   base: number
   lab: number
   category: string
+  description: string
 }
 
 const PRESET_CATEGORIES = ['Windows', 'Doors', 'Other', 'Hardware']
@@ -54,7 +55,9 @@ export default function PriceListPage() {
   const [modalLab,            setModalLab]            = useState('')
   const [modalCategory,       setModalCategory]       = useState('Windows')
   const [modalCustomCategory, setModalCustomCategory] = useState('')
+  const [modalDescription,    setModalDescription]    = useState('')
   const [modalSaving,         setModalSaving]         = useState(false)
+  const [surchargeSearch,     setSurchargeSearch]     = useState('')
 
   useEffect(() => {
     async function load() {
@@ -100,6 +103,7 @@ export default function PriceListPage() {
           base:        r.base_price   || 0,
           lab:         r.labour_price || 0,
           category:    r.category     || 'Other',
+          description: (r as any).description || '',
         })))
       }
       if (ownerFlag) {
@@ -122,6 +126,7 @@ export default function PriceListPage() {
     setModalName('')
     setModalBase('')
     setModalLab('')
+    setModalDescription('')
     const isPreset = PRESET_CATEGORIES.includes(defaultCategory)
     setModalCategory(isPreset ? defaultCategory : 'new')
     setModalCustomCategory(isPreset ? '' : defaultCategory)
@@ -134,6 +139,7 @@ export default function PriceListPage() {
     setModalName(item.label)
     setModalBase(item.base ? String(item.base) : '')
     setModalLab(item.lab ? String(item.lab) : '')
+    setModalDescription(item.description || '')
     const isPreset = PRESET_CATEGORIES.includes(item.category)
     setModalCategory(isPreset ? item.category : 'new')
     setModalCustomCategory(isPreset ? '' : item.category)
@@ -187,6 +193,7 @@ export default function PriceListPage() {
           base_price:   base,
           labour_price: lab,
           category,
+          description:  modalDescription.trim() || null,
           updated_at:   new Date().toISOString(),
         })
         .eq('user_id', userId)
@@ -194,7 +201,7 @@ export default function PriceListPage() {
       if (e) { setError(e.message); setModalSaving(false); return }
       setItems(prev =>
         prev.map(it => it.key === editingItem.key
-          ? { ...it, label: modalName.trim(), base, lab, category }
+          ? { ...it, label: modalName.trim(), base, lab, category, description: modalDescription.trim() }
           : it
         ).sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label))
       )
@@ -209,12 +216,13 @@ export default function PriceListPage() {
           base_price:   base,
           labour_price: lab,
           category,
+          description:  modalDescription.trim() || null,
           type:         'custom',
           updated_at:   new Date().toISOString(),
         })
       if (e) { setError(e.message); setModalSaving(false); return }
       setItems(prev =>
-        [...prev, { key, label: modalName.trim(), base, lab, category }]
+        [...prev, { key, label: modalName.trim(), base, lab, category, description: modalDescription.trim() }]
           .sort((a, b) => a.category.localeCompare(b.category) || a.label.localeCompare(b.label))
       )
     }
@@ -302,6 +310,18 @@ export default function PriceListPage() {
                 onChange={e => setModalName(e.target.value)}
                 placeholder="e.g. Casement Window"
                 style={inputStyle}
+              />
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Description <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span></div>
+              <textarea
+                value={modalDescription}
+                onChange={e => setModalDescription(e.target.value)}
+                placeholder="e.g. Includes installation and hardware"
+                rows={2}
+                style={{ ...inputStyle, resize: 'vertical', minHeight: 60 }}
               />
             </div>
 
@@ -530,6 +550,7 @@ export default function PriceListPage() {
                       <div style={{ fontSize: 14, fontWeight: 600, color: isHardware ? '#64748B' : '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {item.label}
                       </div>
+                      {item.description && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</div>}
                     </div>
                     <div style={{ marginRight: isOwner ? 14 : 0, flexShrink: 0 }}>
                       <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(item.base + item.lab)}</span>
@@ -559,6 +580,14 @@ export default function PriceListPage() {
 
         {activeTab === 'surcharges' && (
           <div style={{ padding: '12px 16px 100px' }}>
+            <div style={{ marginBottom: 12 }}>
+              <input
+                value={surchargeSearch}
+                onChange={e => setSurchargeSearch(e.target.value)}
+                placeholder="Search surcharges…"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: F, color: '#0A1628', background: '#fff', outline: 'none' }}
+              />
+            </div>
             {[
               { label: 'Shape', fields: [
                 { key: 'arch_pct', label: 'Arch', unit: '%' },
@@ -586,7 +615,11 @@ export default function PriceListPage() {
                 { key: 'frame_repair', label: 'Needs repair', unit: '$' },
                 { key: 'frame_rotted', label: 'Rotted frame', unit: '$' },
               ]},
-            ].map(({ label, fields }) => (
+            ].filter(({ label, fields }) => {
+              if (!surchargeSearch.trim()) return true
+              const q = surchargeSearch.toLowerCase()
+              return label.toLowerCase().includes(q) || fields.some(f => f.label.toLowerCase().includes(q))
+            }).map(({ label, fields }) => (
               <div key={label} style={{ marginBottom: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', padding: '14px 2px 8px' }}>
                   <div style={{ width: 3, height: 14, background: '#2563EB', borderRadius: 2, marginRight: 8 }} />

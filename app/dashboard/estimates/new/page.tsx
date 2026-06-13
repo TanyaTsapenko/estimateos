@@ -130,6 +130,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
   glass_type: '', core_type: '', handle_type: '', combo_sections: null,
+  custom_shape_label: '', custom_colour_label: '',
 }
 
 function getTypeSpecificOptions(type: string) {
@@ -237,6 +238,26 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
           </select></div>
       </div>
+      {op.shape === 'custom' && (
+        <div style={{ marginBottom: 8 }}>
+          <input
+            value={op.custom_shape_label}
+            onChange={e => updateOpening(op.id, 'custom_shape_label', e.target.value)}
+            placeholder="Describe the shape (e.g. Half-circle, Triangle…)"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
+          />
+        </div>
+      )}
+      {op.colour === 'custom' && (
+        <div style={{ marginBottom: 8 }}>
+          <input
+            value={op.custom_colour_label}
+            onChange={e => updateOpening(op.id, 'custom_colour_label', e.target.value)}
+            placeholder="Describe the colour (e.g. Bronze, Dark green…)"
+            style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
+          />
+        </div>
+      )}
 
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Glass</label>
@@ -713,6 +734,8 @@ function NewEstimateForm() {
             glass_type: op.glass_type || '', core_type: op.core_type || '',
             handle_type: (op as any).handle_type || '',
             combo_sections: (op as any).combo_sections || null,
+            custom_shape_label: (op as any).custom_shape_label || '',
+            custom_colour_label: (op as any).custom_colour_label || '',
           })))
         }
       } else if (apptId) {
@@ -906,6 +929,8 @@ function NewEstimateForm() {
       core_type: op.core_type || '',
       handle_type: op.handle_type || '',
       combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
+      custom_shape_label: op.custom_shape_label || null,
+      custom_colour_label: op.custom_colour_label || null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, customPrices) * 100) / 100,
       total_cost: Math.round(opCost(op, customPrices) * 100) / 100,
       sort_order: i,

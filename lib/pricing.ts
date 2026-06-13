@@ -74,6 +74,8 @@ export interface Opening {
   core_type: string
   handle_type: string | null
   combo_sections: { type: string; width: number }[] | null
+  custom_shape_label: string
+  custom_colour_label: string
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
