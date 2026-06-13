@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
+import { SHOW_GBB } from '@/lib/flags'
 
 function Card({ children, padding = 22 }: { children: React.ReactNode; padding?: number }) {
   return (
@@ -132,21 +133,23 @@ export default function QuoteSettingsPage() {
 
       <div style={{ padding: '20px 20px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        <Card>
-          <SectionLabel>Pricing</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best pricing</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options on estimates</div>
+        {SHOW_GBB && (
+          <Card>
+            <SectionLabel>Pricing</SectionLabel>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best pricing</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options on estimates</div>
+              </div>
+              <div
+                onClick={() => setPricingMode(prev => prev === 'gbb' ? 'single' : 'gbb')}
+                style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0, background: pricingMode === 'gbb' ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+              >
+                <div style={{ position: 'absolute', top: 3, left: pricingMode === 'gbb' ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+              </div>
             </div>
-            <div
-              onClick={() => setPricingMode(prev => prev === 'gbb' ? 'single' : 'gbb')}
-              style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0, background: pricingMode === 'gbb' ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
-            >
-              <div style={{ position: 'absolute', top: 3, left: pricingMode === 'gbb' ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         <Card>
           <SectionLabel>Defaults</SectionLabel>

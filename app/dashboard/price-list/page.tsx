@@ -26,7 +26,7 @@ interface PriceItem {
   tier_best: Tier | null
 }
 
-const PRESET_CATEGORIES = ['Windows', 'Doors', 'Other']
+const PRESET_CATEGORIES = ['Windows', 'Doors', 'Other', 'Hardware']
 const F = '"Inter", system-ui, -apple-system, sans-serif'
 
 const inputStyle: React.CSSProperties = {
@@ -263,11 +263,39 @@ export default function PriceListPage() {
 
   async function saveModal() {
     if (!modalName.trim() || !userId) return
-    const category = modalCategory === 'new'
-      ? (modalCustomCategory.trim() || 'Other')
-      : modalCategory
+
+    // Empty custom category
+    if (modalCategory === 'new' && !modalCustomCategory.trim()) {
+      setError('Please enter a category name.')
+      return
+    }
+
+    const rawCategory = modalCategory === 'new' ? modalCustomCategory.trim() : modalCategory
+    // Normalize to an existing category name (case-insensitive) to prevent near-duplicate categories
+    const allCategories = [...PRESET_CATEGORIES, ...Object.keys(grouped)]
+    const matchedCategory = allCategories.find(c => c.toLowerCase() === rawCategory.toLowerCase())
+    const category = matchedCategory || rawCategory
+
     const base = parseFloat(modalBase) || 0
     const lab  = parseFloat(modalLab)  || 0
+
+    // Negative price check
+    if (!modalIsTiered && (base < 0 || lab < 0)) {
+      setError('Price cannot be negative.')
+      return
+    }
+
+    // Duplicate item name in same category
+    const duplicateExists = items.some(it =>
+      it.label.toLowerCase() === modalName.trim().toLowerCase() &&
+      it.category.toLowerCase() === category.toLowerCase() &&
+      it.key !== (editingItem?.key ?? '')
+    )
+    if (duplicateExists) {
+      setError('An item with this name already exists in this category.')
+      return
+    }
+
     setModalSaving(true)
     setError('')
 
@@ -325,10 +353,16 @@ export default function PriceListPage() {
   }
 
   const [flashMsg, setFlashMsg] = useState('')
+  const [flashErr, setFlashErr] = useState('')
   function flash(msg: string) { setFlashMsg(msg); setTimeout(() => setFlashMsg(''), 2500) }
+  function flashError(msg: string) { setFlashErr(msg); setTimeout(() => setFlashErr(''), 3000) }
 
   async function saveSurchargesHandler() {
     if (!userId) return
+    if (Object.values(surcharges).some(v => v < 0)) {
+      flashError('Surcharge values cannot be negative.')
+      return
+    }
     setSavingSurcharges(true)
     await supabase.from('profiles').update({ surcharges }).eq('id', userId)
     setSavingSurcharges(false)
@@ -569,6 +603,11 @@ export default function PriceListPage() {
             {flashMsg}
           </div>
         )}
+        {flashErr && (
+          <div style={{ margin: '10px 16px 0', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#DC2626' }}>
+            {flashErr}
+          </div>
+        )}
 
         {/* ── BODY ── */}
         {activeTab === 'items' && <div style={{ padding: '8px 16px 100px' }}>
@@ -633,7 +672,7 @@ export default function PriceListPage() {
                     onClick={() => openAddModal(category)}
                     style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: F, padding: '4px 0' }}
                   >
-                    + Add item
+                    + Add Item
                   </button>
                 )}
               </div>
