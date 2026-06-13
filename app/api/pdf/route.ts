@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getColourLabel } from '@/lib/openingLabels'
 
 const INSTALL_LABELS: Record<string, string> = {
   insert: 'Retrofit', retrofit: 'Retrofit', fullframe: 'Full Frame', stud_to_stud: 'Stud to Stud',
@@ -239,7 +240,7 @@ export async function GET(request: NextRequest) {
       const subParts = [
         op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null,
         installLabel,
-        op.colour && op.colour !== 'white' ? op.colour.charAt(0).toUpperCase() + op.colour.slice(1) : null,
+        op.colour && op.colour !== 'white' ? getColourLabel(op) : null,
         op.room || null,
       ].filter(Boolean)
       return `

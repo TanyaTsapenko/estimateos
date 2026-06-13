@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { substituteProvince } from '@/lib/provinces'
+import { getColourLabel } from '@/lib/openingLabels'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -152,7 +153,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
               <WindowDiagramPdf type={op.type} size={100} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>
-                <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour ? ` · ${op.colour}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
+                <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour && op.colour !== 'white' ? ` · ${getColourLabel(op)}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
                 {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
               </View>
             </View>

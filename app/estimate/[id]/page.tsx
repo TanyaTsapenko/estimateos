@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
@@ -270,12 +271,12 @@ export default function ClientEstimatePage() {
                     {/* Specs */}
                     <div style={{ flex: 1, padding: '10px 12px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
-                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.colour === 'custom' ? (op.custom_colour_label || 'Custom colour') : (COLOUR_LABELS[op.colour] || op.colour)}</span></div>}
+                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getColourLabel(op)}</span></div>}
                         {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
                         {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
                         {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
                         {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.shape === 'custom' ? (op.custom_shape_label || 'Custom shape') : (SHAPE_LABELS[op.shape] || op.shape)}</span></div>}
+                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getShapeLabel(op)}</span></div>}
                         {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
                         {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.brand}</span></div>}
                         {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.width_in}" × {op.height_in}"</span></div>}

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 import WindowDiagram from '@/components/WindowDiagram'
@@ -420,12 +421,12 @@ export default function EstimateDetailPage() {
                   <div style={{ flex: 1, padding: '10px 12px' }}>
                     {/* Grid specs */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
-                      {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.colour === 'custom' ? (op.custom_colour_label || 'Custom colour') : (COLOUR_LABELS[op.colour] || op.colour)}</span></div>}
+                      {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{getColourLabel(op)}</span></div>}
                       {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
                       {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{INSTALL_LABELS2[op.install] || op.install}</span></div>}
                       {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
                       {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                      {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.shape === 'custom' ? (op.custom_shape_label || 'Custom shape') : (SHAPE_LABELS[op.shape] || op.shape)}</span></div>}
+                      {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{getShapeLabel(op)}</span></div>}
                       {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
                       {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.brand}</span></div>}
                       {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.width_in}" × {op.height_in}"</span></div>}

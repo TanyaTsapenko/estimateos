@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
+import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
@@ -136,8 +137,8 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
                   </View>
                   <View style={styles.openingDetails}>
                     <Text style={styles.openingDetail}>Size: {op.width_in}" × {op.height_in}"</Text>
-                    {op.colour && op.colour !== 'white' && <Text style={styles.openingDetail}>Colour: {op.colour === 'custom' ? (op.custom_colour_label || 'Custom colour') : ({ black: 'Black', grey: 'Grey' }[op.colour as string] || op.colour)}</Text>}
-                    {op.shape && op.shape !== 'rect' && <Text style={styles.openingDetail}>Shape: {op.shape === 'custom' ? (op.custom_shape_label || 'Custom shape') : ({ arch: 'Arch' }[op.shape as string] || op.shape)}</Text>}
+                    {op.colour && op.colour !== 'white' && <Text style={styles.openingDetail}>Colour: {getColourLabel(op)}</Text>}
+                    {op.shape && op.shape !== 'rect' && <Text style={styles.openingDetail}>Shape: {getShapeLabel(op)}</Text>}
                     {op.material && <Text style={styles.openingDetail}>Material: {op.material}</Text>}
                     {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {op.glass}</Text>}
                     {op.floor && op.floor !== 'first' && <Text style={styles.openingDetail}>Floor: {op.floor}</Text>}

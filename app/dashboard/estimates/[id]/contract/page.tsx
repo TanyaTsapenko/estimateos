@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 
 interface Opening {
@@ -15,6 +16,7 @@ interface Opening {
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
   glass_type: string | null; core_type: string | null
+  custom_colour_label: string | null; custom_shape_label: string | null
 }
 interface Profile {
   id: string
@@ -437,12 +439,12 @@ export default function ContractPage() {
                       {/* Specs */}
                       <div style={{ flex: 1, padding: '10px 12px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', marginBottom: 8 }}>
-                          {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{COLOUR_LABELS[op.colour] || op.colour}</span></div>}
+                          {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getColourLabel(op)}</span></div>}
                           {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
                           {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
                           {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
                           {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                          {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{SHAPE_LABELS[op.shape] || op.shape}</span></div>}
+                          {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getShapeLabel(op)}</span></div>}
                           {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
                           {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{op.brand}</span></div>}
                           {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{op.width_in}" × {op.height_in}"</span></div>}
