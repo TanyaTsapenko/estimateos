@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { substituteProvince } from '@/lib/provinces'
 
 export async function GET(request: NextRequest) {
   const contractId = request.nextUrl.searchParams.get('contractId')
@@ -159,7 +160,7 @@ ${(() => {
       </div>
       <div>
         <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">${c.title}</div>
-        <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${c.content.replace(/\n/g, '<br>')}</div>
+        <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${substituteProvince(c.content, p?.province).replace(/\n/g, '<br>')}</div>
       </div>
     </div>`).join('')}
 </div>`
@@ -323,7 +324,7 @@ ${(() => {
     </div>
     <div>
       <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">${c.title}</div>
-      <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${c.content.replace(/\n/g, '<br>')}</div>
+      <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${substituteProvince(c.content, p?.province).replace(/\n/g, '<br>')}</div>
     </div>
   </div>`).join('')}
 </div>`

@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
+import { substituteProvince } from '@/lib/provinces'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -242,7 +243,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
                 [...clauses].sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0)).filter((c: any) => c.enabled !== false).map((clause: any, i: number) => (
                   <View key={i} style={styles.clauseItem}>
                     <Text style={styles.clauseTitle}>{clause.title || clause.name}</Text>
-                    <Text style={styles.clauseText}>{clause.content || clause.text}</Text>
+                    <Text style={styles.clauseText}>{substituteProvince(clause.content || clause.text || '', company.province)}</Text>
                   </View>
                 ))
               ) : contract.contract_terms_snapshot ? (

@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { substituteProvince } from '@/lib/provinces'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 import { Download } from 'lucide-react'
 
@@ -388,7 +389,7 @@ export default function SignContractPage() {
                 <CardHeader title="Terms & Conditions" />
                 <div style={{ padding: '14px 16px' }}>
                   {enabledClauses.map((clause: any) => (
-                    <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                    <CheckRow key={clause.id} text={`${clause.title}: ${substituteProvince(clause.content, profile?.province)}`} />
                   ))}
                 </div>
               </div>
@@ -738,7 +739,7 @@ export default function SignContractPage() {
                 <CardHeader title="Terms & Conditions" />
                 <div style={{ padding: '14px 16px' }}>
                   {enabledClauses.map((clause: any) => (
-                    <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                    <CheckRow key={clause.id} text={`${clause.title}: ${substituteProvince(clause.content, profile?.province)}`} />
                   ))}
                 </div>
               </div>
