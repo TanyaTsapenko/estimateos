@@ -255,8 +255,8 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
           <View style={styles.signaturesSection}>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Contractor</Text>
-              {company.signature_url && (
-                <Image style={styles.signatureImage} src={company.signature_url} />
+              {(contract.contractor_signature_url || company.signature_url) && (
+                <Image style={styles.signatureImage} src={contract.contractor_signature_url || company.signature_url} />
               )}
               <View style={styles.signatureLine} />
               <Text style={styles.signatureName}>{company.company_name}</Text>

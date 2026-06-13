@@ -360,6 +360,7 @@ export default function ContractSettingsPage() {
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase' }}>Deposit</div>
               <Toggle on={depositRequired} onChange={setDepositRequired} />
             </div>
+            <div style={{ fontSize: 12, color: '#64748B', marginTop: 6, marginBottom: depositRequired ? 10 : 0 }}>This sets your default deposit percentage for new estimates. You can adjust or remove the deposit on individual projects when creating an estimate.</div>
             {depositRequired && (
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Deposit Amount</div>

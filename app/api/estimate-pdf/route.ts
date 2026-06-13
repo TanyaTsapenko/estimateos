@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const [{ data: openings, error: opErr }, { data: company, error: compErr }] = await Promise.all([
       admin.from('estimate_openings').select('*').eq('estimate_id', estimateId).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, insurance, logo_url, signature_url, warranty_period, completion_timeframe, project_manager, interac_email').eq('id', estimate.user_id).maybeSingle(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, insurance, logo_url, signature_url, warranty_period, warranty_summary, completion_timeframe, project_manager, interac_email').eq('id', estimate.user_id).maybeSingle(),
     ])
 
     console.log('[estimate-pdf] openings:', openings?.length, 'opErr:', opErr?.message)

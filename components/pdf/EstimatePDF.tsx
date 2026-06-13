@@ -228,6 +228,14 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           </View>
         )}
 
+        {/* Warranty */}
+        {company.warranty_summary && (
+          <View style={{ marginTop: 16 }}>
+            <Text style={styles.sectionTitle}>Warranty</Text>
+            <Text style={{ fontSize: 9, color: '#374151', lineHeight: 1.5 }}>{company.warranty_summary}</Text>
+          </View>
+        )}
+
         {/* Valid until */}
         <View style={styles.validBox}>
           <Text style={styles.validText}>This estimate is valid for 30 days until {formatDate(estimate.valid_until || new Date().toISOString())}. Prices subject to change after expiry.</Text>
