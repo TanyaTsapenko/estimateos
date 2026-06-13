@@ -134,6 +134,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             {estimate.client_phone && <Text style={styles.colDetail}>{estimate.client_phone}</Text>}
             {estimate.client_email && <Text style={styles.colDetail}>{estimate.client_email}</Text>}
             {estimate.client_address && <Text style={styles.colDetail}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.client_postal_code}</Text>}
+            {estimate.job_site_same_as_client === false && estimate.job_site_address && <Text style={styles.colDetail}>Job Site: {estimate.job_site_address}, {estimate.job_site_city}, {estimate.job_site_province} {estimate.job_site_postal_code}</Text>}
           </View>
         </View>
 

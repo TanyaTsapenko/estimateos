@@ -122,6 +122,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
 interface ClientInfo {
   client_name: string; client_email: string; client_phone: string
   client_address: string; client_city: string; client_province: string; client_postal_code: string
+  job_site_address: string; job_site_city: string; job_site_province: string; job_site_postal_code: string
 }
 
 const TIERS = [
@@ -677,6 +678,7 @@ function NewEstimateForm() {
     client_phone: '',
     client_address: searchParams.get('client_address') || '',
     client_city: '', client_province: 'AB', client_postal_code: '',
+    job_site_address: '', job_site_city: '', job_site_province: '', job_site_postal_code: '',
   })
 
   const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
@@ -689,6 +691,7 @@ function NewEstimateForm() {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
+  const [jobSiteSameAsClient, setJobSiteSameAsClient] = useState(true)
   const userIdRef = useRef<string | null>(null)
 
   const setCErr = (k: keyof ClientErrors, v: string | null) => setClientErrors(p => ({ ...p, [k]: v }))
@@ -774,7 +777,12 @@ function NewEstimateForm() {
             client_city:        est.client_city || '',
             client_province:    est.client_province || 'AB',
             client_postal_code: (est as any).client_postal_code || '',
+            job_site_address:   (est as any).job_site_address || '',
+            job_site_city:      (est as any).job_site_city || '',
+            job_site_province:  (est as any).job_site_province || '',
+            job_site_postal_code: (est as any).job_site_postal_code || '',
           })
+          setJobSiteSameAsClient((est as any).job_site_same_as_client !== false)
           setTier(est.tier || 'better')
           setUseGBB(!!est.has_tiers)
           if (est.discount_type) {
@@ -908,6 +916,7 @@ function NewEstimateForm() {
 
     const estimateFields = {
       ...client,
+      job_site_same_as_client: jobSiteSameAsClient,
       tier: useGBB ? tier : null,
       subtotal: Math.round(subtotal * 100) / 100,
       discount_type: discountAmt > 0 ? discountType : null,
@@ -1151,6 +1160,63 @@ function NewEstimateForm() {
                 <input placeholder="A1A 1A1" value={client.client_postal_code}
                   onChange={e => setClient(p => ({ ...p, client_postal_code: formatPostal(e.target.value) }))} />
               </div></div>
+
+              {/* Job Site Address */}
+              <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>Job site is the same as client's address</div>
+                  <div
+                    onClick={() => setJobSiteSameAsClient(p => !p)}
+                    style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0,
+                      background: jobSiteSameAsClient ? '#2563EB' : '#E2E5EA',
+                      cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+                  >
+                    <div style={{ position: 'absolute', top: 3, left: jobSiteSameAsClient ? 23 : 3,
+                      width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                  </div>
+                </div>
+                {!jobSiteSameAsClient && (
+                  <>
+                    <div className="r1"><div className="f">
+                      <label>Job Site Address</label>
+                      <AddressAutocomplete
+                        value={client.job_site_address}
+                        placeholder="456 Work Site Ave"
+                        onChange={v => setClient(p => ({ ...p, job_site_address: v }))}
+                        onSelect={({ street, city, province, postalCode }) => {
+                          setClient(p => ({
+                            ...p,
+                            job_site_address: street,
+                            ...(city && { job_site_city: city }),
+                            ...(province && { job_site_province: province }),
+                            ...(postalCode && { job_site_postal_code: formatPostal(postalCode) }),
+                          }))
+                        }}
+                      />
+                    </div></div>
+                    <div className="r2">
+                      <div className="f"><label>City</label>
+                        <input placeholder="Calgary" value={client.job_site_city}
+                          onChange={e => setClient(p => ({ ...p, job_site_city: e.target.value }))} />
+                      </div>
+                      <div className="f"><label>Province</label>
+                        <select value={client.job_site_province || 'AB'}
+                          onChange={e => setClient(p => ({ ...p, job_site_province: e.target.value }))}>
+                          {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                            <option key={k} value={k}>{k} — {lbl}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="r1"><div className="f"><label>Postal Code</label>
+                      <input placeholder="A1A 1A1" value={client.job_site_postal_code}
+                        onChange={e => setClient(p => ({ ...p, job_site_postal_code: formatPostal(e.target.value) }))} />
+                    </div></div>
+                  </>
+                )}
+              </div>
+
               {SHOW_GBB && (<>
               <div className="sl" style={{ marginTop: 20 }}>Good / Better / Best</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -1404,6 +1470,62 @@ function NewEstimateForm() {
               <input placeholder="A1A 1A1" value={client.client_postal_code}
                 onChange={e => setClient(p => ({ ...p, client_postal_code: formatPostal(e.target.value) }))} />
             </div></div>
+
+            {/* Job Site Address */}
+            <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>Job site is the same as client's address</div>
+                <div
+                  onClick={() => setJobSiteSameAsClient(p => !p)}
+                  style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0,
+                    background: jobSiteSameAsClient ? '#2563EB' : '#E2E5EA',
+                    cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
+                >
+                  <div style={{ position: 'absolute', top: 3, left: jobSiteSameAsClient ? 23 : 3,
+                    width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
+                </div>
+              </div>
+              {!jobSiteSameAsClient && (
+                <>
+                  <div className="r1"><div className="f">
+                    <label>Job Site Address</label>
+                    <AddressAutocomplete
+                      value={client.job_site_address}
+                      placeholder="456 Work Site Ave"
+                      onChange={v => setClient(p => ({ ...p, job_site_address: v }))}
+                      onSelect={({ street, city, province, postalCode }) => {
+                        setClient(p => ({
+                          ...p,
+                          job_site_address: street,
+                          ...(city && { job_site_city: city }),
+                          ...(province && { job_site_province: province }),
+                          ...(postalCode && { job_site_postal_code: formatPostal(postalCode) }),
+                        }))
+                      }}
+                    />
+                  </div></div>
+                  <div className="r2">
+                    <div className="f"><label>City</label>
+                      <input placeholder="Calgary" value={client.job_site_city}
+                        onChange={e => setClient(p => ({ ...p, job_site_city: e.target.value }))} />
+                    </div>
+                    <div className="f"><label>Province</label>
+                      <select value={client.job_site_province || 'AB'}
+                        onChange={e => setClient(p => ({ ...p, job_site_province: e.target.value }))}>
+                        {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                          <option key={k} value={k}>{k} — {lbl}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="r1"><div className="f"><label>Postal Code</label>
+                    <input placeholder="A1A 1A1" value={client.job_site_postal_code}
+                      onChange={e => setClient(p => ({ ...p, job_site_postal_code: formatPostal(e.target.value) }))} />
+                  </div></div>
+                </>
+              )}
+            </div>
           </>
         )}
 

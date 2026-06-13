@@ -30,6 +30,8 @@ interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
   client_phone: string | null; client_address: string | null; client_city: string | null
   postal_code: string | null; client_province: string | null; scope_notes: string | null; status: string
+  job_site_same_as_client: boolean | null; job_site_address: string | null; job_site_city: string | null
+  job_site_province: string | null; job_site_postal_code: string | null
   tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
   has_tiers: boolean | null
   total_good: number | null; total_better: number | null; total_best: number | null
@@ -275,6 +277,7 @@ export default function EstimateDetailPage() {
     estimate.client_email   && { label: 'Email',   value: estimate.client_email },
     estimate.client_phone   && { label: 'Phone',   value: estimate.client_phone },
     estimate.client_address && { label: 'Address', value: `${estimate.client_address}${estimate.client_city ? `, ${estimate.client_city}` : ''}` },
+    estimate.job_site_same_as_client === false && estimate.job_site_address && { label: 'Job Site', value: `${estimate.job_site_address}${estimate.job_site_city ? `, ${estimate.job_site_city}` : ''}` },
     estimate.payment_method && { label: 'Payment', value: estimate.payment_method },
   ].filter(Boolean) as { label: string; value: string }[]
 

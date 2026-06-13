@@ -124,7 +124,8 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
           <Text style={styles.sectionTitle}>Prepared for</Text>
           <View style={styles.infoBox}>
             <Text style={{ fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0A1628', marginBottom: 4 }}>{estimate.client_name}</Text>
-            {estimate.client_address && <Text style={styles.companyContact}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.postal_code}</Text>}
+            {estimate.client_address && <Text style={styles.companyContact}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.client_postal_code}</Text>}
+            {estimate.job_site_same_as_client === false && estimate.job_site_address && <Text style={styles.companyContact}>Job Site: {estimate.job_site_address}, {estimate.job_site_city}, {estimate.job_site_province} {estimate.job_site_postal_code}</Text>}
             {estimate.client_phone && <Text style={styles.companyContact}>{estimate.client_phone}</Text>}
             {estimate.client_email && <Text style={styles.companyContact}>{estimate.client_email}</Text>}
           </View>

@@ -92,6 +92,9 @@ export async function GET(request: NextRequest) {
     est?.client_address
       ? [est.client_address, est?.client_city].filter(Boolean).join(', ')
       : est?.client_city,
+    (est as any)?.job_site_same_as_client === false && (est as any)?.job_site_address
+      ? `Job Site: ${[(est as any).job_site_address, (est as any).job_site_city].filter(Boolean).join(', ')}`
+      : null,
     est?.client_email,
     est?.client_phone,
   ].filter(Boolean).join('<br>')
