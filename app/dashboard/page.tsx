@@ -136,8 +136,7 @@ export default function DashboardPage() {
   const [showAllActivity, setShowAllActivity] = useState(false)
   const [activityFilter, setActivityFilter] = useState<'all' | 'estimates' | 'payments'>('all')
   const [isMobile, setIsMobile] = useState(false)
-const [pricingMode, setPricingMode] = useState<string | null>(null)
-  const [dashToast, setDashToast] = useState('')
+const [dashToast, setDashToast] = useState('')
   const [reminderSending, setReminderSending] = useState(false)
   const [paying, setPaying] = useState<string | null>(null)
   const [checklistDismissed, setChecklistDismissed] = useState(false)
@@ -175,9 +174,8 @@ const [pricingMode, setPricingMode] = useState<string | null>(null)
       }
       setRepNames(nameMap)
     }
-    supabase.from('profiles').select('pricing_mode, company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
+    supabase.from('profiles').select('company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
       if (prof) {
-        setPricingMode((prof as any).pricing_mode || 'single')
         setCompanyName((prof as any).company_name || '')
         const full = [prof.first_name, prof.last_name].filter(Boolean).join(' ')
         if (full) setUserName(full)

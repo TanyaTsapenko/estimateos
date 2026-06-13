@@ -1,7 +1,5 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
-import { SHOW_GBB } from '@/lib/flags'
-
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
@@ -46,13 +44,6 @@ const styles = StyleSheet.create({
   openingPrice: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#2563EB' },
   openingDetails: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   openingDetail: { fontSize: 8, color: '#6b7280' },
-  tierTable: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  tierBox: { flex: 1, padding: 10, borderWidth: 0.5, borderColor: '#e5e7eb', borderRadius: 6, alignItems: 'center' },
-  tierBoxBetter: { flex: 1, padding: 10, borderWidth: 1.5, borderColor: '#2563EB', borderRadius: 6, alignItems: 'center', backgroundColor: '#eff6ff' },
-  tierLabel: { fontSize: 8, color: '#6b7280', marginBottom: 4 },
-  tierPrice: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#0A1628' },
-  tierPriceBetter: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#2563EB' },
-  tierRecommended: { fontSize: 7, color: '#2563EB', marginTop: 2 },
 })
 
 const WINDOW_TYPES: Record<string, string> = {
@@ -156,34 +147,6 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
             </View>
           ))}
         </View>
-
-        {/* Tier pricing if applicable */}
-        {SHOW_GBB && estimate.has_tiers && estimate.total_good && (() => {
-          const selectedTier = estimate.tier || 'better'
-          const badge = estimate.tier ? '★ Selected' : '★ Recommended'
-          return (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Pricing Options</Text>
-              <View style={styles.tierTable}>
-                <View style={selectedTier === 'good' ? styles.tierBoxBetter : styles.tierBox}>
-                  <Text style={styles.tierLabel}>Good</Text>
-                  <Text style={selectedTier === 'good' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_good)}</Text>
-                  {selectedTier === 'good' && <Text style={styles.tierRecommended}>{badge}</Text>}
-                </View>
-                <View style={selectedTier === 'better' ? styles.tierBoxBetter : styles.tierBox}>
-                  <Text style={styles.tierLabel}>Better</Text>
-                  <Text style={selectedTier === 'better' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_better)}</Text>
-                  {selectedTier === 'better' && <Text style={styles.tierRecommended}>{badge}</Text>}
-                </View>
-                <View style={selectedTier === 'best' ? styles.tierBoxBetter : styles.tierBox}>
-                  <Text style={styles.tierLabel}>Best</Text>
-                  <Text style={selectedTier === 'best' ? styles.tierPriceBetter : styles.tierPrice}>{formatCurrency(estimate.total_best)}</Text>
-                  {selectedTier === 'best' && <Text style={styles.tierRecommended}>{badge}</Text>}
-                </View>
-              </View>
-            </View>
-          )
-        })()}
 
         {/* Totals */}
         <View style={styles.totalsSection}>

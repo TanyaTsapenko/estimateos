@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
-import { SHOW_GBB } from '@/lib/flags'
 
 function Card({ children, padding = 22 }: { children: React.ReactNode; padding?: number }) {
   return (
@@ -52,14 +51,12 @@ export default function QuoteSettingsPage() {
   const supabase = createClient()
   const { role, loading: roleLoading } = usePermissions()
 
-  const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
   const [validDays, setValidDays] = useState(30)
-  const [initialPricingMode, setInitialPricingMode] = useState<'single' | 'gbb'>('single')
   const [initialValidDays, setInitialValidDays] = useState(30)
   const [userId, setUserId] = useState<string | null>(null)
   const [toast, setToast] = useState('')
 
-  const dirty = pricingMode !== initialPricingMode || validDays !== initialValidDays
+  const dirty = validDays !== initialValidDays
   const valid = dirty
 
   function flash(msg: string) {
@@ -74,14 +71,12 @@ export default function QuoteSettingsPage() {
       setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('pricing_mode, default_valid_days')
+        .select('default_valid_days')
         .eq('id', sanitizedId)
         .single()
       if (prof) {
-        const pm: 'single' | 'gbb' = (prof as any).pricing_mode === 'gbb' ? 'gbb' : 'single'
         const vd: number = (prof as any).default_valid_days || 30
-        setPricingMode(pm);        setInitialPricingMode(pm)
-        setValidDays(vd);          setInitialValidDays(vd)
+        setValidDays(vd); setInitialValidDays(vd)
       }
     })
   }, [])
@@ -89,11 +84,9 @@ export default function QuoteSettingsPage() {
   async function save() {
     if (!userId) return
     const { error } = await supabase.from('profiles').update({
-      pricing_mode:       pricingMode,
       default_valid_days: validDays,
     }).eq('id', userId)
     if (error) { flash('Error saving: ' + error.message); return }
-    setInitialPricingMode(pricingMode)
     setInitialValidDays(validDays)
     flash('Saved')
   }
@@ -133,24 +126,6 @@ export default function QuoteSettingsPage() {
 
       <div style={{ padding: '20px 20px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {SHOW_GBB && (
-          <Card>
-            <SectionLabel>Pricing</SectionLabel>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best pricing</div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options on estimates</div>
-              </div>
-              <div
-                onClick={() => setPricingMode(prev => prev === 'gbb' ? 'single' : 'gbb')}
-                style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0, background: pricingMode === 'gbb' ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
-              >
-                <div style={{ position: 'absolute', top: 3, left: pricingMode === 'gbb' ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-              </div>
-            </div>
-          </Card>
-        )}
-
         <Card>
           <SectionLabel>Defaults</SectionLabel>
           <div>
@@ -168,7 +143,7 @@ export default function QuoteSettingsPage() {
           </div>
         </Card>
 
-        <SaveBar dirty={dirty} valid={valid} onSave={save} onDiscard={() => { setPricingMode(initialPricingMode); setValidDays(initialValidDays) }} />
+        <SaveBar dirty={dirty} valid={valid} onSave={save} onDiscard={() => { setValidDays(initialValidDays) }} />
       </div>
 
       {toast && <Toast text={toast} />}

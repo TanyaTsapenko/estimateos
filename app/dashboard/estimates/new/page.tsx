@@ -6,13 +6,10 @@ import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, validateQuantity, validateDimension, validatePositiveNumber, type ClientErrors } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
-import { SHOW_GBB } from '@/lib/flags'
-
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
 
-interface Tier { display_name: string; specs: string[]; pricing_type: 'fixed' | 'per_sqft'; price: number }
-type CustomOpeningType = { label: string; base: number; lab: number; category?: string; is_tiered?: boolean; tier_good?: Tier | null; tier_better?: Tier | null; tier_best?: Tier | null }
+type CustomOpeningType = { label: string; base: number; lab: number; category?: string }
 
 function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }: {
   value: string
@@ -32,7 +29,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   }, [open])
 
   // Build a flat list of all items, grouped by category
-  const allItems: Array<{ key: string; name: string; price: number; category: string; is_tiered?: boolean }> = []
+  const allItems: Array<{ key: string; name: string; price: number; category: string }> = []
   Object.entries(OPENING_TYPES).forEach(([k, v]) => {
     const cat = k.startsWith('window_') ? 'Windows' : k.startsWith('door_') ? 'Doors' : 'Other'
     const dbPrice = customPrices?.types?.[k]
@@ -42,7 +39,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
   if (customOpeningTypes) {
     Object.entries(customOpeningTypes).forEach(([k, v]) => {
       if (!allItems.find(i => i.key === k)) {
-        allItems.push({ key: k, name: v.label, price: v.base + v.lab, category: v.category || 'Other', is_tiered: v.is_tiered })
+        allItems.push({ key: k, name: v.label, price: v.base + v.lab, category: v.category || 'Other' })
       }
     })
   }
@@ -108,7 +105,7 @@ function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }
                     : <div style={{ width: 14, flexShrink: 0 }} />
                   }
                   <span style={{ flex: 1 }}>{item.name}</span>
-                  <span style={{ fontSize: 12, color: item.is_tiered ? '#3B6CFF' : '#64748B', fontWeight: 600, flexShrink: 0 }}>{item.is_tiered ? '3 Tiers' : fmtCAD(item.price)}</span>
+                  <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600, flexShrink: 0 }}>{fmtCAD(item.price)}</span>
                 </button>
               ))}
             </div>
@@ -123,43 +120,6 @@ interface ClientInfo {
   client_name: string; client_email: string; client_phone: string
   client_address: string; client_city: string; client_province: string; client_postal_code: string
   job_site_address: string; job_site_city: string; job_site_province: string; job_site_postal_code: string
-}
-
-const TIERS = [
-  { key: 'good',   label: 'Good',   mult: 1.0, desc: 'Standard materials & workmanship',   badge: '' },
-  { key: 'better', label: 'Better', mult: 1.2, desc: 'Mid-grade product, 5-yr warranty',   badge: 'POPULAR' },
-  { key: 'best',   label: 'Best',   mult: 1.4, desc: 'Premium product, lifetime warranty', badge: 'BEST VALUE' },
-]
-
-function calcTierTotal(ops: Opening[], tierKey: 'good' | 'better' | 'best', customTypes: Record<string, CustomOpeningType>, customPrices: CustomPrices | undefined): number {
-  return ops.reduce((sum, op) => {
-    const item = customTypes[op.type]
-    if (item?.is_tiered) {
-      const t = tierKey === 'good' ? item.tier_good : tierKey === 'better' ? item.tier_better : item.tier_best
-      if (!t) return sum
-      const unit = t.pricing_type === 'per_sqft'
-        ? t.price * ((op.width_in || 0) / 12) * ((op.height_in || 0) / 12)
-        : t.price
-      const s = customPrices?.surcharges || {}
-      const shapeMult = op.shape === 'arch' ? 1 + (s.arch_pct || 0) / 100
-        : op.shape === 'custom' ? 1 + (s.custom_shape_pct || 0) / 100 : 1.0
-      const colourAdd = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey || 0)
-        : op.colour === 'custom' ? (s.custom_colour || 0) : 0
-      const glassAdd = op.glass === 'lowe' ? (s.lowe || 0)
-        : op.glass === 'frosted' ? (s.frosted || 0)
-        : op.glass === 'tinted' ? (s.tinted || 0)
-        : op.glass === 'tempered' ? (s.tempered || 0) : 0
-      const installAdd = op.install === 'fullframe' ? (s.fullframe || 0)
-        : op.install === 'stud_to_stud' ? (s.stud_to_stud || 0) : 0
-      const floorAdd = op.floor === 'second' ? (s.second_floor || 0)
-        : op.floor === 'third' ? (s.third_floor || 0) : 0
-      const frameAdd = op.frame === 'repair' ? (s.frame_repair || 0)
-        : op.frame === 'rotted' ? (s.frame_rotted || 0) : 0
-      const unitWithSurcharges = unit * shapeMult + colourAdd + glassAdd + installAdd + floorAdd + frameAdd
-      return sum + unitWithSurcharges * op.qty
-    }
-    return sum + opCost(op, 1.0, customPrices)
-  }, 0)
 }
 
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
@@ -220,13 +180,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: customOpeningTypes[op.type]?.is_tiered ? '#3B6CFF' : 'var(--amber)' }}>
-            {customOpeningTypes[op.type]?.is_tiered ? (() => {
-              const t = customOpeningTypes[op.type]?.tier_better
-              if (!t) return '3 Tiers'
-              const unit = t.pricing_type === 'per_sqft' ? t.price * ((op.width_in||0)/12) * ((op.height_in||0)/12) : t.price
-              return fmtCAD(unit * op.qty)
-            })() : fmtCAD(opCost(op, 1.0, customPrices))}
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
+            {fmtCAD(opCost(op, customPrices))}
           </div>
           {openingsCount > 1 && (
             <button onClick={() => removeOpening(op.id)}
@@ -245,32 +200,6 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
           </select></div>
       </div>
-
-      {customOpeningTypes[op.type]?.is_tiered && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginBottom: 10 }}>
-          {(['good', 'better', 'best'] as const).map(tk => {
-            const TIER_COLORS: Record<string, string> = { good: '#64748B', better: '#3B6CFF', best: '#D97706' }
-            const TIER_LABELS: Record<string, string> = { good: 'Good', better: 'Better', best: 'Best' }
-            const item = customOpeningTypes[op.type]!
-            const t = tk === 'good' ? item.tier_good : tk === 'better' ? item.tier_better : item.tier_best
-            const color = TIER_COLORS[tk]
-            if (!t) return <div key={tk} />
-            const unit = t.pricing_type === 'per_sqft'
-              ? t.price * ((op.width_in || 0) / 12) * ((op.height_in || 0) / 12)
-              : t.price
-            return (
-              <div key={tk} style={{ border: `1.5px solid ${color}44`, background: `${color}08`, borderRadius: 8, padding: '8px 10px' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{TIER_LABELS[tk]}</div>
-                <div style={{ fontSize: 11, color: '#475569', fontWeight: 500, marginBottom: 3 }}>{t.display_name}</div>
-                {t.specs.slice(0, 2).map((s, i) => (
-                  <div key={i} style={{ fontSize: 9, color: '#94A3B8', lineHeight: 1.4 }}>• {s}</div>
-                ))}
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', marginTop: 5 }}>{fmtCAD(unit * op.qty)}</div>
-              </div>
-            )
-          })}
-        </div>
-      )}
 
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
@@ -682,9 +611,6 @@ function NewEstimateForm() {
   })
 
   const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
-  const [tier, setTier] = useState('better')
-  const [pricingMode, setPricingMode] = useState<'single' | 'gbb'>('single')
-  const [useGBB, setUseGBB] = useState(false)
   const [profile, setProfile] = useState<{ province: string; default_valid_days?: number } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
@@ -699,29 +625,18 @@ function NewEstimateForm() {
 
   function applyPriceRows(priceRows: any[] | null) {
     if (!priceRows || priceRows.length === 0) return
-    const types: Record<string, { base: number; lab: number; is_tiered?: boolean; tier_good?: any; tier_better?: any; tier_best?: any }> = {}
+    const types: Record<string, { base: number; lab: number }> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
-      types[r.opening_type] = {
-        base: r.base_price,
-        lab: r.labour_price,
-        is_tiered: r.is_tiered || false,
-        tier_good: r.tier_good || null,
-        tier_better: r.tier_better || null,
-        tier_best: r.tier_best || null,
-      }
+      types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
     })
     setCustomPrices(prev => ({ surcharges: prev?.surcharges, types }))
     const customTypesMap: Record<string, CustomOpeningType> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
       customTypesMap[r.opening_type] = {
-        label:       r.custom_label,
-        base:        r.base_price,
-        lab:         r.labour_price,
-        category:    r.category    || 'Other',
-        is_tiered:   r.is_tiered   || false,
-        tier_good:   r.tier_good   || null,
-        tier_better: r.tier_better || null,
-        tier_best:   r.tier_best   || null,
+        label:    r.custom_label,
+        base:     r.base_price,
+        lab:      r.labour_price,
+        category: r.category || 'Other',
       }
     })
     setCustomOpeningTypes(customTypesMap)
@@ -746,19 +661,12 @@ function NewEstimateForm() {
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
       const [{ data: prof }, { data: priceRows }, { data: profSurcharges }] = await Promise.all([
-        supabase.from('profiles').select('province, pricing_mode, role, team_owner_id, default_valid_days').eq('id', sanitizedId).single(),
+        supabase.from('profiles').select('province, role, team_owner_id, default_valid_days').eq('id', sanitizedId).single(),
         supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
         supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single(),
       ])
       if (prof) {
         setProfile(prof)
-        let resolvedPricingMode = (prof as any).pricing_mode || 'single'
-        if ((prof as any).role !== 'owner' && (prof as any).team_owner_id) {
-          const { data: ownerProf } = await supabase.from('profiles').select('pricing_mode').eq('id', (prof as any).team_owner_id).single()
-          if (ownerProf) resolvedPricingMode = (ownerProf as any).pricing_mode || 'single'
-        }
-        setPricingMode(resolvedPricingMode === 'gbb' ? 'gbb' : 'single')
-        setUseGBB(resolvedPricingMode === 'gbb')
       }
       if (profSurcharges?.surcharges) {
         setCustomPrices(prev => ({ types: prev?.types || {}, surcharges: profSurcharges.surcharges }))
@@ -783,8 +691,6 @@ function NewEstimateForm() {
             job_site_postal_code: (est as any).job_site_postal_code || '',
           })
           setJobSiteSameAsClient((est as any).job_site_same_as_client !== false)
-          setTier(est.tier || 'better')
-          setUseGBB(!!est.has_tiers)
           if (est.discount_type) {
             setDiscountType(est.discount_type as 'fixed' | 'percent')
             setDiscountValue(String(est.discount_value || ''))
@@ -832,17 +738,9 @@ function NewEstimateForm() {
     })
   }, [])
 
-  const mult = TIERS.find(t => t.key === tier)?.mult || 1.2
   const province = client.client_province || profile?.province || 'AB'
   const [taxRate, taxLabel] = TAX_RATES[province] || [0.05, 'GST (5%)']
-  const hasAnyTieredItems = openings.some(op => !!customOpeningTypes[op.type]?.is_tiered)
-  const showGBB = useGBB && hasAnyTieredItems
-  const gbbGood   = showGBB ? calcTierTotal(openings, 'good',   customOpeningTypes, customPrices) : null
-  const gbbBetter = showGBB ? calcTierTotal(openings, 'better', customOpeningTypes, customPrices) : null
-  const gbbBest   = showGBB ? calcTierTotal(openings, 'best',   customOpeningTypes, customPrices) : null
-  const subtotal = showGBB
-    ? (gbbBetter ?? 0)
-    : openings.reduce((s, op) => s + opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best'), 0)
+  const subtotal = openings.reduce((s, op) => s + opCost(op, customPrices), 0)
   const discountAmt = discountValue
     ? discountType === 'percent'
       ? subtotal * (Math.min(parseFloat(discountValue) || 0, 100) / 100)
@@ -917,7 +815,6 @@ function NewEstimateForm() {
     const estimateFields = {
       ...client,
       job_site_same_as_client: jobSiteSameAsClient,
-      tier: useGBB ? tier : null,
       subtotal: Math.round(subtotal * 100) / 100,
       discount_type: discountAmt > 0 ? discountType : null,
       discount_value: discountAmt > 0 ? parseFloat(discountValue) : null,
@@ -925,21 +822,6 @@ function NewEstimateForm() {
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
-      has_tiers:       useGBB && hasAnyTieredItems,
-      subtotal_good:   gbbGood   !== null ? Math.round(gbbGood   * 100) / 100 : null,
-      subtotal_better: gbbBetter !== null ? Math.round(gbbBetter * 100) / 100 : null,
-      subtotal_best:   gbbBest   !== null ? Math.round(gbbBest   * 100) / 100 : null,
-      ...(() => {
-        const dv = parseFloat(discountValue) || 0
-        const discountGood   = discountType === 'percent' ? (gbbGood   || 0) * (dv / 100) : Math.min(dv, gbbGood   || 0)
-        const discountBetter = discountType === 'percent' ? (gbbBetter || 0) * (dv / 100) : Math.min(dv, gbbBetter || 0)
-        const discountBest   = discountType === 'percent' ? (gbbBest   || 0) * (dv / 100) : Math.min(dv, gbbBest   || 0)
-        return {
-          total_good:   gbbGood   !== null ? Math.round(Math.max(0, gbbGood   - discountGood)   * (1 + taxRate) * 100) / 100 : null,
-          total_better: gbbBetter !== null ? Math.round(Math.max(0, gbbBetter - discountBetter) * (1 + taxRate) * 100) / 100 : null,
-          total_best:   gbbBest   !== null ? Math.round(Math.max(0, gbbBest   - discountBest)   * (1 + taxRate) * 100) / 100 : null,
-        }
-      })(),
     }
 
     // Resolve client_id — from appointment or find-or-create
@@ -1024,8 +906,8 @@ function NewEstimateForm() {
       core_type: op.core_type || '',
       handle_type: op.handle_type || '',
       combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
-      unit_cost: Math.round(opCost({ ...op, qty: 1 }, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
-      total_cost: Math.round(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best') * 100) / 100,
+      unit_cost: Math.round(opCost({ ...op, qty: 1 }, customPrices) * 100) / 100,
+      total_cost: Math.round(opCost(op, customPrices) * 100) / 100,
       sort_order: i,
     }))
 
@@ -1217,40 +1099,6 @@ function NewEstimateForm() {
                 )}
               </div>
 
-              {SHOW_GBB && (<>
-              <div className="sl" style={{ marginTop: 20 }}>Good / Better / Best</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ fontSize: 13, color: '#64748B' }}>Show clients three pricing options</div>
-                <div
-                  onClick={() => setUseGBB(p => !p)}
-                  style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0,
-                    background: useGBB ? '#2563EB' : '#E2E5EA',
-                    cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
-                >
-                  <div style={{ position: 'absolute', top: 3, left: useGBB ? 23 : 3,
-                    width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-                </div>
-              </div>
-              </>)}
-              {!useGBB && (
-                <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                  {TIERS.map(t => (
-                    <button key={t.key} onClick={() => setTier(t.key)}
-                      style={{
-                        flex: 1, padding: '10px 8px', borderRadius: 10, fontSize: 12, fontWeight: 700,
-                        border: '1.5px solid', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
-                        borderColor: tier === t.key ? 'var(--blue)' : 'var(--border)',
-                        background: tier === t.key ? 'rgba(59,108,255,.08)' : 'var(--surface)',
-                        color: tier === t.key ? 'var(--blue-dark)' : 'var(--ash)',
-                      }}>
-                      <div>{t.label}</div>
-                      <div style={{ fontSize: 10, marginTop: 2, opacity: .7 }}>{fmtCAD(subtotal * t.mult / (mult))}</div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
               <div className="sl" style={{ marginTop: 4 }}>Discount & Payment</div>
               <div style={{ marginBottom: 12 }}>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -1274,50 +1122,27 @@ function NewEstimateForm() {
                 {openings.map(op => (
                   <div key={op.id} className="sum-row">
                     <span>{(OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type)} × {op.qty}</span>
-                    {customOpeningTypes[op.type]?.is_tiered
-                      ? <span style={{ fontSize: 11, fontWeight: 600, color: '#3B6CFF' }}>3 Tiers</span>
-                      : <span>{fmtCAD(opCost(op, mult, customPrices, tier as 'good' | 'better' | 'best'))}</span>
-                    }
+                    <span>{fmtCAD(opCost(op, customPrices))}</span>
                   </div>
                 ))}
-                {SHOW_GBB && showGBB ? (
-                  <>
-                    <div className="sum-row" style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
-                      <span style={{ color: '#64748B' }}>Good total</span>
-                      <span>{fmtCAD((gbbGood || 0) * (1 + taxRate))}</span>
-                    </div>
-                    <div className="sum-row" style={{ fontWeight: 700, color: '#3B6CFF' }}>
-                      <span>Better total ★</span>
-                      <span>{fmtCAD((gbbBetter || 0) * (1 + taxRate))}</span>
-                    </div>
-                    <div className="sum-row" style={{ color: '#D97706' }}>
-                      <span>Best total</span>
-                      <span>{fmtCAD((gbbBest || 0) * (1 + taxRate))}</span>
-                    </div>
-                    <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>All totals include {taxLabel}</div>
-                  </>
-                ) : (
-                  <>
-                    <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                      <span>Subtotal</span>
-                      <span>{fmtCAD(subtotal)}</span>
-                    </div>
-                    {discountAmt > 0 && (
-                      <div className="sum-row" style={{ color: '#16a34a' }}>
-                        <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
-                        <span>−{fmtCAD(discountAmt)}</span>
-                      </div>
-                    )}
-                    <div className="sum-row">
-                      <span>{taxLabel}</span>
-                      <span>{fmtCAD(taxAmount)}</span>
-                    </div>
-                    <div className="sum-total">
-                      <span className="sum-total-l">Total</span>
-                      <span className="sum-total-v">{fmtCAD(total)}</span>
-                    </div>
-                  </>
+                <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
+                  <span>Subtotal</span>
+                  <span>{fmtCAD(subtotal)}</span>
+                </div>
+                {discountAmt > 0 && (
+                  <div className="sum-row" style={{ color: '#16a34a' }}>
+                    <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
+                    <span>−{fmtCAD(discountAmt)}</span>
+                  </div>
                 )}
+                <div className="sum-row">
+                  <span>{taxLabel}</span>
+                  <span>{fmtCAD(taxAmount)}</span>
+                </div>
+                <div className="sum-total">
+                  <span className="sum-total-l">Total</span>
+                  <span className="sum-total-v">{fmtCAD(total)}</span>
+                </div>
               </div>
 
               <button onClick={saveEstimate} disabled={saving} style={{
@@ -1354,8 +1179,8 @@ function NewEstimateForm() {
   }
 
   // ── MOBILE STEPPER ───────────────────────────
-  const pills = [1, 2, 3, 4]
-  const stepLabels = ['Client', 'Openings', 'Pricing', 'Review']
+  const pills = [1, 2, 4]
+  const stepLabels = ['Client', 'Openings', 'Review']
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -1542,48 +1367,8 @@ function NewEstimateForm() {
           </>
         )}
 
-        {step === 3 && useGBB && (
-          <>
-            <div className="info-box">
-              Present all three options to your client — they choose. Most clients pick Better or Best.
-            </div>
-            <div className="tier-grid">
-              {TIERS.map(t => (
-                <div key={t.key} className={`tier${tier === t.key ? ' on' : ''}`} onClick={() => setTier(t.key)}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span className="t-tag">{t.label}</span>
-                    {t.badge && <span className="t-badge">{t.badge}</span>}
-                  </div>
-                  <div className="t-price">{fmtCAD(subtotal * t.mult)}</div>
-                  <div className="t-sub">+{fmtCAD(subtotal * t.mult * taxRate)} tax = {fmtCAD(subtotal * t.mult * (1 + taxRate))}</div>
-                  <div className="t-why">{t.desc}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--ash)', textAlign: 'center' }}>
-              Your client will see all three tiers and choose on their device
-            </div>
-          </>
-        )}
-
         {step === 4 && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>Good / Better / Best</div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Show clients three pricing options</div>
-              </div>
-              <div
-                onClick={() => setUseGBB(p => !p)}
-                style={{ width: 44, height: 24, borderRadius: 999, flexShrink: 0,
-                  background: useGBB ? '#2563EB' : '#E2E5EA',
-                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s' }}
-              >
-                <div style={{ position: 'absolute', top: 3, left: useGBB ? 23 : 3,
-                  width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }} />
-              </div>
-            </div>
             <div className="sum-box" style={{ marginTop: 16 }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
                 {client.client_name} — {client.client_address || client.client_city || ''}
@@ -1591,50 +1376,27 @@ function NewEstimateForm() {
               {openings.map(op => (
                 <div key={op.id} className="sum-row">
                   <span>{OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || op.type} × {op.qty}</span>
-                  {customOpeningTypes[op.type]?.is_tiered
-                    ? <span style={{ fontSize: 11, fontWeight: 600, color: '#3B6CFF' }}>3 Tiers</span>
-                    : <span>{fmtCAD(opCost(op, mult, customPrices))}</span>
-                  }
+                  <span>{fmtCAD(opCost(op, customPrices))}</span>
                 </div>
               ))}
-              {showGBB ? (
-                <>
-                  <div className="sum-row" style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid #F1F5F9' }}>
-                    <span style={{ color: '#64748B' }}>Good total</span>
-                    <span>{fmtCAD((gbbGood || 0) * (1 + taxRate))}</span>
-                  </div>
-                  <div className="sum-row" style={{ fontWeight: 700, color: '#3B6CFF' }}>
-                    <span>Better total ★</span>
-                    <span>{fmtCAD((gbbBetter || 0) * (1 + taxRate))}</span>
-                  </div>
-                  <div className="sum-row" style={{ color: '#D97706' }}>
-                    <span>Best total</span>
-                    <span>{fmtCAD((gbbBest || 0) * (1 + taxRate))}</span>
-                  </div>
-                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 6 }}>All totals include {taxLabel}</div>
-                </>
-              ) : (
-                <>
-                  <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
-                    <span>Subtotal</span>
-                    <span>{fmtCAD(subtotal)}</span>
-                  </div>
-                  {discountAmt > 0 && (
-                    <div className="sum-row" style={{ color: '#16a34a' }}>
-                      <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
-                      <span>−{fmtCAD(discountAmt)}</span>
-                    </div>
-                  )}
-                  <div className="sum-row">
-                    <span>{taxLabel}</span>
-                    <span>{fmtCAD(taxAmount)}</span>
-                  </div>
-                  <div className="sum-total">
-                    <span className="sum-total-l">Total</span>
-                    <span className="sum-total-v">{fmtCAD(total)}</span>
-                  </div>
-                </>
+              <div className="sum-row" style={{ marginTop: 6, paddingTop: 6 }}>
+                <span>Subtotal</span>
+                <span>{fmtCAD(subtotal)}</span>
+              </div>
+              {discountAmt > 0 && (
+                <div className="sum-row" style={{ color: '#16a34a' }}>
+                  <span>Discount{discountType === 'percent' ? ` (${discountValue}%)` : ''}</span>
+                  <span>−{fmtCAD(discountAmt)}</span>
+                </div>
               )}
+              <div className="sum-row">
+                <span>{taxLabel}</span>
+                <span>{fmtCAD(taxAmount)}</span>
+              </div>
+              <div className="sum-total">
+                <span className="sum-total-l">Total</span>
+                <span className="sum-total-v">{fmtCAD(total)}</span>
+              </div>
             </div>
 
             <div style={{ marginBottom: 14 }}>

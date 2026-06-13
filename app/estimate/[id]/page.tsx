@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { SHOW_GBB } from '@/lib/flags'
 import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
@@ -20,11 +19,9 @@ const CARD: React.CSSProperties = { background: '#fff', borderRadius: 16, paddin
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_address: string | null
   client_city: string | null; client_province: string | null; client_email: string | null; client_phone: string | null
-  status: string; tier: string | null; subtotal: number; tax_amount: number; total: number
+  status: string; subtotal: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   scope_notes: string | null; valid_until: string | null; created_at: string | null
-  has_tiers: boolean | null
-  total_good: number | null; total_better: number | null; total_best: number | null
   tax_rate: number | null; view_count: number | null
 }
 interface Opening {
@@ -41,26 +38,9 @@ interface Opening {
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
-  phone: string | null; logo_url: string | null; contract_terms: string | null; pricing_mode: string | null
+  phone: string | null; logo_url: string | null; contract_terms: string | null
   deposit_percent: number | null
 }
-interface TierData { display_name: string; specs: string[]; pricing_type: string; price: number }
-interface PriceListItem {
-  opening_type: string; is_tiered: boolean
-  tier_good: TierData | null; tier_better: TierData | null; tier_best: TierData | null
-}
-
-function aggregateSpecs(ops: Opening[], items: PriceListItem[], field: 'tier_good' | 'tier_better' | 'tier_best'): string[] {
-  const seen = new Set<string>()
-  const out: string[] = []
-  ops.forEach(op => {
-    const item = items.find(p => p.opening_type === op.type && p.is_tiered)
-    const tier = item?.[field]
-    tier?.specs?.forEach(s => { if (!seen.has(s)) { seen.add(s); out.push(s) } })
-  })
-  return out.slice(0, 5)
-}
-
 function fmtDate(iso: string) {
   return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(iso + 'T00:00:00'))
 }
@@ -88,7 +68,6 @@ export default function ClientEstimatePage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [priceListItems, setPriceListItems] = useState<PriceListItem[]>([])
   const [docStatus, setDocStatus] = useState<'loading' | 'signed' | 'declined' | 'active'>('loading')
 
   useEffect(() => {
@@ -110,17 +89,11 @@ export default function ClientEstimatePage() {
 
       const [{ data: ops }, { data: prof }] = await Promise.all([
         supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, handle_type').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, address, city, province, postal, phone, logo_url, contract_terms, pricing_mode, deposit_percent').eq('id', (est as any).user_id).single(),
+        supabase.from('profiles').select('company_name, address, city, province, postal, phone, logo_url, contract_terms, deposit_percent').eq('id', (est as any).user_id).single(),
       ])
       setOpenings(ops || [])
       setProfile(prof)
 
-      if (est.has_tiers) {
-        const { data: pl } = await supabase
-          .from('price_lists').select('opening_type, is_tiered, tier_good, tier_better, tier_best')
-          .eq('user_id', (est as any).user_id).eq('is_tiered', true)
-        setPriceListItems((pl || []) as PriceListItem[])
-      }
     }
     load()
   }, [id])
@@ -158,28 +131,12 @@ export default function ClientEstimatePage() {
   )
 
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const showGBB    = SHOW_GBB && !!(estimate.has_tiers && estimate.total_good && estimate.total_better && estimate.total_best)
-  const goodSpecs   = aggregateSpecs(openings, priceListItems, 'tier_good')
-  const betterSpecs = aggregateSpecs(openings, priceListItems, 'tier_better')
-  const bestSpecs   = aggregateSpecs(openings, priceListItems, 'tier_best')
-  const goodDisplayName   = priceListItems.find(p => p.is_tiered && p.tier_good?.display_name)?.tier_good?.display_name || null
-  const betterDisplayName = priceListItems.find(p => p.is_tiered && p.tier_better?.display_name)?.tier_better?.display_name || null
-  const bestDisplayName   = priceListItems.find(p => p.is_tiered && p.tier_best?.display_name)?.tier_best?.display_name || null
   const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
   const issuedDate  = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
   const depositPct  = profile?.deposit_percent ?? 30
   const depositAmt  = Math.round(estimate.total * depositPct) / 100
   const balanceAmt  = estimate.total - depositAmt
   const hasClientDetails = !!(estimate.client_email || estimate.client_phone || estimate.client_address)
-
-  const tiers: Array<{
-    label: string; displayName: string | null; specs: string[]; price: number; border: string
-    bg: string; lc: string; pc: string; badge?: string
-  }> = [
-    { label: 'Good',   displayName: goodDisplayName,   specs: goodSpecs,   price: estimate.total_good!,   border: '1.5px solid #E5E7EB', bg: '#fff',    lc: INK_SOFT, pc: INK  },
-    { label: 'Better', displayName: betterDisplayName, specs: betterSpecs, price: estimate.total_better!, border: `2px solid ${BLUE}`,   bg: BLUE_SOFT, lc: BLUE,     pc: BLUE, badge: 'Recommended' },
-    { label: 'Best',   displayName: bestDisplayName,   specs: bestSpecs,   price: estimate.total_best!,   border: '1.5px solid #D97706', bg: '#fff',    lc: '#D97706', pc: INK  },
-  ]
 
   const statusPill = estimate.status === 'signed'
     ? <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: 'rgba(5,150,105,0.25)', border: '1px solid rgba(16,185,129,0.4)', color: '#6EE7B7' }}>✓ Signed</span>
@@ -301,7 +258,7 @@ export default function ClientEstimatePage() {
                     <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>
                       {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
                     </div>
-                    {!showGBB && <div style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(op.total_cost)}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(op.total_cost)}</div>
                   </div>
                   {/* Body */}
                   <div style={{ display: 'flex' }}>
@@ -348,43 +305,24 @@ export default function ClientEstimatePage() {
                 </div>
               ))}
 
-              {!showGBB && (
-                <div style={{ borderTop: '1.5px solid #E5E7EB', paddingTop: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 6 }}>
-                    <span>Subtotal</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.subtotal)}</span>
-                  </div>
-                  {estimate.discount_amount > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>
-                      <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-                      <span style={{ fontFamily: MONO }}>−{fmtCAD(estimate.discount_amount)}</span>
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 12 }}>
-                    <span>{taxLabel}</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.tax_amount)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: `1.5px solid ${INK}`, paddingTop: 10 }}>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>Total</span>
-                    <span style={{ fontSize: 24, fontWeight: 800, color: BLUE, fontFamily: MONO }}>{fmtCAD(estimate.total)}</span>
-                  </div>
+              <div style={{ borderTop: '1.5px solid #E5E7EB', paddingTop: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 6 }}>
+                  <span>Subtotal</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.subtotal)}</span>
                 </div>
-              )}
-
-              {showGBB && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-                  {tiers.map(({ label, displayName, specs, price, border, bg, lc, pc, badge }) => (
-                    <div key={label} style={{ border, borderRadius: 12, padding: '14px 16px', background: bg }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: displayName || specs.length ? 4 : 0 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: lc, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-                        {badge && <span style={{ fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff', borderRadius: 20, padding: '2px 8px' }}>{badge}</span>}
-                      </div>
-                      {displayName && <div style={{ fontSize: 12, color: INK_SOFT, marginBottom: specs.length ? 6 : 0 }}>{displayName}</div>}
-                      {specs.map((s, i) => <div key={i} style={{ fontSize: 12, color: lc, marginBottom: 3 }}>• {s}</div>)}
-                      <div style={{ fontSize: 22, fontWeight: 800, color: pc, marginTop: 10, fontFamily: MONO }}>{fmtCAD(price)}</div>
-                      <div style={{ fontSize: 11, color: INK_SOFT, marginTop: 2 }}>inc. {taxLabel}</div>
-                    </div>
-                  ))}
+                {estimate.discount_amount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>
+                    <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+                    <span style={{ fontFamily: MONO }}>−{fmtCAD(estimate.discount_amount)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 12 }}>
+                  <span>{taxLabel}</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.tax_amount)}</span>
                 </div>
-              )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: `1.5px solid ${INK}`, paddingTop: 10 }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>Total</span>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: BLUE, fontFamily: MONO }}>{fmtCAD(estimate.total)}</span>
+                </div>
+              </div>
             </div>
           )}
 

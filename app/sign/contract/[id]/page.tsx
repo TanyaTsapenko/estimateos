@@ -19,8 +19,6 @@ interface Estimate {
   client_name: string | null; client_email: string | null; client_phone: string | null
   client_address: string | null; subtotal: number; tax_amount: number; total: number
   discount_amount: number
-  has_tiers: boolean | null; tier: string | null
-  total_good: number | null; total_better: number | null; total_best: number | null
 }
 interface Opening { id: string; type: string; qty: number; total_cost: number }
 interface Profile {
@@ -200,7 +198,7 @@ export default function SignContractPage() {
             companyPhone: contract?.company_phone || '',
             companyEmail: contract?.company_email || '',
             contractId: contractId,
-            total: estimate ? getTierTotal(estimate) : 0,
+            total: estimate ? estimate?.total || 0 : 0,
           }),
         }),
         fetch('/api/notify-contractor-signed', {
@@ -211,7 +209,7 @@ export default function SignContractPage() {
             contractorName: contract?.company_name || '',
             clientName: estimate?.client_name || '',
             companyName: contract?.company_name || 'Your Company',
-            total: estimate ? getTierTotal(estimate) : 0,
+            total: estimate ? estimate?.total || 0 : 0,
             depositPercent: profile?.deposit_percent || 10,
             contractId: contractId,
           }),
@@ -247,18 +245,10 @@ export default function SignContractPage() {
     </div>
   )
 
-  function getTierTotal(est: Estimate): number {
-    if (!est?.has_tiers) return est?.total || 0
-    if (est.tier === 'good') return est.total_good || 0
-    if (est.tier === 'best') return est.total_best || 0
-    return est.total_better || 0
-  }
-
-  const tierNotSelected = !!estimate?.has_tiers && !estimate?.tier
   const depositPct = profile?.deposit_percent ?? contract?.deposit_percent ?? 10
   const depositRequired = profile?.deposit_required !== false
-  const depositAmt = Math.round(getTierTotal(estimate) * depositPct) / 100
-  const balanceAmt = getTierTotal(estimate) - depositAmt
+  const depositAmt = Math.round((estimate?.total || 0) * depositPct) / 100
+  const balanceAmt = (estimate?.total || 0) - depositAmt
   const contractorEmail = contract?.company_email
 
   // Already signed — read-only view
@@ -359,10 +349,7 @@ export default function SignContractPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
-                {tierNotSelected
-                  ? <span style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic', maxWidth: 180, textAlign: 'right' }}>Your contractor will finalize the pricing option before sending the contract.</span>
-                  : <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(getTierTotal(estimate))}</span>
-                }
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate?.total || 0)}</span>
               </div>
               {depositRequired && (
                 <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>
@@ -538,7 +525,7 @@ export default function SignContractPage() {
               {depositRequired && <>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: '#1D4ED8', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(getTierTotal(estimate))}</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate?.total || 0)}</div>
                 </>}
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: estimate.client_email ? 10 : 0 }}>
@@ -604,7 +591,7 @@ export default function SignContractPage() {
               <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
                 <div style={{ fontSize: 28, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-                <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(getTierTotal(estimate))}</div>
+                <div style={{ fontSize: 12, color: '#94A3B8' }}>{depositPct}% of {fmtCAD(estimate?.total || 0)}</div>
               </div>
             )}
 
@@ -709,10 +696,7 @@ export default function SignContractPage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
-                {tierNotSelected
-                  ? <span style={{ fontSize: 11, color: '#94A3B8', fontStyle: 'italic', maxWidth: 180, textAlign: 'right' }}>Your contractor will finalize the pricing option before sending the contract.</span>
-                  : <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(getTierTotal(estimate))}</span>
-                }
+                <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate?.total || 0)}</span>
               </div>
               {depositRequired && (
                 <div style={{ marginTop: 12, borderTop: '1px solid #F0F0F0', paddingTop: 12 }}>

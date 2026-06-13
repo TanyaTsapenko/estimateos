@@ -6,8 +6,6 @@ import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 import WindowDiagram from '@/components/WindowDiagram'
-import { SHOW_GBB } from '@/lib/flags'
-
 interface Opening {
   id: string; type: string; qty: number; width: string | null
   width_in: number | null; height_in: number | null; room: string | null
@@ -32,9 +30,7 @@ interface Estimate {
   postal_code: string | null; client_province: string | null; scope_notes: string | null; status: string
   job_site_same_as_client: boolean | null; job_site_address: string | null; job_site_city: string | null
   job_site_province: string | null; job_site_postal_code: string | null
-  tier: string | null; subtotal: number; tax_rate: number; tax_amount: number; total: number
-  has_tiers: boolean | null
-  total_good: number | null; total_better: number | null; total_best: number | null
+  subtotal: number; tax_rate: number; tax_amount: number; total: number
   discount_type: string | null; discount_value: number | null; discount_amount: number
   payment_method: string | null
   signed_at: string | null; client_signature_url: string | null; valid_until: string | null
@@ -67,7 +63,7 @@ export default function EstimateDetailPage() {
   const [openings,       setOpenings]       = useState<Opening[]>([])
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [contract,       setContract]       = useState<{ id: string; status: string } | null>(null)
-  const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; pricing_mode: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
+  const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
   const [loading,             setLoading]             = useState(true)
   const [sending,             setSending]             = useState(false)
   const [showEmailModal,      setShowEmailModal]      = useState(false)
@@ -115,7 +111,7 @@ export default function EstimateDetailPage() {
         setCustomLabels(labels)
       }
       if (est?.user_id) {
-        const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, pricing_mode, email, phone, signature_url').eq('id', est.user_id).single()
+        const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, email, phone, signature_url').eq('id', est.user_id).single()
         setProfile(prof)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced' || est?.status === 'paid') {
@@ -134,14 +130,6 @@ export default function EstimateDetailPage() {
   function showToast(msg: string) {
     setToast(msg)
     setTimeout(() => setToast(''), 2500)
-  }
-
-  async function selectTier(t: 'good' | 'better' | 'best') {
-    if (!estimate) return
-    const newTotal = t === 'good' ? estimate.total_good : t === 'better' ? estimate.total_better : estimate.total_best
-    if (newTotal === null) return
-    await supabase.from('estimates').update({ tier: t, total: newTotal }).eq('id', id)
-    setEstimate(p => p ? { ...p, tier: t, total: newTotal } : p)
   }
 
   async function handleSendEmail() {
@@ -189,7 +177,6 @@ export default function EstimateDetailPage() {
       client_city: estimate.client_city,
       postal_code: estimate.postal_code,
       client_province: estimate.client_province,
-      tier: estimate.tier,
       status: 'draft',
       subtotal: estimate.subtotal,
       tax_rate: estimate.tax_rate,
@@ -268,7 +255,6 @@ export default function EstimateDetailPage() {
   const isInvoiced    = estimate.status === 'invoiced' || estimate.status === 'paid'
   const isDeclined    = estimate.status === 'declined'
   const canEmail      = !!estimate.client_email && !isSigned && !isInvoiced && !isDeclined
-  const tierLabel     = estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'
   const signedDate    = estimate.signed_at
     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.signed_at))
     : null
@@ -360,39 +346,6 @@ export default function EstimateDetailPage() {
 
           {/* ── LEFT COLUMN: tier + client in one card ── */}
           <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
-            {/* Tier */}
-            {SHOW_GBB && (estimate.has_tiers ? (
-              <div style={{ marginBottom: 16 }}>
-                <div style={SL}>Select tier</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {(['good', 'better', 'best'] as const).map(t => {
-                    const amt = t === 'good' ? estimate.total_good : t === 'better' ? estimate.total_better : estimate.total_best
-                    if (amt === null) return null
-                    const selected = estimate.tier === t
-                    return (
-                      <button
-                        key={t}
-                        onClick={() => selectTier(t)}
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '10px 14px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                          border: selected ? '2px solid #2563EB' : '1.5px solid #E5E7EB',
-                          background: selected ? '#EFF4FF' : '#fff',
-                        }}
-                      >
-                        <span style={{ fontSize: 13, fontWeight: 700, color: selected ? '#2563EB' : '#0A1628', textTransform: 'capitalize' }}>{t}</span>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: selected ? '#2563EB' : '#0A1628', fontFamily: 'monospace' }}>{fmtCAD(amt)}</span>
-                          {selected && <Check size={14} color="#2563EB" strokeWidth={2.5} />}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            ) : (
-              profile?.pricing_mode === 'gbb' && estimate.tier && estimate.tier !== 'single' && <div style={SL}>{tierLabel} Tier</div>
-            ))}
             <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
               {fmtCAD(estimate.total)}
             </div>

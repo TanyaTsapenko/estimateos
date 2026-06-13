@@ -84,7 +84,7 @@ export function dimToSizeBucket(wIn: number, hIn: number): string {
 }
 
 export interface CustomPrices {
-  types: Record<string, { base: number; lab: number; is_tiered?: boolean; tier_good?: any; tier_better?: any; tier_best?: any }>
+  types: Record<string, { base: number; lab: number }>
   surcharges?: {
     arch_pct?: number
     custom_shape_pct?: number
@@ -103,15 +103,9 @@ export interface CustomPrices {
   }
 }
 
-export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey: 'good' | 'better' | 'best' = 'better'): number {
+export function opCost(op: Opening, custom?: CustomPrices): number {
   const customType = custom?.types[op.type]
   const s = custom?.surcharges || {}
-
-  if (customType?.is_tiered) {
-    const tier = tierKey === 'good' ? customType.tier_good : tierKey === 'better' ? customType.tier_better : customType.tier_best
-    const price = tier?.price || 0
-    return price * (op.qty || 1)
-  }
 
   const defaults = OPENING_TYPES[op.type] ?? OPENING_TYPES['window_dh']
   const base = customType?.base ?? defaults.base
@@ -133,7 +127,7 @@ export function opCost(op: Opening, mult: number, custom?: CustomPrices, tierKey
            : op.frame === 'rotted' ? (s.frame_rotted ?? 0) : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
 
-  const unitCost = ((base + lab) * sh + fa + ia + fc + col + gl + ex) * mult
+  const unitCost = (base + lab) * sh + fa + ia + fc + col + gl + ex
   return unitCost * (op.qty || 1)
 }
 
