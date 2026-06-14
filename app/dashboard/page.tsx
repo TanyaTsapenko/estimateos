@@ -406,9 +406,27 @@ const [dashToast, setDashToast] = useState('')
     setPaying(invoiceId)
     const supabase = createClient()
     try {
-      await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
+      const { data: updatedInv, error: invErr } = await supabase
+        .from('invoices')
+        .update({ status: 'paid', paid_at: new Date().toISOString() })
+        .eq('id', invoiceId)
+        .select('id')
+      if (invErr || !updatedInv?.length) {
+        setDashToast('Failed to mark as paid' + (invErr ? ': ' + invErr.message : ' — no rows updated'))
+        setTimeout(() => setDashToast(''), 3500)
+        return
+      }
       if (invoiceType === 'final' && estimateId) {
-        await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
+        const { data: updatedEst, error: estErr } = await supabase
+          .from('estimates')
+          .update({ status: 'paid' })
+          .eq('id', estimateId)
+          .select('id')
+        if (estErr || !updatedEst?.length) {
+          setDashToast('Failed to update estimate status' + (estErr ? ': ' + estErr.message : ''))
+          setTimeout(() => setDashToast(''), 3500)
+          return
+        }
       }
       const attItem = attention.find(i => i.id === invoiceId)
       if (currentUserId) {
@@ -450,9 +468,7 @@ const [dashToast, setDashToast] = useState('')
       try {
         const res = await fetch('/api/send-email', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ type: emailType, invoiceId }),
         })
         const data = await res.json()
@@ -492,11 +508,17 @@ const [dashToast, setDashToast] = useState('')
     if (!reminderModal) return
     setReminderSending(true)
     try {
-      await fetch('/api/send-email', {
+      const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estimateId: reminderModal.estimateId, type: 'reminder', message: reminderModal.message }),
       })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setDashToast('Failed to send reminder' + (body?.error ? ': ' + body.error : ''))
+        setTimeout(() => setDashToast(''), 3500)
+        return
+      }
       setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
       setReminderModal(null)
       setDashToast('Reminder sent!')

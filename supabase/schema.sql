@@ -98,7 +98,11 @@ create policy "Users insert own estimates"
   on public.estimates for insert with check (auth.uid() = user_id);
 
 create policy "Users update own estimates"
-  on public.estimates for update using (auth.uid() = user_id);
+  on public.estimates for update using (
+    auth.uid() = user_id
+    OR auth.uid() = (SELECT team_owner_id FROM public.profiles WHERE id = estimates.user_id)
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = (SELECT team_owner_id FROM public.profiles WHERE id = estimates.user_id)
+  );
 
 create policy "Users delete own estimates"
   on public.estimates for delete using (auth.uid() = user_id);
@@ -189,7 +193,11 @@ create policy "Users insert own invoices"
   on public.invoices for insert with check (auth.uid() = user_id);
 
 create policy "Users update own invoices"
-  on public.invoices for update using (auth.uid() = user_id);
+  on public.invoices for update using (
+    auth.uid() = user_id
+    OR auth.uid() = (SELECT team_owner_id FROM public.profiles WHERE id = invoices.user_id)
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = (SELECT team_owner_id FROM public.profiles WHERE id = invoices.user_id)
+  );
 
 create policy "Users delete own invoices"
   on public.invoices for delete using (auth.uid() = user_id);
