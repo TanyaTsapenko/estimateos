@@ -25,6 +25,7 @@ interface AttentionItem {
   id: string; actionType: 'reminder' | 'invoice' | 'mark_paid'; address?: string
   invoiceType?: 'deposit' | 'final'; estimateId?: string; createdAt?: string; priority: number
   amount?: number; entityNumber?: string
+  lastReminderSentAt?: string | null; reminderCount?: number; ctaDisabled?: boolean
 }
 interface ActivityItem {
   event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
@@ -116,10 +117,20 @@ const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color:
   deposit_paid:         { icon: DollarSign,  bg: '#ECFDF5', color: '#059669', label: 'paid deposit' },
   final_invoice_sent:   { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent final invoice' },
   final_paid:           { icon: CheckCircle, bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
+  reminder_sent:        { icon: SendIcon,    bg: '#EFF6FF', color: '#2563EB', label: 'sent reminder' },
 }
 
 function fmtAmt(n: number) {
   return `CA$${n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+function nth(n: number): string {
+  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`
+  const r = n % 10
+  if (r === 1) return `${n}st`
+  if (r === 2) return `${n}nd`
+  if (r === 3) return `${n}rd`
+  return `${n}th`
 }
 
 const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
@@ -143,7 +154,7 @@ const [dashToast, setDashToast] = useState('')
   const [checklistData, setChecklistData] = useState<{ logoUrl: string | null; contractTerms: string | null; hasPriceList: boolean } | null>(null)
   const [reminderModal, setReminderModal] = useState<{
     estimateId: string; estimateNumber: string; clientName: string
-    clientEmail: string; address: string; message: string
+    clientEmail: string; address: string; message: string; reminderCount: number
   } | null>(null)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [currentUserId, setCurrentUserId] = useState('')
@@ -240,7 +251,7 @@ const [dashToast, setDashToast] = useState('')
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const todayUTC = new Date().toISOString().slice(0, 10)
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }] = await Promise.all([
-        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
+        supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name,last_reminder_sent_at,reminder_count,viewed_at').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total,created_at,status').in('user_id', userIds).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
@@ -340,11 +351,20 @@ const [dashToast, setDashToast] = useState('')
       stale.forEach((e: any) => {
         const sentDate = e.sent_at || e.updated_at
         const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
+        const viewedDesc = e.viewed_at
+          ? (() => { const vd = Math.floor((Date.now() - new Date(e.viewed_at).getTime()) / 86400000); return `viewed ${vd === 0 ? 'today' : vd === 1 ? 'yesterday' : `${vd}d ago`}, no reply` })()
+          : 'never opened'
+        const inCooldown = !!e.last_reminder_sent_at && (Date.now() - new Date(e.last_reminder_sent_at).getTime()) < 24 * 3600000
+        const hrsSinceReminder = e.last_reminder_sent_at ? Math.floor((Date.now() - new Date(e.last_reminder_sent_at).getTime()) / 3600000) : 0
         attItems.push({
           icon: SendIcon, color: '#2563EB',
           title: e.client_name,
-          desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, no reply${typeof e.total === 'number' ? ` · ${fmtAmt(e.total)}` : ''}`,
-          cta: 'Send reminder', id: e.id, actionType: 'reminder', priority: 4,
+          desc: `${e.estimate_number} · ${daysSince} day${daysSince !== 1 ? 's' : ''}, ${viewedDesc}${typeof e.total === 'number' ? ` · ${fmtAmt(e.total)}` : ''}`,
+          cta: inCooldown ? `Sent ${hrsSinceReminder}h ago` : 'Send reminder',
+          ctaDisabled: inCooldown,
+          id: e.id, actionType: 'reminder', priority: 4,
+          lastReminderSentAt: e.last_reminder_sent_at || null,
+          reminderCount: e.reminder_count ?? 0,
         })
       })
       attItems.sort((a, b) => a.priority - b.priority)
@@ -495,10 +515,19 @@ const [dashToast, setDashToast] = useState('')
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const [{ data: est }, { data: prof }] = await Promise.all([
-      supabase.from('estimates').select('client_name, client_email, client_address, estimate_number').eq('id', estimateId).single(),
+      supabase.from('estimates').select('client_name, client_email, client_address, estimate_number, last_reminder_sent_at, reminder_count').eq('id', estimateId).single(),
       supabase.from('profiles').select('company_name').eq('id', sanitizedId).single(),
     ])
     if (!est) return
+    if (est.last_reminder_sent_at) {
+      const hoursSince = (Date.now() - new Date(est.last_reminder_sent_at).getTime()) / 3600000
+      if (hoursSince < 24) {
+        const hoursLeft = Math.ceil(24 - hoursSince)
+        setDashToast(`A reminder was already sent today. Try again in ${hoursLeft}h.`)
+        setTimeout(() => setDashToast(''), 3500)
+        return
+      }
+    }
     const companyName = (prof as any)?.company_name || ''
     const address = est.client_address || ''
     const msg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
@@ -509,6 +538,7 @@ const [dashToast, setDashToast] = useState('')
       clientEmail: est.client_email || '',
       address,
       message: msg,
+      reminderCount: est.reminder_count ?? 0,
     })
   }
 
@@ -526,6 +556,42 @@ const [dashToast, setDashToast] = useState('')
         setDashToast('Failed to send reminder' + (body?.error ? ': ' + body.error : ''))
         setTimeout(() => setDashToast(''), 3500)
         return
+      }
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const now = new Date().toISOString()
+        const newCount = (reminderModal.reminderCount ?? 0) + 1
+        await supabase.from('estimates').update({
+          last_reminder_sent_at: now,
+          reminder_count: newCount,
+        }).eq('id', reminderModal.estimateId)
+        fetch('/api/log-activity', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: user.id,
+            event_type: 'reminder_sent',
+            actor_type: 'contractor',
+            entity_type: 'estimate',
+            entity_id: reminderModal.estimateId,
+            entity_number: reminderModal.estimateNumber,
+            client_name: reminderModal.clientName,
+          }),
+        }).catch(() => {})
+        const { data: senderProfile } = await supabase
+          .from('profiles').select('team_owner_id, first_name, last_name').eq('id', user.id).single()
+        if (senderProfile?.team_owner_id) {
+          const repName = [senderProfile.first_name, senderProfile.last_name].filter(Boolean).join(' ') || 'Team member'
+          await supabase.from('notifications').insert({
+            user_id: senderProfile.team_owner_id,
+            type: 'team_activity',
+            title: 'Team activity',
+            body: `${repName} sent a reminder for ${reminderModal.estimateNumber}`,
+            link: `/dashboard/estimates/${reminderModal.estimateId}`,
+            read: false,
+          })
+        }
       }
       setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
       setReminderModal(null)
@@ -954,13 +1020,14 @@ const [dashToast, setDashToast] = useState('')
                     </div>
                     <button
                       onClick={() => {
+                        if (item.ctaDisabled) return
                         if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
                         else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType, item.estimateId)
                         else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                         else router.push(`/dashboard/estimates/${item.id}`)
                       }}
-                      disabled={item.actionType === 'mark_paid' && paying === item.id}
-                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 8, cursor: item.actionType === 'mark_paid' && paying === item.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
+                      disabled={(item.actionType === 'mark_paid' && paying === item.id) || !!item.ctaDisabled}
+                      style={{ padding: '6px 12px', fontSize: 12, fontWeight: 700, color: item.ctaDisabled ? '#94A3B8' : '#fff', background: item.ctaDisabled ? '#E2E8F0' : item.color, border: 'none', borderRadius: 8, cursor: (item.actionType === 'mark_paid' && paying === item.id) || item.ctaDisabled ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
                       {item.actionType === 'mark_paid' && paying === item.id ? 'Saving...' : item.cta}
                     </button>
                   </div>
@@ -1068,13 +1135,14 @@ const [dashToast, setDashToast] = useState('')
                   </div>
                   <button
                     onClick={() => {
+                      if (item.ctaDisabled) return
                       if (item.actionType === 'invoice') router.push(`/dashboard/estimates/${item.id}/invoice`)
                       else if (item.actionType === 'mark_paid') handleMarkPaid(item.id, item.invoiceType, item.estimateId)
                       else if (item.actionType === 'reminder') handleOpenReminder(item.id)
                       else router.push(`/dashboard/estimates/${item.id}`)
                     }}
-                    disabled={item.actionType === 'mark_paid' && paying === item.id}
-                    style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: '#fff', background: item.color, border: 'none', borderRadius: 7, cursor: item.actionType === 'mark_paid' && paying === item.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
+                    disabled={(item.actionType === 'mark_paid' && paying === item.id) || !!item.ctaDisabled}
+                    style={{ padding: '5px 11px', fontSize: 12, fontWeight: 700, color: item.ctaDisabled ? '#94A3B8' : '#fff', background: item.ctaDisabled ? '#E2E8F0' : item.color, border: 'none', borderRadius: 7, cursor: (item.actionType === 'mark_paid' && paying === item.id) || item.ctaDisabled ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0, opacity: item.actionType === 'mark_paid' && paying === item.id ? 0.6 : 1 }}>
                     {item.actionType === 'mark_paid' && paying === item.id ? 'Saving...' : item.cta}
                   </button>
                 </div>
@@ -1207,6 +1275,16 @@ const [dashToast, setDashToast] = useState('')
                 }}
               />
             </div>
+
+            {/* Warning banner for repeat reminders */}
+            {(reminderModal.reminderCount ?? 0) >= 3 && (
+              <div style={{
+                background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10,
+                padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400E',
+              }}>
+                This will be the {nth((reminderModal.reminderCount ?? 0) + 1)} reminder for this client.
+              </div>
+            )}
 
             {/* Buttons */}
             <div style={{ display: 'flex', gap: 10 }}>
