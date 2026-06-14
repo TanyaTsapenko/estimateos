@@ -190,7 +190,11 @@ create policy "Users see own invoices"
   on public.invoices for select using (auth.uid() = user_id);
 
 create policy "Users insert own invoices"
-  on public.invoices for insert with check (auth.uid() = user_id);
+  on public.invoices for insert with check (
+    auth.uid() = user_id
+    OR auth.uid() = (SELECT team_owner_id FROM public.profiles WHERE id = invoices.user_id)
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = (SELECT team_owner_id FROM public.profiles WHERE id = invoices.user_id)
+  );
 
 create policy "Users update own invoices"
   on public.invoices for update using (

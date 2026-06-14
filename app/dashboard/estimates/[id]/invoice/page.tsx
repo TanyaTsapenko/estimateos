@@ -89,7 +89,7 @@ export default function CreateInvoicePage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', sanitizedId)
+      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', estimate.user_id)
       const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
 
       const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
