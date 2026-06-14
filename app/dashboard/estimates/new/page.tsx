@@ -685,7 +685,8 @@ function NewEstimateForm() {
   const [discountValue, setDiscountValue] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
   const [jobSiteSameAsClient, setJobSiteSameAsClient] = useState(true)
-  const userIdRef = useRef<string | null>(null)
+  const userIdRef     = useRef<string | null>(null)
+  const priceUserIdRef = useRef<string | null>(null)
 
   const setCErr = (k: keyof ClientErrors, v: string | null) => setClientErrors(p => ({ ...p, [k]: v }))
   const clearCErr = (k: keyof ClientErrors) => setCErr(k, null)
@@ -711,11 +712,11 @@ function NewEstimateForm() {
 
   useEffect(() => {
     const handleVisibility = async () => {
-      if (document.visibilityState !== 'visible' || !userIdRef.current) return
+      if (document.visibilityState !== 'visible' || !priceUserIdRef.current) return
       const { data: priceRows } = await supabase
         .from('price_lists')
         .select('*')
-        .eq('user_id', userIdRef.current)
+        .eq('user_id', priceUserIdRef.current)
       applyPriceRows(priceRows)
     }
     document.addEventListener('visibilitychange', handleVisibility)
@@ -727,11 +728,22 @@ function NewEstimateForm() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
-      const [{ data: prof }, { data: priceRows }, { data: profSurcharges }, { data: paletteRows }] = await Promise.all([
-        supabase.from('profiles').select('province, role, team_owner_id, default_valid_days').eq('id', sanitizedId).single(),
-        supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
-        supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single(),
-        supabase.from('color_palette').select('id, name, hex_color, price_addon, category').eq('user_id', sanitizedId).order('sort_order').order('created_at'),
+
+      // Load profile first to resolve team_owner_id before fetching pricing data
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('province, role, team_owner_id, default_valid_days')
+        .eq('id', sanitizedId)
+        .single()
+
+      // Team members use their owner's price list, surcharges, and colour palette
+      const pricingId = (prof as any)?.team_owner_id || sanitizedId
+      priceUserIdRef.current = pricingId
+
+      const [{ data: priceRows }, { data: profSurcharges }, { data: paletteRows }] = await Promise.all([
+        supabase.from('price_lists').select('*').eq('user_id', pricingId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
+        supabase.from('profiles').select('surcharges').eq('id', pricingId).single(),
+        supabase.from('color_palette').select('id, name, hex_color, price_addon, category').eq('user_id', pricingId).order('sort_order').order('created_at'),
       ])
       if (prof) {
         setProfile(prof)
