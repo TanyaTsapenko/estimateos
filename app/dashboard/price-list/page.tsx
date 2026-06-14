@@ -42,6 +42,7 @@ export default function PriceListPage() {
   const [items,        setItems]        = useState<PriceItem[]>([])
   const [loading,      setLoading]      = useState(true)
   const [userId,       setUserId]       = useState<string | null>(null)
+  const [pricingUserId, setPricingUserId] = useState<string | null>(null)
   const [error,        setError]        = useState('')
   const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null)
   const [activeTab,    setActiveTab]    = useState<'items' | 'surcharges' | 'colours'>('items')
@@ -93,6 +94,7 @@ export default function PriceListPage() {
       const ownerFlag = profData?.role === 'owner'
       setIsOwner(ownerFlag)
       const queryUserId = ownerFlag ? sanitizedId : (profData?.team_owner_id || sanitizedId)
+      setPricingUserId(queryUserId)
       let { data } = await supabase
         .from('price_lists')
         .select('*')
@@ -146,10 +148,10 @@ export default function PriceListPage() {
   }, [])
 
   useEffect(() => {
-    if (activeTab !== 'colours' || paletteLoaded || !userId) return
+    if (activeTab !== 'colours' || paletteLoaded || !pricingUserId) return
     async function loadPalette() {
       setPaletteLoading(true)
-      const { data } = await supabase.from('color_palette').select('*').eq('user_id', userId).order('sort_order').order('created_at')
+      const { data } = await supabase.from('color_palette').select('*').eq('user_id', pricingUserId).order('sort_order').order('created_at')
       setPaletteItems((data || []).map((r: any) => ({
         id: r.id, name: r.name, hex_color: r.hex_color, manufacturer_code: r.manufacturer_code,
         price_addon: r.price_addon || 0, sort_order: r.sort_order || 0, category: r.category,
@@ -158,7 +160,7 @@ export default function PriceListPage() {
       setPaletteLoading(false)
     }
     loadPalette()
-  }, [activeTab, userId, paletteLoaded])
+  }, [activeTab, pricingUserId, paletteLoaded])
 
   function openAddModal(defaultCategory = 'Windows') {
     setEditingItem(null)
