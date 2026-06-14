@@ -39,7 +39,7 @@ const inputStyle: React.CSSProperties = {
 export default function PriceListPage() {
   const router   = useRouter()
   const supabase = createClient()
-  const { role, loading: roleLoading } = usePermissions()
+  const { role, loading: roleLoading, permissions } = usePermissions()
 
   const [items,        setItems]        = useState<PriceItem[]>([])
   const [loading,      setLoading]      = useState(true)
@@ -91,11 +91,14 @@ export default function PriceListPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-      setUserId(sanitizedId)
       const { data: profData } = await supabase.from('profiles').select('role, team_owner_id, surcharges').eq('id', sanitizedId).single()
+      // admin/manager with price_list permission get edit access, not just read-only
       const ownerFlag = profData?.role === 'owner'
+        || ((profData?.role === 'admin' || profData?.role === 'manager') && permissions?.price_list === true)
       setIsOwner(ownerFlag)
-      const queryUserId = ownerFlag ? sanitizedId : (profData?.team_owner_id || sanitizedId)
+      // team members (any role) always read from the owner's data
+      const queryUserId = profData?.team_owner_id || sanitizedId
+      setUserId(queryUserId)   // writes go to owner's records for admin/manager too
       setPricingUserId(queryUserId)
       let { data } = await supabase
         .from('price_lists')
@@ -104,9 +107,10 @@ export default function PriceListPage() {
         .neq('opening_type', '_sizes')
         .order('category', { ascending: true, nullsFirst: false })
         .order('custom_label', { ascending: true, nullsFirst: false })
-      if (data && data.length === 0 && ownerFlag) {
+      // only seed defaults for the actual account owner (no team_owner_id)
+      if (data && data.length === 0 && !profData?.team_owner_id) {
         const seeds = Object.entries(OPENING_TYPES).map(([key, val]) => ({
-          user_id:      sanitizedId,
+          user_id:      queryUserId,
           type:         key,
           opening_type: key,
           custom_label: val.name,
@@ -118,7 +122,7 @@ export default function PriceListPage() {
         const { data: refetched } = await supabase
           .from('price_lists')
           .select('*')
-          .eq('user_id', sanitizedId)
+          .eq('user_id', queryUserId)
           .neq('opening_type', '_sizes')
           .order('category', { ascending: true, nullsFirst: false })
           .order('custom_label', { ascending: true, nullsFirst: false })
@@ -134,7 +138,8 @@ export default function PriceListPage() {
           description: (r as any).description || '',
         })))
       }
-      if (ownerFlag) {
+      // actual owner: surcharges are on their own profile; team members: fetch from owner
+      if (!profData?.team_owner_id) {
         if (profData?.surcharges && Object.keys(profData.surcharges).length > 0) {
           setSurcharges(prev => ({ ...prev, ...profData.surcharges }))
         }
