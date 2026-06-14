@@ -9,7 +9,7 @@ import { Search, Plus, ChevronRight } from 'lucide-react'
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
   client_city: string | null; status: string; total: number
-  tier: string | null; created_at: string; viewed_at: string | null
+  created_at: string; viewed_at: string | null
 }
 
 const FILTERS = ['All', 'Draft', 'Sent', 'Signed', 'Invoiced', 'Paid']
@@ -67,7 +67,7 @@ export default function EstimatesPage() {
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data }, { data: stats }] = await Promise.all([
         supabase.from('estimates')
-          .select('id, estimate_number, client_name, client_city, status, total, tier, created_at, viewed_at')
+          .select('id, estimate_number, client_name, client_city, status, total, created_at, viewed_at')
           .eq('user_id', sanitizedId)
           .order('created_at', { ascending: false })
           .limit(50),

@@ -7,7 +7,7 @@ import { useRole } from '@/lib/useRole'
 import { DollarSign, Send, Target, TrendingUp } from 'lucide-react'
 
 interface Estimate {
-  id: string; status: string; total: number; tier: string | null
+  id: string; status: string; total: number
   client_province: string | null; created_at: string
 }
 
@@ -71,7 +71,7 @@ export default function ReportsPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data } = await supabase.from('estimates')
-        .select('id, status, total, tier, client_province, created_at')
+        .select('id, status, total, client_province, created_at')
         .eq('user_id', sanitizedId)
         .order('created_at', { ascending: false })
       setEstimates(data || [])
@@ -98,9 +98,6 @@ export default function ReportsPage() {
   const winRate = filtered.length > 0 ? Math.round(signed.length / filtered.length * 100) : 0
   const avgDeal = signed.length > 0 ? revenue / signed.length : 0
   const pipeline = sent.reduce((s, e) => s + (e.total || 0), 0)
-
-  const tierCounts: Record<string, number> = { good: 0, better: 0, best: 0 }
-  signed.forEach(e => { if (e.tier) tierCounts[e.tier] = (tierCounts[e.tier] || 0) + 1 })
 
   const funnel = [
     { label: 'Created',  count: filtered.length,                  color: FUNNEL_COLORS.created  },
@@ -181,77 +178,35 @@ export default function ReportsPage() {
               <KpiCard icon={<TrendingUp size={15} />} label="Avg per job" value={fmtCAD(avgDeal)} sub="Average"  />
             </div>
 
-            {/* ── SALES FUNNEL + TIER BREAKDOWN ── */}
-            <div className="reports-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-
-              {/* Sales funnel */}
-              <div style={{
-                background: '#fff', borderRadius: 12,
-                boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-                padding: '20px',
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', marginBottom: 18 }}>
-                  Sales funnel
-                </div>
-                {funnel.map(f => (
-                  <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: f.color, width: 36, flexShrink: 0, letterSpacing: '-.02em', lineHeight: 1 }}>
-                      {f.count}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628', width: 60, flexShrink: 0 }}>
-                      {f.label}
-                    </div>
-                    <div style={{ flex: 1, background: '#F1F5F9', borderRadius: 4, height: 8, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%', borderRadius: 4, background: f.color,
-                        width: filtered.length > 0 ? `${f.count / filtered.length * 100}%` : '0%',
-                        transition: 'width .5s ease',
-                      }} />
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8', width: 38, textAlign: 'right', flexShrink: 0 }}>
-                      {filtered.length > 0 ? `${Math.round(f.count / filtered.length * 100)}%` : '0%'}
-                    </div>
+            {/* ── SALES FUNNEL ── */}
+            <div style={{
+              background: '#fff', borderRadius: 12,
+              boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
+              padding: '20px',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', marginBottom: 18 }}>
+                Sales funnel
+              </div>
+              {funnel.map(f => (
+                <div key={f.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: f.color, width: 36, flexShrink: 0, letterSpacing: '-.02em', lineHeight: 1 }}>
+                    {f.count}
                   </div>
-                ))}
-              </div>
-
-              {/* Tier breakdown */}
-              <div style={{
-                background: '#fff', borderRadius: 12,
-                boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-                padding: '20px',
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', marginBottom: 16 }}>
-                  Tier breakdown{' '}
-                  <span style={{ fontSize: 11, fontWeight: 500, color: '#94A3B8' }}>signed only</span>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#0A1628', width: 60, flexShrink: 0 }}>
+                    {f.label}
+                  </div>
+                  <div style={{ flex: 1, background: '#F1F5F9', borderRadius: 4, height: 8, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: 4, background: f.color,
+                      width: filtered.length > 0 ? `${f.count / filtered.length * 100}%` : '0%',
+                      transition: 'width .5s ease',
+                    }} />
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8', width: 38, textAlign: 'right', flexShrink: 0 }}>
+                    {filtered.length > 0 ? `${Math.round(f.count / filtered.length * 100)}%` : '0%'}
+                  </div>
                 </div>
-                {signed.length === 0 ? (
-                  <div style={{ fontSize: 12, color: '#94A3B8', paddingTop: 8 }}>No signed estimates yet.</div>
-                ) : (
-                  Object.entries(tierCounts).filter(([, c]) => c > 0).map(([tier, count]) => (
-                    <div
-                      key={tier}
-                      style={{
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        padding: '10px 0', borderBottom: '1px solid rgba(10,22,40,0.05)',
-                      }}
-                    >
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', textTransform: 'capitalize' }}>{tier}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 12, color: '#64748B' }}>{count} job{count !== 1 ? 's' : ''}</span>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700,
-                          background: 'rgba(37,99,235,.08)', color: '#2563EB',
-                          borderRadius: 6, padding: '3px 8px',
-                        }}>
-                          {Math.round(count / signed.length * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
+              ))}
             </div>
 
             {/* Empty state */}
