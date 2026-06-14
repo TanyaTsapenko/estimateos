@@ -177,6 +177,7 @@ interface OpeningCardProps {
   openingsCount: number
   removeOpening: (id: string) => void
   updateOpening: (id: string, k: keyof Opening, v: string | number | boolean | object | null) => void
+  duplicateOpening: (id: string) => void
 }
 
 function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boolean; onToggle: () => void; icon: React.ReactNode }) {
@@ -194,7 +195,7 @@ function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boo
   )
 }
 
-function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
+function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
     : op.type.startsWith('door_') ? 'Doors'
     : (customOpeningTypes[op.type]?.category || 'Other')
@@ -202,6 +203,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const hasPalette = categoryPalette.length > 0
   const opts = getTypeSpecificOptions(op.type)
   const hasTypeSpecific = Object.values(opts).some(Boolean)
+
+  const [isExpanded, setIsExpanded] = useState(true)
 
   const [openGroup, setOpenGroup] = useState(() => ({
     appearance: true,
@@ -217,18 +220,61 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const selStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' } as const
   const lblStyle = { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' } as const
 
+  const typeName = OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || 'Opening'
+  const incomplete = !op.width_in || !op.height_in
+
+  if (!isExpanded) {
+    const dimStr = op.width_in && op.height_in ? ` — ${op.width_in}×${op.height_in}"` : ''
+    const colourDisplay = op.colour_name || (op.colour !== 'white' ? op.colour : '')
+    const colourStr = colourDisplay ? ` · ${colourDisplay}` : ''
+    const roomStr = op.room ? ` · ${op.room}` : ''
+    return (
+      <div className="op-card" style={{ padding: '10px 14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setIsExpanded(true)}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+            <div className="op-badge" style={{ flexShrink: 0 }}>{idx + 1}</div>
+            <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--jet)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {typeName}{dimStr}{colourStr}{roomStr}
+            </div>
+          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: incomplete ? '#D97706' : 'var(--amber)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+            {incomplete ? '⚠ incomplete' : fmtCAD(opCost(op, customPrices))}
+          </div>
+          <button onClick={() => duplicateOpening(op.id)} title="Duplicate"
+            style={{ background: 'rgba(37,99,235,0.07)', border: 'none', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', color: '#2563EB', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          {openingsCount > 1 && (
+            <button onClick={() => removeOpening(op.id)}
+              style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '4px 7px', fontSize: 11, color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="op-card">
       {/* Card header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="op-badge">{idx + 1}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flex: 1, minWidth: 0 }} onClick={() => setIsExpanded(false)}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+          <div className="op-badge" style={{ flexShrink: 0 }}>{idx + 1}</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--jet)' }}>
-            {OPENING_TYPES[op.type]?.name || customOpeningTypes[op.type]?.label || 'Opening'}
+            {typeName}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(opCost(op, customPrices))}</div>
+          <button onClick={() => duplicateOpening(op.id)} title="Duplicate"
+            style={{ background: 'rgba(37,99,235,0.07)', border: 'none', borderRadius: 6, padding: '4px 7px', cursor: 'pointer', color: '#2563EB', display: 'flex', alignItems: 'center' }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
           {openingsCount > 1 && (
             <button onClick={() => removeOpening(op.id)}
               style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#dc2626', cursor: 'pointer' }}>✕</button>
@@ -849,6 +895,14 @@ function NewEstimateForm() {
     if (openings.length <= 1) return
     setOpenings(p => p.filter(o => o.id !== id))
   }
+  function duplicateOpening(id: string) {
+    setOpenings(p => {
+      const idx = p.findIndex(o => o.id === id)
+      if (idx === -1) return p
+      const dupe = { ...p[idx], id: Date.now().toString() }
+      return [...p.slice(0, idx + 1), dupe, ...p.slice(idx + 1)]
+    })
+  }
   function updateOpening(id: string, k: keyof Opening, v: string | number | boolean | object | null) {
     setOpenings(p => p.map(o => o.id === id ? { ...o, [k]: v } : o))
   }
@@ -1258,7 +1312,7 @@ function NewEstimateForm() {
                 {openings.map((op, idx) => (
                   <OpeningCard key={op.id} op={op} idx={idx}
                     customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />
+                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} />
                 ))}
               </div>
               <button onClick={addOpening}
@@ -1455,7 +1509,7 @@ function NewEstimateForm() {
             <div className="info-box">Add each window or door as a separate opening. Quantities and options affect the price.</div>
             {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx}
               customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />)}
+              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} />)}
             <button onClick={addOpening}
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>
               + Add another opening
