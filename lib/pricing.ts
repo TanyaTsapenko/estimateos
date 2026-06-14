@@ -76,6 +76,8 @@ export interface Opening {
   combo_sections: { type: string; width: number }[] | null
   custom_shape_label: string
   custom_colour_label: string
+  colour_palette_id?: string | null
+  colour_name?: string | null
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
@@ -87,6 +89,7 @@ export function dimToSizeBucket(wIn: number, hIn: number): string {
 
 export interface CustomPrices {
   types: Record<string, { base: number; lab: number }>
+  colourPalette?: Record<string, number>
   surcharges?: {
     arch_pct?: number
     custom_shape_pct?: number
@@ -115,8 +118,10 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
 
   const sh = op.shape === 'arch' ? 1 + (s.arch_pct ?? 0) / 100
            : op.shape === 'custom' ? 1 + (s.custom_shape_pct ?? 0) / 100 : 1.0
-  const col = op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 0)
-            : op.colour === 'custom' ? (s.custom_colour ?? 0) : 0
+  const col = op.colour_palette_id && custom?.colourPalette
+    ? (custom.colourPalette[op.colour_palette_id] ?? 0)
+    : op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 0)
+    : op.colour === 'custom' ? (s.custom_colour ?? 0) : 0
   const gl = op.glass === 'lowe' ? (s.lowe ?? 0)
            : op.glass === 'frosted' ? (s.frosted ?? 0)
            : op.glass === 'tinted' ? (s.tinted ?? 0)

@@ -16,6 +16,16 @@ interface PriceItem {
   description: string
 }
 
+interface ColorEntry {
+  id: string
+  name: string
+  hex_color: string | null
+  manufacturer_code: string | null
+  price_addon: number
+  sort_order: number
+  category: string
+}
+
 const PRESET_CATEGORIES = ['Windows', 'Doors', 'Other', 'Hardware']
 const F = '"Inter", system-ui, -apple-system, sans-serif'
 
@@ -34,7 +44,7 @@ export default function PriceListPage() {
   const [userId,       setUserId]       = useState<string | null>(null)
   const [error,        setError]        = useState('')
   const [deletingItem, setDeletingItem] = useState<PriceItem | null>(null)
-  const [activeTab,    setActiveTab]    = useState<'items' | 'surcharges'>('items')
+  const [activeTab,    setActiveTab]    = useState<'items' | 'surcharges' | 'colours'>('items')
   const [surcharges, setSurcharges] = useState({
     arch_pct: 0, custom_shape_pct: 0,
     black_grey: 0, custom_colour: 0,
@@ -58,6 +68,20 @@ export default function PriceListPage() {
   const [modalDescription,    setModalDescription]    = useState('')
   const [modalSaving,         setModalSaving]         = useState(false)
   const [surchargeSearch,     setSurchargeSearch]     = useState('')
+
+  const [paletteItems,      setPaletteItems]      = useState<ColorEntry[]>([])
+  const [paletteLoaded,     setPaletteLoaded]     = useState(false)
+  const [paletteLoading,    setPaletteLoading]    = useState(false)
+  const [activeColourCat,   setActiveColourCat]   = useState('Windows')
+  const [showColourModal,   setShowColourModal]   = useState(false)
+  const [editingColour,     setEditingColour]     = useState<ColorEntry | null>(null)
+  const [colourModalName,   setColourModalName]   = useState('')
+  const [colourModalHex,    setColourModalHex]    = useState('#FFFFFF')
+  const [colourModalCode,   setColourModalCode]   = useState('')
+  const [colourModalAddon,  setColourModalAddon]  = useState('0')
+  const [colourModalSaving, setColourModalSaving] = useState(false)
+  const [deletingColour,    setDeletingColour]    = useState<ColorEntry | null>(null)
+  const [colourError,       setColourError]       = useState('')
 
   useEffect(() => {
     async function load() {
@@ -120,6 +144,21 @@ export default function PriceListPage() {
     }
     load()
   }, [])
+
+  useEffect(() => {
+    if (activeTab !== 'colours' || paletteLoaded || !userId) return
+    async function loadPalette() {
+      setPaletteLoading(true)
+      const { data } = await supabase.from('color_palette').select('*').eq('user_id', userId).order('sort_order').order('created_at')
+      setPaletteItems((data || []).map((r: any) => ({
+        id: r.id, name: r.name, hex_color: r.hex_color, manufacturer_code: r.manufacturer_code,
+        price_addon: r.price_addon || 0, sort_order: r.sort_order || 0, category: r.category,
+      })))
+      setPaletteLoaded(true)
+      setPaletteLoading(false)
+    }
+    loadPalette()
+  }, [activeTab, userId, paletteLoaded])
 
   function openAddModal(defaultCategory = 'Windows') {
     setEditingItem(null)
@@ -248,6 +287,82 @@ export default function PriceListPage() {
     flash('Surcharges saved!')
   }
 
+  function openAddColour() {
+    setEditingColour(null)
+    setColourModalName('')
+    setColourModalHex('#FFFFFF')
+    setColourModalCode('')
+    setColourModalAddon('0')
+    setColourError('')
+    setShowColourModal(true)
+  }
+  function openEditColour(c: ColorEntry) {
+    setEditingColour(c)
+    setColourModalName(c.name)
+    setColourModalHex(c.hex_color || '#FFFFFF')
+    setColourModalCode(c.manufacturer_code || '')
+    setColourModalAddon(String(c.price_addon))
+    setColourError('')
+    setShowColourModal(true)
+  }
+  async function saveColour() {
+    if (!colourModalName.trim() || !userId) return
+    setColourModalSaving(true); setColourError('')
+    const addon = parseFloat(colourModalAddon) || 0
+    if (editingColour) {
+      const { error: e } = await supabase.from('color_palette').update({
+        name: colourModalName.trim(), hex_color: colourModalHex || null,
+        manufacturer_code: colourModalCode.trim() || null, price_addon: addon,
+      }).eq('id', editingColour.id)
+      if (e) { setColourError(e.message); setColourModalSaving(false); return }
+      setPaletteItems(prev => prev.map(p => p.id === editingColour.id
+        ? { ...p, name: colourModalName.trim(), hex_color: colourModalHex, manufacturer_code: colourModalCode.trim() || null, price_addon: addon }
+        : p))
+    } else {
+      const catItems = paletteItems.filter(p => p.category === activeColourCat)
+      const nextOrder = catItems.length > 0 ? Math.max(...catItems.map(p => p.sort_order)) + 1 : 0
+      const { data: created, error: e } = await supabase.from('color_palette').insert({
+        user_id: userId, category: activeColourCat,
+        name: colourModalName.trim(), hex_color: colourModalHex || null,
+        manufacturer_code: colourModalCode.trim() || null,
+        price_addon: addon, sort_order: nextOrder,
+      }).select().single()
+      if (e || !created) { setColourError(e?.message || 'Failed'); setColourModalSaving(false); return }
+      setPaletteItems(prev => [...prev, {
+        id: (created as any).id, name: (created as any).name, hex_color: (created as any).hex_color,
+        manufacturer_code: (created as any).manufacturer_code, price_addon: (created as any).price_addon || 0,
+        sort_order: (created as any).sort_order || 0, category: (created as any).category,
+      }])
+    }
+    setColourModalSaving(false)
+    setShowColourModal(false)
+  }
+  async function deleteColour(c: ColorEntry) {
+    if (!userId) return
+    const { count } = await supabase.from('estimate_openings').select('id', { count: 'exact', head: true }).eq('colour_palette_id', c.id)
+    if (count && count > 0) {
+      setColourError(`Cannot delete: colour is used in ${count} existing opening(s). Remove it from estimates first.`)
+      setDeletingColour(null); return
+    }
+    await supabase.from('color_palette').delete().eq('id', c.id)
+    setPaletteItems(prev => prev.filter(p => p.id !== c.id))
+    setDeletingColour(null)
+  }
+  async function moveColour(c: ColorEntry, direction: 'up' | 'down') {
+    if (!userId) return
+    const catItems = paletteItems.filter(p => p.category === c.category).sort((a, b) => a.sort_order - b.sort_order)
+    const idx = catItems.findIndex(p => p.id === c.id)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (swapIdx < 0 || swapIdx >= catItems.length) return
+    const reordered = [...catItems]
+    ;[reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]]
+    await Promise.all(reordered.map((item, i) => supabase.from('color_palette').update({ sort_order: i }).eq('id', item.id)))
+    setPaletteItems(prev => {
+      const others = prev.filter(p => p.category !== c.category)
+      return [...others, ...reordered.map((item, i) => ({ ...item, sort_order: i }))]
+    })
+  }
+
   async function deleteItem(item: PriceItem) {
     if (!userId) return
     await supabase.from('price_lists').delete().eq('user_id', userId).eq('opening_type', item.key)
@@ -272,6 +387,8 @@ export default function PriceListPage() {
       )
     : grouped
 
+  const allColourCategories = [...new Set([...PRESET_CATEGORIES, ...Object.keys(grouped)])]
+
   return (
     <>
       <ConfirmModal
@@ -283,6 +400,65 @@ export default function PriceListPage() {
         onConfirm={() => deletingItem && deleteItem(deletingItem)}
         onCancel={() => setDeletingItem(null)}
       />
+
+      <ConfirmModal
+        open={!!deletingColour}
+        icon="trash"
+        title={`Delete "${deletingColour?.name ?? ''}"?`}
+        body="This colour will be removed from your palette. This cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => deletingColour && deleteColour(deletingColour)}
+        onCancel={() => setDeletingColour(null)}
+      />
+
+      {/* ── COLOUR MODAL ── */}
+      {showColourModal && (
+        <div onClick={e => { if (e.target === e.currentTarget) setShowColourModal(false) }}
+          style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', background: 'rgba(0,0,0,0.4)', fontFamily: F }}>
+          <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: '24px 20px 40px', maxHeight: '80vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>{editingColour ? 'Edit Colour' : 'Add Colour'}</div>
+              <button onClick={() => setShowColourModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#94A3B8', cursor: 'pointer', padding: 4, lineHeight: 1 }}>✕</button>
+            </div>
+            {colourError && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#DC2626', marginBottom: 12 }}>{colourError}</div>}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Colour swatch</div>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <label style={{ position: 'relative', flexShrink: 0, cursor: 'pointer' }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 10, background: colourModalHex, border: '2px solid #E2E5EA' }} />
+                  <input type="color" value={colourModalHex} onChange={e => setColourModalHex(e.target.value)}
+                    style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%', height: '100%', cursor: 'pointer' }} />
+                </label>
+                <input value={colourModalHex} onChange={e => setColourModalHex(e.target.value)} placeholder="#FFFFFF" maxLength={7}
+                  style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', textTransform: 'uppercase' }} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Name</div>
+              <input autoFocus value={colourModalName} onChange={e => setColourModalName(e.target.value)} placeholder="e.g. White, Bronze, RAL 7016" style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                Manufacturer code <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+              </div>
+              <input value={colourModalCode} onChange={e => setColourModalCode(e.target.value)} placeholder="e.g. RAL 7016, SW 6258" style={inputStyle} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Price add-on ($)</div>
+              <input type="number" min="0" step="5" value={colourModalAddon} onChange={e => setColourModalAddon(e.target.value)} placeholder="0" style={inputStyle} />
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowColourModal(false)} style={{ flex: 1, padding: 13, background: '#F5F6F8', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: F }}>Cancel</button>
+              <button onClick={saveColour} disabled={!colourModalName.trim() || colourModalSaving}
+                style={{ flex: 2, padding: 13, border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: F,
+                  background: !colourModalName.trim() ? '#CBD5E1' : '#2563EB',
+                  cursor: !colourModalName.trim() || colourModalSaving ? 'not-allowed' : 'pointer' }}>
+                {colourModalSaving ? 'Saving…' : 'Save Colour'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── ADD / EDIT MODAL ── */}
       {showModal && (
@@ -432,7 +608,7 @@ export default function PriceListPage() {
               {!isOwner && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Only the account owner can edit the price list.</div>}
             </div>
           </div>
-          {hasItems && isOwner && (
+          {hasItems && isOwner && activeTab === 'items' && (
             <button
               onClick={() => openAddModal()}
               style={{ padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
@@ -444,7 +620,7 @@ export default function PriceListPage() {
 
         {/* ── TAB SWITCHER ── */}
         <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 10, padding: 3, margin: '12px 16px 0', gap: 2 }}>
-          {(['items', 'surcharges'] as const).map(tab => (
+          {(['items', 'surcharges', 'colours'] as const).map(tab => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={{
               flex: 1, padding: '8px', borderRadius: 8, border: 'none', cursor: 'pointer', fontFamily: F,
               fontSize: 13, fontWeight: 600,
@@ -452,7 +628,7 @@ export default function PriceListPage() {
               color: activeTab === tab ? '#0A1628' : '#64748B',
               boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
             }}>
-              {tab === 'items' ? 'Items' : 'Surcharges'}
+              {tab === 'items' ? 'Items' : tab === 'surcharges' ? 'Surcharges' : 'Colours'}
             </button>
           ))}
         </div>
@@ -652,6 +828,65 @@ export default function PriceListPage() {
                 {savingSurcharges ? 'Saving…' : 'Save surcharges'}
               </button>
             )}
+          </div>
+        )}
+
+        {activeTab === 'colours' && (
+          <div style={{ padding: '12px 16px 100px' }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14, overflowX: 'auto', paddingBottom: 2 }}>
+              {allColourCategories.map(cat => (
+                <button key={cat} onClick={() => setActiveColourCat(cat)} style={{
+                  padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                  border: `1.5px solid ${activeColourCat === cat ? '#2563EB' : '#E2E5EA'}`,
+                  background: activeColourCat === cat ? '#EFF4FF' : '#fff',
+                  color: activeColourCat === cat ? '#2563EB' : '#64748B',
+                  cursor: 'pointer', fontFamily: F,
+                }}>{cat}</button>
+              ))}
+            </div>
+            {colourError && !showColourModal && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: '#DC2626', marginBottom: 12 }}>{colourError}</div>
+            )}
+            {isOwner && (
+              <button onClick={openAddColour} style={{
+                width: '100%', padding: '12px', background: '#EFF4FF', border: '1.5px dashed #93C5FD',
+                borderRadius: 12, fontSize: 13, fontWeight: 600, color: '#2563EB',
+                cursor: 'pointer', fontFamily: F, marginBottom: 12,
+              }}>+ Add colour</button>
+            )}
+            {paletteLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#94A3B8', fontSize: 13 }}>Loading…</div>
+            ) : (() => {
+              const catItems = paletteItems.filter(p => p.category === activeColourCat).sort((a, b) => a.sort_order - b.sort_order)
+              if (catItems.length === 0) return (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8', fontSize: 13, lineHeight: 1.6 }}>
+                  No colours for {activeColourCat} yet.{isOwner ? ' Tap "+ Add colour" above to build your palette.' : ''}
+                </div>
+              )
+              return (
+                <div style={{ background: '#fff', borderRadius: 14, border: '0.5px solid #E5E7EB', overflow: 'hidden' }}>
+                  {catItems.map((c, i) => (
+                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: i < catItems.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: c.hex_color || '#E5E7EB', border: '1px solid rgba(0,0,0,.1)', flexShrink: 0 }} />
+                      <div onClick={() => isOwner && openEditColour(c)} style={{ flex: 1, minWidth: 0, cursor: isOwner ? 'pointer' : 'default' }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                        {c.manufacturer_code && <div style={{ fontSize: 11, color: '#94A3B8' }}>{c.manufacturer_code}</div>}
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', flexShrink: 0 }}>
+                        {c.price_addon > 0 ? `+$${c.price_addon}` : 'No fee'}
+                      </div>
+                      {isOwner && (
+                        <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                          <button onClick={() => moveColour(c, 'up')} disabled={i === 0} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #E5E7EB', background: i === 0 ? '#F8FAFC' : '#fff', color: i === 0 ? '#CBD5E1' : '#64748B', fontSize: 11, cursor: i === 0 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↑</button>
+                          <button onClick={() => moveColour(c, 'down')} disabled={i === catItems.length - 1} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #E5E7EB', background: i === catItems.length - 1 ? '#F8FAFC' : '#fff', color: i === catItems.length - 1 ? '#CBD5E1' : '#64748B', fontSize: 11, cursor: i === catItems.length - 1 ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>↓</button>
+                          <button onClick={() => { setColourError(''); setDeletingColour(c) }} style={{ width: 28, height: 28, borderRadius: 6, border: 'none', background: 'rgba(220,38,38,0.08)', color: '#DC2626', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
 

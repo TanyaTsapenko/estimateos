@@ -11,6 +11,14 @@ const estErrBorder = '1.5px solid #C0341A'
 
 type CustomOpeningType = { label: string; base: number; lab: number; category?: string }
 
+interface PaletteEntry {
+  id: string
+  name: string
+  hex_color: string | null
+  price_addon: number
+  category: string
+}
+
 function OpeningTypeSelect({ value, onChange, customOpeningTypes, customPrices }: {
   value: string
   onChange: (v: string) => void
@@ -165,12 +173,18 @@ interface OpeningCardProps {
   idx: number
   customOpeningTypes: Record<string, CustomOpeningType>
   customPrices: CustomPrices | undefined
+  palette: PaletteEntry[]
   openingsCount: number
   removeOpening: (id: string) => void
   updateOpening: (id: string, k: keyof Opening, v: string | number | boolean | object | null) => void
 }
 
-function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
+function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
+  const category = op.type.startsWith('window_') ? 'Windows'
+    : op.type.startsWith('door_') ? 'Doors'
+    : (customOpeningTypes[op.type]?.category || 'Other')
+  const categoryPalette = palette.filter(c => c.category === category)
+  const hasPalette = categoryPalette.length > 0
   return (
     <div className="op-card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -230,13 +244,15 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
             <option value="arch">Arch{customPrices?.surcharges?.arch_pct ? ` (+${customPrices.surcharges.arch_pct}%)` : ''}</option>
             <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
           </select></div>
-        <div className="f"><label>Colour</label>
-          <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
-            <option value="white">White</option>
-            <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
-            <option value="grey">Grey{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
-            <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
-          </select></div>
+        {!hasPalette && (
+          <div className="f"><label>Colour</label>
+            <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
+              <option value="white">White</option>
+              <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+              <option value="grey">Grey{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+              <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
+            </select></div>
+        )}
       </div>
       {op.shape === 'custom' && (
         <div style={{ marginBottom: 8 }}>
@@ -248,15 +264,44 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, openingsCount,
           />
         </div>
       )}
-      {op.colour === 'custom' && (
+      {hasPalette ? (
         <div style={{ marginBottom: 8 }}>
-          <input
-            value={op.custom_colour_label}
-            onChange={e => updateOpening(op.id, 'custom_colour_label', e.target.value)}
-            placeholder="Describe the colour (e.g. Bronze, Dark green…)"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
-          />
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Colour</label>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {categoryPalette.map(c => {
+              const selected = op.colour_palette_id === c.id
+              return (
+                <button key={c.id} type="button" onClick={() => {
+                  updateOpening(op.id, 'colour_palette_id', c.id)
+                  updateOpening(op.id, 'colour_name', c.name)
+                }} style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                  padding: '6px 8px', borderRadius: 10,
+                  border: `2px solid ${selected ? '#2563EB' : 'transparent'}`,
+                  background: selected ? '#EFF4FF' : 'var(--surface)',
+                  cursor: 'pointer',
+                }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 7, background: c.hex_color || '#E5E7EB', border: '1.5px solid rgba(0,0,0,.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {selected && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,.5))' }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>}
+                  </div>
+                  <span style={{ fontSize: 10, fontWeight: selected ? 700 : 500, color: selected ? '#2563EB' : 'var(--jet)', maxWidth: 56, textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word' }}>{c.name}</span>
+                  {c.price_addon > 0 && <span style={{ fontSize: 9, color: '#94A3B8' }}>+${c.price_addon}</span>}
+                </button>
+              )
+            })}
+          </div>
         </div>
+      ) : (
+        op.colour === 'custom' && (
+          <div style={{ marginBottom: 8 }}>
+            <input
+              value={op.custom_colour_label}
+              onChange={e => updateOpening(op.id, 'custom_colour_label', e.target.value)}
+              placeholder="Describe the colour (e.g. Bronze, Dark green…)"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
+            />
+          </div>
+        )
       )}
 
       <div className="r2" style={{ marginBottom: 8 }}>
@@ -635,6 +680,7 @@ function NewEstimateForm() {
   const [profile, setProfile] = useState<{ province: string; default_valid_days?: number } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
+  const [palette, setPalette] = useState<PaletteEntry[]>([])
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
@@ -650,7 +696,7 @@ function NewEstimateForm() {
     priceRows.filter((r: any) => r.opening_type !== '_sizes').forEach((r: any) => {
       types[r.opening_type] = { base: r.base_price, lab: r.labour_price }
     })
-    setCustomPrices(prev => ({ surcharges: prev?.surcharges, types }))
+    setCustomPrices(prev => ({ colourPalette: prev?.colourPalette, surcharges: prev?.surcharges, types }))
     const customTypesMap: Record<string, CustomOpeningType> = {}
     priceRows.filter((r: any) => r.opening_type !== '_sizes' && r.custom_label).forEach((r: any) => {
       customTypesMap[r.opening_type] = {
@@ -681,16 +727,23 @@ function NewEstimateForm() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
-      const [{ data: prof }, { data: priceRows }, { data: profSurcharges }] = await Promise.all([
+      const [{ data: prof }, { data: priceRows }, { data: profSurcharges }, { data: paletteRows }] = await Promise.all([
         supabase.from('profiles').select('province, role, team_owner_id, default_valid_days').eq('id', sanitizedId).single(),
         supabase.from('price_lists').select('*').eq('user_id', sanitizedId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
         supabase.from('profiles').select('surcharges').eq('id', sanitizedId).single(),
+        supabase.from('color_palette').select('id, name, hex_color, price_addon, category').eq('user_id', sanitizedId).order('sort_order').order('created_at'),
       ])
       if (prof) {
         setProfile(prof)
       }
       if (profSurcharges?.surcharges) {
         setCustomPrices(prev => ({ types: prev?.types || {}, surcharges: profSurcharges.surcharges }))
+      }
+      if (paletteRows) {
+        setPalette(paletteRows as PaletteEntry[])
+        const palMap: Record<string, number> = {}
+        ;(paletteRows as any[]).forEach(c => { palMap[c.id] = c.price_addon || 0 })
+        setCustomPrices(prev => ({ ...(prev || { types: {} }), colourPalette: palMap }))
       }
       if (editId) {
         const [{ data: est }, { data: ops }] = await Promise.all([
@@ -736,6 +789,8 @@ function NewEstimateForm() {
             combo_sections: (op as any).combo_sections || null,
             custom_shape_label: (op as any).custom_shape_label || '',
             custom_colour_label: (op as any).custom_colour_label || '',
+            colour_palette_id: (op as any).colour_palette_id || null,
+            colour_name: (op as any).colour_name || null,
           })))
         }
       } else if (apptId) {
@@ -931,6 +986,8 @@ function NewEstimateForm() {
       combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
       custom_shape_label: op.custom_shape_label || null,
       custom_colour_label: op.custom_colour_label || null,
+      colour_palette_id: op.colour_palette_id || null,
+      colour_name: op.colour_name || null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, customPrices) * 100) / 100,
       total_cost: Math.round(opCost(op, customPrices) * 100) / 100,
       sort_order: i,
@@ -1186,7 +1243,7 @@ function NewEstimateForm() {
               <div className="op-cards-grid">
                 {openings.map((op, idx) => (
                   <OpeningCard key={op.id} op={op} idx={idx}
-                    customOpeningTypes={customOpeningTypes} customPrices={customPrices}
+                    customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
                     openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />
                 ))}
               </div>
@@ -1383,7 +1440,7 @@ function NewEstimateForm() {
           <>
             <div className="info-box">Add each window or door as a separate opening. Quantities and options affect the price.</div>
             {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx}
-              customOpeningTypes={customOpeningTypes} customPrices={customPrices}
+              customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
               openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} />)}
             <button onClick={addOpening}
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>

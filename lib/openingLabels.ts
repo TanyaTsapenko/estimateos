@@ -1,7 +1,8 @@
 const COLOUR_MAP: Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
 const SHAPE_MAP: Record<string, string>  = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
 
-export function getColourLabel(op: { colour?: string | null; custom_colour_label?: string | null }): string {
+export function getColourLabel(op: { colour?: string | null; custom_colour_label?: string | null; colour_name?: string | null }): string {
+  if (op.colour_name) return op.colour_name
   if (!op.colour) return ''
   if (op.colour === 'custom') return op.custom_colour_label || 'Custom colour'
   return COLOUR_MAP[op.colour] || op.colour
