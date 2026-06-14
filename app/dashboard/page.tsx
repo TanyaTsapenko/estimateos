@@ -118,6 +118,7 @@ const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color:
   final_invoice_sent:   { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent final invoice' },
   final_paid:           { icon: CheckCircle, bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
   reminder_sent:        { icon: SendIcon,    bg: '#EFF6FF', color: '#2563EB', label: 'sent reminder' },
+  estimate_auto_expired:{ icon: ClockIcon,   bg: '#FEF3C7', color: '#D97706', label: 'estimate expired (no response)' },
 }
 
 function fmtAmt(n: number) {
@@ -562,10 +563,16 @@ const [dashToast, setDashToast] = useState('')
       if (user) {
         const now = new Date().toISOString()
         const newCount = (reminderModal.reminderCount ?? 0) + 1
-        await supabase.from('estimates').update({
+        const isAutoExpiring = newCount === 3
+        const estimateUpdate: Record<string, unknown> = {
           last_reminder_sent_at: now,
           reminder_count: newCount,
-        }).eq('id', reminderModal.estimateId)
+        }
+        if (isAutoExpiring) {
+          estimateUpdate.status = 'expired'
+          estimateUpdate.expired_reason = 'no_response_after_reminders'
+        }
+        await supabase.from('estimates').update(estimateUpdate).eq('id', reminderModal.estimateId)
         fetch('/api/log-activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -579,6 +586,29 @@ const [dashToast, setDashToast] = useState('')
             client_name: reminderModal.clientName,
           }),
         }).catch(() => {})
+        if (isAutoExpiring) {
+          fetch('/api/log-activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user_id: user.id,
+              event_type: 'estimate_auto_expired',
+              actor_type: 'contractor',
+              entity_type: 'estimate',
+              entity_id: reminderModal.estimateId,
+              entity_number: reminderModal.estimateNumber,
+              client_name: reminderModal.clientName,
+            }),
+          }).catch(() => {})
+          await supabase.from('notifications').insert({
+            user_id: user.id,
+            type: 'estimate_expired',
+            title: 'Estimate expired',
+            body: `${reminderModal.estimateNumber} expired without a response${reminderModal.clientName ? ` from ${reminderModal.clientName}` : ''}`,
+            link: `/dashboard/estimates/${reminderModal.estimateId}`,
+            read: false,
+          })
+        }
         const { data: senderProfile } = await supabase
           .from('profiles').select('team_owner_id, first_name, last_name').eq('id', user.id).single()
         if (senderProfile?.team_owner_id) {
@@ -593,10 +623,11 @@ const [dashToast, setDashToast] = useState('')
           })
         }
       }
+      const wasAutoExpired = (reminderModal.reminderCount ?? 0) + 1 === 3
       setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
       setReminderModal(null)
-      setDashToast('Reminder sent!')
-      setTimeout(() => setDashToast(''), 2500)
+      setDashToast(wasAutoExpired ? 'Reminder sent — estimate marked as expired' : 'Reminder sent!')
+      setTimeout(() => setDashToast(''), 3000)
     } finally {
       setReminderSending(false)
     }
@@ -1277,14 +1308,21 @@ const [dashToast, setDashToast] = useState('')
             </div>
 
             {/* Warning banner for repeat reminders */}
-            {(reminderModal.reminderCount ?? 0) >= 3 && (
+            {(reminderModal.reminderCount ?? 0) === 2 ? (
+              <div style={{
+                background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10,
+                padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#991B1B',
+              }}>
+                This is the final reminder. If the client doesn't respond, this estimate will be marked as expired.
+              </div>
+            ) : (reminderModal.reminderCount ?? 0) > 2 ? (
               <div style={{
                 background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10,
                 padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#92400E',
               }}>
                 This will be the {nth((reminderModal.reminderCount ?? 0) + 1)} reminder for this client.
               </div>
-            )}
+            ) : null}
 
             {/* Buttons */}
             <div style={{ display: 'flex', gap: 10 }}>
