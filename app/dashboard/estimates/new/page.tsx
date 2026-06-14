@@ -179,14 +179,47 @@ interface OpeningCardProps {
   updateOpening: (id: string, k: keyof Opening, v: string | number | boolean | object | null) => void
 }
 
+function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boolean; onToggle: () => void; icon: React.ReactNode }) {
+  return (
+    <div onClick={onToggle} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', marginTop: 8, cursor: 'pointer', borderTop: '1px solid #F1F5F9', userSelect: 'none' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2563EB', display: 'flex', alignItems: 'center', gap: 6 }}>
+        {icon}
+        {title}
+      </div>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.18s', flexShrink: 0 }}>
+        <polyline points="6 9 12 15 18 9"/>
+      </svg>
+    </div>
+  )
+}
+
 function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
     : op.type.startsWith('door_') ? 'Doors'
     : (customOpeningTypes[op.type]?.category || 'Other')
   const categoryPalette = palette.filter(c => c.category === category)
   const hasPalette = categoryPalette.length > 0
+  const opts = getTypeSpecificOptions(op.type)
+  const hasTypeSpecific = Object.values(opts).some(Boolean)
+
+  const [openGroup, setOpenGroup] = useState(() => ({
+    appearance: true,
+    glass: op.glass !== 'clear',
+    installation: op.install !== 'retrofit' || op.frame !== 'none' || op.material !== 'vinyl' ||
+      !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
+      op.sidelight_left > 0 || op.sidelight_right > 0 || op.transom_above || op.has_screen ||
+      op.tilt_clean || !!op.glass_type || !!op.core_type || !!op.handle_type || !!op.combo_sections,
+    notes: !!(op.notes || op.brand),
+  }))
+  const toggle = (g: keyof typeof openGroup) => setOpenGroup(p => ({ ...p, [g]: !p[g] }))
+
+  const selStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' } as const
+  const lblStyle = { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' } as const
+
   return (
     <div className="op-card">
+      {/* Card header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className="op-badge">{idx + 1}</div>
@@ -195,18 +228,15 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>
-            {fmtCAD(opCost(op, customPrices))}
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--amber)' }}>{fmtCAD(opCost(op, customPrices))}</div>
           {openingsCount > 1 && (
             <button onClick={() => removeOpening(op.id)}
-              style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#dc2626', cursor: 'pointer' }}>
-              ✕
-            </button>
+              style={{ background: 'rgba(239,68,68,.1)', border: 'none', borderRadius: 6, padding: '3px 8px', fontSize: 11, color: '#dc2626', cursor: 'pointer' }}>✕</button>
           )}
         </div>
       </div>
 
+      {/* ── GROUP 1: Basic Info (always visible) ── */}
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Type</label>
           <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} customPrices={customPrices} /></div>
@@ -215,7 +245,6 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
             {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
           </select></div>
       </div>
-
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
           <div style={{ position: 'relative' }}>
@@ -236,373 +265,89 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
             <span style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: 'var(--ash)', pointerEvents: 'none' }}>in</span>
           </div></div>
       </div>
-
-      <div className="r2" style={{ marginBottom: 8 }}>
-        <div className="f"><label>Shape</label>
-          <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)} disabled={op.type === 'window_combo'} style={{ opacity: op.type === 'window_combo' ? 0.4 : 1, cursor: op.type === 'window_combo' ? 'not-allowed' : 'pointer' }}>
-            <option value="rect">Rectangle</option>
-            <option value="arch">Arch{customPrices?.surcharges?.arch_pct ? ` (+${customPrices.surcharges.arch_pct}%)` : ''}</option>
-            <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
-          </select></div>
-        {!hasPalette && (
-          <div className="f"><label>Colour</label>
-            <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
-              <option value="white">White</option>
-              <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
-              <option value="grey">Grey{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
-              <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
-            </select></div>
-        )}
-      </div>
-      {op.shape === 'custom' && (
-        <div style={{ marginBottom: 8 }}>
-          <input
-            value={op.custom_shape_label}
-            onChange={e => updateOpening(op.id, 'custom_shape_label', e.target.value)}
-            placeholder="Describe the shape (e.g. Half-circle, Triangle…)"
-            style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
-          />
-        </div>
-      )}
-      {hasPalette ? (
-        <div style={{ marginBottom: 8 }}>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Colour</label>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {categoryPalette.map(c => {
-              const selected = op.colour_palette_id === c.id
-              return (
-                <button key={c.id} type="button" onClick={() => {
-                  updateOpening(op.id, 'colour_palette_id', c.id)
-                  updateOpening(op.id, 'colour_name', c.name)
-                }} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  padding: '6px 8px', borderRadius: 10,
-                  border: `2px solid ${selected ? '#2563EB' : 'transparent'}`,
-                  background: selected ? '#EFF4FF' : 'var(--surface)',
-                  cursor: 'pointer',
-                }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 7, background: c.hex_color || '#E5E7EB', border: '1.5px solid rgba(0,0,0,.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {selected && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,.5))' }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>}
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: selected ? 700 : 500, color: selected ? '#2563EB' : 'var(--jet)', maxWidth: 56, textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word' }}>{c.name}</span>
-                  {c.price_addon > 0 && <span style={{ fontSize: 9, color: '#94A3B8' }}>+${c.price_addon}</span>}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-      ) : (
-        op.colour === 'custom' && (
-          <div style={{ marginBottom: 8 }}>
-            <input
-              value={op.custom_colour_label}
-              onChange={e => updateOpening(op.id, 'custom_colour_label', e.target.value)}
-              placeholder="Describe the colour (e.g. Bronze, Dark green…)"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }}
-            />
-          </div>
-        )
-      )}
-
-      <div className="r2" style={{ marginBottom: 8 }}>
-        <div className="f"><label>Glass</label>
-          <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
-            <option value="clear">Clear</option>
-            <option value="lowe">Low-E{customPrices?.surcharges?.lowe ? ` (+$${customPrices.surcharges.lowe})` : ''}</option>
-            <option value="frosted">Frosted{customPrices?.surcharges?.frosted ? ` (+$${customPrices.surcharges.frosted})` : ''}</option>
-            <option value="tinted">Tinted{customPrices?.surcharges?.tinted ? ` (+$${customPrices.surcharges.tinted})` : ''}</option>
-            <option value="tempered">Tempered{customPrices?.surcharges?.tempered ? ` (+$${customPrices.surcharges.tempered})` : ''}</option>
-          </select></div>
-        <div className="f"><label>Frame</label>
-          <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
-            <option value="none">Good condition</option>
-            <option value="repair">Needs repair{customPrices?.surcharges?.frame_repair ? ` (+$${customPrices.surcharges.frame_repair})` : ''}</option>
-            <option value="rotted">Rotted{customPrices?.surcharges?.frame_rotted ? ` (+$${customPrices.surcharges.frame_rotted})` : ''}</option>
-          </select></div>
-      </div>
-
-      <div className="r1" style={{ marginBottom: 8 }}>
-        <div className="f"><label>Installation</label>
-          <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
-            <option value="retrofit">Retrofit</option>
-            <option value="fullframe">Full Frame{customPrices?.surcharges?.fullframe ? ` (+$${customPrices.surcharges.fullframe})` : ''}</option>
-            <option value="stud_to_stud">Stud to Stud{customPrices?.surcharges?.stud_to_stud ? ` (+$${customPrices.surcharges.stud_to_stud})` : ''}</option>
-          </select></div>
-      </div>
-
-      <div className="r2">
+      <div className="r2" style={{ marginBottom: 4 }}>
+        <div className="f"><label>Room (optional)</label>
+          <input placeholder="Living room" value={op.room} onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
         <div className="f"><label>Floor</label>
           <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
             <option value="first">Ground floor</option>
             <option value="second">Second floor{customPrices?.surcharges?.second_floor ? ` (+$${customPrices.surcharges.second_floor})` : ''}</option>
             <option value="third">Third floor{customPrices?.surcharges?.third_floor ? ` (+$${customPrices.surcharges.third_floor})` : ''}</option>
           </select></div>
-        <div className="f"><label>Room (optional)</label>
-          <input placeholder="Living room" value={op.room}
-            onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
       </div>
 
-      {/* Type-specific options */}
-      {(() => {
-        const opts = getTypeSpecificOptions(op.type)
-        const hasAny = Object.values(opts).some(Boolean)
-        if (!hasAny) return null
-        return (
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2563EB', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              Options
-            </div>
-
-            {opts.showScreen && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Screen included</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Insect screen</div>
-                </div>
-                <div onClick={() => updateOpening(op.id, 'has_screen', !op.has_screen)}
-                  style={{ width: 40, height: 22, borderRadius: 99, background: op.has_screen ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                  <div style={{ position: 'absolute', top: 3, left: op.has_screen ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-                </div>
-              </div>
+      {/* ── GROUP 2: Appearance ── */}
+      <GroupHeader title="Appearance" open={openGroup.appearance} onToggle={() => toggle('appearance')} icon={
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      } />
+      {openGroup.appearance && (
+        <div style={{ paddingTop: 6 }}>
+          <div className="r2" style={{ marginBottom: 8 }}>
+            <div className="f"><label>Shape</label>
+              <select value={op.shape} onChange={e => updateOpening(op.id, 'shape', e.target.value)} disabled={op.type === 'window_combo'} style={{ opacity: op.type === 'window_combo' ? 0.4 : 1, cursor: op.type === 'window_combo' ? 'not-allowed' : 'pointer' }}>
+                <option value="rect">Rectangle</option>
+                <option value="arch">Arch{customPrices?.surcharges?.arch_pct ? ` (+${customPrices.surcharges.arch_pct}%)` : ''}</option>
+                <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
+              </select></div>
+            {!hasPalette && (
+              <div className="f"><label>Colour</label>
+                <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
+                  <option value="white">White</option>
+                  <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+                  <option value="grey">Grey{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
+                  <option value="custom">Custom colour{customPrices?.surcharges?.custom_colour ? ` (+$${customPrices.surcharges.custom_colour})` : ''}</option>
+                </select></div>
             )}
-
-            {opts.showTiltClean && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Tilt-in for cleaning</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Both sashes tilt in</div>
-                </div>
-                <div onClick={() => updateOpening(op.id, 'tilt_clean', !op.tilt_clean)}
-                  style={{ width: 40, height: 22, borderRadius: 99, background: op.tilt_clean ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                  <div style={{ position: 'absolute', top: 3, left: op.tilt_clean ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-                </div>
-              </div>
-            )}
-
-            {opts.showDirection && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Opening direction</div>
-                <select value={op.opening_direction} onChange={e => updateOpening(op.id, 'opening_direction', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.opening_direction ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='left'>Left</option>
-                  <option value='right'>Right</option>
-                  <option value='both'>Both (double casement)</option>
-                </select>
-              </div>
-            )}
-
-            {opts.showPanels && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Number of panels</div>
-                <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.panels_count ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='2'>2 panels</option>
-                  <option value='3'>3 panels</option>
-                </select>
-              </div>
-            )}
-
-            {opts.showBayOptions && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Sections</div>
-                <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.panels_count ? '#0A1628' : '#94A3B8', background: '#fff', marginBottom: 8 }}>
-                  <option value=''>Select...</option>
-                  <option value='3'>3 sections</option>
-                  <option value='5'>5 sections</option>
-                  <option value='7'>7 sections</option>
-                </select>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Angle</div>
-                <select value={op.bay_angle} onChange={e => updateOpening(op.id, 'bay_angle', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.bay_angle ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='30'>30°</option>
-                  <option value='45'>45°</option>
-                  <option value='60'>60°</option>
-                </select>
-              </div>
-            )}
-
-            {opts.showTransomPanes && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Number of panes</div>
-                <select value={op.transom_panes} onChange={e => updateOpening(op.id, 'transom_panes', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.transom_panes ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='2'>2 panes</option>
-                  <option value='3'>3 panes</option>
-                  <option value='4'>4 panes</option>
-                </select>
-              </div>
-            )}
-
-            {opts.showSidelights && (
-              <>
-                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Left sidelight width (in)</div>
-                  <input type="number" min="0" value={op.sidelight_left || ''} placeholder="0 = none"
-                    onChange={e => updateOpening(op.id, 'sidelight_left', parseFloat(e.target.value) || 0)}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
-                </div>
-                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Right sidelight width (in)</div>
-                  <input type="number" min="0" value={op.sidelight_right || ''} placeholder="0 = none"
-                    onChange={e => updateOpening(op.id, 'sidelight_right', parseFloat(e.target.value) || 0)}
-                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
-                </div>
-              </>
-            )}
-
-            {opts.showTransomAbove && (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Transom above</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>Window above door</div>
-                </div>
-                <div onClick={() => updateOpening(op.id, 'transom_above', !op.transom_above)}
-                  style={{ width: 40, height: 22, borderRadius: 99, background: op.transom_above ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-                  <div style={{ position: 'absolute', top: 3, left: op.transom_above ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
-                </div>
-              </div>
-            )}
-
-            {opts.showGlassType && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Glass coverage</div>
-                <select value={op.glass_type} onChange={e => updateOpening(op.id, 'glass_type', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.glass_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='full'>Full glass</option>
-                  <option value='half'>Half glass</option>
-                </select>
-              </div>
-            )}
-
-            {opts.showCoreType && (
-              <div style={{ padding: '8px 0' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Core type</div>
-                <select value={op.core_type} onChange={e => updateOpening(op.id, 'core_type', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.core_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  <option value='hollow'>Hollow core</option>
-                  <option value='solid'>Solid core</option>
-                </select>
-              </div>
-            )}
-            {opts.showHandleType && (
-              <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Handle type</div>
-                <select value={op.handle_type || ''} onChange={e => updateOpening(op.id, 'handle_type', e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: op.handle_type ? '#0A1628' : '#94A3B8', background: '#fff' }}>
-                  <option value=''>Select...</option>
-                  {['window_cas', 'window_awn', 'window_tilt'].includes(op.type) ? <>
-                    <option value='casement_lever'>Casement lever</option>
-                    <option value='tilt_latch'>Tilt latch</option>
-                    <option value='lift_rail'>Lift rail</option>
-                    <option value='push_bar'>Push bar</option>
-                  </> : <>
-                    <option value='lever'>Lever handle</option>
-                    <option value='knob'>Knob</option>
-                    <option value='pull_bar'>Pull bar</option>
-                    <option value='passage_set'>Passage set</option>
-                    <option value='deadbolt_lever'>Deadbolt + lever</option>
-                    <option value='dummy'>Dummy handle</option>
-                  </>}
-                </select>
-              </div>
-            )}
-            {opts.showComboSections && (() => {
-              const sections: { type: string; width: number }[] = (op as any).combo_sections || [{ type: 'window_fix', width: 24 }, { type: 'window_cas', width: 14 }]
-              const typeLabels: Record<string, string> = { window_dh: 'D-Hung', window_sh: 'S-Hung', window_cas: 'Casement', window_awn: 'Awning', window_sl: 'Slider', window_fix: 'Fixed', window_trans: 'Transom' }
-              return (
-                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 8 }}>Sections</div>
-                  <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8, overflowX: 'auto', paddingBottom: 2 }}>
-                    {sections.map((s, i) => (
-                      <div key={i} style={{ flex: s.width, border: '1.5px solid #E2E8F0', borderRadius: 6, background: s.type === 'window_fix' ? '#F8FAFC' : '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
-                        <div style={{ fontSize: 10, color: '#94A3B8' }}>{s.width}"</div>
-                      </div>
-                    ))}
-                    <div onClick={() => {
-                      const newSections = [...sections, { type: 'window_fix', width: 14 }]
-                      updateOpening(op.id, 'combo_sections' as any, newSections)
-                    }} style={{ width: 28, border: '1.5px dashed #E2E8F0', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#2563EB', fontSize: 18, flexShrink: 0 }}>+</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start', overflowX: 'auto', paddingBottom: 4 }}>
-                    {sections.map((s, i) => (
-                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 5, fontSize: 12, fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</div>
-                        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-                          <select value={s.type} onChange={e => {
-                            const updated = sections.map((sec, j) => j === i ? { ...sec, type: e.target.value } : sec)
-                            updateOpening(op.id, 'combo_sections' as any, updated)
-                          }} style={{ flex: 1, padding: '9px 10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
-                            <option value="window_fix">Fixed</option>
-                            <option value="window_dh">Double-Hung</option>
-                            <option value="window_cas">Casement</option>
-                            <option value="window_awn">Awning</option>
-                            <option value="window_sl">Slider</option>
-                            <option value="window_trans">Transom</option>
-                          </select>
-                          {sections.length > 1 && (
-                            <div onClick={() => {
-                              const updated = sections.filter((_, j) => j !== i)
-                              updateOpening(op.id, 'combo_sections' as any, updated)
-                            }} style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            </div>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 10px' }}>
-                          <input type="number" min="1" value={s.width} onChange={e => {
-                            const updated = sections.map((sec, j) => j === i ? { ...sec, width: parseFloat(e.target.value) || 0 } : sec)
-                            updateOpening(op.id, 'combo_sections' as any, updated)
-                          }} style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 13, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}/>
-                          <span style={{ fontSize: 9, color: '#94A3B8', flexShrink: 0 }}>in</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: 8, padding: '6px 8px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12, color: '#64748B' }}>
-                    <span style={{ color: '#94A3B8' }}>Config: </span>
-                    <span style={{ color: '#0A1628', fontWeight: 600 }}>{sections.map(s => `${typeLabels[s.type] || s.type} ${s.width}"`).join(' + ')}</span>
-                  </div>
-                </div>
-              )
-            })()}
           </div>
-        )
-      })()}
-
-      {/* More options toggle */}
-      <div
-        onClick={() => updateOpening(op.id, 'showMore' as any, !op.showMore as any)}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '9px', border: '1px dashed #E2E8F0', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#94A3B8', marginTop: 4 }}
-      >
-        {(op as any).showMore ? '− Less options' : '+ More options'}
-      </div>
-
-      {/* Extra fields */}
-      {(op as any).showMore && (
-        <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid #F1F5F9' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Material</div>
-              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).material} onChange={e => updateOpening(op.id, 'material' as any, e.target.value)}>
-                <option value="vinyl">Vinyl</option>
-                <option value="wood">Wood</option>
-                <option value="fiberglass">Fiberglass</option>
-                <option value="aluminum">Aluminum</option>
-                <option value="composite">Composite</option>
+          {op.shape === 'custom' && (
+            <div style={{ marginBottom: 8 }}>
+              <input value={op.custom_shape_label} onChange={e => updateOpening(op.id, 'custom_shape_label', e.target.value)}
+                placeholder="Describe the shape (e.g. Half-circle, Triangle…)"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }} />
+            </div>
+          )}
+          {hasPalette ? (
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Colour</label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {categoryPalette.map(c => {
+                  const selected = op.colour_palette_id === c.id
+                  return (
+                    <button key={c.id} type="button" onClick={() => {
+                      updateOpening(op.id, 'colour_palette_id', c.id)
+                      updateOpening(op.id, 'colour_name', c.name)
+                    }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '6px 8px', borderRadius: 10, border: `2px solid ${selected ? '#2563EB' : 'transparent'}`, background: selected ? '#EFF4FF' : 'var(--surface)', cursor: 'pointer' }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 7, background: c.hex_color || '#E5E7EB', border: '1.5px solid rgba(0,0,0,.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {selected && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,.5))' }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>}
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: selected ? 700 : 500, color: selected ? '#2563EB' : 'var(--jet)', maxWidth: 56, textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word' }}>{c.name}</span>
+                      {c.price_addon > 0 && <span style={{ fontSize: 9, color: '#94A3B8' }}>+${c.price_addon}</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ) : (
+            op.colour === 'custom' && (
+              <div style={{ marginBottom: 8 }}>
+                <input value={op.custom_colour_label} onChange={e => updateOpening(op.id, 'custom_colour_label', e.target.value)}
+                  placeholder="Describe the colour (e.g. Bronze, Dark green…)"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', outline: 'none' }} />
+              </div>
+            )
+          )}
+          <div className="r2">
+            <div><div style={lblStyle}>Grid pattern</div>
+              <select style={selStyle} value={op.grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern', e.target.value)}>
+                <option value="none">None</option>
+                <option value="colonial">Colonial</option>
+                <option value="prairie">Prairie</option>
+                <option value="diamond">Diamond</option>
+                <option value="custom">Custom</option>
               </select>
             </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Hardware colour</div>
-              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour' as any, e.target.value)}>
+            <div><div style={lblStyle}>Hardware colour</div>
+              <select style={selStyle} value={op.hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour', e.target.value)}>
                 <option value="white">White</option>
                 <option value="black">Black</option>
                 <option value="chrome">Chrome</option>
@@ -611,31 +356,288 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
               </select>
             </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Grid pattern</div>
-              <select style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern' as any, e.target.value)}>
-                <option value="none">None</option>
-                <option value="colonial">Colonial</option>
-                <option value="prairie">Prairie</option>
-                <option value="diamond">Diamond</option>
-                <option value="custom">Custom</option>
+        </div>
+      )}
+
+      {/* ── GROUP 3: Glass & Performance ── */}
+      <GroupHeader title="Glass & Performance" open={openGroup.glass} onToggle={() => toggle('glass')} icon={
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      } />
+      {openGroup.glass && (
+        <div style={{ paddingTop: 6 }}>
+          <div className="f"><label>Glass</label>
+            <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
+              <option value="clear">Clear</option>
+              <option value="lowe">Low-E{customPrices?.surcharges?.lowe ? ` (+$${customPrices.surcharges.lowe})` : ''}</option>
+              <option value="frosted">Frosted{customPrices?.surcharges?.frosted ? ` (+$${customPrices.surcharges.frosted})` : ''}</option>
+              <option value="tinted">Tinted{customPrices?.surcharges?.tinted ? ` (+$${customPrices.surcharges.tinted})` : ''}</option>
+              <option value="tempered">Tempered{customPrices?.surcharges?.tempered ? ` (+$${customPrices.surcharges.tempered})` : ''}</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* ── GROUP 4: Installation & Details ── */}
+      <GroupHeader title="Installation & Details" open={openGroup.installation} onToggle={() => toggle('installation')} icon={
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      } />
+      {openGroup.installation && (
+        <div style={{ paddingTop: 6 }}>
+          <div className="r1" style={{ marginBottom: 8 }}>
+            <div className="f"><label>Installation</label>
+              <select value={op.install} onChange={e => updateOpening(op.id, 'install', e.target.value)}>
+                <option value="retrofit">Retrofit</option>
+                <option value="fullframe">Full Frame{customPrices?.surcharges?.fullframe ? ` (+$${customPrices.surcharges.fullframe})` : ''}</option>
+                <option value="stud_to_stud">Stud to Stud{customPrices?.surcharges?.stud_to_stud ? ` (+$${customPrices.surcharges.stud_to_stud})` : ''}</option>
+              </select></div>
+          </div>
+          <div className="r1" style={{ marginBottom: 8 }}>
+            <div className="f"><label>Existing Opening Condition</label>
+              <select value={op.frame} onChange={e => updateOpening(op.id, 'frame', e.target.value)}>
+                <option value="none">Good</option>
+                <option value="repair">Needs repair{customPrices?.surcharges?.frame_repair ? ` (+$${customPrices.surcharges.frame_repair})` : ''}</option>
+                <option value="rotted">Rotted{customPrices?.surcharges?.frame_rotted ? ` (+$${customPrices.surcharges.frame_rotted})` : ''}</option>
+              </select></div>
+          </div>
+          <div className="r1" style={{ marginBottom: hasTypeSpecific ? 10 : 0 }}>
+            <div><div style={lblStyle}>Material</div>
+              <select style={selStyle} value={op.material} onChange={e => updateOpening(op.id, 'material', e.target.value)}>
+                <option value="vinyl">Vinyl</option>
+                <option value="wood">Wood</option>
+                <option value="fiberglass">Fiberglass</option>
+                <option value="aluminum">Aluminum</option>
+                <option value="composite">Composite</option>
               </select>
             </div>
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Brand (optional)</div>
-              <input style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} value={(op as any).brand} onChange={e => updateOpening(op.id, 'brand' as any, e.target.value)} placeholder="e.g. Pella" />
+          </div>
+
+          {hasTypeSpecific && (
+            <div style={{ paddingTop: 4, borderTop: '0.5px solid #F1F5F9' }}>
+              {opts.showScreen && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Screen included</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>Insect screen</div>
+                  </div>
+                  <div onClick={() => updateOpening(op.id, 'has_screen', !op.has_screen)}
+                    style={{ width: 40, height: 22, borderRadius: 99, background: op.has_screen ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: 3, left: op.has_screen ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                  </div>
+                </div>
+              )}
+              {opts.showTiltClean && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Tilt-in for cleaning</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>Both sashes tilt in</div>
+                  </div>
+                  <div onClick={() => updateOpening(op.id, 'tilt_clean', !op.tilt_clean)}
+                    style={{ width: 40, height: 22, borderRadius: 99, background: op.tilt_clean ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: 3, left: op.tilt_clean ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                  </div>
+                </div>
+              )}
+              {opts.showDirection && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Opening direction</div>
+                  <select value={op.opening_direction} onChange={e => updateOpening(op.id, 'opening_direction', e.target.value)}
+                    style={{ ...selStyle, color: op.opening_direction ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='left'>Left</option>
+                    <option value='right'>Right</option>
+                    <option value='both'>Both (double casement)</option>
+                  </select>
+                </div>
+              )}
+              {opts.showPanels && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Number of panels</div>
+                  <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
+                    style={{ ...selStyle, color: op.panels_count ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='2'>2 panels</option>
+                    <option value='3'>3 panels</option>
+                  </select>
+                </div>
+              )}
+              {opts.showBayOptions && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Sections</div>
+                  <select value={op.panels_count} onChange={e => updateOpening(op.id, 'panels_count', e.target.value)}
+                    style={{ ...selStyle, color: op.panels_count ? '#0A1628' : '#94A3B8', marginBottom: 8 }}>
+                    <option value=''>Select...</option>
+                    <option value='3'>3 sections</option>
+                    <option value='5'>5 sections</option>
+                    <option value='7'>7 sections</option>
+                  </select>
+                  <div style={lblStyle}>Angle</div>
+                  <select value={op.bay_angle} onChange={e => updateOpening(op.id, 'bay_angle', e.target.value)}
+                    style={{ ...selStyle, color: op.bay_angle ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='30'>30°</option>
+                    <option value='45'>45°</option>
+                    <option value='60'>60°</option>
+                  </select>
+                </div>
+              )}
+              {opts.showTransomPanes && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Number of panes</div>
+                  <select value={op.transom_panes} onChange={e => updateOpening(op.id, 'transom_panes', e.target.value)}
+                    style={{ ...selStyle, color: op.transom_panes ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='2'>2 panes</option>
+                    <option value='3'>3 panes</option>
+                    <option value='4'>4 panes</option>
+                  </select>
+                </div>
+              )}
+              {opts.showSidelights && (
+                <>
+                  <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                    <div style={lblStyle}>Left sidelight width (in)</div>
+                    <input type="number" min="0" value={op.sidelight_left || ''} placeholder="0 = none"
+                      onChange={e => updateOpening(op.id, 'sidelight_left', parseFloat(e.target.value) || 0)}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
+                  </div>
+                  <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                    <div style={lblStyle}>Right sidelight width (in)</div>
+                    <input type="number" min="0" value={op.sidelight_right || ''} placeholder="0 = none"
+                      onChange={e => updateOpening(op.id, 'sidelight_right', parseFloat(e.target.value) || 0)}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }} />
+                  </div>
+                </>
+              )}
+              {opts.showTransomAbove && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#0A1628' }}>Transom above</div>
+                    <div style={{ fontSize: 11, color: '#94A3B8' }}>Window above door</div>
+                  </div>
+                  <div onClick={() => updateOpening(op.id, 'transom_above', !op.transom_above)}
+                    style={{ width: 40, height: 22, borderRadius: 99, background: op.transom_above ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: 3, left: op.transom_above ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                  </div>
+                </div>
+              )}
+              {opts.showGlassType && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Glass coverage</div>
+                  <select value={op.glass_type} onChange={e => updateOpening(op.id, 'glass_type', e.target.value)}
+                    style={{ ...selStyle, color: op.glass_type ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='full'>Full glass</option>
+                    <option value='half'>Half glass</option>
+                  </select>
+                </div>
+              )}
+              {opts.showCoreType && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Core type</div>
+                  <select value={op.core_type} onChange={e => updateOpening(op.id, 'core_type', e.target.value)}
+                    style={{ ...selStyle, color: op.core_type ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    <option value='hollow'>Hollow core</option>
+                    <option value='solid'>Solid core</option>
+                  </select>
+                </div>
+              )}
+              {opts.showHandleType && (
+                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
+                  <div style={lblStyle}>Handle type</div>
+                  <select value={op.handle_type || ''} onChange={e => updateOpening(op.id, 'handle_type', e.target.value)}
+                    style={{ ...selStyle, color: op.handle_type ? '#0A1628' : '#94A3B8' }}>
+                    <option value=''>Select...</option>
+                    {['window_cas', 'window_awn', 'window_tilt'].includes(op.type) ? <>
+                      <option value='casement_lever'>Casement lever</option>
+                      <option value='tilt_latch'>Tilt latch</option>
+                      <option value='lift_rail'>Lift rail</option>
+                      <option value='push_bar'>Push bar</option>
+                    </> : <>
+                      <option value='lever'>Lever handle</option>
+                      <option value='knob'>Knob</option>
+                      <option value='pull_bar'>Pull bar</option>
+                      <option value='passage_set'>Passage set</option>
+                      <option value='deadbolt_lever'>Deadbolt + lever</option>
+                      <option value='dummy'>Dummy handle</option>
+                    </>}
+                  </select>
+                </div>
+              )}
+              {opts.showComboSections && (() => {
+                const sections: { type: string; width: number }[] = op.combo_sections || [{ type: 'window_fix', width: 24 }, { type: 'window_cas', width: 14 }]
+                const typeLabels: Record<string, string> = { window_dh: 'D-Hung', window_sh: 'S-Hung', window_cas: 'Casement', window_awn: 'Awning', window_sl: 'Slider', window_fix: 'Fixed', window_trans: 'Transom' }
+                return (
+                  <div style={{ padding: '8px 0' }}>
+                    <div style={lblStyle}>Sections</div>
+                    <div style={{ display: 'flex', gap: 3, height: 48, marginBottom: 8, overflowX: 'auto', paddingBottom: 2 }}>
+                      {sections.map((s, i) => (
+                        <div key={i} style={{ flex: s.width, border: '1.5px solid #E2E8F0', borderRadius: 6, background: s.type === 'window_fix' ? '#F8FAFC' : '#EEF4FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: s.type === 'window_fix' ? '#334155' : '#2563EB' }}>{typeLabels[s.type] || s.type}</div>
+                          <div style={{ fontSize: 10, color: '#94A3B8' }}>{s.width}"</div>
+                        </div>
+                      ))}
+                      <div onClick={() => updateOpening(op.id, 'combo_sections' as any, [...sections, { type: 'window_fix', width: 14 }])}
+                        style={{ width: 28, border: '1.5px dashed #E2E8F0', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#2563EB', fontSize: 18, flexShrink: 0 }}>+</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start', overflowX: 'auto', paddingBottom: 4 }}>
+                      {sections.map((s, i) => (
+                        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ width: 20, height: 20, background: '#F1F5F9', borderRadius: 5, fontSize: 12, fontWeight: 700, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i + 1}</div>
+                          <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                            <select value={s.type} onChange={e => updateOpening(op.id, 'combo_sections' as any, sections.map((sec, j) => j === i ? { ...sec, type: e.target.value } : sec))}
+                              style={{ flex: 1, padding: '9px 10px', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
+                              <option value="window_fix">Fixed</option>
+                              <option value="window_dh">Double-Hung</option>
+                              <option value="window_cas">Casement</option>
+                              <option value="window_awn">Awning</option>
+                              <option value="window_sl">Slider</option>
+                              <option value="window_trans">Transom</option>
+                            </select>
+                            {sections.length > 1 && (
+                              <div onClick={() => updateOpening(op.id, 'combo_sections' as any, sections.filter((_, j) => j !== i))}
+                                style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(220,38,38,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '9px 10px' }}>
+                            <input type="number" min="1" value={s.width}
+                              onChange={e => updateOpening(op.id, 'combo_sections' as any, sections.map((sec, j) => j === i ? { ...sec, width: parseFloat(e.target.value) || 0 } : sec))}
+                              style={{ width: '100%', border: 'none', background: 'transparent', fontSize: 13, textAlign: 'center', outline: 'none', fontFamily: 'inherit' }}/>
+                            <span style={{ fontSize: 9, color: '#94A3B8', flexShrink: 0 }}>in</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: 8, padding: '6px 8px', background: '#F8FAFC', borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12, color: '#64748B' }}>
+                      <span style={{ color: '#94A3B8' }}>Config: </span>
+                      <span style={{ color: '#0A1628', fontWeight: 600 }}>{sections.map(s => `${typeLabels[s.type] || s.type} ${s.width}"`).join(' + ')}</span>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── GROUP 5: Notes ── */}
+      <GroupHeader title="Notes" open={openGroup.notes} onToggle={() => toggle('notes')} icon={
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      } />
+      {openGroup.notes && (
+        <div style={{ paddingTop: 6 }}>
+          <div style={{ marginBottom: 10 }}>
+            <div style={lblStyle}>Manufacturer (optional)</div>
+            <input style={{ ...selStyle, boxSizing: 'border-box' as const }} value={op.brand}
+              onChange={e => updateOpening(op.id, 'brand', e.target.value)} placeholder="e.g. Pella, North Star, Gentek" />
           </div>
           <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6, display: 'block' }}>Notes (this opening)</div>
-            <textarea
-              value={(op as any).notes}
-              onChange={e => updateOpening(op.id, 'notes' as any, e.target.value)}
-              placeholder="e.g. Remove existing trim, custom colour match"
-              rows={2}
-              style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff', resize: 'vertical' }}
-            />
+            <div style={lblStyle}>Notes (this opening)</div>
+            <textarea value={op.notes} onChange={e => updateOpening(op.id, 'notes', e.target.value)}
+              placeholder="e.g. Remove existing trim, custom colour match" rows={2}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff', resize: 'vertical', boxSizing: 'border-box' as const }} />
           </div>
         </div>
       )}
