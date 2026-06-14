@@ -55,7 +55,11 @@ export default function BellButton({ notifications, onMarkRead, onMarkAllRead, v
 
   return (
     <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
-      <button onClick={() => setOpen(v => !v)} style={btnStyle}>
+      <button onClick={() => {
+        const willOpen = !open
+        setOpen(willOpen)
+        if (willOpen && unread > 0) onMarkAllRead()
+      }} style={btnStyle}>
         <Bell size={18} strokeWidth={2} color={variant === 'dark' ? 'rgba(255,255,255,0.8)' : '#475569'} />
         {unread > 0 && (
           <div style={{
@@ -95,14 +99,8 @@ export default function BellButton({ notifications, onMarkRead, onMarkAllRead, v
           boxShadow: '0 8px 40px rgba(10,22,40,0.18), 0 0 0 1px rgba(10,22,40,0.08)',
           zIndex: 9999,
         }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #EEF0F4', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #EEF0F4' }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>Notifications</span>
-            {unread > 0 && (
-              <button onClick={onMarkAllRead}
-                style={{ fontSize: 12, fontWeight: 600, color: '#2563EB', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-                Mark all as read
-              </button>
-            )}
           </div>
 
           {notifications.length === 0 ? (

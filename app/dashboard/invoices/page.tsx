@@ -44,6 +44,7 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading,  setLoading]  = useState(true)
   const [paying,   setPaying]   = useState<string | null>(null)
+  const [pageError, setPageError] = useState('')
 
   useEffect(() => {
     if (!roleLoading && role !== 'owner') router.replace('/dashboard')
@@ -66,14 +67,54 @@ export default function InvoicesPage() {
   async function markPaid(invoiceId: string, invoiceType?: string | null, estimateId?: string | null) {
     setPaying(invoiceId)
     try {
-      await supabase.from('invoices').update({ status: 'paid', paid_at: new Date().toISOString() }).eq('id', invoiceId)
-      if (invoiceType === 'final' && estimateId) {
-        await supabase.from('estimates').update({ status: 'paid' }).eq('id', estimateId)
+      const { data: updatedInv, error: invErr } = await supabase
+        .from('invoices')
+        .update({ status: 'paid', paid_at: new Date().toISOString() })
+        .eq('id', invoiceId)
+        .select('id')
+      if (invErr || !updatedInv?.length) {
+        setPageError('Failed to mark as paid' + (invErr ? ': ' + invErr.message : ' — no rows updated'))
+        setTimeout(() => setPageError(''), 3500)
+        return
       }
-      setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+      if (invoiceType === 'final' && estimateId) {
+        const { data: updatedEst, error: estErr } = await supabase
+          .from('estimates')
+          .update({ status: 'paid' })
+          .eq('id', estimateId)
+          .select('id')
+        if (estErr || !updatedEst?.length) {
+          setPageError('Failed to update estimate status' + (estErr ? ': ' + estErr.message : ''))
+          setTimeout(() => setPageError(''), 3500)
+          return
+        }
+      }
       const invData = invoices.find(i => i.id === invoiceId)
-      supabase.auth.getUser().then(({ data: { user } }) => {
-        if (!user) return
+      setInvoices(p => p.map(i => i.id === invoiceId ? { ...i, status: 'paid' } : i))
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        void (async () => {
+          const notifType = invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid'
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+          const { data: existing } = await supabase
+            .from('notifications').select('id')
+            .eq('user_id', user.id).eq('type', notifType)
+            .gte('created_at', fiveMinutesAgo).limit(1)
+          if (!existing?.length) {
+            const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', user.id).single()
+            const ns = (prof?.notification_settings as any)
+            if (ns?.inapp?.pushPayment !== false) {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: notifType,
+                title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
+                body: `${invData?.estimates?.client_name || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${invData?.estimates?.estimate_number || ''} · ${fmtCAD(invData?.amount || 0)}`,
+                link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
+                read: false,
+              })
+            }
+          }
+        })().catch(() => {})
         fetch('/api/log-activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -87,36 +128,18 @@ export default function InvoicesPage() {
             client_name: invData?.estimates?.client_name,
             amount: invData?.amount,
           }),
-        })
-        void (async () => {
-            const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', user.id).single()
-            const ns = (prof?.notification_settings as any)
-            if (ns?.inapp?.pushPayment !== false) {
-              await supabase.from('notifications').insert({
-                user_id: user.id,
-                type: invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid',
-                title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
-                body: `${invData?.estimates?.client_name || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${invData?.estimates?.estimate_number || ''} · ${fmtCAD(invData?.amount || 0)}`,
-                link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
-                read: false,
-              })
-            }
-          })().catch(() => {})
-      }).catch(() => {})
-      const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
-      try {
-        const res = await fetch('/api/send-email', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ type: emailType, invoiceId }),
-        })
-        const data = await res.json()
-        console.log('[mark-paid] receipt email result:', res.status, data)
-      } catch (err) {
-        console.error('[mark-paid] receipt email error:', err)
+        }).catch(() => {})
       }
+      const emailType = invoiceType === 'final' ? 'final_receipt' : 'deposit_receipt'
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: emailType, invoiceId }),
+      }).then(r => r.json()).then(d => {
+        console.log('[mark-paid] receipt email result:', d)
+      }).catch(err => {
+        console.error('[mark-paid] receipt email error:', err)
+      })
     } finally {
       setPaying(null)
     }
@@ -355,6 +378,18 @@ export default function InvoicesPage() {
           </>
         )}
       </div>
+
+      {pageError && (
+        <div style={{
+          position: 'fixed', bottom: 'calc(env(safe-area-inset-bottom) + 90px)', left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#DC2626', color: '#fff', borderRadius: 99,
+          padding: '10px 20px', fontSize: 13, fontWeight: 600,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.18)', zIndex: 200, whiteSpace: 'nowrap',
+        }}>
+          {pageError}
+        </div>
+      )}
     </div>
   )
 }

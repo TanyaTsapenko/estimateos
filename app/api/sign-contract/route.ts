@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     title: 'Contract signed',
     body: `${clientName || 'Client'} signed the contract`,
     link: `/dashboard/estimates/${contract.estimate_id}`,
+    read: false,
   })
 
   try {

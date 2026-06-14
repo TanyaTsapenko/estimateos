@@ -431,17 +431,25 @@ const [dashToast, setDashToast] = useState('')
       const attItem = attention.find(i => i.id === invoiceId)
       if (currentUserId) {
         void (async () => {
-          const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', currentUserId).single()
-          const ns = (prof?.notification_settings as any)
-          if (ns?.inapp?.pushPayment !== false) {
-            await supabase.from('notifications').insert({
-              user_id: currentUserId,
-              type: invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid',
-              title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
-              body: `${attItem?.title || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${attItem?.entityNumber || ''} · CA$${(attItem?.amount || 0).toFixed(2)}`,
-              link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
-              read: false,
-            })
+          const notifType = invoiceType === 'deposit' ? 'deposit_paid' : 'final_paid'
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+          const { data: existing } = await supabase
+            .from('notifications').select('id')
+            .eq('user_id', currentUserId).eq('type', notifType)
+            .gte('created_at', fiveMinutesAgo).limit(1)
+          if (!existing?.length) {
+            const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', currentUserId).single()
+            const ns = (prof?.notification_settings as any)
+            if (ns?.inapp?.pushPayment !== false) {
+              await supabase.from('notifications').insert({
+                user_id: currentUserId,
+                type: notifType,
+                title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
+                body: `${attItem?.title || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${attItem?.entityNumber || ''} · CA$${(attItem?.amount || 0).toFixed(2)}`,
+                link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
+                read: false,
+              })
+            }
           }
         })().catch(() => {})
       }
