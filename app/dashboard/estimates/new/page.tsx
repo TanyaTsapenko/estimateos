@@ -943,6 +943,19 @@ function NewEstimateForm() {
   const userIdRef     = useRef<string | null>(null)
   const priceUserIdRef = useRef<string | null>(null)
 
+  // ── TRIM STATE ────────────────────────────────
+  const [trimCasing,              setTrimCasing]              = useState('none')
+  const [trimCasingSize,          setTrimCasingSize]          = useState('2_3_8')
+  const [trimJamb,                setTrimJamb]                = useState('none')
+  const [trimBrickmold,           setTrimBrickmold]           = useState(false)
+  const [trimBrickmoldPaletteId,  setTrimBrickmoldPaletteId]  = useState<string | null>(null)
+  const [trimBrickmoldColourName, setTrimBrickmoldColourName] = useState<string | null>(null)
+  const [trimRosettes,            setTrimRosettes]            = useState('none')
+  const [trimCaping,              setTrimCaping]              = useState(false)
+  const [trimNailFin,             setTrimNailFin]             = useState(false)
+  const [trimDripCap,             setTrimDripCap]             = useState(false)
+  const [trimBlueSkin,            setTrimBlueSkin]            = useState(false)
+
   const setCErr = (k: keyof ClientErrors, v: string | null) => setClientErrors(p => ({ ...p, [k]: v }))
   const clearCErr = (k: keyof ClientErrors) => setCErr(k, null)
 
@@ -1032,6 +1045,17 @@ function NewEstimateForm() {
             job_site_postal_code: (est as any).job_site_postal_code || '',
           })
           setJobSiteSameAsClient((est as any).job_site_same_as_client !== false)
+          setTrimCasing((est as any).trim_casing || 'none')
+          setTrimCasingSize((est as any).trim_casing_size || '2_3_8')
+          setTrimJamb((est as any).trim_jamb || 'none')
+          setTrimBrickmold(Boolean((est as any).trim_brickmold))
+          setTrimBrickmoldPaletteId((est as any).trim_brickmold_colour_palette_id || null)
+          setTrimBrickmoldColourName((est as any).trim_brickmold_colour_name || null)
+          setTrimRosettes((est as any).trim_rosettes || 'none')
+          setTrimCaping(Boolean((est as any).trim_caping))
+          setTrimNailFin(Boolean((est as any).trim_nail_fin))
+          setTrimDripCap(Boolean((est as any).trim_drip_cap))
+          setTrimBlueSkin(Boolean((est as any).trim_blue_skin))
           if (est.discount_type) {
             setDiscountType(est.discount_type as 'fixed' | 'percent')
             setDiscountValue(String(est.discount_value || ''))
@@ -1140,13 +1164,13 @@ function NewEstimateForm() {
       if (hasErrors(errs)) return
     }
     setError('')
-    const nextStep = step === 2 ? 4 : step + 1
+    const nextStep = step === 2 ? 3 : step === 3 ? 4 : step + 1
     setStep(nextStep)
     window.scrollTo(0, 0)
   }
   function back() {
     setError('')
-    const prevStep = step === 4 ? 2 : step - 1
+    const prevStep = step === 4 ? 3 : step === 3 ? 2 : step - 1
     setStep(prevStep)
     window.scrollTo(0, 0)
   }
@@ -1186,6 +1210,17 @@ function NewEstimateForm() {
       tax_rate: taxRate,
       tax_amount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100,
+      trim_casing: trimCasing,
+      trim_casing_size: trimCasing !== 'none' ? trimCasingSize : null,
+      trim_jamb: trimJamb,
+      trim_brickmold: trimBrickmold,
+      trim_brickmold_colour_palette_id: trimBrickmold ? trimBrickmoldPaletteId : null,
+      trim_brickmold_colour_name: trimBrickmold ? trimBrickmoldColourName : null,
+      trim_rosettes: trimRosettes,
+      trim_caping: trimCaping,
+      trim_nail_fin: trimNailFin,
+      trim_drip_cap: trimDripCap,
+      trim_blue_skin: trimBlueSkin,
     }
 
     // Resolve client_id — from appointment or find-or-create
@@ -1307,6 +1342,119 @@ function NewEstimateForm() {
 
     router.push(`/dashboard/estimates/${savedId}`)
   }
+
+  // ── TRIM SECTION (shared desktop + mobile) ───
+  const tS = customPrices?.surcharges || {}
+  const sfx = (v: number | undefined) => v && v > 0 ? ` (+$${v})` : ''
+  const winPalette = palette.filter(c => c.category === 'Windows')
+  const tSel: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }
+  const tLbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#64748B', marginBottom: 5 }
+  const togStyle = (on: boolean): React.CSSProperties => ({ width: 40, height: 22, borderRadius: 99, background: on ? '#2563EB' : '#E2E5EA', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 })
+  const togKnob = (on: boolean): React.CSSProperties => ({ position: 'absolute', top: 3, left: on ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' })
+  const trimContent = (
+    <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', padding: 16 }}>
+      <div className="sl">Trim &amp; Finishing</div>
+      <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Applied to all openings in this estimate</div>
+
+      {/* Casing */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={tLbl}>Casing</div>
+        <select value={trimCasing} onChange={e => setTrimCasing(e.target.value)} style={tSel}>
+          <option value="none">None</option>
+          <option value="oak">Oak{sfx(tS.casing_oak)}</option>
+          <option value="vinyl">Vinyl{sfx(tS.casing_vinyl)}</option>
+          <option value="mdf">MDF{sfx(tS.casing_mdf)}</option>
+          <option value="custom">Custom{sfx(tS.casing_custom)}</option>
+        </select>
+      </div>
+      {trimCasing !== 'none' && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={tLbl}>Casing size</div>
+          <select value={trimCasingSize} onChange={e => setTrimCasingSize(e.target.value)} style={tSel}>
+            <option value="2_3_8">2-3/8&quot;</option>
+            <option value="3_3_8">3-3/8&quot;{sfx(tS.casing_size_3_3_8)}</option>
+          </select>
+        </div>
+      )}
+
+      {/* Jamb */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={tLbl}>Jamb extension</div>
+        <select value={trimJamb} onChange={e => setTrimJamb(e.target.value)} style={tSel}>
+          <option value="none">None</option>
+          <option value="oak">Oak{sfx(tS.jamb_oak)}</option>
+          <option value="wood">Wood{sfx(tS.jamb_wood)}</option>
+          <option value="vinyl">Vinyl{sfx(tS.jamb_vinyl)}</option>
+          <option value="plywood">Plywood{sfx(tS.jamb_plywood)}</option>
+          <option value="custom">Custom{sfx(tS.jamb_custom)}</option>
+        </select>
+      </div>
+
+      {/* Brickmold */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: trimBrickmold && winPalette.length > 0 ? 10 : 0 }}>
+          <div style={tLbl}>Brickmold{sfx(tS.brickmold)}</div>
+          <div style={togStyle(trimBrickmold)} onClick={() => setTrimBrickmold(v => !v)}>
+            <div style={togKnob(trimBrickmold)} />
+          </div>
+        </div>
+        {trimBrickmold && winPalette.length > 0 && (
+          <div>
+            <div style={{ ...tLbl, marginBottom: 8 }}>Brickmold Colour</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <button type="button"
+                onClick={() => { setTrimBrickmoldPaletteId(null); setTrimBrickmoldColourName(null) }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '6px 8px', borderRadius: 10, border: `2px solid ${!trimBrickmoldPaletteId ? '#2563EB' : 'transparent'}`, background: !trimBrickmoldPaletteId ? '#EFF4FF' : 'var(--surface)', cursor: 'pointer' }}>
+                <div style={{ width: 32, height: 32, borderRadius: 7, background: '#fff', border: '1.5px solid rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: '#94A3B8', fontWeight: 700 }}>—</div>
+                <span style={{ fontSize: 9, color: '#64748B' }}>None</span>
+              </button>
+              {winPalette.map(c => {
+                const sel = trimBrickmoldPaletteId === c.id
+                return (
+                  <button key={c.id} type="button"
+                    onClick={() => { setTrimBrickmoldPaletteId(c.id); setTrimBrickmoldColourName(c.name) }}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '6px 8px', borderRadius: 10, border: `2px solid ${sel ? '#2563EB' : 'transparent'}`, background: sel ? '#EFF4FF' : 'var(--surface)', cursor: 'pointer' }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 7, background: c.hex_color || '#E5E7EB', border: '1.5px solid rgba(0,0,0,.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {sel && <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M1.5 5.5L5.5 9.5L12.5 1.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                    <span style={{ fontSize: 9, color: '#64748B', maxWidth: 48, textAlign: 'center', wordBreak: 'break-word', lineHeight: 1.2 }}>{c.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Rosettes */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={tLbl}>Rosettes</div>
+        <select value={trimRosettes} onChange={e => setTrimRosettes(e.target.value)} style={tSel}>
+          <option value="none">None</option>
+          <option value="round">Round{sfx(tS.rosettes_round)}</option>
+          <option value="45">45°{sfx(tS.rosettes_45)}</option>
+          <option value="flat">Flat{sfx(tS.rosettes_flat)}</option>
+        </select>
+      </div>
+
+      {/* Extras 2×2 */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {([
+          { label: 'Caping',     val: trimCaping,    set: setTrimCaping,    sur: tS.caping },
+          { label: 'Nail fin',   val: trimNailFin,   set: setTrimNailFin,   sur: tS.nail_fin },
+          { label: 'Drip cap',   val: trimDripCap,   set: setTrimDripCap,   sur: tS.drip_cap },
+          { label: 'Blue skin',  val: trimBlueSkin,  set: setTrimBlueSkin,  sur: tS.blue_skin },
+        ] as { label: string; val: boolean; set: React.Dispatch<React.SetStateAction<boolean>>; sur: number | undefined }[]).map(({ label, val, set, sur }) => (
+          <div key={label} style={{ background: '#F8FAFC', borderRadius: 12, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{label}{sur && sur > 0 ? ` (+$${sur})` : ''}</span>
+            <div style={togStyle(val)} onClick={() => set(v => !v)}>
+              <div style={togKnob(val)} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   // ── DESKTOP TWO-COL FORM ─────────────────────
   if (isDesktop) {
@@ -1553,6 +1701,7 @@ function NewEstimateForm() {
                 style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer' }}>
                 + Add another opening
               </button>
+              <div style={{ marginTop: 12 }}>{trimContent}</div>
             </div>
           </div>
 
@@ -1563,8 +1712,8 @@ function NewEstimateForm() {
   }
 
   // ── MOBILE STEPPER ───────────────────────────
-  const pills = [1, 2, 4]
-  const stepLabels = ['Client', 'Openings', 'Review']
+  const pills = [1, 2, 3, 4]
+  const stepLabels = ['Client', 'Openings', 'Trim', 'Review']
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -1591,6 +1740,15 @@ function NewEstimateForm() {
             <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
               {client.client_name || 'New Estimate'}
             </div>
+            <div style={{ display: 'flex', gap: 4, marginTop: 5 }}>
+              {pills.map((p, i) => (
+                <div key={p} style={{
+                  height: 4, borderRadius: 2, transition: 'all 0.2s',
+                  width: step === p ? 28 : 18,
+                  background: step === p ? '#0A1628' : i < pills.indexOf(step) ? '#2563EB' : '#E2E5EA',
+                }} />
+              ))}
+            </div>
           </div>
         </div>
         {step > 1 && subtotal > 0 && (
@@ -1600,7 +1758,7 @@ function NewEstimateForm() {
         )}
       </div>
 
-      <div className="card screen-enter" style={{ paddingTop: 42 }}>
+      <div className="card screen-enter" style={{ paddingTop: 24 }}>
         {error && <div className="error-msg">{error}</div>}
 
         {step === 1 && (
@@ -1748,6 +1906,15 @@ function NewEstimateForm() {
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>
               + Add another opening
             </button>
+          </>
+        )}
+
+        {step === 3 && (
+          <>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 12 }}>
+              Step 3 of 4 — {stepLabels[2]}
+            </div>
+            {trimContent}
           </>
         )}
 
