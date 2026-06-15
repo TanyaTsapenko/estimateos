@@ -210,6 +210,7 @@ const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
   { slot: 'photo_3',  label: 'Additional 1' },
   { slot: 'photo_4',  label: 'Additional 2' },
 ]
+const KNOWN_ROOMS = ['Living Room', 'Kitchen', 'Dining Room', 'Bedroom', 'Bathroom', 'Basement', 'Office']
 
 function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
@@ -224,6 +225,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const [photoUploading, setPhotoUploading] = useState({ interior: false, exterior: false, photo_3: false, photo_4: false })
   const [photoKeys, setPhotoKeys] = useState(() => { const t = Date.now(); return { interior: t, exterior: t, photo_3: t, photo_4: t } })
   const [photoError, setPhotoError] = useState('')
+  const [otherRoomSelected, setOtherRoomSelected] = useState(() => op.room !== '' && !KNOWN_ROOMS.includes(op.room))
 
   const [openGroup, setOpenGroup] = useState(() => ({
     appearance: true,
@@ -371,7 +373,24 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
       </div>
       <div className="r2" style={{ marginBottom: 4 }}>
         <div className="f"><label>Room (optional)</label>
-          <input placeholder="Living room" value={op.room} onChange={e => updateOpening(op.id, 'room', e.target.value)} /></div>
+          <select value={otherRoomSelected ? 'Other' : op.room} onChange={e => {
+            const val = e.target.value
+            if (val === 'Other') {
+              setOtherRoomSelected(true)
+              if (KNOWN_ROOMS.includes(op.room)) updateOpening(op.id, 'room', '')
+            } else {
+              setOtherRoomSelected(false)
+              updateOpening(op.id, 'room', val)
+            }
+          }}>
+            <option value="">— select room —</option>
+            {KNOWN_ROOMS.map(r => <option key={r} value={r}>{r}</option>)}
+            <option value="Other">Other</option>
+          </select>
+          {otherRoomSelected && (
+            <input style={{ marginTop: 6 }} placeholder="e.g. Garage, Hallway" value={op.room}
+              onChange={e => updateOpening(op.id, 'room', e.target.value)} />
+          )}</div>
         <div className="f"><label>Floor</label>
           <select value={op.floor} onChange={e => updateOpening(op.id, 'floor', e.target.value)}>
             <option value="first">Ground floor</option>
