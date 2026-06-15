@@ -6,8 +6,9 @@ export const OPENING_TYPES: Record<string, { name: string; base: number; lab: nu
   window_bow:   { name: 'Bow Window',           base: 2400, lab: 620, icon: '' },
   window_sl:    { name: 'Sliding Window',      base: 750,  lab: 280, icon: '' },
   window_fix:   { name: 'Fixed / Picture',     base: 600,  lab: 250, icon: '' },
-  window_sh:    { name: 'Single-Hung Window',  base: 650,  lab: 280, icon: '' },
-  window_awn:   { name: 'Awning Window',       base: 780,  lab: 290, icon: '' },
+  window_sh:     { name: 'Single-Hung Window',  base: 650,  lab: 280, icon: '' },
+  window_hopper: { name: 'Hopper Window',       base: 650,  lab: 280, icon: '' },
+  window_awn:    { name: 'Awning Window',        base: 780,  lab: 290, icon: '' },
   window_trans: { name: 'Transom Window',      base: 550,  lab: 220, icon: '' },
   window_arch:  { name: 'Arched Window',       base: 950,  lab: 350, icon: '' },
   window_tilt:  { name: 'Tilt & Turn Window',  base: 1100, lab: 380, icon: '' },
@@ -88,6 +89,11 @@ export interface Opening {
   interior_colour_palette_id?: string | null
   interior_colour_name?: string | null
   interior_colour?: string | null
+  // Phase 3 subtype attributes
+  window_subtype?: string
+  pane?: string
+  egress_required?: boolean
+  shape_position?: string
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
