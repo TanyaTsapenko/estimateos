@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
+import { getColourLabel, getShapeLabel, getGlassLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
@@ -149,7 +149,6 @@ export default function ClientEstimatePage() {
 
   const SHAPE_LABELS:   Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
   const COLOUR_LABELS:  Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
-  const GLASS_LABELS:   Record<string, string> = { clear: 'Clear', lowe: 'Low-E', frosted: 'Frosted', tinted: 'Tinted', tempered: 'Tempered' }
   const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
   const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
   const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
@@ -275,7 +274,7 @@ export default function ClientEstimatePage() {
                     <div style={{ flex: 1, padding: '10px 12px' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
                         {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getColourLabel(op)}</span></div>}
-                        {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{GLASS_LABELS[op.glass] || op.glass}</span></div>}
+                        {op.glass && op.glass !== 'clear' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getGlassLabel(op)}</span></div>}
                         {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
                         {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
                         {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}

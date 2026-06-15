@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
-import { getColourLabel, getShapeLabel } from '@/lib/openingLabels'
+import { getColourLabel, getShapeLabel, getGlassLabel } from '@/lib/openingLabels'
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
@@ -140,7 +140,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
                     {op.colour && op.colour !== 'white' && <Text style={styles.openingDetail}>Colour: {getColourLabel(op)}</Text>}
                     {op.shape && op.shape !== 'rect' && <Text style={styles.openingDetail}>Shape: {getShapeLabel(op)}</Text>}
                     {op.material && <Text style={styles.openingDetail}>Material: {op.material}</Text>}
-                    {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {op.glass}</Text>}
+                    {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {getGlassLabel(op)}</Text>}
                     {op.floor && op.floor !== 'first' && <Text style={styles.openingDetail}>Floor: {op.floor}</Text>}
                     {op.notes && <Text style={styles.openingDetail}>Note: {op.notes}</Text>}
                   </View>
