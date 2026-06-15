@@ -1,7 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { substituteProvince } from '@/lib/provinces'
-import { getColourLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
 
 const styles = StyleSheet.create({
@@ -69,9 +69,10 @@ interface ContractPDFProps {
   openings: any[]
   company: any
   customLabels?: Record<string, string>
+  subtypesByType?: SubtypeMap
 }
 
-export function ContractPDF({ contract, estimate, openings, company, customLabels }: ContractPDFProps) {
+export function ContractPDF({ contract, estimate, openings, company, customLabels, subtypesByType }: ContractPDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
@@ -134,7 +135,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
             <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
               <WindowDiagramPdf type={op.type} size={100} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : ''}</Text>
                 <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour && op.colour !== 'white' ? ` · ${getColourLabel(op)}` : ''}{getInteriorColourLabel(op) ? ` · Int: ${getInteriorColourLabel(op)}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
                 {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
               </View>

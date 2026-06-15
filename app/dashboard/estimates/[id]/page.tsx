@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -408,7 +409,7 @@ export default function EstimateDetailPage() {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>
-                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', fontFamily: 'monospace' }}>{fmtCAD(op.total_cost)}</div>
                 </div>

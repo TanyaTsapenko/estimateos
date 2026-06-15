@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { getSubtypeLabel } from '@/lib/openingLabels'
 import { ArrowLeft } from 'lucide-react'
 
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
@@ -88,7 +89,7 @@ export default function SignPage() {
           </div>
           {openings.map(op => (
             <div key={op.id} className="sum-row">
-              <span>{OPENING_TYPES[op.type]?.name || op.type} × {op.qty}{op.room ? ` (${op.room})` : ''}</span>
+              <span>{OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}{op.room ? ` (${op.room})` : ''}</span>
               <span>{fmtCAD(op.total_cost)}</span>
             </div>
           ))}

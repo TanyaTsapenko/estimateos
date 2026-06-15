@@ -6,10 +6,12 @@ import { useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, TAX_RATES, opCost, fmtCAD, dimToSizeBucket, type Opening, type CustomPrices } from '@/lib/pricing'
 import { formatPhone, validateName, validatePhone, validateEmail, validateAddress, hasErrors, validateQuantity, validateDimension, validatePositiveNumber, type ClientErrors } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import { getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 const estErrStyle: React.CSSProperties = { fontSize: 11, color: '#C0341A', marginTop: 4 }
 const estErrBorder = '1.5px solid #C0341A'
 
 type CustomOpeningType = { label: string; base: number; lab: number; category?: string }
+type SubtypeEntry = { key: string; label: string }
 
 interface PaletteEntry {
   id: string
@@ -188,6 +190,7 @@ interface OpeningCardProps {
   duplicateOpening: (id: string) => void
   userId: string | null
   typeFieldVisibility: Record<string, Record<string, boolean>>
+  subtypesByType: Record<string, SubtypeEntry[]>
 }
 
 function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boolean; onToggle: () => void; icon: React.ReactNode }) {
@@ -220,7 +223,7 @@ const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
 ]
 const KNOWN_ROOMS = ['Living Room', 'Kitchen', 'Dining Room', 'Bedroom', 'Bathroom', 'Basement', 'Office']
 
-function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId, typeFieldVisibility }: OpeningCardProps) {
+function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId, typeFieldVisibility, subtypesByType }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
     : op.type.startsWith('door_') ? 'Doors'
     : (customOpeningTypes[op.type]?.category || 'Other')
@@ -300,7 +303,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
             </svg>
             <div className="op-badge" style={{ flexShrink: 0 }}>{idx + 1}</div>
             <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, color: 'var(--jet)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {typeName}{dimStr}{colourStr}{roomStr}
+              {typeName}{op.window_subtype ? ` — ${getSubtypeLabel(op, subtypesByType)}` : ''}{dimStr}{colourStr}{roomStr}
             </div>
           </div>
           {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
@@ -354,12 +357,21 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
       {/* ── GROUP 1: Basic Info (always visible) ── */}
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Type</label>
-          <OpeningTypeSelect value={op.type} onChange={v => updateOpening(op.id, 'type', v)} customOpeningTypes={customOpeningTypes} customPrices={customPrices} /></div>
+          <OpeningTypeSelect value={op.type} onChange={v => { updateOpening(op.id, 'type', v); updateOpening(op.id, 'window_subtype', '') }} customOpeningTypes={customOpeningTypes} customPrices={customPrices} /></div>
         <div className="f"><label>Qty</label>
           <select value={op.qty} onChange={e => updateOpening(op.id, 'qty', Number(e.target.value))}>
             {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
           </select></div>
       </div>
+      {(subtypesByType[op.type]?.length ?? 0) > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <label>Subtype</label>
+          <select value={op.window_subtype || ''} onChange={e => updateOpening(op.id, 'window_subtype', e.target.value)} style={selStyle}>
+            <option value="">— Select —</option>
+            {subtypesByType[op.type].map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+        </div>
+      )}
       <div className="r2" style={{ marginBottom: 8 }}>
         <div className="f"><label>Width</label>
           <div style={{ position: 'relative' }}>
@@ -944,6 +956,7 @@ function NewEstimateForm() {
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
   const [palette, setPalette] = useState<PaletteEntry[]>([])
   const [typeFieldVisibility, setTypeFieldVisibility] = useState<Record<string, Record<string, boolean>>>({})
+  const [subtypesByType, setSubtypesByType] = useState<Record<string, SubtypeEntry[]>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
@@ -1016,12 +1029,21 @@ function NewEstimateForm() {
       const pricingId = (prof as any)?.team_owner_id || sanitizedId
       priceUserIdRef.current = pricingId
 
-      const [{ data: priceRows }, { data: profSurcharges }, { data: paletteRows }, { data: visRows }] = await Promise.all([
+      const [{ data: priceRows }, { data: profSurcharges }, { data: paletteRows }, { data: visRows }, { data: subtypeRows }] = await Promise.all([
         supabase.from('price_lists').select('*').eq('user_id', pricingId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
         supabase.from('profiles').select('surcharges').eq('id', pricingId).single(),
         supabase.from('color_palette').select('id, name, hex_color, price_addon, category').eq('user_id', pricingId).order('sort_order').order('created_at'),
         supabase.from('type_field_visibility').select('type_key, field_name, is_visible'),
+        supabase.from('window_subtypes').select('type_key, subtype_key, subtype_label, sort_order').order('sort_order'),
       ])
+      if (subtypeRows) {
+        const stMap: Record<string, SubtypeEntry[]> = {}
+        subtypeRows.forEach((r: any) => {
+          if (!stMap[r.type_key]) stMap[r.type_key] = []
+          stMap[r.type_key].push({ key: r.subtype_key, label: r.subtype_label })
+        })
+        setSubtypesByType(stMap)
+      }
       if (visRows) {
         const visMap: Record<string, Record<string, boolean>> = {}
         visRows.forEach((r: any) => {
@@ -1110,6 +1132,7 @@ function NewEstimateForm() {
             exterior_photo_url: (op as any).exterior_photo_url || null,
             photo_3_url: (op as any).photo_3_url || null,
             photo_4_url: (op as any).photo_4_url || null,
+            window_subtype: (op as any).window_subtype || '',
           })))
         }
       } else if (apptId) {
@@ -1342,6 +1365,7 @@ function NewEstimateForm() {
       exterior_photo_url: op.exterior_photo_url || null,
       photo_3_url: op.photo_3_url || null,
       photo_4_url: op.photo_4_url || null,
+      window_subtype: op.window_subtype || null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, customPrices) * 100) / 100,
       total_cost: Math.round(opCost(op, customPrices) * 100) / 100,
       sort_order: i,
@@ -1711,7 +1735,7 @@ function NewEstimateForm() {
                 {openings.map((op, idx) => (
                   <OpeningCard key={op.id} op={op} idx={idx}
                     customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} />
+                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} subtypesByType={subtypesByType} />
                 ))}
               </div>
               <button onClick={addOpening}
@@ -1918,7 +1942,7 @@ function NewEstimateForm() {
             <div className="info-box">Add each window or door as a separate opening. Quantities and options affect the price.</div>
             {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx}
               customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} />)}
+              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} subtypesByType={subtypesByType} />)}
             <button onClick={addOpening}
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>
               + Add another opening

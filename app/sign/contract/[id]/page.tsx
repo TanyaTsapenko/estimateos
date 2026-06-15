@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { getSubtypeLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 import { Download } from 'lucide-react'
@@ -331,7 +332,7 @@ export default function SignContractPage() {
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
                 <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type} × {op.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}
@@ -678,7 +679,7 @@ export default function SignContractPage() {
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
                 <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type} × {op.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}

@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
-import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -61,9 +61,10 @@ interface EstimatePDFProps {
   openings: any[]
   company: any
   customLabels?: Record<string, string>
+  subtypesByType?: SubtypeMap
 }
 
-export function EstimatePDF({ estimate, openings, company, customLabels }: EstimatePDFProps) {
+export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType }: EstimatePDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
 
@@ -114,7 +115,7 @@ export function EstimatePDF({ estimate, openings, company, customLabels }: Estim
                 <WindowDiagramPdf type={op.type} size={100} />
                 <View style={{ flex: 1 }}>
                   <View style={styles.openingHeader}>
-                    <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.room ? ` — ${op.room}` : ''}</Text>
+                    <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : ''}{op.room ? ` — ${op.room}` : ''}</Text>
                     <Text style={styles.openingPrice}>{formatCurrency(op.total_cost)}</Text>
                   </View>
                   <View style={styles.openingDetails}>

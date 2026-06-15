@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
-import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 
 interface Opening {
@@ -424,7 +424,7 @@ export default function ContractPage() {
             <div style={{ padding: '14px 16px' }}>
               {openings.map((op, i) => {
                 const def = OPENING_TYPES[op.type]
-                const name = def?.name || op.type
+                const name = `${def?.name || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
                 return (
                   <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                     {/* Header */}

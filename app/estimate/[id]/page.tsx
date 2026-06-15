@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 
 const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
@@ -262,7 +262,7 @@ export default function ClientEstimatePage() {
                   {/* Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
                     <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>
-                      {OPENING_TYPES[op.type]?.name || op.type} × {op.qty}
+                      {OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
                     </div>
                     <div style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(op.total_cost)}</div>
                   </div>

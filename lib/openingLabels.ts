@@ -1,3 +1,5 @@
+export type SubtypeMap = Record<string, { key: string; label: string }[]>
+
 const COLOUR_MAP: Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
 const SHAPE_MAP:  Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
 const GLASS_MAP:      Record<string, string> = { clear: 'Clear', lowe: 'Low-E', frosted: 'Frosted', tinted: 'Tinted', tempered: 'Tempered' }
@@ -20,6 +22,19 @@ export function getInteriorColourLabel(op: { interior_colour?: string | null; in
   if (op.interior_colour_name) return op.interior_colour_name
   if (!op.interior_colour || op.interior_colour === 'white') return ''
   return COLOUR_MAP[op.interior_colour] || op.interior_colour
+}
+
+export function getSubtypeLabel(
+  op: { window_subtype?: string | null; type?: string | null },
+  subtypesByType?: SubtypeMap | null,
+): string {
+  if (!op.window_subtype) return ''
+  if (subtypesByType && op.type) {
+    const found = subtypesByType[op.type]?.find(s => s.key === op.window_subtype)
+    if (found) return found.label
+  }
+  // Fallback: humanise the raw key (e.g. "left_casement" → "Left Casement")
+  return op.window_subtype.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 export function getGlassLabel(op: { glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null }): string {
