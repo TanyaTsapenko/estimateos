@@ -143,7 +143,8 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   interior_colour: 'white', interior_colour_palette_id: null, interior_colour_name: null,
 }
 
-function getTypeSpecificOptions(type: string) {
+function getTypeSpecificOptions(type: string, visibility?: Record<string, Record<string, boolean>>) {
+  // Fallback hardcoded arrays — used when visibility table not yet loaded or fetch failed
   const windows_with_screen = ['window_dh', 'window_sh', 'window_cas', 'window_awn', 'window_sl']
   const tilt_windows = ['window_dh', 'window_sh']
   const directional = ['window_cas']
@@ -154,19 +155,24 @@ function getTypeSpecificOptions(type: string) {
   const storm = ['door_storm']
   const interior = ['door_int']
   const garden = ['door_garden']
+
+  const loaded = visibility && Object.keys(visibility).length > 0
+  const v = loaded ? (visibility![type] ?? {}) : null
+  const vis = (field: string): boolean | null => v !== null ? (v[field] ?? false) : null
+
   return {
-    showScreen: windows_with_screen.includes(type),
-    showTiltClean: tilt_windows.includes(type),
-    showDirection: directional.includes(type),
-    showPanels: multi_panel.includes(type),
-    showBayOptions: bay_bow.includes(type),
-    showTransomPanes: transom.includes(type),
-    showSidelights: door_entry.includes(type),
-    showTransomAbove: door_entry.includes(type) || garden.includes(type),
-    showGlassType: storm.includes(type),
-    showCoreType: interior.includes(type),
-    showComboSections: type === 'window_combo',
-    showHandleType: ['window_cas', 'window_awn', 'window_tilt', 'door_entry', 'door_french', 'door_patio', 'door_garden', 'door_double', 'door_int'].includes(type),
+    showScreen:        vis('screen')          ?? windows_with_screen.includes(type),
+    showTiltClean:     vis('tilt_clean')      ?? tilt_windows.includes(type),
+    showDirection:     vis('direction')       ?? directional.includes(type),
+    showPanels:        vis('panels_count')    ?? multi_panel.includes(type),
+    showBayOptions:    vis('bay_angle')       ?? bay_bow.includes(type),
+    showTransomPanes:  vis('transom_panes')   ?? transom.includes(type),
+    showSidelights:    vis('sidelights')      ?? door_entry.includes(type),
+    showTransomAbove:  vis('transom_above')   ?? (door_entry.includes(type) || garden.includes(type)),
+    showGlassType:     vis('glass_type')      ?? storm.includes(type),
+    showCoreType:      vis('core_type')       ?? interior.includes(type),
+    showComboSections: vis('combo_sections')  ?? (type === 'window_combo'),
+    showHandleType:    vis('handle_type')     ?? ['window_cas', 'window_awn', 'window_tilt', 'door_entry', 'door_french', 'door_patio', 'door_garden', 'door_double', 'door_int'].includes(type),
   }
 }
 
@@ -181,6 +187,7 @@ interface OpeningCardProps {
   updateOpening: (id: string, k: keyof Opening, v: string | number | boolean | object | null) => void
   duplicateOpening: (id: string) => void
   userId: string | null
+  typeFieldVisibility: Record<string, Record<string, boolean>>
 }
 
 function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boolean; onToggle: () => void; icon: React.ReactNode }) {
@@ -213,13 +220,13 @@ const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
 ]
 const KNOWN_ROOMS = ['Living Room', 'Kitchen', 'Dining Room', 'Bedroom', 'Bathroom', 'Basement', 'Office']
 
-function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId }: OpeningCardProps) {
+function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId, typeFieldVisibility }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
     : op.type.startsWith('door_') ? 'Doors'
     : (customOpeningTypes[op.type]?.category || 'Other')
   const categoryPalette = palette.filter(c => c.category === category)
   const hasPalette = categoryPalette.length > 0
-  const opts = getTypeSpecificOptions(op.type)
+  const opts = getTypeSpecificOptions(op.type, typeFieldVisibility)
   const hasTypeSpecific = Object.values(opts).some(Boolean)
 
   const [isExpanded, setIsExpanded] = useState(true)
@@ -936,6 +943,7 @@ function NewEstimateForm() {
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
   const [palette, setPalette] = useState<PaletteEntry[]>([])
+  const [typeFieldVisibility, setTypeFieldVisibility] = useState<Record<string, Record<string, boolean>>>({})
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
   const [clientErrors, setClientErrors] = useState<ClientErrors>({})
@@ -1008,11 +1016,20 @@ function NewEstimateForm() {
       const pricingId = (prof as any)?.team_owner_id || sanitizedId
       priceUserIdRef.current = pricingId
 
-      const [{ data: priceRows }, { data: profSurcharges }, { data: paletteRows }] = await Promise.all([
+      const [{ data: priceRows }, { data: profSurcharges }, { data: paletteRows }, { data: visRows }] = await Promise.all([
         supabase.from('price_lists').select('*').eq('user_id', pricingId).order('category', { nullsFirst: false }).order('custom_label', { nullsFirst: false }),
         supabase.from('profiles').select('surcharges').eq('id', pricingId).single(),
         supabase.from('color_palette').select('id, name, hex_color, price_addon, category').eq('user_id', pricingId).order('sort_order').order('created_at'),
+        supabase.from('type_field_visibility').select('type_key, field_name, is_visible'),
       ])
+      if (visRows) {
+        const visMap: Record<string, Record<string, boolean>> = {}
+        visRows.forEach((r: any) => {
+          if (!visMap[r.type_key]) visMap[r.type_key] = {}
+          visMap[r.type_key][r.field_name] = r.is_visible
+        })
+        setTypeFieldVisibility(visMap)
+      }
       if (prof) {
         setProfile(prof)
       }
@@ -1694,7 +1711,7 @@ function NewEstimateForm() {
                 {openings.map((op, idx) => (
                   <OpeningCard key={op.id} op={op} idx={idx}
                     customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} />
+                    openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} />
                 ))}
               </div>
               <button onClick={addOpening}
@@ -1901,7 +1918,7 @@ function NewEstimateForm() {
             <div className="info-box">Add each window or door as a separate opening. Quantities and options affect the price.</div>
             {openings.map((op, idx) => <OpeningCard key={op.id} op={op} idx={idx}
               customOpeningTypes={customOpeningTypes} customPrices={customPrices} palette={palette}
-              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} />)}
+              openingsCount={openings.length} removeOpening={removeOpening} updateOpening={updateOpening} duplicateOpening={duplicateOpening} userId={userIdRef.current} typeFieldVisibility={typeFieldVisibility} />)}
             <button onClick={addOpening}
               style={{ width: '100%', background: 'transparent', border: '1.5px dashed var(--border)', borderRadius: 12, padding: 13, fontSize: 13, fontWeight: 600, color: 'var(--ash)', cursor: 'pointer', marginBottom: 14 }}>
               + Add another opening
