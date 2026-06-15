@@ -140,6 +140,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   glass_type: '', core_type: '', handle_type: '', combo_sections: null,
   custom_shape_label: '', custom_colour_label: '',
   interior_photo_url: null, exterior_photo_url: null, photo_3_url: null, photo_4_url: null,
+  interior_colour: 'white', interior_colour_palette_id: null, interior_colour_name: null,
 }
 
 function getTypeSpecificOptions(type: string) {
@@ -226,6 +227,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const [photoKeys, setPhotoKeys] = useState(() => { const t = Date.now(); return { interior: t, exterior: t, photo_3: t, photo_4: t } })
   const [photoError, setPhotoError] = useState('')
   const [otherRoomSelected, setOtherRoomSelected] = useState(() => op.room !== '' && !KNOWN_ROOMS.includes(op.room))
+  const [showInteriorColour, setShowInteriorColour] = useState(() => !!(op.interior_colour && op.interior_colour !== 'white') || !!op.interior_colour_palette_id)
 
   const [openGroup, setOpenGroup] = useState(() => ({
     appearance: true,
@@ -413,7 +415,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                 <option value="custom">Custom shape{customPrices?.surcharges?.custom_shape_pct ? ` (+${customPrices.surcharges.custom_shape_pct}%)` : ''}</option>
               </select></div>
             {!hasPalette && (
-              <div className="f"><label>Colour</label>
+              <div className="f"><label>Exterior Colour</label>
                 <select value={op.colour} onChange={e => updateOpening(op.id, 'colour', e.target.value)}>
                   <option value="white">White</option>
                   <option value="black">Black{customPrices?.surcharges?.black_grey ? ` (+$${customPrices.surcharges.black_grey})` : ''}</option>
@@ -431,7 +433,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
           )}
           {hasPalette ? (
             <div style={{ marginBottom: 8 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Colour</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Exterior Colour</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {categoryPalette.map(c => {
                   const selected = op.colour_palette_id === c.id
@@ -459,6 +461,54 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
               </div>
             )
           )}
+          {/* Interior colour toggle */}
+          <div style={{ marginBottom: 8, paddingTop: 2 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#374151', cursor: 'pointer', userSelect: 'none' }}>
+              <input type="checkbox" checked={showInteriorColour} onChange={e => {
+                setShowInteriorColour(e.target.checked)
+                if (!e.target.checked) {
+                  updateOpening(op.id, 'interior_colour', 'white')
+                  updateOpening(op.id, 'interior_colour_palette_id', null)
+                  updateOpening(op.id, 'interior_colour_name', null)
+                }
+              }} style={{ width: 15, height: 15, accentColor: '#2563EB', cursor: 'pointer' }} />
+              Different interior colour
+            </label>
+            {showInteriorColour && (
+              hasPalette ? (
+                <div style={{ marginTop: 8 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Interior Colour</label>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {categoryPalette.map(c => {
+                      const selected = op.interior_colour_palette_id === c.id
+                      return (
+                        <button key={c.id} type="button" onClick={() => {
+                          updateOpening(op.id, 'interior_colour_palette_id', c.id)
+                          updateOpening(op.id, 'interior_colour_name', c.name)
+                        }} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '6px 8px', borderRadius: 10, border: `2px solid ${selected ? '#2563EB' : 'transparent'}`, background: selected ? '#EFF4FF' : 'var(--surface)', cursor: 'pointer' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 7, background: c.hex_color || '#E5E7EB', border: '1.5px solid rgba(0,0,0,.1)', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {selected && <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,.5))' }}><polyline points="2 7 5.5 10.5 12 3.5"/></svg>}
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: selected ? 700 : 500, color: selected ? '#2563EB' : 'var(--jet)', maxWidth: 56, textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word' }}>{c.name}</span>
+                          {c.price_addon > 0 && <span style={{ fontSize: 9, color: '#94A3B8' }}>+${c.price_addon}</span>}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ marginTop: 8 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--ash)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Interior Colour</label>
+                  <select value={op.interior_colour || 'white'} onChange={e => updateOpening(op.id, 'interior_colour', e.target.value)}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' }}>
+                    <option value="white">White</option>
+                    <option value="black">Black</option>
+                    <option value="grey">Grey</option>
+                  </select>
+                </div>
+              )
+            )}
+          </div>
           <div className="r2">
             <div><div style={lblStyle}>Grid pattern</div>
               <select style={selStyle} value={op.grid_pattern} onChange={e => updateOpening(op.id, 'grid_pattern', e.target.value)}>
@@ -1003,6 +1053,9 @@ function NewEstimateForm() {
             custom_colour_label: (op as any).custom_colour_label || '',
             colour_palette_id: (op as any).colour_palette_id || null,
             colour_name: (op as any).colour_name || null,
+            interior_colour: (op as any).interior_colour || 'white',
+            interior_colour_palette_id: (op as any).interior_colour_palette_id || null,
+            interior_colour_name: (op as any).interior_colour_name || null,
             interior_photo_url: (op as any).interior_photo_url || null,
             exterior_photo_url: (op as any).exterior_photo_url || null,
             photo_3_url: (op as any).photo_3_url || null,
@@ -1221,6 +1274,9 @@ function NewEstimateForm() {
       custom_colour_label: op.custom_colour_label || null,
       colour_palette_id: op.colour_palette_id || null,
       colour_name: op.colour_name || null,
+      interior_colour: op.interior_colour || 'white',
+      interior_colour_palette_id: op.interior_colour_palette_id || null,
+      interior_colour_name: op.interior_colour_name || null,
       interior_photo_url: op.interior_photo_url || null,
       exterior_photo_url: op.exterior_photo_url || null,
       photo_3_url: op.photo_3_url || null,

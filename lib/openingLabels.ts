@@ -16,6 +16,12 @@ export function getShapeLabel(op: { shape?: string | null; custom_shape_label?: 
   return SHAPE_MAP[op.shape] || op.shape
 }
 
+export function getInteriorColourLabel(op: { interior_colour?: string | null; interior_colour_name?: string | null }): string {
+  if (op.interior_colour_name) return op.interior_colour_name
+  if (!op.interior_colour || op.interior_colour === 'white') return ''
+  return COLOUR_MAP[op.interior_colour] || op.interior_colour
+}
+
 export function getGlassLabel(op: { glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null }): string {
   if (op.glass_kind != null) {
     const parts: string[] = []

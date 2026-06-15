@@ -85,6 +85,9 @@ export interface Opening {
   glass_kind?: string
   low_e?: boolean
   tempered?: boolean
+  interior_colour_palette_id?: string | null
+  interior_colour_name?: string | null
+  interior_colour?: string | null
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
@@ -130,6 +133,10 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
     ? (custom.colourPalette[op.colour_palette_id] ?? 0)
     : op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 0)
     : op.colour === 'custom' ? (s.custom_colour ?? 0) : 0
+  const colInt = op.interior_colour_palette_id && custom?.colourPalette
+    ? (custom.colourPalette[op.interior_colour_palette_id] ?? 0)
+    : op.interior_colour === 'black' || op.interior_colour === 'grey' ? (s.black_grey ?? 0)
+    : op.interior_colour === 'custom' ? (s.custom_colour ?? 0) : 0
   const gl = op.glass_kind != null
     ? (op.low_e     ? (s.lowe     ?? 0) : 0)
       + (op.tempered ? (s.tempered ?? 0) : 0)
@@ -148,7 +155,7 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
            : op.frame === 'rotted' ? (s.frame_rotted ?? 0) : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
 
-  const unitCost = (base + lab) * sh + fa + ia + fc + col + gl + ex
+  const unitCost = (base + lab) * sh + fa + ia + fc + col + colInt + gl + ex
   return unitCost * (op.qty || 1)
 }
 
