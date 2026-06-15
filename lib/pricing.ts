@@ -78,6 +78,8 @@ export interface Opening {
   custom_colour_label: string
   colour_palette_id?: string | null
   colour_name?: string | null
+  interior_photo_url?: string | null
+  exterior_photo_url?: string | null
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
