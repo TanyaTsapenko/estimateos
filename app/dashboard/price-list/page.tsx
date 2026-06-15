@@ -55,6 +55,12 @@ export default function PriceListPage() {
     fullframe: 0, stud_to_stud: 0,
     second_floor: 0, third_floor: 0,
     frame_repair: 0, frame_rotted: 0,
+    casing_oak: 0, casing_vinyl: 0, casing_mdf: 0, casing_custom: 0,
+    casing_size_3_3_8: 0,
+    jamb_oak: 0, jamb_wood: 0, jamb_vinyl: 0, jamb_plywood: 0, jamb_custom: 0,
+    brickmold: 0,
+    rosettes_round: 0, rosettes_45: 0, rosettes_flat: 0,
+    caping: 0, nail_fin: 0, drip_cap: 0, blue_skin: 0,
   })
   const [savingSurcharges, setSavingSurcharges] = useState(false)
   const [isOwner, setIsOwner] = useState(true)
@@ -819,6 +825,32 @@ export default function PriceListPage() {
               { label: 'Frame condition', fields: [
                 { key: 'frame_repair', label: 'Needs repair', unit: '$' },
                 { key: 'frame_rotted', label: 'Rotted frame', unit: '$' },
+              ]},
+              { label: 'Trim & Accessories — Casing', fields: [
+                { key: 'casing_oak', label: 'Oak casing', unit: '$' },
+                { key: 'casing_vinyl', label: 'Vinyl casing', unit: '$' },
+                { key: 'casing_mdf', label: 'MDF casing', unit: '$' },
+                { key: 'casing_custom', label: 'Custom casing', unit: '$' },
+                { key: 'casing_size_3_3_8', label: '3-3/8" size upcharge', unit: '$' },
+              ]},
+              { label: 'Trim & Accessories — Jamb', fields: [
+                { key: 'jamb_oak', label: 'Oak jamb', unit: '$' },
+                { key: 'jamb_wood', label: 'Wood jamb', unit: '$' },
+                { key: 'jamb_vinyl', label: 'Vinyl jamb', unit: '$' },
+                { key: 'jamb_plywood', label: 'Plywood jamb', unit: '$' },
+                { key: 'jamb_custom', label: 'Custom jamb', unit: '$' },
+              ]},
+              { label: 'Trim & Accessories — Brickmold & Rosettes', fields: [
+                { key: 'brickmold', label: 'Brickmold', unit: '$' },
+                { key: 'rosettes_round', label: 'Round rosettes', unit: '$' },
+                { key: 'rosettes_45', label: '45° rosettes', unit: '$' },
+                { key: 'rosettes_flat', label: 'Flat rosettes', unit: '$' },
+              ]},
+              { label: 'Trim & Accessories — Other', fields: [
+                { key: 'caping', label: 'Caping', unit: '$' },
+                { key: 'nail_fin', label: 'Nail fin', unit: '$' },
+                { key: 'drip_cap', label: 'Drip cap', unit: '$' },
+                { key: 'blue_skin', label: 'Blue skin', unit: '$' },
               ]},
             ].filter(({ label, fields }) => {
               if (!surchargeSearch.trim()) return true

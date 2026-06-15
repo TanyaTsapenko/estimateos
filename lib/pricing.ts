@@ -116,6 +116,24 @@ export interface CustomPrices {
     third_floor?: number
     frame_repair?: number
     frame_rotted?: number
+    casing_oak?: number
+    casing_vinyl?: number
+    casing_mdf?: number
+    casing_custom?: number
+    casing_size_3_3_8?: number
+    jamb_oak?: number
+    jamb_wood?: number
+    jamb_vinyl?: number
+    jamb_plywood?: number
+    jamb_custom?: number
+    brickmold?: number
+    rosettes_round?: number
+    rosettes_45?: number
+    rosettes_flat?: number
+    caping?: number
+    nail_fin?: number
+    drip_cap?: number
+    blue_skin?: number
   }
 }
 
