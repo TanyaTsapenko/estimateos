@@ -51,7 +51,7 @@ export default function PriceListPage() {
   const [surcharges, setSurcharges] = useState({
     arch_pct: 0, custom_shape_pct: 0,
     black_grey: 0, custom_colour: 0,
-    lowe: 0, frosted: 0, tinted: 0, tempered: 0,
+    lowe: 0, frosted: 0, tinted: 0, tempered: 0, obscure: 0,
     fullframe: 0, stud_to_stud: 0,
     second_floor: 0, third_floor: 0,
     frame_repair: 0, frame_rotted: 0,
@@ -803,9 +803,10 @@ export default function PriceListPage() {
               ]},
               { label: 'Glass', fields: [
                 { key: 'lowe', label: 'Low-E', unit: '$' },
+                { key: 'tempered', label: 'Tempered', unit: '$' },
                 { key: 'frosted', label: 'Frosted', unit: '$' },
                 { key: 'tinted', label: 'Tinted', unit: '$' },
-                { key: 'tempered', label: 'Tempered', unit: '$' },
+                { key: 'obscure', label: 'Obscure', unit: '$' },
               ]},
               { label: 'Installation', fields: [
                 { key: 'fullframe', label: 'Full Frame', unit: '$' },

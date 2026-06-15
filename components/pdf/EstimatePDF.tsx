@@ -140,7 +140,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
                     {op.colour && op.colour !== 'white' && <Text style={styles.openingDetail}>Colour: {getColourLabel(op)}</Text>}
                     {op.shape && op.shape !== 'rect' && <Text style={styles.openingDetail}>Shape: {getShapeLabel(op)}</Text>}
                     {op.material && <Text style={styles.openingDetail}>Material: {op.material}</Text>}
-                    {op.glass && op.glass !== 'clear' && <Text style={styles.openingDetail}>Glass: {getGlassLabel(op)}</Text>}
+                    {getGlassLabel(op) && <Text style={styles.openingDetail}>Glass: {getGlassLabel(op)}</Text>}
                     {op.floor && op.floor !== 'first' && <Text style={styles.openingDetail}>Floor: {op.floor}</Text>}
                     {op.notes && <Text style={styles.openingDetail}>Note: {op.notes}</Text>}
                   </View>

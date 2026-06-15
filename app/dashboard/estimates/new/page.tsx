@@ -132,7 +132,7 @@ interface ClientInfo {
 
 const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
-  shape: 'rect', colour: 'white', glass: 'clear', frame: 'none',
+  shape: 'rect', colour: 'white', glass: 'clear', glass_kind: 'clear', low_e: false, tempered: false, frame: 'none',
   install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0, has_screen: false,
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
@@ -229,7 +229,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
 
   const [openGroup, setOpenGroup] = useState(() => ({
     appearance: true,
-    glass: op.glass !== 'clear',
+    glass: op.glass !== 'clear' || !!op.low_e || !!op.tempered || (!!op.glass_kind && op.glass_kind !== 'clear'),
     installation: op.install !== 'retrofit' || op.frame !== 'none' || op.material !== 'vinyl' ||
       !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
       op.sidelight_left > 0 || op.sidelight_right > 0 || op.transom_above || op.has_screen ||
@@ -488,14 +488,25 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
       } />
       {openGroup.glass && (
         <div style={{ paddingTop: 6 }}>
-          <div className="f"><label>Glass</label>
-            <select value={op.glass} onChange={e => updateOpening(op.id, 'glass', e.target.value)}>
+          <div className="f"><label>Glass Type</label>
+            <select value={op.glass_kind || 'clear'} onChange={e => updateOpening(op.id, 'glass_kind', e.target.value)}>
               <option value="clear">Clear</option>
-              <option value="lowe">Low-E{customPrices?.surcharges?.lowe ? ` (+$${customPrices.surcharges.lowe})` : ''}</option>
               <option value="frosted">Frosted{customPrices?.surcharges?.frosted ? ` (+$${customPrices.surcharges.frosted})` : ''}</option>
               <option value="tinted">Tinted{customPrices?.surcharges?.tinted ? ` (+$${customPrices.surcharges.tinted})` : ''}</option>
-              <option value="tempered">Tempered{customPrices?.surcharges?.tempered ? ` (+$${customPrices.surcharges.tempered})` : ''}</option>
+              <option value="obscure">Obscure{(customPrices?.surcharges as any)?.obscure ? ` (+$${(customPrices?.surcharges as any).obscure})` : ''}</option>
             </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', cursor: 'pointer', userSelect: 'none' }}>
+              <input type="checkbox" checked={op.low_e || false} onChange={e => updateOpening(op.id, 'low_e', e.target.checked)}
+                style={{ width: 15, height: 15, accentColor: '#2563EB', cursor: 'pointer' }} />
+              Low-E{customPrices?.surcharges?.lowe ? ` (+$${customPrices.surcharges.lowe})` : ''}
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', cursor: 'pointer', userSelect: 'none' }}>
+              <input type="checkbox" checked={op.tempered || false} onChange={e => updateOpening(op.id, 'tempered', e.target.checked)}
+                style={{ width: 15, height: 15, accentColor: '#2563EB', cursor: 'pointer' }} />
+              Tempered{customPrices?.surcharges?.tempered ? ` (+$${customPrices.surcharges.tempered})` : ''}
+            </label>
           </div>
         </div>
       )}
@@ -981,6 +992,10 @@ function NewEstimateForm() {
             panels_count: op.panels_count || '', bay_angle: op.bay_angle || '',
             transom_panes: op.transom_panes || '', sidelight_left: op.sidelight_left || 0,
             sidelight_right: op.sidelight_right || 0, transom_above: op.transom_above || false,
+            glass_kind: op.glass_kind != null ? op.glass_kind
+              : (op.glass === 'frosted' ? 'frosted' : op.glass === 'tinted' ? 'tinted' : 'clear'),
+            low_e: op.low_e != null ? op.low_e : op.glass === 'lowe',
+            tempered: op.tempered != null ? op.tempered : op.glass === 'tempered',
             glass_type: op.glass_type || '', core_type: op.core_type || '',
             handle_type: (op as any).handle_type || '',
             combo_sections: (op as any).combo_sections || null,
@@ -1173,7 +1188,15 @@ function NewEstimateForm() {
       width: (op.width_in && op.height_in) ? dimToSizeBucket(op.width_in, op.height_in) : op.width,
       width_in: op.width_in || null,
       height_in: op.height_in || null,
-      shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
+      shape: op.shape, colour: op.colour, frame: op.frame,
+      glass: op.tempered ? 'tempered' : op.low_e ? 'lowe'
+        : op.glass_kind === 'frosted' ? 'frosted'
+        : op.glass_kind === 'tinted'  ? 'tinted'
+        : op.glass_kind === 'obscure' ? 'frosted'
+        : 'clear',
+      glass_kind: op.glass_kind || 'clear',
+      low_e:     op.low_e     || false,
+      tempered:  op.tempered  || false,
       install: op.install, floor: op.floor, room: op.room,
       sidelight: op.sidelight, transom: op.transom,
       has_screen: Boolean(op.has_screen),

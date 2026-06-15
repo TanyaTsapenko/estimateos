@@ -82,6 +82,9 @@ export interface Opening {
   exterior_photo_url?: string | null
   photo_3_url?: string | null
   photo_4_url?: string | null
+  glass_kind?: string
+  low_e?: boolean
+  tempered?: boolean
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)
@@ -103,6 +106,7 @@ export interface CustomPrices {
     frosted?: number
     tinted?: number
     tempered?: number
+    obscure?: number
     fullframe?: number
     stud_to_stud?: number
     second_floor?: number
@@ -126,10 +130,16 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
     ? (custom.colourPalette[op.colour_palette_id] ?? 0)
     : op.colour === 'black' || op.colour === 'grey' ? (s.black_grey ?? 0)
     : op.colour === 'custom' ? (s.custom_colour ?? 0) : 0
-  const gl = op.glass === 'lowe' ? (s.lowe ?? 0)
-           : op.glass === 'frosted' ? (s.frosted ?? 0)
-           : op.glass === 'tinted' ? (s.tinted ?? 0)
-           : op.glass === 'tempered' ? (s.tempered ?? 0) : 0
+  const gl = op.glass_kind != null
+    ? (op.low_e     ? (s.lowe     ?? 0) : 0)
+      + (op.tempered ? (s.tempered ?? 0) : 0)
+      + (op.glass_kind === 'frosted' ? (s.frosted ?? 0)
+        : op.glass_kind === 'tinted'  ? (s.tinted  ?? 0)
+        : op.glass_kind === 'obscure' ? (s.obscure ?? 0) : 0)
+    : op.glass === 'lowe'     ? (s.lowe     ?? 0)
+    : op.glass === 'frosted'  ? (s.frosted  ?? 0)
+    : op.glass === 'tinted'   ? (s.tinted   ?? 0)
+    : op.glass === 'tempered' ? (s.tempered ?? 0) : 0
   const fa = op.floor === 'second' ? (s.second_floor ?? 0)
            : op.floor === 'third' ? (s.third_floor ?? 0) : 0
   const ia = op.install === 'fullframe' ? (s.fullframe ?? 0)
