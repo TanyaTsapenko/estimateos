@@ -724,7 +724,7 @@ function NewEstimateForm() {
     job_site_address: '', job_site_city: '', job_site_province: '', job_site_postal_code: '',
   })
 
-  const [openings, setOpenings] = useState<Opening[]>([{ id: '1', ...DEFAULT_OPENING }])
+  const [openings, setOpenings] = useState<Opening[]>(() => [{ id: crypto.randomUUID(), ...DEFAULT_OPENING }])
   const [profile, setProfile] = useState<{ province: string; default_valid_days?: number } | null>(null)
   const [customPrices, setCustomPrices] = useState<CustomPrices | undefined>(undefined)
   const [customOpeningTypes, setCustomOpeningTypes] = useState<Record<string, CustomOpeningType>>({})
@@ -889,7 +889,7 @@ function NewEstimateForm() {
   const total = afterDiscount + taxAmount
 
   function addOpening() {
-    setOpenings(p => [...p, { id: Date.now().toString(), ...DEFAULT_OPENING }])
+    setOpenings(p => [...p, { id: crypto.randomUUID(), ...DEFAULT_OPENING }])
   }
   function removeOpening(id: string) {
     if (openings.length <= 1) return
@@ -899,7 +899,7 @@ function NewEstimateForm() {
     setOpenings(p => {
       const idx = p.findIndex(o => o.id === id)
       if (idx === -1) return p
-      const dupe = { ...p[idx], id: Date.now().toString() }
+      const dupe = { ...p[idx], id: crypto.randomUUID() }
       return [...p.slice(0, idx + 1), dupe, ...p.slice(idx + 1)]
     })
   }
