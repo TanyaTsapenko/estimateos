@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { substituteProvince } from '@/lib/provinces'
 import { getColourLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { OPENING_TYPES } from '@/lib/pricing'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -54,26 +55,6 @@ const styles = StyleSheet.create({
   badge: { fontSize: 8, color: '#ffffff', backgroundColor: '#0A1628', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
 })
 
-const WINDOW_TYPES: Record<string, string> = {
-  window_dh: 'Double-Hung Window',
-  window_casement: 'Casement Window',
-  window_sliding: 'Sliding Window',
-  window_picture: 'Picture Window',
-  window_bay: 'Bay Window',
-  window_bow: 'Bow Window',
-  window_awning: 'Awning Window',
-  window_combination: 'Combination Window',
-  window_garden: 'Garden Window',
-  window_skylight: 'Skylight',
-  door_entry: 'Entry Door',
-  door_double_entry: 'Double Entry Door',
-  door_french: 'French Doors',
-  door_patio_sliding: 'Patio Sliding Door',
-  door_garden: 'Garden Door',
-  door_storm: 'Storm Door',
-  door_interior: 'Interior Door',
-}
-
 function formatCurrency(amount: number) {
   return `CA$${amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -87,9 +68,10 @@ interface ContractPDFProps {
   estimate: any
   openings: any[]
   company: any
+  customLabels?: Record<string, string>
 }
 
-export function ContractPDF({ contract, estimate, openings, company }: ContractPDFProps) {
+export function ContractPDF({ contract, estimate, openings, company, customLabels }: ContractPDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
@@ -152,7 +134,7 @@ export function ContractPDF({ contract, estimate, openings, company }: ContractP
             <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
               <WindowDiagramPdf type={op.type} size={100} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{WINDOW_TYPES[op.type] || op.type}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}</Text>
                 <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour && op.colour !== 'white' ? ` · ${getColourLabel(op)}` : ''}{getInteriorColourLabel(op) ? ` · Int: ${getInteriorColourLabel(op)}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
                 {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
               </View>

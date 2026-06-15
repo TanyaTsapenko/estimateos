@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/renderer'
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { OPENING_TYPES } from '@/lib/pricing'
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
@@ -47,26 +48,6 @@ const styles = StyleSheet.create({
   openingDetail: { fontSize: 8, color: '#6b7280' },
 })
 
-const WINDOW_TYPES: Record<string, string> = {
-  window_dh: 'Double-Hung Window',
-  window_casement: 'Casement Window',
-  window_sliding: 'Sliding Window',
-  window_picture: 'Picture Window',
-  window_bay: 'Bay Window',
-  window_bow: 'Bow Window',
-  window_awning: 'Awning Window',
-  window_combination: 'Combination Window',
-  window_garden: 'Garden Window',
-  window_skylight: 'Skylight',
-  door_entry: 'Entry Door',
-  door_double_entry: 'Double Entry Door',
-  door_french: 'French Doors',
-  door_patio_sliding: 'Patio Sliding Door',
-  door_garden: 'Garden Door',
-  door_storm: 'Storm Door',
-  door_interior: 'Interior Door',
-}
-
 function formatCurrency(amount: number) {
   return `CA$${amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
@@ -79,9 +60,10 @@ interface EstimatePDFProps {
   estimate: any
   openings: any[]
   company: any
+  customLabels?: Record<string, string>
 }
 
-export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
+export function EstimatePDF({ estimate, openings, company, customLabels }: EstimatePDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
 
@@ -132,7 +114,7 @@ export function EstimatePDF({ estimate, openings, company }: EstimatePDFProps) {
                 <WindowDiagramPdf type={op.type} size={100} />
                 <View style={{ flex: 1 }}>
                   <View style={styles.openingHeader}>
-                    <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{WINDOW_TYPES[op.type] || op.type}{op.room ? ` — ${op.room}` : ''}</Text>
+                    <Text style={styles.openingTitle}>{op.qty > 1 ? `${op.qty}× ` : ''}{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.room ? ` — ${op.room}` : ''}</Text>
                     <Text style={styles.openingPrice}>{formatCurrency(op.total_cost)}</Text>
                   </View>
                   <View style={styles.openingDetails}>

@@ -28,10 +28,13 @@ export async function GET(req: NextRequest) {
     console.log('[estimate-pdf] estimate fetch:', { found: !!estimate, error: estErr?.message })
     if (!estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
-    const [{ data: openings, error: opErr }, { data: company, error: compErr }] = await Promise.all([
+    const [{ data: openings, error: opErr }, { data: company, error: compErr }, { data: priceRows }] = await Promise.all([
       admin.from('estimate_openings').select('*').eq('estimate_id', estimateId).order('sort_order'),
       admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, insurance, logo_url, signature_url, warranty_period, warranty_summary, completion_timeframe, project_manager, interac_email').eq('id', estimate.user_id).maybeSingle(),
+      admin.from('price_lists').select('opening_type, custom_label').eq('user_id', estimate.user_id).neq('opening_type', '_sizes'),
     ])
+    const customLabels: Record<string, string> = {}
+    priceRows?.forEach((r: any) => { if (r.custom_label) customLabels[r.opening_type] = r.custom_label })
 
     console.log('[estimate-pdf] openings:', openings?.length, 'opErr:', opErr?.message)
     console.log('[estimate-pdf] company:', company?.company_name, 'compErr:', compErr?.message)
@@ -45,6 +48,7 @@ export async function GET(req: NextRequest) {
         estimate,
         openings: openings || [],
         company: company || {},
+        customLabels,
       }) as React.ReactElement<DocumentProps>
     )
 
