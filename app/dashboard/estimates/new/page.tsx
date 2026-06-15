@@ -232,11 +232,11 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const [openGroup, setOpenGroup] = useState(() => ({
     appearance: true,
     glass: op.glass !== 'clear' || !!op.low_e || !!op.tempered || (!!op.glass_kind && op.glass_kind !== 'clear'),
-    installation: op.install !== 'retrofit' || op.frame !== 'none' || op.material !== 'vinyl' ||
-      !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
+    installation4a: true,
+    typeconfig: !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
       op.sidelight_left > 0 || op.sidelight_right > 0 || op.transom_above || op.has_screen ||
       op.tilt_clean || !!op.glass_type || !!op.core_type || !!op.handle_type || !!op.combo_sections,
-    notes: !!(op.notes || op.brand || op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url),
+    notes: !!(op.notes || op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url),
   }))
   const toggle = (g: keyof typeof openGroup) => setOpenGroup(p => ({ ...p, [g]: !p[g] }))
 
@@ -561,11 +561,11 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
         </div>
       )}
 
-      {/* ── GROUP 4: Installation & Details ── */}
-      <GroupHeader title="Installation & Details" open={openGroup.installation} onToggle={() => toggle('installation')} icon={
+      {/* ── GROUP 4A: Installation ── */}
+      <GroupHeader title="Installation" open={openGroup.installation4a} onToggle={() => toggle('installation4a')} icon={
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       } />
-      {openGroup.installation && (
+      {openGroup.installation4a && (
         <div style={{ paddingTop: 6 }}>
           <div className="r1" style={{ marginBottom: 8 }}>
             <div className="f"><label>Installation</label>
@@ -583,7 +583,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                 <option value="rotted">Rotted{customPrices?.surcharges?.frame_rotted ? ` (+$${customPrices.surcharges.frame_rotted})` : ''}</option>
               </select></div>
           </div>
-          <div className="r1" style={{ marginBottom: hasTypeSpecific ? 10 : 0 }}>
+          <div className="r1" style={{ marginBottom: 8 }}>
             <div><div style={lblStyle}>Material</div>
               <select style={selStyle} value={op.material} onChange={e => updateOpening(op.id, 'material', e.target.value)}>
                 <option value="vinyl">Vinyl</option>
@@ -594,9 +594,23 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
               </select>
             </div>
           </div>
+          <div className="r1">
+            <div><div style={lblStyle}>Manufacturer (optional)</div>
+              <input style={{ ...selStyle, boxSizing: 'border-box' as const }} value={op.brand}
+                onChange={e => updateOpening(op.id, 'brand', e.target.value)} placeholder="e.g. Pella, North Star, Gentek" />
+            </div>
+          </div>
+        </div>
+      )}
 
-          {hasTypeSpecific && (
-            <div style={{ paddingTop: 4, borderTop: '0.5px solid #F1F5F9' }}>
+      {/* ── GROUP 4B: Type configuration (only for types that have specific options) ── */}
+      {hasTypeSpecific && (
+        <>
+          <GroupHeader title="Type configuration" open={openGroup.typeconfig} onToggle={() => toggle('typeconfig')} icon={
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+          } />
+          {openGroup.typeconfig && (
+            <div style={{ paddingTop: 6 }}>
               {opts.showScreen && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
                   <div>
@@ -803,7 +817,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
               })()}
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* ── GROUP 5: Notes & Photos ── */}
@@ -812,11 +826,6 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
       } />
       {openGroup.notes && (
         <div style={{ paddingTop: 6 }}>
-          <div style={{ marginBottom: 10 }}>
-            <div style={lblStyle}>Manufacturer (optional)</div>
-            <input style={{ ...selStyle, boxSizing: 'border-box' as const }} value={op.brand}
-              onChange={e => updateOpening(op.id, 'brand', e.target.value)} placeholder="e.g. Pella, North Star, Gentek" />
-          </div>
           <div style={{ marginBottom: 12 }}>
             <div style={lblStyle}>Notes (this opening)</div>
             <textarea value={op.notes} onChange={e => updateOpening(op.id, 'notes', e.target.value)}
