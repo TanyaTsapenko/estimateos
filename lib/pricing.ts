@@ -80,6 +80,8 @@ export interface Opening {
   colour_name?: string | null
   interior_photo_url?: string | null
   exterior_photo_url?: string | null
+  photo_3_url?: string | null
+  photo_4_url?: string | null
 }
 
 // Derive sm/md/lg/xl from the larger of width or height (in inches)

@@ -139,7 +139,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
   glass_type: '', core_type: '', handle_type: '', combo_sections: null,
   custom_shape_label: '', custom_colour_label: '',
-  interior_photo_url: null, exterior_photo_url: null,
+  interior_photo_url: null, exterior_photo_url: null, photo_3_url: null, photo_4_url: null,
 }
 
 function getTypeSpecificOptions(type: string) {
@@ -197,6 +197,20 @@ function GroupHeader({ title, open, onToggle, icon }: { title: string; open: boo
   )
 }
 
+type PhotoSlot = 'interior' | 'exterior' | 'photo_3' | 'photo_4'
+const SLOT_FIELD: Record<PhotoSlot, keyof Opening> = {
+  interior: 'interior_photo_url',
+  exterior: 'exterior_photo_url',
+  photo_3:  'photo_3_url',
+  photo_4:  'photo_4_url',
+}
+const PHOTO_SLOTS: { slot: PhotoSlot; label: string }[] = [
+  { slot: 'interior', label: 'Interior' },
+  { slot: 'exterior', label: 'Exterior' },
+  { slot: 'photo_3',  label: 'Additional 1' },
+  { slot: 'photo_4',  label: 'Additional 2' },
+]
+
 function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openingsCount, removeOpening, updateOpening, duplicateOpening, userId }: OpeningCardProps) {
   const category = op.type.startsWith('window_') ? 'Windows'
     : op.type.startsWith('door_') ? 'Doors'
@@ -207,8 +221,8 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
   const hasTypeSpecific = Object.values(opts).some(Boolean)
 
   const [isExpanded, setIsExpanded] = useState(true)
-  const [photoUploading, setPhotoUploading] = useState({ interior: false, exterior: false })
-  const [photoKeys, setPhotoKeys] = useState(() => ({ interior: Date.now(), exterior: Date.now() }))
+  const [photoUploading, setPhotoUploading] = useState({ interior: false, exterior: false, photo_3: false, photo_4: false })
+  const [photoKeys, setPhotoKeys] = useState(() => { const t = Date.now(); return { interior: t, exterior: t, photo_3: t, photo_4: t } })
   const [photoError, setPhotoError] = useState('')
 
   const [openGroup, setOpenGroup] = useState(() => ({
@@ -218,11 +232,11 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
       !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
       op.sidelight_left > 0 || op.sidelight_right > 0 || op.transom_above || op.has_screen ||
       op.tilt_clean || !!op.glass_type || !!op.core_type || !!op.handle_type || !!op.combo_sections,
-    notes: !!(op.notes || op.brand || op.interior_photo_url || op.exterior_photo_url),
+    notes: !!(op.notes || op.brand || op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url),
   }))
   const toggle = (g: keyof typeof openGroup) => setOpenGroup(p => ({ ...p, [g]: !p[g] }))
 
-  async function handlePhotoUpload(side: 'interior' | 'exterior', e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoUpload(slot: PhotoSlot, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !userId) return
@@ -230,29 +244,29 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
     if (!allowed.includes(file.type)) { setPhotoError('Only JPG, PNG or WebP allowed'); return }
     if (file.size > 5 * 1024 * 1024) { setPhotoError('Max 5 MB per photo'); return }
     setPhotoError('')
-    setPhotoUploading(p => ({ ...p, [side]: true }))
+    setPhotoUploading(p => ({ ...p, [slot]: true }))
     const supabase = createClient()
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace('jpeg', 'jpg')
-    const path = `${userId}/${op.id}/${side}.${ext}`
+    const path = `${userId}/${op.id}/${slot}.${ext}`
     const { error } = await supabase.storage.from('opening-photos').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { setPhotoError('Upload failed: ' + error.message); setPhotoUploading(p => ({ ...p, [side]: false })); return }
+    if (error) { setPhotoError('Upload failed: ' + error.message); setPhotoUploading(p => ({ ...p, [slot]: false })); return }
     const { data: urlData } = supabase.storage.from('opening-photos').getPublicUrl(path)
-    updateOpening(op.id, side === 'interior' ? 'interior_photo_url' : 'exterior_photo_url', urlData.publicUrl)
-    setPhotoKeys(p => ({ ...p, [side]: Date.now() }))
-    setPhotoUploading(p => ({ ...p, [side]: false }))
+    updateOpening(op.id, SLOT_FIELD[slot], urlData.publicUrl)
+    setPhotoKeys(p => ({ ...p, [slot]: Date.now() }))
+    setPhotoUploading(p => ({ ...p, [slot]: false }))
   }
 
-  async function handlePhotoDelete(side: 'interior' | 'exterior') {
-    const url = side === 'interior' ? op.interior_photo_url : op.exterior_photo_url
+  async function handlePhotoDelete(slot: PhotoSlot) {
+    const url = op[SLOT_FIELD[slot]] as string | null | undefined
     if (!url || !userId) return
     const supabase = createClient()
     const marker = '/object/public/opening-photos/'
-    const idx = url.indexOf(marker)
-    if (idx !== -1) {
-      const path = decodeURIComponent(url.slice(idx + marker.length).split('?')[0])
+    const markerIdx = url.indexOf(marker)
+    if (markerIdx !== -1) {
+      const path = decodeURIComponent(url.slice(markerIdx + marker.length).split('?')[0])
       await supabase.storage.from('opening-photos').remove([path])
     }
-    updateOpening(op.id, side === 'interior' ? 'interior_photo_url' : 'exterior_photo_url', null)
+    updateOpening(op.id, SLOT_FIELD[slot], null)
   }
 
   const selStyle = { width: '100%', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', color: '#0A1628', background: '#fff' } as const
@@ -278,7 +292,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
               {typeName}{dimStr}{colourStr}{roomStr}
             </div>
           </div>
-          {(op.interior_photo_url || op.exterior_photo_url) && (
+          {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
               <circle cx="12" cy="13" r="4"/>
@@ -732,33 +746,32 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
 
           {/* ── Photos ── */}
           <div>
-            <div style={lblStyle}>Photos (interior / exterior)</div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              {(['interior', 'exterior'] as const).map(side => {
-                const url = side === 'interior' ? op.interior_photo_url : op.exterior_photo_url
-                const loading = photoUploading[side]
-                const inputId = `photo-${op.id}-${side}`
+            <div style={lblStyle}>Photos</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {PHOTO_SLOTS.map(({ slot, label }) => {
+                const url = op[SLOT_FIELD[slot]] as string | null | undefined
+                const loading = photoUploading[slot]
+                const inputId = `photo-${op.id}-${slot}`
                 return (
-                  <div key={side} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div key={slot} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
-                      {side === 'interior' ? 'Interior' : 'Exterior'}
+                      {label}
                     </div>
                     {url ? (
-                      <div style={{ position: 'relative', width: 84, height: 84 }}>
-                        <img src={`${url}?v=${photoKeys[side]}`} alt={side}
-                          style={{ width: 84, height: 84, objectFit: 'cover', borderRadius: 8, border: '1px solid #E2E8F0', display: 'block' }} />
+                      <div style={{ position: 'relative' }}>
+                        <img src={`${url}?v=${photoKeys[slot]}`} alt={label}
+                          style={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 8, border: '1px solid #E2E8F0', display: 'block' }} />
                         <div style={{ position: 'absolute', top: 3, right: 3, display: 'flex', gap: 3 }}>
-                          <label htmlFor={`${inputId}-replace`}
-                            title="Replace"
+                          <label htmlFor={`${inputId}-replace`} title="Replace"
                             style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '3px 5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                               <circle cx="12" cy="13" r="3"/>
                             </svg>
                             <input id={`${inputId}-replace`} type="file" accept="image/*" capture="environment"
-                              style={{ display: 'none' }} onChange={e => handlePhotoUpload(side, e)} />
+                              style={{ display: 'none' }} onChange={e => handlePhotoUpload(slot, e)} />
                           </label>
-                          <button onClick={() => handlePhotoDelete(side)} title="Remove"
+                          <button onClick={() => handlePhotoDelete(slot)} title="Remove"
                             style={{ background: 'rgba(220,38,38,0.7)', border: 'none', borderRadius: 5, padding: '3px 5px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
                               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -768,7 +781,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                       </div>
                     ) : (
                       <label htmlFor={inputId}
-                        style={{ width: 84, height: 84, borderRadius: 8, border: '2px dashed #CBD5E1', background: '#F8FAFC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: loading ? 'default' : 'pointer', gap: 5, opacity: loading ? 0.55 : 1 }}>
+                        style={{ aspectRatio: '1 / 1', borderRadius: 8, border: '2px dashed #CBD5E1', background: '#F8FAFC', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: loading ? 'default' : 'pointer', gap: 5, opacity: loading ? 0.55 : 1 }}>
                         {loading ? (
                           <div style={{ fontSize: 10, color: '#94A3B8' }}>Uploading…</div>
                         ) : (
@@ -781,7 +794,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                           </>
                         )}
                         <input id={inputId} type="file" accept="image/*" capture="environment"
-                          style={{ display: 'none' }} disabled={loading} onChange={e => handlePhotoUpload(side, e)} />
+                          style={{ display: 'none' }} disabled={loading} onChange={e => handlePhotoUpload(slot, e)} />
                       </label>
                     )}
                   </div>
@@ -958,6 +971,8 @@ function NewEstimateForm() {
             colour_name: (op as any).colour_name || null,
             interior_photo_url: (op as any).interior_photo_url || null,
             exterior_photo_url: (op as any).exterior_photo_url || null,
+            photo_3_url: (op as any).photo_3_url || null,
+            photo_4_url: (op as any).photo_4_url || null,
           })))
         }
       } else if (apptId) {
@@ -1166,6 +1181,8 @@ function NewEstimateForm() {
       colour_name: op.colour_name || null,
       interior_photo_url: op.interior_photo_url || null,
       exterior_photo_url: op.exterior_photo_url || null,
+      photo_3_url: op.photo_3_url || null,
+      photo_4_url: op.photo_4_url || null,
       unit_cost: Math.round(opCost({ ...op, qty: 1 }, customPrices) * 100) / 100,
       total_cost: Math.round(opCost(op, customPrices) * 100) / 100,
       sort_order: i,
