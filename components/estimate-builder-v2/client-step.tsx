@@ -74,7 +74,10 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
     setTimeout(() => searchRef.current?.focus(), 50)
   }
 
+  const canContinue = subMode === 'selected' || (subMode === 'create' && value.name.trim().length > 0)
+
   const handleContinue = () => {
+    if (subMode === 'browse') return
     if (subMode === 'create' && !value.name.trim()) { setNameErr('Name is required'); return }
     setNameErr('')
     onContinue()
@@ -235,21 +238,19 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
         </div>
       )}
 
-      {/* ── Continue / Skip ── */}
+      {/* ── Continue ── */}
       <div style={{ marginTop: 'auto' }}>
         <button
           onClick={handleContinue}
-          style={{ width: '100%', height: 50, borderRadius: 13, border: 'none', background: C.blue, color: '#fff', fontSize: 15, fontWeight: 700, boxShadow: '0 6px 20px rgba(59,108,255,0.35)', cursor: 'pointer', fontFamily: 'inherit' }}
+          disabled={!canContinue}
+          style={{ width: '100%', height: 50, borderRadius: 13, border: 'none', background: canContinue ? C.blue : C.borderStrong, color: canContinue ? '#fff' : C.inkFaint, fontSize: 15, fontWeight: 700, boxShadow: canContinue ? '0 6px 20px rgba(59,108,255,0.35)' : 'none', cursor: canContinue ? 'pointer' : 'not-allowed', fontFamily: 'inherit', transition: 'background 0.15s' }}
         >
           Continue to openings →
         </button>
-        {subMode === 'browse' && (
-          <button
-            onClick={onContinue}
-            style={{ display: 'block', width: '100%', marginTop: 10, background: 'transparent', border: 'none', fontSize: 13, color: C.inkSoft, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 0' }}
-          >
-            Skip — add client later
-          </button>
+        {!canContinue && (
+          <div style={{ textAlign: 'center', marginTop: 8, fontSize: 12, color: C.inkSoft }}>
+            Select or create a client to continue
+          </div>
         )}
       </div>
     </div>
