@@ -10,6 +10,7 @@ import { TypePickerSheet } from '@/components/estimate-builder-v2/type-picker'
 import { PickerSheet, type PickerState } from '@/components/estimate-builder-v2/primitives'
 import { EBIcon } from '@/components/estimate-builder-v2/icons'
 import ConfirmModal from '@/components/ConfirmModal'
+import { ClientStep, type ClientInfo } from '@/components/estimate-builder-v2/client-step'
 
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
@@ -46,15 +47,16 @@ function money(n: number) {
 }
 
 // ── Page ──────────────────────────────────────────────────────────
-type Mode = 'list' | 'edit'
+type Mode = 'client' | 'list' | 'edit'
 
 export default function NewEstimateV2() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [clientInfo, setClientInfo] = useState<ClientInfo>({ name: '', email: '', phone: '', address: '' })
   const [openings, setOpenings] = useState<Opening[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
-  const [mode, setMode] = useState<Mode>('list')
+  const [mode, setMode] = useState<Mode>('client')
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
@@ -172,11 +174,18 @@ export default function NewEstimateV2() {
       <BuilderHeader
         count={openings.length}
         total={total}
+        step={mode === 'client' ? 1 : 2}
         onBack={() => {
           if (mode === 'edit') setMode('list')
+          else if (mode === 'list') setMode('client')
           else router.push('/dashboard/estimates')
         }}
       />
+
+      {/* ── Client step ── */}
+      {mode === 'client' && (
+        <ClientStep value={clientInfo} onChange={setClientInfo} onContinue={() => setMode('list')} />
+      )}
 
       {/* ── List mode ── */}
       {mode === 'list' && (
@@ -267,7 +276,7 @@ export default function NewEstimateV2() {
       {/* Bottom bar (list mode, only when openings exist) */}
       {mode === 'list' && openings.length > 0 && (
         <BottomBar
-          onBack={() => router.push('/dashboard/estimates')}
+          onBack={() => setMode('client')}
           onContinue={() => {
             console.log('Continue clicked - Step 3 not yet implemented', openings)
             alert('Openings saved locally. Save-to-database and next steps coming soon!')

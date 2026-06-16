@@ -6,10 +6,13 @@ function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
 }
 
-export function BuilderHeader({ count, total, onBack }: {
+const STEP_LABELS = ['Client', 'Openings', 'Details']
+
+export function BuilderHeader({ count, total, onBack, step }: {
   count: number
   total: number
   onBack: () => void
+  step?: number
 }) {
   return (
     <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, flexShrink: 0, paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
@@ -25,6 +28,21 @@ export function BuilderHeader({ count, total, onBack }: {
           <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{money(total)}</div>
         </div>
       </div>
+      {step != null && (
+        <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'flex-end', gap: 6 }}>
+          {STEP_LABELS.map((label, i) => {
+            const n = i + 1
+            const active = n === step
+            const done = n < step
+            return (
+              <div key={n} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: '100%', height: 4, borderRadius: 99, background: done ? C.blue : active ? C.ink : C.borderStrong, transition: 'background 0.2s' }} />
+                <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500, color: active ? C.ink : done ? C.blue : C.inkFaint }}>{label}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
