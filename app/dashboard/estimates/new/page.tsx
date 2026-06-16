@@ -233,7 +233,14 @@ export default function NewEstimateV2() {
       {mode === 'list' && (
         <BottomBar
           onBack={() => router.push('/dashboard/estimates')}
-          onContinue={() => router.push('/dashboard/estimates/new')}
+          onContinue={() => {
+            if (openings.length > 0) {
+              console.log('Continue clicked - Step 3 not yet implemented', openings)
+              alert('Openings saved locally. Save-to-database and next steps coming soon!')
+            } else {
+              alert('Add at least one opening first')
+            }
+          }}
           ctaLabel="Continue to details"
         />
       )}
