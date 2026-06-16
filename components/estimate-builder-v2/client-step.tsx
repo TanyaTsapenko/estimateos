@@ -25,7 +25,7 @@ type Props = {
 
 export function ClientStep({ value, onChange, onContinue }: Props) {
   const supabase = createClient()
-  const [subMode, setSubMode] = useState<SubMode>(value.id ? 'selected' : 'browse')
+  const [subMode, setSubMode] = useState<SubMode>(value.id ? 'selected' : value.name ? 'create' : 'browse')
   const [clients, setClients] = useState<ClientRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)

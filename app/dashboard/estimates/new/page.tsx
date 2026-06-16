@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { C, SETTINGS, makeOpening, getType, type Opening, FRAME_COLOURS, HW_COLOURS, type Palettes } from '@/lib/v2/openingTypes'
 import { BuilderHeader, BottomBar } from '@/components/estimate-builder-v2/builder-header'
@@ -49,11 +49,19 @@ function money(n: number) {
 // ── Page ──────────────────────────────────────────────────────────
 type Mode = 'client' | 'list' | 'edit'
 
-export default function NewEstimateV2() {
+function NewEstimateV2() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const [clientInfo, setClientInfo] = useState<ClientInfo>({ name: '', email: '', phone: '', address: '' })
+  const apptId = searchParams.get('appointment_id') || ''
+
+  const [clientInfo, setClientInfo] = useState<ClientInfo>(() => ({
+    name:    searchParams.get('client_name')    || '',
+    email:   '',
+    phone:   '',
+    address: searchParams.get('client_address') || '',
+  }))
   const [openings, setOpenings] = useState<Opening[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
   const [mode, setMode] = useState<Mode>('client')
@@ -105,6 +113,31 @@ export default function NewEstimateV2() {
     }
     load()
   }, [])
+
+  // Fetch full appointment data and merge into clientInfo
+  useEffect(() => {
+    if (!apptId) return
+    async function fetchAppt() {
+      const { data: appt } = await supabase
+        .from('appointments')
+        .select('client_name, client_phone, client_email, client_address, client_city, client_province, postal_code, client_id')
+        .eq('id', apptId)
+        .maybeSingle()
+      if (!appt) return
+      const row = appt as Record<string, string | null>
+      setClientInfo(prev => ({
+        ...prev,
+        ...(row.client_id    && { id:      row.client_id }),
+        ...(row.client_name  && { name:    row.client_name }),
+        ...(row.client_phone && { phone:   row.client_phone }),
+        ...(row.client_email && { email:   row.client_email }),
+        ...(row.client_address && {
+          address: [row.client_address, row.client_city].filter(Boolean).join(', '),
+        }),
+      }))
+    }
+    fetchAppt()
+  }, [apptId])
 
   const total = openings.reduce((s, o) => s + computePrice(o, customPricing), 0)
   const op = openings[activeIdx]
@@ -309,5 +342,13 @@ export default function NewEstimateV2() {
         onClose={() => { setTypePickerOpen(false); setPendingAdd(false) }}
       />
     </div>
+  )
+}
+
+export default function NewEstimatePage() {
+  return (
+    <Suspense fallback={null}>
+      <NewEstimateV2 />
+    </Suspense>
   )
 }
