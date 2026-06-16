@@ -9,6 +9,7 @@ import { OpeningEditor } from '@/components/estimate-builder-v2/opening-editor'
 import { TypePickerSheet } from '@/components/estimate-builder-v2/type-picker'
 import { PickerSheet, type PickerState } from '@/components/estimate-builder-v2/primitives'
 import { EBIcon } from '@/components/estimate-builder-v2/icons'
+import ConfirmModal from '@/components/ConfirmModal'
 
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
@@ -57,6 +58,7 @@ export default function NewEstimateV2() {
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
+  const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
 
@@ -206,7 +208,7 @@ export default function NewEstimateV2() {
                     price={money(computePrice(o, customPricing))}
                     onEdit={() => { setActiveIdx(i); setMode('edit') }}
                     onDup={() => dupOpening(i)}
-                    onDel={() => delOpening(i)}
+                    onDel={() => setDeleteIdx(i)}
                   />
                 ))}
               </div>
@@ -232,7 +234,7 @@ export default function NewEstimateV2() {
             <button onClick={() => dupOpening(activeIdx)} title="Duplicate" style={{ width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.border}`, background: C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               <EBIcon name="dup" size={15} color={C.inkMid} />
             </button>
-            <button onClick={() => { delOpening(activeIdx); setMode('list') }} title="Delete" style={{ width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.border}`, background: C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+            <button onClick={() => setDeleteIdx(activeIdx)} title="Delete" style={{ width: 32, height: 32, borderRadius: 9, border: `1px solid ${C.border}`, background: C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
               <EBIcon name="trash" size={15} color={C.red} />
             </button>
           </div>
@@ -275,6 +277,21 @@ export default function NewEstimateV2() {
       )}
 
       {/* Sheets */}
+      <ConfirmModal
+        open={deleteIdx !== null}
+        icon="trash"
+        title="Remove this opening?"
+        body="This opening will be removed from the estimate. This cannot be undone."
+        confirmLabel="Remove"
+        onConfirm={() => {
+          if (deleteIdx !== null) {
+            delOpening(deleteIdx)
+            if (mode === 'edit') setMode('list')
+          }
+          setDeleteIdx(null)
+        }}
+        onCancel={() => setDeleteIdx(null)}
+      />
       <PickerSheet picker={picker} onClose={() => setPicker(null)} />
       <TypePickerSheet
         open={typePickerOpen}

@@ -132,6 +132,7 @@ export const F: Record<string, FieldDef> = {
   condition:   { label: 'Opening condition',kind:'select', sec: 'install', opts: ['Good','Fair','Poor'], half: true },
   brickmould:  { label: 'Brickmould',      kind: 'select', sec: 'install', opts: ['None','Standard','Aluminum'], half: true },
   jamb:        { label: 'Jamb depth',      kind: 'select', sec: 'install', opts: ['4 9/16"','6 9/16"','Custom'], half: true },
+  jambCustom:  { label: 'Specify jamb depth', kind: 'text', sec: 'install', ph: 'e.g. 7 1/4"' },
 
   screen:      { label: 'Screen type',     kind: 'select', sec: 'config',  opts: ['None','Standard','Retractable','BetterVue'], half: true },
   openDir:     { label: 'Opening direction',kind:'select', sec: 'config',  opts: ['Left','Right'], half: true },
@@ -153,6 +154,8 @@ export const F: Record<string, FieldDef> = {
   sidelights:  { label: 'Sidelights',     kind: 'select', sec: 'look',    opts: ['None','Left','Right','Both'], half: true },
   transomAbove:{ label: 'Transom above',  kind: 'toggle', sec: 'look',    sub: 'Glass panel above door' },
 
+  customShapeDesc: { label: 'Describe the shape', kind: 'text', sec: 'basics', ph: 'e.g. arched top with 24″ radius' },
+
   photos:      { label: 'Photos',          kind: 'photos', sec: 'notes' },
   notes:       { label: 'Notes',           kind: 'notes',  sec: 'notes' },
 }
@@ -165,7 +168,6 @@ export type TypeDef = {
   name: string
   subs: string[]
   fields: string[]
-  sectionBuilder?: boolean
 }
 
 export type CatalogGroup = {
@@ -198,10 +200,11 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['owidth','oheight','qty','sideUnit','bayAngle','seatBoard','headBoard','room','floor','extColour','intColour','grid',...W_COMMON_GLASS,...W_COMMON_INSTALL,'photos','notes'] },
       bow:         { name: 'Bow',           subs: ['4 lite','5 lite','6 lite','7 lite'],
         fields: ['owidth','oheight','qty','numSections','sideUnit','room','floor','extColour','intColour','grid',...W_COMMON_GLASS,...W_COMMON_INSTALL,'photos','notes'] },
-      combination: { name: 'Combination',   subs: ['Custom combination'], sectionBuilder: true,
+      // TODO: section builder UI not yet implemented
+      combination: { name: 'Combination',   subs: ['Custom combination'],
         fields: ['owidth','oheight','qty','extColour','intColour','grid',...W_COMMON_GLASS,'material','install','photos','notes'] },
       special:     { name: 'Special shape', subs: ['Arch','Half arch','Circle','Half circle','Triangle','Trapezoid','Pentagon','Octagon','Gothic','Custom'],
-        fields: ['width','height','qty','extColour','intColour','glassType','pane','lowE','tempered','argon','material','photos','notes'] },
+        fields: ['width','height','qty','customShapeDesc','extColour','intColour','glassType','pane','lowE','tempered','argon','material','photos','notes'] },
       transom:     { name: 'Transom',       subs: ['Fixed transom','Operable transom'],
         fields: ['width','height','qty','room','floor','extColour','intColour','transomPanes','glassType','pane','lowE','tempered','argon','material','install','condition','photos','notes'] },
     },

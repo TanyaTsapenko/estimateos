@@ -135,8 +135,25 @@ export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
       return <div><FieldLabel>{def.label}</FieldLabel><Stepper value={v as number} onChange={x => onVal(k, x)} /></div>
     case 'dim':
       return <div><FieldLabel>{def.label}</FieldLabel><DimInput value={v as string} unit={def.unit} ph={def.ph} onChange={x => onVal(k, x)} /></div>
-    case 'select':
-      return <div><FieldLabel optional={def.optional}>{def.label}</FieldLabel><SelectBox value={v as string} placeholder={def.optional ? 'Not set' : 'Select…'} onClick={() => openPicker(k, { label: def.label, opts: def.opts! }, v as string | undefined, x => onVal(k, x))} /></div>
+    case 'text':
+      return (
+        <div>
+          <FieldLabel>{def.label}</FieldLabel>
+          <input value={(v as string) || ''} placeholder={def.ph || ''} onChange={e => onVal(k, e.target.value)}
+            style={{ width: '100%', height: 46, padding: '0 13px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 13, fontWeight: 600, color: C.ink, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+        </div>
+      )
+    case 'select': {
+      const customKey = `${k}Custom`
+      const showCustomInput = (v as string) === 'Custom' && !!F[customKey]
+      return (
+        <div>
+          <FieldLabel optional={def.optional}>{def.label}</FieldLabel>
+          <SelectBox value={v as string} placeholder={def.optional ? 'Not set' : 'Select…'} onClick={() => openPicker(k, { label: def.label, opts: def.opts! }, v as string | undefined, x => onVal(k, x))} />
+          {showCustomInput && <div style={{ marginTop: 8 }}><FieldControl k={customKey} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} /></div>}
+        </div>
+      )
+    }
     case 'color':
       return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={def.palette === 'hw' ? palettes?.hw : palettes?.frame} value={v as string} onChange={x => onVal(k, x)} /></div>
     case 'toggle':
