@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { C, F, SECTIONS, getType, type Opening } from '@/lib/v2/openingTypes'
+import { C, F, SECTIONS, getType, type Opening, type Palettes } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { MiniDiagram } from './diagram'
 import { FieldLabel, SelectBox, FieldGrid, type PickerState } from './primitives'
@@ -51,9 +51,10 @@ type Props = {
   openType: () => void
   openPicker: (k: string, def: { label: string; opts: string[] }, value: string | undefined, onPick: (v: string) => void) => void
   setPicker: (p: PickerState) => void
+  palettes?: Palettes
 }
 
-export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker }: Props) {
+export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes }: Props) {
   const groups = groupSections(op)
   const basics = groups.find(g => g.id === 'basics')
   const rest = groups.filter(g => g.id !== 'basics')
@@ -84,7 +85,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <EBIcon name={basics.icon} size={15} color={C.inkMid} />
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{basics.label}</span>
           </div>
-          <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} />
+          <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
         </>
       )}
 
@@ -94,7 +95,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <SectionTitle icon={g.icon} label={g.label} open={!!openSecs[g.id]} onToggle={() => toggle(g.id)} />
             {openSecs[g.id] && (
               <div style={{ padding: '2px 0 18px' }}>
-                <FieldGrid keys={g.keys} op={op} onVal={onVal} openPicker={openPicker} />
+                <FieldGrid keys={g.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
               </div>
             )}
           </div>

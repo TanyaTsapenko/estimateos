@@ -1,5 +1,5 @@
 'use client'
-import { C, F, FRAME_COLOURS, HW_COLOURS, type Opening, type PaletteEntry } from '@/lib/v2/openingTypes'
+import { C, F, FRAME_COLOURS, HW_COLOURS, type Opening, type PaletteEntry, type Palettes } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 
 // ── Label ─────────────────────────────────────────────────────────
@@ -66,8 +66,8 @@ function fieldPalette(palette: string): PaletteEntry[] {
   return palette === 'hw' ? HW_COLOURS : FRAME_COLOURS
 }
 
-export function Swatches({ palette, value, onChange }: { palette: string; value?: string; onChange: (v: string) => void }) {
-  const list = fieldPalette(palette)
+export function Swatches({ palette, entries, value, onChange }: { palette: string; entries?: PaletteEntry[]; value?: string; onChange: (v: string) => void }) {
+  const list = entries ?? fieldPalette(palette)
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
       {list.map(c => {
@@ -123,9 +123,10 @@ type FCProps = {
   op: Opening
   onVal: (k: string, v: string | number | boolean) => void
   openPicker: (k: string, def: { label: string; opts: string[] }, value: string | undefined, onPick: (v: string) => void) => void
+  palettes?: Palettes
 }
 
-export function FieldControl({ k, op, onVal, openPicker }: FCProps) {
+export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
   const def = F[k]
   if (!def) return null
   const v = op.vals[k]
@@ -137,7 +138,7 @@ export function FieldControl({ k, op, onVal, openPicker }: FCProps) {
     case 'select':
       return <div><FieldLabel optional={def.optional}>{def.label}</FieldLabel><SelectBox value={v as string} placeholder={def.optional ? 'Not set' : 'Select…'} onClick={() => openPicker(k, { label: def.label, opts: def.opts! }, v as string | undefined, x => onVal(k, x))} /></div>
     case 'color':
-      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} value={v as string} onChange={x => onVal(k, x)} /></div>
+      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={def.palette === 'hw' ? palettes?.hw : palettes?.frame} value={v as string} onChange={x => onVal(k, x)} /></div>
     case 'toggle':
       return <Toggle on={!!v} onChange={x => onVal(k, x)} label={def.label} sub={def.sub} />
     case 'photos':
@@ -156,9 +157,10 @@ type FGProps = {
   onVal: (k: string, v: string | number | boolean) => void
   openPicker: FCProps['openPicker']
   gap?: number
+  palettes?: Palettes
 }
 
-export function FieldGrid({ keys, op, onVal, openPicker, gap = 16 }: FGProps) {
+export function FieldGrid({ keys, op, onVal, openPicker, gap = 16, palettes }: FGProps) {
   const rows: React.ReactNode[] = []
   for (let i = 0; i < keys.length; i++) {
     const k = keys[i], def = F[k]
@@ -167,13 +169,13 @@ export function FieldGrid({ keys, op, onVal, openPicker, gap = 16 }: FGProps) {
     if (def?.half && nextDef?.half) {
       rows.push(
         <div key={k} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <FieldControl k={k} op={op} onVal={onVal} openPicker={openPicker} />
-          <FieldControl k={nextKey!} op={op} onVal={onVal} openPicker={openPicker} />
+          <FieldControl k={k} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+          <FieldControl k={nextKey!} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
         </div>
       )
       i++
     } else {
-      rows.push(<FieldControl key={k} k={k} op={op} onVal={onVal} openPicker={openPicker} />)
+      rows.push(<FieldControl key={k} k={k} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />)
     }
   }
   return <div style={{ display: 'flex', flexDirection: 'column', gap }}>{rows}</div>

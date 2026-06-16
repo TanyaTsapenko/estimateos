@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { C, SETTINGS, makeOpening, getType, type Opening } from '@/lib/v2/openingTypes'
+import { C, SETTINGS, makeOpening, getType, type Opening, FRAME_COLOURS, HW_COLOURS, type Palettes } from '@/lib/v2/openingTypes'
 import { BuilderHeader, BottomBar } from '@/components/estimate-builder-v2/builder-header'
 import { OpeningRow } from '@/components/estimate-builder-v2/opening-row'
 import { OpeningEditor } from '@/components/estimate-builder-v2/opening-editor'
@@ -58,30 +58,46 @@ export default function NewEstimateV2() {
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
+  const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
   const [clientName, setClientName] = useState('')
 
-  // Load price_lists from Supabase
+  // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
 
-      const { data: rows, error } = await supabase
-        .from('price_lists')
-        .select('opening_type, base_price, labour_price')
-        .eq('user_id', user.id)
+      const [priceResult, paletteResult] = await Promise.all([
+        supabase.from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', user.id),
+        supabase.from('color_palette').select('id, name, hex_color, category').eq('user_id', user.id).order('sort_order').order('created_at'),
+      ])
 
-      if (error) {
-        console.error('[price_lists] fetch failed, falling back to default pricing:', error)
-        return
-      }
-
-      if (rows && rows.length > 0) {
+      const { data: priceRows, error: priceErr } = priceResult
+      if (priceErr) {
+        console.error('[price_lists] fetch failed, falling back to default pricing:', priceErr)
+      } else if (priceRows && priceRows.length > 0) {
         const base: Record<string, number> = {}
-        rows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
+        priceRows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
           base[r.opening_type] = (r.base_price || 0) + (r.labour_price || 0)
         })
         setCustomPricing(prev => ({ ...prev, base }))
+      }
+
+      const { data: paletteRows } = paletteResult
+      if (paletteRows && paletteRows.length > 0) {
+        type RawEntry = { id: string; name: string; hex_color: string | null; category: string }
+        const toEntry = (r: RawEntry) => ({
+          id: r.id,
+          hex: r.hex_color || '#E5E7EB',
+          ring: (r.hex_color || '').toUpperCase() === '#FFFFFF',
+        })
+        const rows = paletteRows as RawEntry[]
+        const frameRows = rows.filter(r => r.category !== 'Hardware')
+        const hwRows    = rows.filter(r => r.category === 'Hardware')
+        setPalettes({
+          frame: frameRows.length > 0 ? frameRows.map(toEntry) : FRAME_COLOURS,
+          hw:    hwRows.length    > 0 ? hwRows.map(toEntry)    : HW_COLOURS,
+        })
       }
     }
     load()
@@ -241,6 +257,7 @@ export default function NewEstimateV2() {
               openType={() => setTypePickerOpen(true)}
               openPicker={openPicker}
               setPicker={setPicker}
+              palettes={palettes}
             />
           </div>
 

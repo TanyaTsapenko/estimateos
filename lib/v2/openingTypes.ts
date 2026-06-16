@@ -60,6 +60,7 @@ export const SETTINGS = {
 }
 
 export type PaletteEntry = { id: string; hex: string; ring?: boolean }
+export type Palettes = { frame: PaletteEntry[]; hw: PaletteEntry[] }
 export const FRAME_COLOURS: PaletteEntry[] = SETTINGS.palettes.frame
 export const HW_COLOURS: PaletteEntry[] = SETTINGS.palettes.hardware
 
