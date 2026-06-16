@@ -65,15 +65,20 @@ export default function NewEstimateV2() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
 
-      const { data: rows } = await supabase
+      const { data: rows, error } = await supabase
         .from('price_lists')
-        .select('type_key, base_price, labour_price')
+        .select('opening_type, base_price, labour_price')
         .eq('user_id', user.id)
+
+      if (error) {
+        console.error('[price_lists] fetch failed, falling back to default pricing:', error)
+        return
+      }
 
       if (rows && rows.length > 0) {
         const base: Record<string, number> = {}
-        rows.forEach((r: { type_key: string; base_price: number; labour_price: number }) => {
-          base[r.type_key] = (r.base_price || 0) + (r.labour_price || 0)
+        rows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
+          base[r.opening_type] = (r.base_price || 0) + (r.labour_price || 0)
         })
         setCustomPricing(prev => ({ ...prev, base }))
       }
