@@ -59,7 +59,6 @@ export default function NewEstimateV2() {
   const [pendingAdd, setPendingAdd] = useState(false)
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
-  const [clientName, setClientName] = useState('')
 
   // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
@@ -169,7 +168,6 @@ export default function NewEstimateV2() {
     <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', maxWidth: 600, margin: '0 auto' }}>
 
       <BuilderHeader
-        client={clientName || undefined}
         count={openings.length}
         total={total}
         onBack={() => {
@@ -181,16 +179,6 @@ export default function NewEstimateV2() {
       {/* ── List mode ── */}
       {mode === 'list' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px 20px', display: 'flex', flexDirection: 'column' }}>
-
-          {/* Client name input */}
-          <div style={{ marginBottom: 14 }}>
-            <input
-              value={clientName}
-              onChange={e => setClientName(e.target.value)}
-              placeholder="Client name…"
-              style={{ width: '100%', height: 46, padding: '0 14px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 16, fontWeight: 600, color: C.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
-            />
-          </div>
 
           {openings.length === 0 ? (
             /* ── Empty state ── */

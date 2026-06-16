@@ -6,8 +6,7 @@ function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
 }
 
-export function BuilderHeader({ client, count, total, onBack }: {
-  client?: string
+export function BuilderHeader({ count, total, onBack }: {
   count: number
   total: number
   onBack: () => void
@@ -19,8 +18,7 @@ export function BuilderHeader({ client, count, total, onBack }: {
           <EBIcon name="back" size={20} color={C.inkMid} />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>New estimate</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client || 'Client'}</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em' }}>New estimate</div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ fontSize: 11.5, color: C.inkSoft, fontWeight: 600 }}>{count} {count === 1 ? 'opening' : 'openings'}</div>
