@@ -30,7 +30,7 @@ function EssentialsHead({ op, openType, onSub }: {
             <MiniDiagram typeId={op.typeId} size={36} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 15.5, fontWeight: 800, color: C.ink }}>{t.name}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{t.name}</div>
             <div style={{ fontSize: 11.5, color: C.blueDeep, fontWeight: 600 }}>{t.cat === 'window' ? 'Window' : 'Door'} · tap to change</div>
           </div>
           <EBIcon name="chev-r" size={18} color={C.blue} />
@@ -83,7 +83,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 2px 12px' }}>
             <EBIcon name={basics.icon} size={15} color={C.inkMid} />
-            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{basics.label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{basics.label}</span>
           </div>
           <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
         </>

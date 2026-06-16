@@ -42,7 +42,7 @@ export function TypePickerSheet({ open, current, onPick, onClose }: Props) {
               <div key={cat} style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '4px 2px 9px' }}>
                   <EBIcon name={group.icon} size={15} color={C.inkSoft} />
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{group.label}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{group.label}</span>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 }}>
                   {types.map(([id, t]) => {
