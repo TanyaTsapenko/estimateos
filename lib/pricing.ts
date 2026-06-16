@@ -140,6 +140,8 @@ export interface CustomPrices {
     nail_fin?: number
     drip_cap?: number
     blue_skin?: number
+    triple_pane?: number
+    egress_required?: number
   }
 }
 
@@ -178,8 +180,10 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
   const fc = op.frame === 'repair' ? (s.frame_repair ?? 0)
            : op.frame === 'rotted' ? (s.frame_rotted ?? 0) : 0
   const ex = (op.sidelight || 0) + (op.transom || 0) + (op.screen || 0)
+  const tp = op.pane === 'triple' ? (s.triple_pane ?? 0) : 0
+  const egr = op.egress_required ? (s.egress_required ?? 0) : 0
 
-  const unitCost = (base + lab) * sh + fa + ia + fc + col + colInt + gl + ex
+  const unitCost = (base + lab) * sh + fa + ia + fc + col + colInt + gl + ex + tp + egr
   return unitCost * (op.qty || 1)
 }
 

@@ -1,7 +1,25 @@
 export type SubtypeMap = Record<string, { key: string; label: string }[]>
 
 const COLOUR_MAP: Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
-const SHAPE_MAP:  Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
+const SHAPE_MAP: Record<string, string> = {
+  rect:       'Rectangle',
+  arch:       'Arch',
+  half_moon:  'Half Moon',
+  full_circle:'Full Circle',
+  oval:       'Oval',
+  triangle:   'Triangle',
+  trapezoid:  'Trapezoid',
+  pentagon:   'Pentagon',
+  octagon:    'Octagon',
+  eyebrow:    'Eyebrow',
+  gothic:     'Gothic',
+  custom:     'Custom shape',
+}
+const ARCH_POSITION_MAP: Record<string, string> = {
+  full:    'Full Arch',
+  half:    'Half Arch',
+  quarter: 'Quarter Arch',
+}
 const GLASS_MAP:      Record<string, string> = { clear: 'Clear', lowe: 'Low-E', frosted: 'Frosted', tinted: 'Tinted', tempered: 'Tempered' }
 const GLASS_KIND_MAP: Record<string, string> = { frosted: 'Frosted', tinted: 'Tinted', obscure: 'Obscure' }
 
@@ -12,10 +30,14 @@ export function getColourLabel(op: { colour?: string | null; custom_colour_label
   return COLOUR_MAP[op.colour] || op.colour
 }
 
-export function getShapeLabel(op: { shape?: string | null; custom_shape_label?: string | null }): string {
+export function getShapeLabel(op: { shape?: string | null; custom_shape_label?: string | null; shape_position?: string | null }): string {
   if (!op.shape) return ''
   if (op.shape === 'custom') return op.custom_shape_label || 'Custom shape'
-  return SHAPE_MAP[op.shape] || op.shape
+  const base = SHAPE_MAP[op.shape] || op.shape
+  if (op.shape === 'arch' && op.shape_position && op.shape_position !== 'full') {
+    return `${base} (${ARCH_POSITION_MAP[op.shape_position] || op.shape_position})`
+  }
+  return base
 }
 
 export function getInteriorColourLabel(op: { interior_colour?: string | null; interior_colour_name?: string | null }): string {
@@ -37,15 +59,16 @@ export function getSubtypeLabel(
   return op.window_subtype.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-export function getGlassLabel(op: { glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null }): string {
+export function getGlassLabel(op: { glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null; pane?: string | null }): string {
+  const parts: string[] = []
+  if (op.pane === 'triple') parts.push('Triple Pane')
   if (op.glass_kind != null) {
-    const parts: string[] = []
     if (op.glass_kind && op.glass_kind !== 'clear') parts.push(GLASS_KIND_MAP[op.glass_kind] || op.glass_kind)
     if (op.low_e) parts.push('Low-E')
     if (op.tempered) parts.push('Tempered')
-    return parts.join(', ')
+  } else {
+    // Legacy fallback for rows without new columns
+    if (op.glass && op.glass !== 'clear') parts.push(GLASS_MAP[op.glass] || op.glass)
   }
-  // Legacy fallback for rows without new columns
-  if (!op.glass || op.glass === 'clear') return ''
-  return GLASS_MAP[op.glass] || op.glass
+  return parts.join(', ')
 }
