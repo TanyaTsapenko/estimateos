@@ -4,8 +4,8 @@ import { C } from '@/lib/v2/openingTypes'
 type Props = { typeId: string; size?: number; color?: string }
 
 export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
-  const st = { stroke: color, strokeWidth: 1.6, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-  const thin = { ...st, strokeWidth: 1.2, opacity: 0.7 }
+  const st = { stroke: color, strokeWidth: 1.2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  const thin = { ...st, strokeWidth: 0.9, opacity: 0.7 }
   const dot = (cx: number, cy: number, r = 1.05) => <circle cx={cx} cy={cy} r={r} fill={color} />
   const WF = <rect x="5" y="3.5" width="14" height="17" rx="1.5" {...st} />
   const DF = <rect x="7" y="2.5" width="10" height="19" rx="1" {...st} />
