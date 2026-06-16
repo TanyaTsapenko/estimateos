@@ -86,7 +86,7 @@ export default function NewEstimateV2() {
       if (paletteRows && paletteRows.length > 0) {
         type RawEntry = { id: string; name: string; hex_color: string | null; category: string }
         const toEntry = (r: RawEntry) => ({
-          id: r.id,
+          id: r.name,
           hex: r.hex_color || '#E5E7EB',
           ring: (r.hex_color || '').toUpperCase() === '#FFFFFF',
         })
