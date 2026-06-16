@@ -121,11 +121,18 @@ export default function EstimatesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
           {role !== 'admin' && (
+          <>
+          <button
+            onClick={() => router.push('/dashboard/estimates/new-v2')}
+            style={{ background: 'transparent', color: '#2563EB', border: '1.5px solid #2563EB', borderRadius: 10, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+            Try new builder →
+          </button>
           <button
             onClick={() => router.push('/dashboard/estimates/new')}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
             <Plus size={14} strokeWidth={2.5} /> New Estimate
           </button>
+          </>
           )}
         </div>
       </div>
