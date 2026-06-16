@@ -39,11 +39,11 @@ export function BottomBar({ onBack, onContinue, ctaLabel = 'Continue', backLabel
 }) {
   return (
     <div style={{ flexShrink: 0, padding: '12px 16px', paddingBottom: 'max(26px, calc(12px + env(safe-area-inset-bottom)))', background: C.card, borderTop: `1px solid ${C.border}`, display: 'flex', gap: 10 }}>
-      <button onClick={onBack} style={{ height: 52, padding: '0 20px', borderRadius: 13, border: `1px solid ${C.borderStrong}`, background: C.card, color: C.inkMid, fontSize: 14.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-        <EBIcon name="back" size={17} color={C.inkMid} />{backLabel}
+      <button onClick={onBack} style={{ height: 48, padding: '0 20px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, color: C.inkMid, fontSize: 14, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+        ← {backLabel}
       </button>
-      <button onClick={onContinue} style={{ flex: 1, height: 52, borderRadius: 13, border: 'none', background: C.blue, color: '#fff', fontSize: 15.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 10px 22px rgba(37,99,235,0.32)', cursor: 'pointer' }}>
-        {ctaLabel}<EBIcon name="chev-r" size={18} color="#fff" />
+      <button onClick={onContinue} style={{ flex: 1, height: 48, borderRadius: 12, border: 'none', background: C.blue, color: '#fff', fontSize: 14, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 20px rgba(59,108,255,0.35)', cursor: 'pointer' }}>
+        {ctaLabel} →
       </button>
     </div>
   )

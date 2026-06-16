@@ -51,11 +51,12 @@ export default function NewEstimateV2() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [openings, setOpenings] = useState<Opening[]>(() => [makeOpening('casement', 0)])
+  const [openings, setOpenings] = useState<Opening[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
   const [mode, setMode] = useState<Mode>('list')
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
+  const [pendingAdd, setPendingAdd] = useState(false)
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [clientName, setClientName] = useState('')
 
@@ -111,18 +112,27 @@ export default function NewEstimateV2() {
     setOpenings(list => list.map((o, i) => {
       if (i !== activeIdx) return o
       const fresh = makeOpening(typeId, 0)
-      // Preserve common fields
       const preserve = ['width', 'height', 'owidth', 'oheight', 'qty', 'room', 'floor']
       preserve.forEach(k => { if (o.vals[k] != null) fresh.vals[k] = o.vals[k] })
       return fresh
     }))
   }, [activeIdx])
 
+  const handleTypePick = useCallback((typeId: string) => {
+    if (pendingAdd) {
+      const n = makeOpening(typeId, 0)
+      setOpenings(l => [...l, n])
+      setActiveIdx(openings.length)
+      setMode('edit')
+      setPendingAdd(false)
+    } else {
+      changeType(typeId)
+    }
+  }, [pendingAdd, openings.length, changeType])
+
   const addOpening = () => {
-    const n = makeOpening('casement', 0)
-    setOpenings(l => [...l, n])
-    setActiveIdx(openings.length)
-    setMode('edit')
+    setPendingAdd(true)
+    setTypePickerOpen(true)
   }
 
   const dupOpening = (i: number) => {
@@ -135,13 +145,12 @@ export default function NewEstimateV2() {
   }
 
   const delOpening = (i: number) => {
-    if (openings.length <= 1) return
     setOpenings(l => l.filter((_, j) => j !== i))
     if (activeIdx >= openings.length - 1) setActiveIdx(Math.max(0, activeIdx - 1))
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: C.bg, fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column', maxWidth: 600, margin: '0 auto' }}>
+    <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', maxWidth: 600, margin: '0 auto' }}>
 
       <BuilderHeader
         client={clientName || undefined}
@@ -155,7 +164,7 @@ export default function NewEstimateV2() {
 
       {/* ── List mode ── */}
       {mode === 'list' && (
-        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px 20px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px 20px', display: 'flex', flexDirection: 'column' }}>
 
           {/* Client name input */}
           <div style={{ marginBottom: 14 }}>
@@ -163,32 +172,46 @@ export default function NewEstimateV2() {
               value={clientName}
               onChange={e => setClientName(e.target.value)}
               placeholder="Client name…"
-              style={{ width: '100%', height: 46, padding: '0 14px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 15, fontWeight: 600, color: C.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              style={{ width: '100%', height: 46, padding: '0 14px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 16, fontWeight: 600, color: C.ink, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.blueSoft, border: `1px solid ${C.blueLine}`, borderRadius: 13, padding: '11px 13px', marginBottom: 14 }}>
-            <EBIcon name="win" size={18} color={C.blue} />
-            <span style={{ fontSize: 12.5, color: C.inkMid, fontWeight: 600, lineHeight: 1.4 }}>Add each window or door as its own opening. Tap a row to edit.</span>
-          </div>
+          {openings.length === 0 ? (
+            /* ── Empty state ── */
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 14, padding: '40px 8px' }}>
+              <EBIcon name="win" size={36} color={C.inkFaint} />
+              <span style={{ fontSize: 13, color: C.inkMid, fontWeight: 500, lineHeight: 1.6 }}>No openings yet. Tap below to add your first window or door.</span>
+              <button onClick={addOpening} style={{ height: 48, padding: '0 24px', borderRadius: 12, border: 'none', background: C.blue, color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                + Add opening
+              </button>
+            </div>
+          ) : (
+            /* ── Opening list ── */
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.blueSoft, border: `1px solid ${C.blueLine}`, borderRadius: 13, padding: '11px 13px', marginBottom: 14 }}>
+                <EBIcon name="win" size={18} color={C.blue} />
+                <span style={{ fontSize: 12.5, color: C.inkMid, fontWeight: 600, lineHeight: 1.4 }}>Add each window or door as its own opening. Tap a row to edit.</span>
+              </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {openings.map((o, i) => (
-              <OpeningRow
-                key={i}
-                index={i + 1}
-                op={o}
-                price={money(computePrice(o, customPricing))}
-                onEdit={() => { setActiveIdx(i); setMode('edit') }}
-                onDup={() => dupOpening(i)}
-                onDel={() => delOpening(i)}
-              />
-            ))}
-          </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {openings.map((o, i) => (
+                  <OpeningRow
+                    key={i}
+                    index={i + 1}
+                    op={o}
+                    price={money(computePrice(o, customPricing))}
+                    onEdit={() => { setActiveIdx(i); setMode('edit') }}
+                    onDup={() => dupOpening(i)}
+                    onDel={() => delOpening(i)}
+                  />
+                ))}
+              </div>
 
-          <button onClick={addOpening} style={{ width: '100%', marginTop: 12, height: 50, borderRadius: 13, border: `1.5px dashed ${C.blueLine}`, background: C.card, color: C.blue, fontSize: 14.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}>
-            <EBIcon name="plus" size={18} color={C.blue} />Add opening
-          </button>
+              <button onClick={addOpening} style={{ width: '100%', marginTop: 12, height: 48, borderRadius: 12, border: `1.5px dashed ${C.blueLine}`, background: C.card, color: C.blue, fontSize: 14, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}>
+                + Add opening
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -227,24 +250,20 @@ export default function NewEstimateV2() {
               <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', color: C.inkSoft, textTransform: 'uppercase' }}>This opening</div>
               <div style={{ fontSize: 19, fontWeight: 800, color: C.blue, fontVariantNumeric: 'tabular-nums' }}>{money(computePrice(op, customPricing))}</div>
             </div>
-            <button onClick={() => setMode('list')} style={{ flex: 1, height: 50, borderRadius: 13, border: 'none', background: C.blue, color: '#fff', fontSize: 15, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 10px 22px rgba(37,99,235,0.30)', cursor: 'pointer' }}>
-              <EBIcon name="check" size={18} color="#fff" />Save opening
+            <button onClick={() => setMode('list')} style={{ flex: 1, height: 48, borderRadius: 12, border: 'none', background: C.blue, color: '#fff', fontSize: 14, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 6px 20px rgba(59,108,255,0.35)', cursor: 'pointer' }}>
+              Save opening
             </button>
           </div>
         </>
       )}
 
-      {/* Bottom bar (list mode only) */}
-      {mode === 'list' && (
+      {/* Bottom bar (list mode, only when openings exist) */}
+      {mode === 'list' && openings.length > 0 && (
         <BottomBar
           onBack={() => router.push('/dashboard/estimates')}
           onContinue={() => {
-            if (openings.length > 0) {
-              console.log('Continue clicked - Step 3 not yet implemented', openings)
-              alert('Openings saved locally. Save-to-database and next steps coming soon!')
-            } else {
-              alert('Add at least one opening first')
-            }
+            console.log('Continue clicked - Step 3 not yet implemented', openings)
+            alert('Openings saved locally. Save-to-database and next steps coming soon!')
           }}
           ctaLabel="Continue to details"
         />
@@ -255,8 +274,8 @@ export default function NewEstimateV2() {
       <TypePickerSheet
         open={typePickerOpen}
         current={op?.typeId}
-        onPick={changeType}
-        onClose={() => setTypePickerOpen(false)}
+        onPick={handleTypePick}
+        onClose={() => { setTypePickerOpen(false); setPendingAdd(false) }}
       />
     </div>
   )

@@ -40,7 +40,7 @@ export function OpeningRow({ index, op, price, onEdit, onDup, onDel }: Props) {
   const sz = sizeStr(op)
   const chips = summaryChips(op)
   return (
-    <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, boxShadow: '0 1px 2px rgba(15,23,42,0.04)', overflow: 'hidden' }}>
+    <div style={{ background: C.card, borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
       <button onClick={onEdit} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, background: C.blue, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{index}</div>
         <div style={{ width: 42, height: 42, borderRadius: 10, background: C.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

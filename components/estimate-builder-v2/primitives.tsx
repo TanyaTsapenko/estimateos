@@ -6,7 +6,7 @@ import { EBIcon } from './icons'
 export function FieldLabel({ children, optional }: { children: React.ReactNode; optional?: boolean }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
-      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.inkSoft }}>{children}</span>
+      <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: C.inkSoft }}>{children}</span>
       {optional && <span style={{ fontSize: 9.5, fontWeight: 700, color: C.inkFaint }}>Optional</span>}
     </div>
   )
@@ -17,7 +17,7 @@ export function SelectBox({ value, placeholder, onClick }: { value?: string | nu
   const empty = value == null || value === ''
   return (
     <button onClick={onClick} style={{ width: '100%', height: 46, padding: '0 13px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, textAlign: 'left' }}>
-      <span style={{ fontSize: 14.5, fontWeight: empty ? 500 : 600, color: empty ? C.inkFaint : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{empty ? (placeholder || 'Select…') : value}</span>
+      <span style={{ fontSize: 16, fontWeight: empty ? 500 : 600, color: empty ? C.inkFaint : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{empty ? (placeholder || 'Select…') : value}</span>
       <EBIcon name="chev-d" size={16} color={C.inkSoft} />
     </button>
   )
@@ -28,7 +28,7 @@ export function DimInput({ value, unit, ph, onChange }: { value?: string | numbe
   return (
     <div style={{ position: 'relative' }}>
       <input value={value || ''} placeholder={ph} inputMode="decimal" onChange={e => onChange(e.target.value)}
-        style={{ width: '100%', height: 46, padding: '0 34px 0 13px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 15.5, fontWeight: 600, color: C.ink, fontVariantNumeric: 'tabular-nums', outline: 'none', boxSizing: 'border-box' }} />
+        style={{ width: '100%', height: 46, padding: '0 34px 0 13px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 16, fontWeight: 600, color: C.ink, fontVariantNumeric: 'tabular-nums', outline: 'none', boxSizing: 'border-box' }} />
       <span style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 13, fontWeight: 600, color: C.inkFaint }}>{unit}</span>
     </div>
   )
