@@ -80,6 +80,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
   const rawFloor   = String(v.floor   || 'Ground floor')
 
   return {
+    id:               op.tempId,
     estimate_id:      estimateId,
     type:             op.typeId,
     window_subtype:   op.sub || null,
