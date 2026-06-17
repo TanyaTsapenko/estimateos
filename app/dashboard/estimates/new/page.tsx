@@ -52,6 +52,13 @@ function dimToSizeBucket(wIn: number, hIn: number): string {
   return dim >= 48 ? 'xl' : dim >= 36 ? 'lg' : dim >= 24 ? 'md' : 'sm'
 }
 
+const INSTALL_MAP: Record<string, string> = {
+  'Retrofit': 'retrofit', 'New construction': 'fullframe', 'Full frame': 'fullframe', 'Stud to stud': 'stud_to_stud',
+}
+const FLOOR_MAP: Record<string, string> = {
+  'Ground floor': 'first', '2nd floor': 'second', '3rd floor': 'third', 'Basement': 'basement',
+}
+
 function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: CustomPricing) {
   const v = op.vals
   const widthIn  = parseFloat(String(v.width  || v.owidth  || '')) || 0
@@ -68,6 +75,9 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
   const unitCost  = Math.round(computePrice({ ...op, vals: { ...v, qty: 1 } }, custom) * 100) / 100
   const totalCost = Math.round(computePrice(op, custom) * 100) / 100
 
+  const rawInstall = String(v.install || 'Retrofit')
+  const rawFloor   = String(v.floor   || 'Ground floor')
+
   return {
     estimate_id:      estimateId,
     type:             op.typeId,
@@ -77,23 +87,23 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     height_in:        heightIn || null,
     width:            widthIn && heightIn ? dimToSizeBucket(widthIn, heightIn) : 'md',
     shape:            'rect',
-    colour:           String(v.extColour || v.doorExt || v.colour || 'White'),
-    interior_colour:  String(v.intColour || v.doorInt || 'White'),
-    hardware_colour:  String(v.hwColour  || 'White'),
+    colour:           String(v.extColour || v.doorExt || v.colour || 'White').toLowerCase(),
+    interior_colour:  String(v.intColour || v.doorInt || 'White').toLowerCase(),
+    hardware_colour:  String(v.hwColour  || 'White').toLowerCase(),
     frame:            'none',
     glass,
     glass_kind:       glassKind,
     low_e:            Boolean(v.lowE),
     tempered:         Boolean(v.tempered),
-    pane:             String(v.pane || 'Double'),
-    install:          String(v.install  || 'Retrofit'),
-    floor:            String(v.floor    || 'Ground floor'),
+    pane:             String(v.pane || 'Double').toLowerCase(),
+    install:          INSTALL_MAP[rawInstall] ?? rawInstall.toLowerCase(),
+    floor:            FLOOR_MAP[rawFloor]   ?? rawFloor.toLowerCase(),
     room:             (v.room     as string) || null,
     has_screen:       Boolean(v.screen && v.screen !== 'None'),
-    material:         String(v.material || v.doorMaterial || 'Vinyl'),
-    grid_pattern:     String(v.grid     || 'None'),
+    material:         String(v.material || v.doorMaterial || 'Vinyl').toLowerCase(),
+    grid_pattern:     String(v.grid     || 'None').toLowerCase(),
     tilt_clean:       Boolean(v.tiltClean),
-    opening_direction:String(v.openDir  || v.operSide || ''),
+    opening_direction:String(v.openDir  || v.operSide || '').toLowerCase(),
     panels_count:     String(v.numPanels || ''),
     bay_angle:        String(v.bayAngle  || ''),
     transom_panes:    String(v.transomPanes || ''),
@@ -102,8 +112,8 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     sidelight_right:  0,
     transom:          0,
     transom_above:    Boolean(v.transomAbove),
-    core_type:        String(v.coreType || ''),
-    handle_type:      String(v.handle   || ''),
+    core_type:        String(v.coreType || '').toLowerCase(),
+    handle_type:      String(v.handle   || '').toLowerCase(),
     egress_required:  Boolean(v.egress),
     notes:            String(v.notes    || ''),
     custom_shape_label: (v.customShapeDesc as string) || null,
@@ -111,6 +121,67 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     total_cost:       totalCost,
     sort_order:       idx,
   }
+}
+
+// ── Reverse-map DB row → v2 Opening ──────────────────────────────
+const INSTALL_UNMAP: Record<string, string> = {
+  retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to stud',
+}
+const FLOOR_UNMAP: Record<string, string> = {
+  first: 'Ground floor', second: '2nd floor', third: '3rd floor', basement: 'Basement',
+}
+
+function capitalize(s: string | null | undefined): string {
+  if (!s) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
+  const typeId = String(row.type || 'doubleHung')
+  const vals: Record<string, string | number | boolean | undefined> = {}
+
+  const qty = Number(row.qty) || 1
+  if (qty !== 1) vals.qty = qty
+  if (row.width_in)  vals.width  = String(row.width_in)
+  if (row.height_in) vals.height = String(row.height_in)
+  if (row.room)      vals.room   = String(row.room)
+
+  // Colour
+  const col = String(row.colour || '')
+  if (col) { vals.extColour = capitalize(col); vals.doorExt = capitalize(col) }
+  const intCol = String(row.interior_colour || '')
+  if (intCol) { vals.intColour = capitalize(intCol); vals.doorInt = capitalize(intCol) }
+  if (row.hardware_colour) vals.hwColour = capitalize(String(row.hardware_colour))
+
+  // Glass
+  if (row.glass_kind) vals.glassType = capitalize(String(row.glass_kind))
+  if (row.pane) vals.pane = capitalize(String(row.pane))
+  if (row.low_e != null)   vals.lowE    = Boolean(row.low_e)
+  if (row.tempered != null) vals.tempered = Boolean(row.tempered)
+
+  // Install / floor
+  const rawInstall = String(row.install || '')
+  if (rawInstall) vals.install = INSTALL_UNMAP[rawInstall] ?? capitalize(rawInstall)
+  const rawFloor = String(row.floor || '')
+  if (rawFloor) vals.floor = FLOOR_UNMAP[rawFloor] ?? capitalize(rawFloor)
+
+  // Material
+  if (row.material) { vals.material = capitalize(String(row.material)); vals.doorMaterial = capitalize(String(row.material)) }
+  if (row.grid_pattern) vals.grid = capitalize(String(row.grid_pattern))
+  if (row.tilt_clean != null) vals.tiltClean = Boolean(row.tilt_clean)
+  if (row.has_screen) vals.screen = 'Standard'; else vals.screen = 'None'
+  if (row.opening_direction) { vals.openDir = capitalize(String(row.opening_direction)); vals.operSide = capitalize(String(row.opening_direction)) }
+  if (row.panels_count) vals.numPanels = String(row.panels_count)
+  if (row.bay_angle) vals.bayAngle = String(row.bay_angle)
+  if (row.transom_panes) vals.transomPanes = String(row.transom_panes)
+  if (row.transom_above != null) vals.transomAbove = Boolean(row.transom_above)
+  if (row.core_type) vals.coreType = capitalize(String(row.core_type))
+  if (row.handle_type) vals.handle = capitalize(String(row.handle_type))
+  if (row.egress_required != null) vals.egress = Boolean(row.egress_required)
+  if (row.notes) vals.notes = String(row.notes)
+  if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)
+
+  return { typeId, sub: String(row.window_subtype || ''), vals }
 }
 
 // ── Page ──────────────────────────────────────────────────────────
@@ -121,7 +192,8 @@ function NewEstimateV2() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
-  const apptId = searchParams.get('appointment_id') || ''
+  const apptId  = searchParams.get('appointment_id') || ''
+  const editId  = searchParams.get('edit') || ''
 
   const [clientInfo, setClientInfo] = useState<ClientInfo>(() => ({
     name:    searchParams.get('client_name')    || '',
@@ -131,7 +203,7 @@ function NewEstimateV2() {
   }))
   const [openings, setOpenings] = useState<Opening[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
-  const [mode, setMode] = useState<Mode>('client')
+  const [mode, setMode] = useState<Mode>(editId ? 'list' : 'client')
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
@@ -181,6 +253,33 @@ function NewEstimateV2() {
     }
     load()
   }, [])
+
+  // Load existing estimate for editing
+  useEffect(() => {
+    if (!editId) return
+    async function loadEstimate() {
+      const [{ data: est }, { data: ops }] = await Promise.all([
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code').eq('id', editId).maybeSingle(),
+        supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
+      ])
+      if (!est) return
+      const row = est as Record<string, string | null>
+      setClientInfo({
+        id:         row.client_id    || undefined,
+        name:       row.client_name  || '',
+        email:      row.client_email || '',
+        phone:      row.client_phone || '',
+        address:    [row.client_address, row.client_city].filter(Boolean).join(', '),
+        city:       row.client_city       || undefined,
+        province:   row.client_province   || undefined,
+        postalCode: row.client_postal_code || undefined,
+      })
+      if (ops && ops.length > 0) {
+        setOpenings((ops as Record<string, unknown>[]).map(reverseMapOpeningRow))
+      }
+    }
+    loadEstimate()
+  }, [editId])
 
   // Fetch full appointment data and merge into clientInfo
   useEffect(() => {
@@ -298,56 +397,78 @@ function NewEstimateV2() {
         clientId = created.id as string
       }
 
-      // 2. Generate estimate number
-      const { count } = await supabase
-        .from('estimates')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', uid)
-      const estimateNumber = 'EST-' + String((count || 0) + 1).padStart(4, '0')
+      const clientFields = {
+        client_id:          clientId,
+        client_name:        clientInfo.name,
+        client_email:       clientInfo.email  || null,
+        client_phone:       clientInfo.phone  || null,
+        client_address:     clientInfo.address || null,
+        client_city:        clientInfo.city    || null,
+        client_province:    clientInfo.province || null,
+        client_postal_code: clientInfo.postalCode || null,
+      }
+      const priceFields = {
+        subtotal:        Math.round(params.subtotal      * 100) / 100,
+        discount_type:   params.discountAmount > 0 ? params.discountType : null,
+        discount_value:  params.discountAmount > 0 ? params.discountValue : null,
+        discount_amount: Math.round(params.discountAmount * 100) / 100,
+        tax_rate:        params.taxRate,
+        tax_amount:      Math.round(params.taxAmount     * 100) / 100,
+        total:           Math.round(params.total         * 100) / 100,
+      }
 
-      // 3. INSERT estimate
-      const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
-      const { data: est, error: estErr } = await supabase
-        .from('estimates')
-        .insert({
-          user_id:          uid,
-          estimate_number:  estimateNumber,
-          client_id:        clientId,
-          client_name:      clientInfo.name,
-          client_email:     clientInfo.email  || null,
-          client_phone:     clientInfo.phone  || null,
-          client_address:   clientInfo.address || null,
-          client_city:      clientInfo.city    || null,
-          client_province:  clientInfo.province || null,
-          client_postal_code: clientInfo.postalCode || null,
-          subtotal:         Math.round(params.subtotal      * 100) / 100,
-          discount_type:    params.discountAmount > 0 ? params.discountType : null,
-          discount_value:   params.discountAmount > 0 ? params.discountValue : null,
-          discount_amount:  Math.round(params.discountAmount * 100) / 100,
-          tax_rate:         params.taxRate,
-          tax_amount:       Math.round(params.taxAmount     * 100) / 100,
-          total:            Math.round(params.total         * 100) / 100,
-          status:           'draft',
-          valid_until:      validUntil,
-          appointment_id:   apptId || null,
-        })
-        .select('id')
-        .single()
-      if (estErr || !est) throw new Error(estErr?.message || 'Failed to save estimate')
-      const savedId = est.id as string
+      let savedId: string
 
-      // 4. Batch INSERT openings
+      if (editId) {
+        // ── UPDATE existing estimate ──
+        const { error: estErr } = await supabase
+          .from('estimates')
+          .update({ ...clientFields, ...priceFields })
+          .eq('id', editId)
+        if (estErr) throw new Error(estErr.message || 'Failed to update estimate')
+        savedId = editId
+
+        // Replace openings: delete old, insert new
+        const { error: delErr } = await supabase.from('estimate_openings').delete().eq('estimate_id', editId)
+        if (delErr) throw new Error('Failed to clear openings: ' + delErr.message)
+      } else {
+        // ── INSERT new estimate ──
+        const { count } = await supabase
+          .from('estimates')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', uid)
+        const estimateNumber = 'EST-' + String((count || 0) + 1).padStart(4, '0')
+        const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+
+        const { data: est, error: estErr } = await supabase
+          .from('estimates')
+          .insert({
+            user_id:         uid,
+            estimate_number: estimateNumber,
+            ...clientFields,
+            ...priceFields,
+            status:          'draft',
+            valid_until:     validUntil,
+            appointment_id:  apptId || null,
+          })
+          .select('id')
+          .single()
+        if (estErr || !est) throw new Error(estErr?.message || 'Failed to save estimate')
+        savedId = est.id as string
+
+        // Update appointment if created from one
+        if (apptId) {
+          await supabase
+            .from('appointments')
+            .update({ estimate_id: savedId, status: 'completed' })
+            .eq('id', apptId)
+        }
+      }
+
+      // Insert openings (both paths)
       const rows = openings.map((o, i) => buildOpeningRow(o, i, savedId, customPricing))
       const { error: opErr } = await supabase.from('estimate_openings').insert(rows)
       if (opErr) throw new Error('Failed to save openings: ' + opErr.message)
-
-      // 5. Update appointment if created from one
-      if (apptId) {
-        await supabase
-          .from('appointments')
-          .update({ estimate_id: savedId, status: 'completed' })
-          .eq('id', apptId)
-      }
 
       router.push('/dashboard/estimates/' + savedId)
     } catch (err: unknown) {
@@ -367,8 +488,10 @@ function NewEstimateV2() {
         onBack={() => {
           if (mode === 'edit') setMode('list')
           else if (mode === 'review') setMode('list')
-          else if (mode === 'list') setMode('client')
-          else router.push('/dashboard/estimates')
+          else if (mode === 'list') {
+            if (editId) router.push('/dashboard/estimates/' + editId)
+            else setMode('client')
+          } else router.push('/dashboard/estimates')
         }}
       />
 

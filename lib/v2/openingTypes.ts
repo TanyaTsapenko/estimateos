@@ -284,3 +284,35 @@ export function missingRequired(op: Opening): string[] {
     return v == null || String(v).trim() === ''
   })
 }
+
+// ── v2 type name lookup (for [id]/page.tsx type header) ──────────
+export const V2_TYPE_LABELS: Record<string, string> = {}
+Object.values(CATALOG).forEach(group => {
+  Object.entries(group.types).forEach(([id, t]) => {
+    V2_TYPE_LABELS[id] = t.name
+  })
+})
+
+// ── v2 → old-style key (for WindowDiagram) ────────────────────────
+export const V2_TO_OLD_TYPE_KEY: Record<string, string> = {
+  casement:    'window_cas',
+  awning:      'window_awn',
+  picture:     'window_fix',
+  slider:      'window_sl',
+  singleHung:  'window_sh',
+  doubleHung:  'window_dh',
+  hopper:      'window_dh',
+  tiltTurn:    'window_tilt',
+  bay:         'window_bay',
+  bow:         'window_bow',
+  combination: 'window_combo',
+  special:     'window_arch',
+  transom:     'window_trans',
+  entry:       'door_entry',
+  doubleEntry: 'door_double',
+  french:      'door_french',
+  garden:      'door_garden',
+  patio:       'door_patio',
+  storm:       'door_storm',
+  interior:    'door_int',
+}

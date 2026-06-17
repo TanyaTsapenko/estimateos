@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
@@ -409,7 +410,7 @@ export default function EstimateDetailPage() {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>
-                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
+                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', fontFamily: 'monospace' }}>{fmtCAD(op.total_cost)}</div>
                 </div>
@@ -420,7 +421,7 @@ export default function EstimateDetailPage() {
                     onClick={() => setEnlargedDiagram({ type: op.type, widthIn: op.width_in || undefined, heightIn: op.height_in || undefined })}
                     style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}
                   >
-                    <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
+                    <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] || op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
                   </div>
                   {/* Specs */}
                   <div style={{ flex: 1, padding: '10px 12px' }}>
@@ -738,7 +739,7 @@ export default function EstimateDetailPage() {
       {enlargedDiagram && (
         <div onClick={() => setEnlargedDiagram(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
-            <WindowDiagram type={enlargedDiagram.type} widthIn={enlargedDiagram.widthIn} heightIn={enlargedDiagram.heightIn} size={240} />
+            <WindowDiagram type={V2_TO_OLD_TYPE_KEY[enlargedDiagram.type] || enlargedDiagram.type} widthIn={enlargedDiagram.widthIn} heightIn={enlargedDiagram.heightIn} size={240} />
             <button onClick={() => setEnlargedDiagram(null)} style={{ padding: '10px 28px', background: '#F1F5F9', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
           </div>
         </div>
