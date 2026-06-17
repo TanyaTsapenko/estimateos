@@ -5,6 +5,7 @@ import { C } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { FieldLabel } from './primitives'
 import { formatPhone } from '@/lib/clientValidation'
+import AddressAutocomplete from '@/components/AddressAutocomplete'
 
 export type ClientInfo = {
   id?: string
@@ -12,6 +13,9 @@ export type ClientInfo = {
   email: string
   phone: string
   address: string
+  city?: string
+  province?: string
+  postalCode?: string
 }
 
 type ClientRow = { id: string; name: string; email: string | null; phone: string | null; address: string | null; city: string | null }
@@ -83,8 +87,8 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
     onContinue()
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', height: 46, padding: '0 13px', borderRadius: 12,
+  const searchInputStyle: React.CSSProperties = {
+    width: '100%', height: 46, padding: '0 13px 0 40px', borderRadius: 12,
     border: `1px solid ${C.borderStrong}`, background: C.card,
     fontSize: 13, fontWeight: 600, color: C.ink,
     outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
@@ -134,7 +138,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search by name, phone or email…"
-                style={{ ...inputStyle, paddingLeft: 40 }}
+                style={searchInputStyle}
               />
             </div>
 
@@ -184,56 +188,62 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
 
       {/* ── Create mode ── */}
       {subMode === 'create' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           <button
             onClick={backToBrowse}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', color: C.inkMid, fontSize: 13, fontWeight: 700, padding: 0, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', color: C.inkMid, fontSize: 13, fontWeight: 700, padding: 0, cursor: 'pointer', fontFamily: 'inherit', alignSelf: 'flex-start', marginBottom: 16 }}
           >
             <EBIcon name="back" size={16} color={C.inkMid} />Search clients
           </button>
 
-          <div>
-            <FieldLabel>Name *</FieldLabel>
-            <input
-              value={value.name}
-              placeholder="Andriy Koval"
-              onChange={e => { onChange({ ...value, name: e.target.value }); if (nameErr) setNameErr('') }}
-              style={{ ...inputStyle, border: nameErr ? `1.5px solid ${C.red}` : `1px solid ${C.borderStrong}` }}
-            />
-            {nameErr && <div style={{ fontSize: 11, color: C.red, marginTop: 4 }}>{nameErr}</div>}
+          <div className="sl">Client</div>
+
+          <div className="r1">
+            <div className="f">
+              <label>Name *</label>
+              <input
+                value={value.name}
+                placeholder="Andriy Koval"
+                onChange={e => { onChange({ ...value, name: e.target.value }); if (nameErr) setNameErr('') }}
+                style={nameErr ? { borderColor: C.red } : undefined}
+              />
+              {nameErr && <div style={{ fontSize: 11, color: C.red, marginTop: 4 }}>{nameErr}</div>}
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <div>
-              <FieldLabel>Email</FieldLabel>
-              <input
-                type="email"
-                value={value.email}
-                placeholder="andriy@email.com"
-                onChange={e => onChange({ ...value, email: e.target.value })}
-                style={inputStyle}
-              />
-            </div>
-            <div>
-              <FieldLabel>Phone</FieldLabel>
+          <div className="r2">
+            <div className="f">
+              <label>Phone</label>
               <input
                 type="tel"
                 value={value.phone}
                 placeholder="(403) 555-0100"
                 onChange={e => onChange({ ...value, phone: formatPhone(e.target.value) })}
-                style={inputStyle}
+              />
+            </div>
+            <div className="f">
+              <label>Email</label>
+              <input
+                type="email"
+                value={value.email}
+                placeholder="andriy@email.com"
+                onChange={e => onChange({ ...value, email: e.target.value })}
               />
             </div>
           </div>
 
-          <div>
-            <FieldLabel>Address</FieldLabel>
-            <input
-              value={value.address}
-              placeholder="123 Maple St, Calgary, AB"
-              onChange={e => onChange({ ...value, address: e.target.value })}
-              style={inputStyle}
-            />
+          <div className="r1">
+            <div className="f">
+              <label>Address</label>
+              <AddressAutocomplete
+                value={value.address}
+                onChange={v => onChange({ ...value, address: v })}
+                onSelect={({ street, city, province, postalCode }) =>
+                  onChange({ ...value, address: street, city, province, postalCode })
+                }
+                placeholder="123 Maple St, Calgary, AB"
+              />
+            </div>
           </div>
         </div>
       )}
