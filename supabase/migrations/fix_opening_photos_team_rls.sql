@@ -37,3 +37,32 @@ create policy "Users delete opening photos"
          = (SELECT team_owner_id FROM public.profiles WHERE id = (storage.foldername(name))[1]::uuid)
     )
   );
+
+drop policy if exists "Users update opening photos" on storage.objects;
+
+create policy "Users update opening photos"
+  on storage.objects for update
+  using (
+    bucket_id = 'opening-photos'
+    AND (
+      auth.uid()::text = (storage.foldername(name))[1]
+      OR auth.uid() = (
+        SELECT team_owner_id FROM public.profiles
+        WHERE id = (storage.foldername(name))[1]::uuid
+      )
+      OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid())
+         = (SELECT team_owner_id FROM public.profiles WHERE id = (storage.foldername(name))[1]::uuid)
+    )
+  )
+  with check (
+    bucket_id = 'opening-photos'
+    AND (
+      auth.uid()::text = (storage.foldername(name))[1]
+      OR auth.uid() = (
+        SELECT team_owner_id FROM public.profiles
+        WHERE id = (storage.foldername(name))[1]::uuid
+      )
+      OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid())
+         = (SELECT team_owner_id FROM public.profiles WHERE id = (storage.foldername(name))[1]::uuid)
+    )
+  );
