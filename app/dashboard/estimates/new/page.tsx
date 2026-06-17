@@ -662,6 +662,7 @@ function NewEstimateV2() {
           clientInfo={clientInfo}
           openings={openings}
           prices={openings.map(o => computePrice(o, customPricing))}
+          trimState={trimState}
           onEditOpenings={() => setMode('list')}
           onSave={saveEstimate}
           saving={saving}

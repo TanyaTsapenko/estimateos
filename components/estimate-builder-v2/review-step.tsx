@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { C, SETTINGS, getType, type Opening } from '@/lib/v2/openingTypes'
 import { type ClientInfo } from './client-step'
 import { MiniDiagram } from './diagram'
+import { type TrimState } from './trim-section'
+import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 
 function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
@@ -30,12 +32,13 @@ type Props = {
   clientInfo: ClientInfo
   openings: Opening[]
   prices: number[]
+  trimState?: TrimState
   onEditOpenings: () => void
   onSave: (p: SaveParams) => void
   saving?: boolean
 }
 
-export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSave, saving = false }: Props) {
+export function ReviewStep({ clientInfo, openings, prices, trimState, onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
 
@@ -129,6 +132,25 @@ export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSav
           })}
         </div>
       </div>
+
+      {/* ── Trim & Finishing ── */}
+      {trimState && hasTrim({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }) && (
+        <div>
+          <SectionLabel>Trim &amp; Finishing</SectionLabel>
+          <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, background: C.card, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {trimSummaryLines({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }).map(line => (
+              <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 13, color: C.inkMid }}>{line.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{line.value}</span>
+              </div>
+            ))}
+            {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
+            <div style={{ fontSize: 11, color: C.inkFaint, borderTop: `1px solid ${C.border}`, paddingTop: 6, marginTop: 2 }}>
+              Included — no extra charge
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Discount ── */}
       <div>

@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
+import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
@@ -486,6 +487,24 @@ export default function EstimateDetailPage() {
                 <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
                 <div style={SL}>Scope of Work</div>
                 <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
+              </>
+            )}
+
+            {/* Trim & Finishing */}
+            {hasTrim(estimate as any) && (
+              <>
+                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
+                <div style={SL}>Trim &amp; Finishing</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {trimSummaryLines(estimate as any).map(line => (
+                    <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
+                      <span style={{ color: '#64748B' }}>{line.label}</span>
+                      <span style={{ fontWeight: 600, color: '#0A1628' }}>{line.value}</span>
+                    </div>
+                  ))}
+                  {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
+                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontStyle: 'italic' }}>Included — no extra charge</div>
+                </div>
               </>
             )}
 

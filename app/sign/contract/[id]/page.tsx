@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
@@ -336,6 +337,19 @@ export default function SignContractPage() {
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}
+              {hasTrim(estimate as any) && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F0F0' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Trim &amp; Finishing</div>
+                  {trimSummaryLines(estimate as any).map(line => (
+                    <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                      <span style={{ color: '#64748B' }}>{line.label}</span>
+                      <span style={{ fontWeight: 600, color: '#0A0E1A' }}>{line.value}</span>
+                    </div>
+                  ))}
+                  {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
+                  <div style={{ fontSize: 10, color: '#CBD5E1', marginTop: 4, fontStyle: 'italic' }}>Included — no extra charge</div>
+                </div>
+              )}
               <div style={{ height: 1, background: '#F0F0F0', margin: '10px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
                 <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
@@ -683,6 +697,19 @@ export default function SignContractPage() {
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}
+              {hasTrim(estimate as any) && (
+                <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #F0F0F0' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Trim &amp; Finishing</div>
+                  {trimSummaryLines(estimate as any).map(line => (
+                    <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                      <span style={{ color: '#64748B' }}>{line.label}</span>
+                      <span style={{ fontWeight: 600, color: '#0A0E1A' }}>{line.value}</span>
+                    </div>
+                  ))}
+                  {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
+                  <div style={{ fontSize: 10, color: '#CBD5E1', marginTop: 4, fontStyle: 'italic' }}>Included — no extra charge</div>
+                </div>
+              )}
               <div style={{ height: 1, background: '#F0F0F0', margin: '10px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
                 <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>

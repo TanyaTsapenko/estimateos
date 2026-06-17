@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image, Font } from '@react-pdf/
 import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
+import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
@@ -133,6 +134,21 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
             </View>
           ))}
         </View>
+
+        {/* Trim & Finishing */}
+        {hasTrim(estimate) && (
+          <View style={{ ...styles.section, marginBottom: 12 }}>
+            <Text style={styles.sectionTitle}>Trim &amp; Finishing</Text>
+            {trimSummaryLines(estimate).map(line => (
+              <View key={line.label} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 0.5, borderBottomColor: '#f3f4f6' }}>
+                <Text style={{ fontSize: 9, color: '#6b7280' }}>{line.label}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{line.value}</Text>
+              </View>
+            ))}
+            {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
+            <Text style={{ fontSize: 8, color: '#9ca3af', marginTop: 4, fontStyle: 'italic' }}>Included — no extra charge</Text>
+          </View>
+        )}
 
         {/* Totals */}
         <View style={styles.totalsSection}>
