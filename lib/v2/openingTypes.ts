@@ -263,6 +263,11 @@ export const NO_DEFAULT = new Set(['width','height','owidth','oheight','room','o
 export type Opening = {
   typeId: string
   sub: string
+  tempId: string
+  interiorPhotoUrl?: string | null
+  exteriorPhotoUrl?: string | null
+  photo3Url?: string | null
+  photo4Url?: string | null
   vals: Record<string, string | number | boolean | undefined>
 }
 
@@ -271,9 +276,10 @@ export function makeOpening(typeId: string, subIndex = 0): Opening {
   const vals: Record<string, string | number | boolean> = {}
   t.fields.forEach(k => {
     if (NO_DEFAULT.has(k)) return
+    if (k === 'photos') return
     if (k in DEFAULTS) vals[k] = DEFAULTS[k]
   })
-  return { typeId, sub: t.subs[subIndex] || t.subs[0], vals }
+  return { typeId, sub: t.subs[subIndex] || t.subs[0], tempId: crypto.randomUUID(), vals }
 }
 
 export function missingRequired(op: Opening): string[] {

@@ -12,6 +12,7 @@ import { EBIcon } from '@/components/estimate-builder-v2/icons'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClientStep, type ClientInfo } from '@/components/estimate-builder-v2/client-step'
 import { ReviewStep, type SaveParams } from '@/components/estimate-builder-v2/review-step'
+import { type PhotoSlot } from '@/components/estimate-builder-v2/photos-upload'
 
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
@@ -117,6 +118,10 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     egress_required:  Boolean(v.egress),
     notes:            String(v.notes    || ''),
     custom_shape_label: (v.customShapeDesc as string) || null,
+    interior_photo_url: op.interiorPhotoUrl || null,
+    exterior_photo_url: op.exteriorPhotoUrl || null,
+    photo_3_url:        op.photo3Url        || null,
+    photo_4_url:        op.photo4Url        || null,
     unit_cost:        unitCost,
     total_cost:       totalCost,
     sort_order:       idx,
@@ -181,7 +186,16 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.notes) vals.notes = String(row.notes)
   if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)
 
-  return { typeId, sub: String(row.window_subtype || ''), vals }
+  return {
+    typeId,
+    sub: String(row.window_subtype || ''),
+    tempId: String(row.id || crypto.randomUUID()),
+    interiorPhotoUrl: (row.interior_photo_url as string | null) || null,
+    exteriorPhotoUrl: (row.exterior_photo_url as string | null) || null,
+    photo3Url:        (row.photo_3_url        as string | null) || null,
+    photo4Url:        (row.photo_4_url        as string | null) || null,
+    vals,
+  }
 }
 
 // ── Page ──────────────────────────────────────────────────────────
@@ -211,12 +225,14 @@ function NewEstimateV2() {
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
   const [saving, setSaving] = useState(false)
+  const [userId, setUserId] = useState('')
 
   // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
+      setUserId(user.id)
 
       const [priceResult, paletteResult] = await Promise.all([
         supabase.from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', user.id),
@@ -318,6 +334,14 @@ function NewEstimateV2() {
     setOpenings(list => list.map((o, i) => i === activeIdx ? { ...o, sub: newSub } : o))
   }, [activeIdx])
 
+  const updatePhoto = useCallback((slot: PhotoSlot, url: string | null) => {
+    const keyMap = {
+      interior: 'interiorPhotoUrl', exterior: 'exteriorPhotoUrl',
+      photo3: 'photo3Url', photo4: 'photo4Url',
+    } as const
+    setOpenings(list => list.map((o, i) => i === activeIdx ? { ...o, [keyMap[slot]]: url } : o))
+  }, [activeIdx])
+
   const openPicker = useCallback((
     k: string,
     def: { label: string; opts: string[] },
@@ -331,6 +355,11 @@ function NewEstimateV2() {
     setOpenings(list => list.map((o, i) => {
       if (i !== activeIdx) return o
       const fresh = makeOpening(typeId, 0)
+      fresh.tempId = o.tempId
+      fresh.interiorPhotoUrl = o.interiorPhotoUrl
+      fresh.exteriorPhotoUrl = o.exteriorPhotoUrl
+      fresh.photo3Url = o.photo3Url
+      fresh.photo4Url = o.photo4Url
       const preserve = ['width', 'height', 'owidth', 'oheight', 'qty', 'room', 'floor']
       preserve.forEach(k => { if (o.vals[k] != null) fresh.vals[k] = o.vals[k] })
       return fresh
@@ -357,6 +386,11 @@ function NewEstimateV2() {
   const dupOpening = (i: number) => {
     setOpenings(l => {
       const c: Opening = JSON.parse(JSON.stringify(l[i]))
+      c.tempId = crypto.randomUUID()
+      c.interiorPhotoUrl = null
+      c.exteriorPhotoUrl = null
+      c.photo3Url = null
+      c.photo4Url = null
       const nl = [...l]
       nl.splice(i + 1, 0, c)
       return nl
@@ -570,6 +604,8 @@ function NewEstimateV2() {
               openPicker={openPicker}
               setPicker={setPicker}
               palettes={palettes}
+              userId={userId}
+              onPhotoUpdate={updatePhoto}
             />
           </div>
 

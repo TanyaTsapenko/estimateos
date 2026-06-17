@@ -5,6 +5,7 @@ import { EBIcon } from './icons'
 import { MiniDiagram } from './diagram'
 import { FieldLabel, SelectBox, FieldGrid, type PickerState } from './primitives'
 import { SectionTitle } from './builder-header'
+import { PhotosUpload, type PhotoSlot } from './photos-upload'
 
 // Groups the type's fields into sections
 function groupSections(op: Opening) {
@@ -52,9 +53,11 @@ type Props = {
   openPicker: (k: string, def: { label: string; opts: string[] }, value: string | undefined, onPick: (v: string) => void) => void
   setPicker: (p: PickerState) => void
   palettes?: Palettes
+  userId?: string
+  onPhotoUpdate?: (slot: PhotoSlot, url: string | null) => void
 }
 
-export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes }: Props) {
+export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes, userId, onPhotoUpdate }: Props) {
   const groups = groupSections(op)
   const basics = groups.find(g => g.id === 'basics')
   const rest = groups.filter(g => g.id !== 'basics')
@@ -94,8 +97,11 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           <div key={g.id} style={{ borderTop: `1px solid ${C.border}` }}>
             <SectionTitle icon={g.icon} label={g.label} open={!!openSecs[g.id]} onToggle={() => toggle(g.id)} />
             {openSecs[g.id] && (
-              <div style={{ padding: '2px 0 18px' }}>
-                <FieldGrid keys={g.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+              <div style={{ padding: '2px 0 18px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {g.keys.includes('photos') && userId && onPhotoUpdate && (
+                  <PhotosUpload op={op} userId={userId} onChange={onPhotoUpdate} />
+                )}
+                <FieldGrid keys={g.keys.filter(k => k !== 'photos')} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
               </div>
             )}
           </div>

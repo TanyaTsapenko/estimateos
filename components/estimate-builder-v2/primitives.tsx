@@ -159,7 +159,7 @@ export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
     case 'toggle':
       return <Toggle on={!!v} onChange={x => onVal(k, x)} label={def.label} sub={def.sub} />
     case 'photos':
-      return <div><FieldLabel>{def.label}</FieldLabel><PhotosField count={v as number} onAdd={() => onVal(k, ((v as number) || 0) + 1)} /></div>
+      return null  // rendered by PhotosUpload in opening-editor.tsx
     case 'notes':
       return <div><FieldLabel>{def.label}</FieldLabel><NotesField value={v as string} onChange={x => onVal(k, x)} /></div>
     default:
