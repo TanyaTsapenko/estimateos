@@ -11,6 +11,7 @@ import { PickerSheet, type PickerState } from '@/components/estimate-builder-v2/
 import { EBIcon } from '@/components/estimate-builder-v2/icons'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClientStep, type ClientInfo } from '@/components/estimate-builder-v2/client-step'
+import { ReviewStep } from '@/components/estimate-builder-v2/review-step'
 
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
@@ -47,7 +48,7 @@ function money(n: number) {
 }
 
 // ── Page ──────────────────────────────────────────────────────────
-type Mode = 'client' | 'list' | 'edit'
+type Mode = 'client' | 'list' | 'edit' | 'review'
 
 function NewEstimateV2() {
   const router = useRouter()
@@ -207,9 +208,10 @@ function NewEstimateV2() {
       <BuilderHeader
         count={openings.length}
         total={total}
-        step={mode === 'client' ? 1 : 2}
+        step={mode === 'client' ? 1 : mode === 'review' ? 3 : 2}
         onBack={() => {
           if (mode === 'edit') setMode('list')
+          else if (mode === 'review') setMode('list')
           else if (mode === 'list') setMode('client')
           else router.push('/dashboard/estimates')
         }}
@@ -306,14 +308,25 @@ function NewEstimateV2() {
         </>
       )}
 
+      {/* Review mode */}
+      {mode === 'review' && (
+        <ReviewStep
+          clientInfo={clientInfo}
+          openings={openings}
+          prices={openings.map(o => computePrice(o, customPricing))}
+          onEditOpenings={() => setMode('list')}
+          onSave={() => {
+            console.log('saveEstimate', { clientInfo, openings })
+            alert('Estimate saved! (Save integration coming in next step)')
+          }}
+        />
+      )}
+
       {/* Bottom bar (list mode, only when openings exist) */}
       {mode === 'list' && openings.length > 0 && (
         <BottomBar
           onBack={() => setMode('client')}
-          onContinue={() => {
-            console.log('Continue clicked - Step 3 not yet implemented', openings)
-            alert('Openings saved locally. Save-to-database and next steps coming soon!')
-          }}
+          onContinue={() => setMode('review')}
           ctaLabel="Continue to details"
         />
       )}
