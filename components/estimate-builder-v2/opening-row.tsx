@@ -1,5 +1,5 @@
 'use client'
-import { C, getType, type Opening } from '@/lib/v2/openingTypes'
+import { C, F, getType, type Opening } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { MiniDiagram } from './diagram'
 
@@ -11,19 +11,45 @@ function sizeStr(op: Opening): string | null {
   return null
 }
 
+// Fields shown inline in the card header/subtitle — no need to repeat as chips
+const CHIP_SKIP = new Set(['width','height','owidth','oheight','qty','room','floor','customShapeDesc','photos','notes'])
+// Default colour value — not worth showing as a chip
+const DEFAULT_COLOURS = new Set(['White','white'])
+
 function summaryChips(op: Opening): string[] {
+  const t = getType(op.typeId)
   const v = op.vals
-  const out: string[] = []
-  const push = (val: string | null | undefined) => { if (val && val !== 'None') out.push(val) }
-  push((v.material || v.doorMaterial) as string)
-  push(v.glassType ? `${v.glassType}${v.pane === 'Triple' ? ' · triple' : ''}` : null)
-  push(v.doorStyle && v.doorStyle !== 'Flush' ? v.doorStyle as string : null)
-  if (v.lowE) out.push('Low-E')
-  if (v.argon) out.push('Argon')
-  if (v.tempered) out.push('Tempered')
-  push(v.screen && v.screen !== 'None' ? `${v.screen} screen` : null)
-  if (v.extColour && v.extColour !== 'White') push(v.extColour as string)
-  return out.slice(0, 4)
+  const chips: string[] = []
+
+  // Include base fields + any subtype-conditional extras
+  const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
+  const allKeys = [...t.fields, ...extraKeys.filter(k => !t.fields.includes(k))]
+
+  for (const key of allKeys) {
+    if (CHIP_SKIP.has(key)) continue
+    const def = F[key]
+    if (!def) continue
+
+    switch (def.kind) {
+      case 'toggle': {
+        if (v[key] === true) chips.push(def.label)
+        break
+      }
+      case 'select': {
+        const val = v[key] as string | undefined
+        if (val && val !== 'None' && val !== '') chips.push(val)
+        break
+      }
+      case 'color': {
+        const val = v[key] as string | undefined
+        if (val && !DEFAULT_COLOURS.has(val)) chips.push(val)
+        break
+      }
+      // dim / qty / text / photos / notes — skip
+    }
+  }
+
+  return chips
 }
 
 type Props = {
