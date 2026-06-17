@@ -6,7 +6,51 @@ function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
 }
 
-const STEP_LABELS = ['Client', 'Openings', 'Details']
+const FLOW_STEPS = ['Client', 'Openings', 'Details']
+
+function Check({ size = 11, color = '#fff' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+      strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 12l4 4 10-10" />
+    </svg>
+  )
+}
+
+function PillStepper({ cur }: { cur: number }) {
+  return (
+    <div style={{ display: 'flex', gap: 6, background: '#F4F6FB', padding: 5, borderRadius: 14, border: '1px solid rgba(15,23,42,0.08)' }}>
+      {FLOW_STEPS.map((s, i) => {
+        const done = i < cur, active = i === cur
+        return (
+          <button key={i} style={{
+            flex: active ? 2 : 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            height: 42, padding: '0 10px', borderRadius: 10, border: 'none',
+            background: active ? C.blue : 'transparent',
+            color: active ? '#fff' : done ? C.blueDeep : '#8A94A6',
+            boxShadow: active ? '0 4px 12px rgba(59,108,255,0.28)' : 'none',
+            transition: 'flex .28s cubic-bezier(.4,0,.2,1), background .2s, color .2s',
+            cursor: 'default',
+          }}>
+            <span style={{
+              width: 20, height: 20, borderRadius: 99, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              background: active ? 'rgba(255,255,255,0.22)' : done ? C.blue : 'transparent',
+              border: (!active && !done) ? '1.5px solid rgba(15,23,42,0.13)' : 'none',
+              fontSize: 11, fontWeight: 600,
+            }}>
+              {done ? <Check /> : <span style={{ color: active ? '#fff' : '#B3BAC6' }}>{i + 1}</span>}
+            </span>
+            {active && (
+              <span style={{ fontSize: 13.5, fontWeight: 600, letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {s}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
 
 export function BuilderHeader({ count, total, onBack, step }: {
   count: number
@@ -29,18 +73,8 @@ export function BuilderHeader({ count, total, onBack, step }: {
         </div>
       </div>
       {step != null && (
-        <div style={{ padding: '0 16px 12px', display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-          {STEP_LABELS.map((label, i) => {
-            const n = i + 1
-            const active = n === step
-            const done = n < step
-            return (
-              <div key={n} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: '100%', height: 4, borderRadius: 99, background: done ? C.blue : active ? C.ink : C.borderStrong, transition: 'background 0.2s' }} />
-                <span style={{ fontSize: 9.5, fontWeight: active ? 700 : 500, color: active ? C.ink : done ? C.blue : C.inkFaint }}>{label}</span>
-              </div>
-            )
-          })}
+        <div style={{ padding: '0 16px 12px' }}>
+          <PillStepper cur={step - 1} />
         </div>
       )}
     </div>
