@@ -7,11 +7,13 @@ import { FieldLabel, SelectBox, FieldGrid, type PickerState } from './primitives
 import { SectionTitle } from './builder-header'
 import { PhotosUpload, type PhotoSlot } from './photos-upload'
 
-// Groups the type's fields into sections
+// Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
   const t = getType(op.typeId)
+  const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
+  const allKeys = [...t.fields, ...extraKeys.filter(k => !t.fields.includes(k))]
   return SECTIONS
-    .map(s => ({ ...s, keys: t.fields.filter(k => F[k] && F[k].sec === s.id) }))
+    .map(s => ({ ...s, keys: allKeys.filter(k => F[k] && F[k].sec === s.id) }))
     .filter(s => s.keys.length > 0)
 }
 
