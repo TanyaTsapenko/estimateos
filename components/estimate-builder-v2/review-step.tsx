@@ -16,15 +16,26 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
+export type SaveParams = {
+  discountType: 'fixed' | 'percent'
+  discountValue: number | null
+  discountAmount: number
+  subtotal: number
+  taxRate: number
+  taxAmount: number
+  total: number
+}
+
 type Props = {
   clientInfo: ClientInfo
   openings: Opening[]
   prices: number[]
   onEditOpenings: () => void
-  onSave: () => void
+  onSave: (p: SaveParams) => void
+  saving?: boolean
 }
 
-export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSave }: Props) {
+export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
 
@@ -37,6 +48,18 @@ export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSav
   const afterDiscount = subtotal - discountAmt
   const taxAmount = afterDiscount * SETTINGS.taxRate
   const total = afterDiscount + taxAmount
+
+  const handleSave = () => {
+    onSave({
+      discountType,
+      discountValue: discountValue ? parseFloat(discountValue) : null,
+      discountAmount: discountAmt,
+      subtotal,
+      taxRate: SETTINGS.taxRate,
+      taxAmount,
+      total,
+    })
+  }
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 32px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -65,9 +88,7 @@ export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSav
       {/* ── What's included ── */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-          <SectionLabel>
-            What&apos;s included ({openings.length})
-          </SectionLabel>
+          <SectionLabel>What&apos;s included ({openings.length})</SectionLabel>
           <button
             onClick={onEditOpenings}
             style={{ fontSize: 12, fontWeight: 700, color: C.blue, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 8 }}
@@ -164,10 +185,17 @@ export function ReviewStep({ clientInfo, openings, prices, onEditOpenings, onSav
 
       {/* ── Save button ── */}
       <button
-        onClick={onSave}
-        style={{ width: '100%', height: 52, borderRadius: 13, border: 'none', background: C.blue, color: '#fff', fontSize: 15, fontWeight: 700, boxShadow: '0 6px 20px rgba(59,108,255,0.35)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 }}
+        onClick={handleSave}
+        disabled={saving}
+        style={{ width: '100%', height: 52, borderRadius: 13, border: 'none',
+          background: saving ? C.borderStrong : C.blue,
+          color: saving ? C.inkFaint : '#fff',
+          fontSize: 15, fontWeight: 700,
+          boxShadow: saving ? 'none' : '0 6px 20px rgba(59,108,255,0.35)',
+          cursor: saving ? 'not-allowed' : 'pointer',
+          fontFamily: 'inherit', marginTop: 4, transition: 'background 0.15s' }}
       >
-        Save estimate →
+        {saving ? 'Saving…' : 'Save estimate →'}
       </button>
     </div>
   )

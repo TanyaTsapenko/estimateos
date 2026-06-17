@@ -11,7 +11,7 @@ import { PickerSheet, type PickerState } from '@/components/estimate-builder-v2/
 import { EBIcon } from '@/components/estimate-builder-v2/icons'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClientStep, type ClientInfo } from '@/components/estimate-builder-v2/client-step'
-import { ReviewStep } from '@/components/estimate-builder-v2/review-step'
+import { ReviewStep, type SaveParams } from '@/components/estimate-builder-v2/review-step'
 
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
@@ -47,6 +47,72 @@ function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
 }
 
+function dimToSizeBucket(wIn: number, hIn: number): string {
+  const dim = Math.max(wIn, hIn)
+  return dim >= 48 ? 'xl' : dim >= 36 ? 'lg' : dim >= 24 ? 'md' : 'sm'
+}
+
+function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: CustomPricing) {
+  const v = op.vals
+  const widthIn  = parseFloat(String(v.width  || v.owidth  || '')) || 0
+  const heightIn = parseFloat(String(v.height || v.oheight || '')) || 0
+
+  // Legacy glass string expected by old readers
+  const glassKind = String(v.glassType || 'Clear').toLowerCase()
+  let glass = 'clear'
+  if (v.tempered) glass = 'tempered'
+  else if (v.lowE) glass = 'lowe'
+  else if (glassKind === 'frosted') glass = 'frosted'
+  else if (glassKind === 'tinted')  glass = 'tinted'
+
+  const unitCost  = Math.round(computePrice({ ...op, vals: { ...v, qty: 1 } }, custom) * 100) / 100
+  const totalCost = Math.round(computePrice(op, custom) * 100) / 100
+
+  return {
+    estimate_id:      estimateId,
+    type:             op.typeId,
+    window_subtype:   op.sub || null,
+    qty:              (v.qty as number) || 1,
+    width_in:         widthIn  || null,
+    height_in:        heightIn || null,
+    width:            widthIn && heightIn ? dimToSizeBucket(widthIn, heightIn) : 'md',
+    shape:            'rect',
+    colour:           String(v.extColour || v.doorExt || v.colour || 'White'),
+    interior_colour:  String(v.intColour || v.doorInt || 'White'),
+    hardware_colour:  String(v.hwColour  || 'White'),
+    frame:            'none',
+    glass,
+    glass_kind:       glassKind,
+    low_e:            Boolean(v.lowE),
+    tempered:         Boolean(v.tempered),
+    pane:             String(v.pane || 'Double'),
+    install:          String(v.install  || 'Retrofit'),
+    floor:            String(v.floor    || 'Ground floor'),
+    room:             (v.room     as string) || null,
+    has_screen:       Boolean(v.screen && v.screen !== 'None'),
+    material:         String(v.material || v.doorMaterial || 'Vinyl'),
+    grid_pattern:     String(v.grid     || 'None'),
+    tilt_clean:       Boolean(v.tiltClean),
+    opening_direction:String(v.openDir  || v.operSide || ''),
+    panels_count:     String(v.numPanels || ''),
+    bay_angle:        String(v.bayAngle  || ''),
+    transom_panes:    String(v.transomPanes || ''),
+    sidelight:        0,
+    sidelight_left:   0,
+    sidelight_right:  0,
+    transom:          0,
+    transom_above:    Boolean(v.transomAbove),
+    core_type:        String(v.coreType || ''),
+    handle_type:      String(v.handle   || ''),
+    egress_required:  Boolean(v.egress),
+    notes:            String(v.notes    || ''),
+    custom_shape_label: (v.customShapeDesc as string) || null,
+    unit_cost:        unitCost,
+    total_cost:       totalCost,
+    sort_order:       idx,
+  }
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 type Mode = 'client' | 'list' | 'edit' | 'review'
 
@@ -72,6 +138,7 @@ function NewEstimateV2() {
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
+  const [saving, setSaving] = useState(false)
 
   // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
@@ -202,6 +269,94 @@ function NewEstimateV2() {
     if (activeIdx >= openings.length - 1) setActiveIdx(Math.max(0, activeIdx - 1))
   }
 
+  // ── Save estimate ─────────────────────────────────────────────────
+  async function saveEstimate(params: SaveParams) {
+    setSaving(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/auth'); return }
+      const uid = user.id
+
+      // 1. Resolve client_id
+      let clientId: string | null = clientInfo.id || null
+      if (!clientId) {
+        const { data: created, error: cErr } = await supabase
+          .from('clients')
+          .insert({
+            owner_id:    uid,
+            name:        clientInfo.name,
+            phone:       clientInfo.phone  || null,
+            email:       clientInfo.email  || null,
+            address:     clientInfo.address || null,
+            city:        clientInfo.city    || null,
+            province:    clientInfo.province || null,
+            postal_code: clientInfo.postalCode || null,
+          })
+          .select('id')
+          .single()
+        if (cErr || !created) throw new Error('Failed to create client: ' + (cErr?.message || 'unknown'))
+        clientId = created.id as string
+      }
+
+      // 2. Generate estimate number
+      const { count } = await supabase
+        .from('estimates')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', uid)
+      const estimateNumber = 'EST-' + String((count || 0) + 1).padStart(4, '0')
+
+      // 3. INSERT estimate
+      const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+      const { data: est, error: estErr } = await supabase
+        .from('estimates')
+        .insert({
+          user_id:          uid,
+          estimate_number:  estimateNumber,
+          client_id:        clientId,
+          client_name:      clientInfo.name,
+          client_email:     clientInfo.email  || null,
+          client_phone:     clientInfo.phone  || null,
+          client_address:   clientInfo.address || null,
+          client_city:      clientInfo.city    || null,
+          client_province:  clientInfo.province || null,
+          client_postal_code: clientInfo.postalCode || null,
+          subtotal:         Math.round(params.subtotal      * 100) / 100,
+          discount_type:    params.discountAmount > 0 ? params.discountType : null,
+          discount_value:   params.discountAmount > 0 ? params.discountValue : null,
+          discount_amount:  Math.round(params.discountAmount * 100) / 100,
+          tax_rate:         params.taxRate,
+          tax_amount:       Math.round(params.taxAmount     * 100) / 100,
+          total:            Math.round(params.total         * 100) / 100,
+          status:           'draft',
+          valid_until:      validUntil,
+          appointment_id:   apptId || null,
+        })
+        .select('id')
+        .single()
+      if (estErr || !est) throw new Error(estErr?.message || 'Failed to save estimate')
+      const savedId = est.id as string
+
+      // 4. Batch INSERT openings
+      const rows = openings.map((o, i) => buildOpeningRow(o, i, savedId, customPricing))
+      const { error: opErr } = await supabase.from('estimate_openings').insert(rows)
+      if (opErr) throw new Error('Failed to save openings: ' + opErr.message)
+
+      // 5. Update appointment if created from one
+      if (apptId) {
+        await supabase
+          .from('appointments')
+          .update({ estimate_id: savedId, status: 'completed' })
+          .eq('id', apptId)
+      }
+
+      router.push('/dashboard/estimates/' + savedId)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'An unexpected error occurred'
+      alert('Error saving estimate: ' + msg)
+      setSaving(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100dvh', background: C.bg, display: 'flex', flexDirection: 'column', maxWidth: 600, margin: '0 auto' }}>
 
@@ -308,17 +463,15 @@ function NewEstimateV2() {
         </>
       )}
 
-      {/* Review mode */}
+      {/* ── Review mode ── */}
       {mode === 'review' && (
         <ReviewStep
           clientInfo={clientInfo}
           openings={openings}
           prices={openings.map(o => computePrice(o, customPricing))}
           onEditOpenings={() => setMode('list')}
-          onSave={() => {
-            console.log('saveEstimate', { clientInfo, openings })
-            alert('Estimate saved! (Save integration coming in next step)')
-          }}
+          onSave={saveEstimate}
+          saving={saving}
         />
       )}
 
