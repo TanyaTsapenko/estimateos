@@ -243,6 +243,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : op.typeId === 'doubleEntry' ? (
             <>
               <DoubleEntryDrawing
+                sub={op.sub}
                 doubleDoorSwing={op.vals.doubleDoorSwing as string | undefined}
                 astragalType={op.vals.astragalType as string | undefined}
                 glassInsert={op.vals.glassInsert as string | undefined}

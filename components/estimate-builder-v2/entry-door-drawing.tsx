@@ -20,15 +20,12 @@ type Seg = 'sidelite' | 'door'
 
 function parseConfig(sub: string): { segs: Seg[]; transom: boolean } {
   switch (sub) {
-    case 'Single + Left Sidelite':       return { segs: ['sidelite','door'],                  transom: false }
-    case 'Single + Right Sidelite':      return { segs: ['door','sidelite'],                  transom: false }
-    case 'Single + Double Sidelite':     return { segs: ['sidelite','door','sidelite'],        transom: false }
-    case 'Single + Transom':             return { segs: ['door'],                              transom: true  }
-    case 'Single + Sidelites + Transom': return { segs: ['sidelite','door','sidelite'],        transom: true  }
-    case 'Double Door':                  return { segs: ['door','door'],                       transom: false }
-    case 'Double Door + Sidelites':      return { segs: ['sidelite','door','door','sidelite'], transom: false }
-    case 'Double Door + Transom':        return { segs: ['door','door'],                       transom: true  }
-    default:                             return { segs: ['door'],                              transom: false }
+    case 'Single + Left Sidelite':       return { segs: ['sidelite','door'],           transom: false }
+    case 'Single + Right Sidelite':      return { segs: ['door','sidelite'],           transom: false }
+    case 'Single + Double Sidelite':     return { segs: ['sidelite','door','sidelite'],transom: false }
+    case 'Single + Transom':             return { segs: ['door'],                      transom: true  }
+    case 'Single + Sidelites + Transom': return { segs: ['sidelite','door','sidelite'],transom: true  }
+    default:                             return { segs: ['door'],                      transom: false }
   }
 }
 
@@ -146,25 +143,19 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightI
   const swing = (doorSwing ?? '').toLowerCase()
   const singleHingeLeft = !swing.includes('right')
 
-  const doorCount     = segs.filter(s => s === 'door').length
   const sideliteCount = segs.filter(s => s === 'sidelite').length
-  const doorW  = (X2 - X1 - sideliteCount * SIDELITE_W) / Math.max(doorCount, 1)
+  const doorW  = (X2 - X1 - sideliteCount * SIDELITE_W)
   const doorY1 = transom ? Y1 + TRANSOM_H : Y1
   const doorY2 = Y2
 
   let cx = X1
-  let doorsSeen = 0
   const panels = segs.map((seg, i) => {
     const w = seg === 'sidelite' ? SIDELITE_W : doorW
     const px1 = cx, px2 = cx + w
     cx += w
 
     if (seg === 'sidelite') return <Sidelite key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2}/>
-
-    // For double-door subtypes: left door hinges left, right door hinges right
-    const hingeLeft = doorCount === 2 ? doorsSeen === 0 : singleHingeLeft
-    doorsSeen++
-    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={hingeLeft} glassInsert={glassInsert}/>
+    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={singleHingeLeft} glassInsert={glassInsert}/>
   })
 
   return (
@@ -181,7 +172,8 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightI
 
 // ── Double Entry Door ──────────────────────────────────────────────
 
-export function DoubleEntryDrawing({ doubleDoorSwing, astragalType, glassInsert, widthIn, heightIn }: {
+export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassInsert, widthIn, heightIn }: {
+  sub: string
   doubleDoorSwing?: string
   astragalType?: string
   glassInsert?: string
@@ -191,28 +183,42 @@ export function DoubleEntryDrawing({ doubleDoorSwing, astragalType, glassInsert,
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
   const swing = (doubleDoorSwing ?? '').toLowerCase()
-  const leftActive  = !swing.includes('right active')
-  const halfW = (X2 - X1) / 2
-  const cx = X1 + halfW
-  const hasAstragal = astragalType && astragalType !== 'None'
+  const leftActive   = !swing.includes('right active')
+  const hasAstragal  = astragalType && astragalType !== 'None'
+  const hasSidelites = sub.includes('Sidelites')
+  const hasTransom   = sub.includes('Transom')
+
+  const doorX1 = hasSidelites ? X1 + SIDELITE_W : X1
+  const doorX2 = hasSidelites ? X2 - SIDELITE_W : X2
+  const doorY1 = hasTransom   ? Y1 + TRANSOM_H  : Y1
+  const cx     = (doorX1 + doorX2) / 2
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      {/* Left panel */}
-      {leftActive
-        ? <DoorPanel         x1={X1} y1={Y1} x2={cx} y2={Y2} hingeLeft={true}  glassInsert={glassInsert}/>
-        : <DoorPanelInactive x1={X1} y1={Y1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert}/>}
+      {/* Transom */}
+      {hasTransom && <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H}/>}
 
-      {/* Right panel */}
+      {/* Sidelites */}
+      {hasSidelites && <>
+        <Sidelite x1={X1}          y1={doorY1} x2={X1 + SIDELITE_W} y2={Y2}/>
+        <Sidelite x1={X2-SIDELITE_W} y1={doorY1} x2={X2}            y2={Y2}/>
+      </>}
+
+      {/* Left door panel */}
+      {leftActive
+        ? <DoorPanel         x1={doorX1} y1={doorY1} x2={cx} y2={Y2} hingeLeft={true}  glassInsert={glassInsert}/>
+        : <DoorPanelInactive x1={doorX1} y1={doorY1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert}/>}
+
+      {/* Right door panel */}
       {!leftActive
-        ? <DoorPanel         x1={cx} y1={Y1} x2={X2} y2={Y2} hingeLeft={false} glassInsert={glassInsert}/>
-        : <DoorPanelInactive x1={cx} y1={Y1} x2={X2} y2={Y2} handleLeft={true}  glassInsert={glassInsert}/>}
+        ? <DoorPanel         x1={cx} y1={doorY1} x2={doorX2} y2={Y2} hingeLeft={false} glassInsert={glassInsert}/>
+        : <DoorPanelInactive x1={cx} y1={doorY1} x2={doorX2} y2={Y2} handleLeft={true}  glassInsert={glassInsert}/>}
 
       {/* Astragal center line */}
       {hasAstragal && (
-        <line x1={cx} y1={Y1+2} x2={cx} y2={Y2-2}
+        <line x1={cx} y1={doorY1+2} x2={cx} y2={Y2-2}
           stroke={SEC} strokeWidth={astragalType === 'Security Astragal' ? 3 : 2}/>
       )}
 
