@@ -350,7 +350,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       french: { name: 'French door', subs: ['Single french','Double french','French + sidelites'],
         fields: ['width','height','qty',
-          'grid','glassInsert','glassSize','sidelights',
+          'grid','glassSize','glassType2','sidelights',
           'laminatedGlass','doorMaterial','thresholdType',
           'hwColour','doorSwing','lockset','multipointLock',
           'photos','notes'],
@@ -380,7 +380,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
         fields: ['width','height','qty',
-          'colour','glassInsert','glassType','laminatedGlass',
+          'colour','glassInsert','glassType','glassType2','laminatedGlass',
           'thresholdType','screen','hwColour','doorSwing','closerType',
           'photos','notes'] },
 
