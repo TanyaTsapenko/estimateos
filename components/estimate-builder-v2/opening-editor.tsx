@@ -8,6 +8,7 @@ import { SectionTitle } from './builder-header'
 import { PhotosUpload, type PhotoSlot } from './photos-upload'
 import { SectionBuilder } from './section-builder'
 import { BayDrawing, BowDrawing } from './bay-bow-drawing'
+import { ShapeOutlineDrawing } from './shape-outline-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -130,6 +131,18 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 sideUnit={op.vals.sideUnit as string | undefined}
                 widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
                 heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : (op.typeId === 'picture' || op.typeId === 'transom' || op.typeId === 'special') ? (
+            <>
+              <ShapeOutlineDrawing
+                shape={op.typeId === 'special' ? op.sub : op.vals.shape as string | undefined}
+                transomPanes={op.typeId === 'transom' ? op.vals.transomPanes as string | undefined : undefined}
+                widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
+                heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+                uid={op.tempId}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
