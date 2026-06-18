@@ -102,13 +102,16 @@ export const F: Record<string, FieldDef> = {
   floor:       { label: 'Floor',            kind: 'select', sec: 'basics', half: true,
                  opts: ['Ground floor','2nd floor','3rd floor','Basement'] },
   numSections: { label: 'Number of sections', kind: 'select', sec: 'basics', opts: ['3','4','5','6'] },
-  sideUnit:    { label: 'Side unit type',   kind: 'select', sec: 'basics', opts: ['Casement','Fixed','Awning'] },
+  sideUnit:    { label: 'Side unit type',   kind: 'select', sec: 'basics', opts: ['Casement','Fixed','Awning','Single Hung','Double Hung'] },
   seatBoard:   { label: 'Seat board',       kind: 'toggle', sec: 'basics', sub: 'Interior sill board' },
   headBoard:   { label: 'Head board',       kind: 'toggle', sec: 'basics', sub: 'Interior top board' },
   numPanels:   { label: 'Number of panels', kind: 'select', sec: 'basics', opts: ['2','3','4'] },
   transomPanes:{ label: 'Number of panes',  kind: 'select', sec: 'basics', opts: ['1','2','3'], half: true },
   bayAngle:    { label: 'Bay angle',        kind: 'select', sec: 'basics', opts: ['30°','45°','60°','90°','Custom'], half: true },
   customShapeDesc: { label: 'Describe the shape', kind: 'text', sec: 'basics', ph: 'e.g. arched top with 24″ radius' },
+
+  roofType:    { label: 'Roof type',         kind: 'select', sec: 'look',   optional: true,
+                 opts: ['Standard','Hip Roof','Shed Roof'], half: true },
 
   // ── Look / Appearance
   extColour:   { label: 'Exterior colour',  kind: 'color',  sec: 'look',   palette: 'frame' },
@@ -151,8 +154,15 @@ export const F: Record<string, FieldDef> = {
   jambCustom:    { label: 'Specify jamb depth', kind: 'text',  sec: 'install', ph: 'e.g. 7 1/4"' },
   thresholdType: { label: 'Threshold type',    kind: 'select', sec: 'install',
                    opts: ['Standard','Low Profile','Barrier Free'], half: true },
+  projectionDepth:       { label: 'Projection depth',        kind: 'select', sec: 'install',
+                           opts: ['12"','18"','24"','Custom'], half: true },
+  projectionDepthCustom: { label: 'Specify projection depth', kind: 'text',   sec: 'install', ph: 'e.g. 30"' },
+  supportType:           { label: 'Support type',             kind: 'select', sec: 'install',
+                           opts: ['Cable Support','Knee Brace','Seat Support'], half: true },
 
   // ── Operation & hardware
+  centerWindowType:  { label: 'Center window type',   kind: 'select', sec: 'config',
+                       opts: ['Fixed','Picture','Casement'], half: true },
   screen:            { label: 'Screen type',         kind: 'select', sec: 'config', opts: ['None','Standard','Retractable','BetterVue'], half: true },
   screenCoverage:    { label: 'Screen coverage',      kind: 'select', sec: 'config', opts: ['Half Screen','Full Screen','No Screen'], half: true },
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
@@ -254,9 +264,10 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       bay: { name: 'Bay', subs: ['3 lite','4 lite','5 lite'],
         fields: ['owidth','oheight','qty','sideUnit','bayAngle','seatBoard','headBoard','room','floor',
-          'extColour','intColour','grid','grilleType',
-          ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'egress','photos','notes'] },
+          'extColour','intColour','roofType','grid','grilleType',
+          ...W_COMMON_GLASS,
+          'material','install','condition','projectionDepth','supportType',
+          'centerWindowType','egress','photos','notes'] },
 
       bow: { name: 'Bow', subs: ['4 lite','5 lite','6 lite','7 lite'],
         fields: ['owidth','oheight','qty','numSections','sideUnit','seatBoard','headBoard','room','floor',
