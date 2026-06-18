@@ -40,10 +40,12 @@ function EssentialsHead({ op, openType, onSub }: {
           <EBIcon name="chev-r" size={18} color={C.blue} />
         </button>
       </div>
-      <div>
-        <FieldLabel>Subtype</FieldLabel>
-        <SelectBox value={op.sub} onClick={() => onSub(t.subs)} />
-      </div>
+      {t.subs.length > 0 && (
+        <div>
+          <FieldLabel>Subtype</FieldLabel>
+          <SelectBox value={op.sub} onClick={() => onSub(t.subs)} />
+        </div>
+      )}
     </div>
   )
 }

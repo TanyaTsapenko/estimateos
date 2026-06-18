@@ -110,7 +110,7 @@ export const F: Record<string, FieldDef> = {
   bayAngle:    { label: 'Bay angle',        kind: 'select', sec: 'basics', opts: ['30°','45°','60°','90°','Custom'], half: true },
   customShapeDesc: { label: 'Describe the shape', kind: 'text', sec: 'basics', ph: 'e.g. arched top with 24″ radius' },
   shape:           { label: 'Shape',              kind: 'select', sec: 'basics', optional: true,
-                     opts: ['Rectangle','Arch','Custom Shape'], half: true },
+                     opts: ['Rectangle','Arch','Half Round','Circle','Octagon','Triangle','Trapezoid','Custom Shape'], half: true },
 
   roofType:    { label: 'Roof type',         kind: 'select', sec: 'look',   optional: true,
                  opts: ['Standard','Hip Roof','Shed Roof'], half: true },
@@ -232,11 +232,11 @@ export const CATALOG: Record<string, CatalogGroup> = {
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
           'screen','openDir','handle','hwColour','egress','photos','notes'] },
 
-      picture: { name: 'Picture', subs: ['Standard picture','Large picture','Custom picture'],
-        fields: ['width','height','qty','room','floor',
+      picture: { name: 'Picture', subs: [],
+        fields: ['width','height','qty','shape','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'egress','photos','notes'] },
+          'photos','notes'] },
 
       slider: { name: 'Slider', subs: ['XO','OX','XX','End vent','Double end vent','Lift-out'],
         fields: ['width','height','qty','room','floor',
@@ -429,7 +429,7 @@ export function makeOpening(typeId: string, subIndex = 0): Opening {
     if (k === 'photos') return
     if (k in DEFAULTS) vals[k] = DEFAULTS[k]
   })
-  const op: Opening = { typeId, sub: t.subs[subIndex] || t.subs[0], tempId: crypto.randomUUID(), vals }
+  const op: Opening = { typeId, sub: t.subs[subIndex] ?? t.subs[0] ?? '', tempId: crypto.randomUUID(), vals }
   if (typeId === 'combination') {
     op.sections = [{ type: 'Picture', width: 36 }]
   }
