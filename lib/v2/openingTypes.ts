@@ -366,11 +366,15 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'photos','notes'] },
 
       patio: { name: 'Patio sliding', subs: ['XO','OX','XOX','OXXO'],
-        fields: ['width','height','qty','numPanels',
+        fields: ['width','height','qty',
           'extColour','intColour',
-          'glassInsert','glassType','pane','lowE','tempered','argon','laminatedGlass',
-          'material','thresholdType','screen','hwColour','doorSwing',
-          'photos','notes'] },
+          'glassType','pane','lowE','tempered','argon','laminatedGlass',
+          'material','thresholdType','screen','hwColour',
+          'photos','notes'],
+        extraFieldsBySubtype: {
+          'XO': ['operSide'],
+          'OX': ['operSide'],
+        } },
 
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
         fields: ['width','height','qty',
