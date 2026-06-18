@@ -10,6 +10,7 @@ import { SectionBuilder } from './section-builder'
 import { BayDrawing, BowDrawing } from './bay-bow-drawing'
 import { ShapeOutlineDrawing } from './shape-outline-drawing'
 import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider-hopper-drawing'
+import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from './awning-hung-tiltturn-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -162,6 +163,46 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <>
               <HopperDrawing
                 openingAngle={op.vals.openingAngle as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'awning' ? (
+            <>
+              <AwningDrawing
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'singleHung' ? (
+            <>
+              <SingleHungDrawing
+                shape={op.vals.shape as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'doubleHung' ? (
+            <>
+              <DoubleHungDrawing
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'tiltTurn' ? (
+            <>
+              <TiltTurnDrawing
+                sub={op.sub}
+                openDir={op.vals.openDir as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
