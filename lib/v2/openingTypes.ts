@@ -88,6 +88,7 @@ export type FieldDef = {
   opts?: string[]
   palette?: string
   sub?: string
+  visibleWhen?: { field: string; value: string }
 }
 
 export const F: Record<string, FieldDef> = {
@@ -106,11 +107,16 @@ export const F: Record<string, FieldDef> = {
   seatBoard:   { label: 'Seat board',       kind: 'toggle', sec: 'basics', sub: 'Interior sill board' },
   headBoard:   { label: 'Head board',       kind: 'toggle', sec: 'basics', sub: 'Interior top board' },
   numPanels:   { label: 'Number of panels', kind: 'select', sec: 'basics', opts: ['2','3','4'] },
-  transomPanes:{ label: 'Number of panes',  kind: 'select', sec: 'basics', opts: ['1','2','3'], half: true },
+  transomPanes:{ label: 'Number of panes',  kind: 'select', sec: 'basics', opts: ['1 Lite','2 Lite','3 Lite','4 Lite'], half: true },
   bayAngle:    { label: 'Bay angle',        kind: 'select', sec: 'basics', opts: ['30°','45°','60°','90°','Custom'], half: true },
   customShapeDesc: { label: 'Describe the shape', kind: 'text', sec: 'basics', ph: 'e.g. arched top with 24″ radius' },
   shape:           { label: 'Shape',              kind: 'select', sec: 'basics', optional: true,
-                     opts: ['Rectangle','Arch','Half Round','Circle','Octagon','Triangle','Trapezoid','Custom Shape'], half: true },
+                     opts: ['Rectangle','Arch','Half Round','Circle','Octagon','Triangle','Trapezoid','Eyebrow','Custom Shape'], half: true },
+  position:        { label: 'Position',           kind: 'select', sec: 'basics',
+                     opts: ['Above Door','Above Window','Standalone'], half: true },
+  associatedOpening:{ label: 'Associated opening', kind: 'select', sec: 'basics',
+                      opts: ['Entry Door','Patio Door','Garden Door','Custom'], half: true,
+                      visibleWhen: { field: 'position', value: 'Above Door' } },
 
   roofType:    { label: 'Roof type',         kind: 'select', sec: 'look',   optional: true,
                  opts: ['Standard','Hip Roof','Shed Roof'], half: true },
@@ -299,10 +305,10 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'material','egress','photos','notes'] },
 
       transom: { name: 'Transom', subs: ['Fixed transom','Operable transom'],
-        fields: ['width','height','qty','room','floor',
+        fields: ['width','height','qty','position','associatedOpening','shape','room','floor',
           'extColour','intColour','transomPanes','grilleType',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
-          'material','install','condition','egress','photos','notes'] },
+          'material','install','condition','photos','notes'] },
     },
   },
   door: {
@@ -394,7 +400,8 @@ export const DEFAULTS: Record<string, string | number | boolean> = {
   hwColour: 'White', lockset: 'Lever', deadbolt: 'Single cylinder',
   brickmould: 'Standard', jamb: '4 9/16"', sideUnit: 'Casement', numSections: '5',
   numPanels: '2', seatBoard: true, headBoard: true, egress: false,
-  coreType: 'Solid', transomPanes: '1', bayAngle: '45°', tiltClean: false,
+  coreType: 'Solid', transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,
+  position: 'Standalone',
   sidelights: 'None', transomAbove: 'None',
   thresholdType: 'Standard',
   closerType: 'None',

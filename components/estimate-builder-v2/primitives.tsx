@@ -178,10 +178,15 @@ type FGProps = {
 }
 
 export function FieldGrid({ keys, op, onVal, openPicker, gap = 16, palettes }: FGProps) {
+  const visibleKeys = keys.filter(k => {
+    const def = F[k]
+    if (!def?.visibleWhen) return true
+    return op.vals[def.visibleWhen.field] === def.visibleWhen.value
+  })
   const rows: React.ReactNode[] = []
-  for (let i = 0; i < keys.length; i++) {
-    const k = keys[i], def = F[k]
-    const nextKey = keys[i + 1]
+  for (let i = 0; i < visibleKeys.length; i++) {
+    const k = visibleKeys[i], def = F[k]
+    const nextKey = visibleKeys[i + 1]
     const nextDef = nextKey ? F[nextKey] : undefined
     if (def?.half && nextDef?.half) {
       rows.push(

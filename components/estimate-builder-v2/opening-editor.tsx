@@ -64,7 +64,13 @@ type Props = {
 }
 
 export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes, userId, onPhotoUpdate, onSections }: Props) {
-  const groups = groupSections(op)
+  const filterKeys = (keys: string[]) => {
+    if (op.typeId === 'transom' && op.vals.install !== 'Retrofit') {
+      return keys.filter(k => k !== 'condition')
+    }
+    return keys
+  }
+  const groups = groupSections(op).map(g => ({ ...g, keys: filterKeys(g.keys) }))
   const basics = groups.find(g => g.id === 'basics')
   const rest = groups.filter(g => g.id !== 'basics')
 
