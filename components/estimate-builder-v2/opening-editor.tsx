@@ -7,6 +7,7 @@ import { FieldLabel, SelectBox, FieldGrid, type PickerState } from './primitives
 import { SectionTitle } from './builder-header'
 import { PhotosUpload, type PhotoSlot } from './photos-upload'
 import { SectionBuilder } from './section-builder'
+import { BayDrawing, BowDrawing } from './bay-bow-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -109,6 +110,29 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys.filter(k => k !== 'owidth')} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'bay' ? (
+            <>
+              <BayDrawing
+                bayAngle={op.vals.bayAngle as string | undefined}
+                centerWindowType={op.vals.centerWindowType as string | undefined}
+                sideUnit={op.vals.sideUnit as string | undefined}
+                widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
+                heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'bow' ? (
+            <>
+              <BowDrawing
+                sub={op.sub}
+                sideUnit={op.vals.sideUnit as string | undefined}
+                widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
+                heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
             </>
           ) : (
             <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />

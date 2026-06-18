@@ -287,7 +287,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'centerWindowType','egress','photos','notes'] },
 
       bow: { name: 'Bow', subs: ['4 lite','5 lite','6 lite','7 lite'],
-        fields: ['owidth','oheight','qty','numSections','sideUnit','seatBoard','headBoard','room','floor',
+        fields: ['owidth','oheight','qty','sideUnit','seatBoard','headBoard','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
           'egress','photos','notes'] },
