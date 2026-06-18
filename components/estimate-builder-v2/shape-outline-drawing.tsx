@@ -31,7 +31,7 @@ function polyPair(pts: string): Pair {
   ]
 }
 
-function shapeElements(shape: string): Pair {
+export function shapeElements(shape: string): Pair {
   const s = shape.toLowerCase().replace(/[\s-]+/g, '')
 
   // Custom or empty → rectangle

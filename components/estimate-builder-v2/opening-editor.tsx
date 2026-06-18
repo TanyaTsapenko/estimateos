@@ -9,6 +9,7 @@ import { PhotosUpload, type PhotoSlot } from './photos-upload'
 import { SectionBuilder } from './section-builder'
 import { BayDrawing, BowDrawing } from './bay-bow-drawing'
 import { ShapeOutlineDrawing } from './shape-outline-drawing'
+import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider-hopper-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -135,13 +136,45 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
             </>
+          ) : op.typeId === 'casement' ? (
+            <>
+              <CasementDrawing
+                shape={op.vals.shape as string | undefined}
+                sub={op.sub}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'slider' ? (
+            <>
+              <SliderDrawing
+                sub={op.sub}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'hopper' ? (
+            <>
+              <HopperDrawing
+                openingAngle={op.vals.openingAngle as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
           ) : (op.typeId === 'picture' || op.typeId === 'transom' || op.typeId === 'special') ? (
             <>
               <ShapeOutlineDrawing
                 shape={op.typeId === 'special' ? op.sub : op.vals.shape as string | undefined}
                 transomPanes={op.typeId === 'transom' ? op.vals.transomPanes as string | undefined : undefined}
-                widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
-                heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
               />
               <div style={{ height: 12 }} />
