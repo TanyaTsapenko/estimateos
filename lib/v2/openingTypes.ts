@@ -132,7 +132,7 @@ export const F: Record<string, FieldDef> = {
   grilleType:  { label: 'Grille type',      kind: 'select', sec: 'look',
                  opts: ['None','GBG','SDL','Surface Grille'], half: true },
   doorStyle:   { label: 'Door style',       kind: 'select', sec: 'look',
-                 opts: ['Flush','2-panel','4-panel','6-panel','Shaker','Full glass'] },
+                 opts: ['Flush','2-panel','4-panel','6-panel','Shaker'] },
   glassInsert: { label: 'Glass insert',     kind: 'select', sec: 'look',
                  opts: ['None','1/4 Lite','1/2 Lite','3/4 Lite','Full Lite'] },
   glassType2:  { label: 'Glass type',       kind: 'select', sec: 'look',
@@ -262,7 +262,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','openDir','hwColour','egress','photos','notes'] },
+          'screen','hwColour','egress','photos','notes'] },
 
       picture: { name: 'Picture', subs: [],
         fields: ['width','height','qty','room','floor','shape',
