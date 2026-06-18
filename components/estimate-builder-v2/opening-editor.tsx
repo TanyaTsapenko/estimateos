@@ -14,6 +14,7 @@ import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } 
 import { EntryDoorDrawing, DoubleEntryDrawing } from './entry-door-drawing'
 import { FrenchDoorDrawing, GardenDoorDrawing } from './french-garden-drawing'
 import { PatioDoorDrawing } from './patio-door-drawing'
+import { StormDoorDrawing, InteriorDoorDrawing } from './storm-interior-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -274,6 +275,29 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <>
               <PatioDoorDrawing
                 sub={op.sub}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'storm' ? (
+            <>
+              <StormDoorDrawing
+                sub={op.sub}
+                hingeSide={op.vals.hingeSide as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'interior' ? (
+            <>
+              <InteriorDoorDrawing
+                sub={op.sub}
+                doorSwing={op.vals.doorSwing as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
