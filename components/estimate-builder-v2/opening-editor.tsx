@@ -157,6 +157,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <CasementDrawing
                 shape={op.vals.shape as string | undefined}
                 sub={op.sub}
+                activePanel={op.vals.activePanel as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
@@ -207,6 +208,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : op.typeId === 'doubleHung' ? (
             <>
               <DoubleHungDrawing
+                topSashOperable={op.vals.topSashOperable as boolean | undefined}
+                bottomSashOperable={op.vals.bottomSashOperable as boolean | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -218,6 +221,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <TiltTurnDrawing
                 sub={op.sub}
                 openDir={op.vals.openDir as string | undefined}
+                openMode={op.vals.openMode as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -229,6 +233,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <EntryDoorDrawing
                 sub={op.sub}
                 doorSwing={op.vals.doorSwing as string | undefined}
+                glassInsert={op.vals.glassInsert as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -240,6 +245,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <DoubleEntryDrawing
                 doubleDoorSwing={op.vals.doubleDoorSwing as string | undefined}
                 astragalType={op.vals.astragalType as string | undefined}
+                glassInsert={op.vals.glassInsert as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -298,6 +304,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <InteriorDoorDrawing
                 sub={op.sub}
                 doorSwing={op.vals.doorSwing as string | undefined}
+                glassInsert={op.vals.glassInsert as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />

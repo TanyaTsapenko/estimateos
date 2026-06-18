@@ -5,6 +5,16 @@ const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115
 const DOOR_FILL = '#C5CBD4'
 
+function liteFraction(g?: string): number {
+  switch (g) {
+    case '1/4 Lite': return 0.25
+    case '1/2 Lite': return 0.50
+    case '3/4 Lite': return 0.75
+    case 'Full Lite': return 1.00
+    default:         return 0
+  }
+}
+
 // ── Shared helpers ─────────────────────────────────────────────────
 
 function DimLines({ wL, hL }: { wL: string; hL: string }) {
@@ -109,9 +119,10 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid }: {
 
 // ── Interior Door ──────────────────────────────────────────────────
 
-export function InteriorDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
+export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightIn }: {
   sub: string
   doorSwing?: string
+  glassInsert?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -120,11 +131,21 @@ export function InteriorDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
   const swing = (doorSwing ?? '').toLowerCase()
   const hingeLeft = !swing.includes('right')
 
+  const frac = liteFraction(glassInsert)
+  const fullGlass = frac >= 1
+  const panelFill = fullGlass ? GLASS : DOOR_FILL
+  const innerH = (Y2 - Y1) - 12
+  const glassH = frac * innerH
+  const glassY1 = Y1 + 6
+
   // ── Single ───────────────────────────────────────────────────────
   if (sub === 'Single') return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      {frac > 0 && !fullGlass && (
+        <rect x={X1+8} y={glassY1} width={X2-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+      )}
       <SwingArc x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft}/>
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -134,7 +155,11 @@ export function InteriorDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
   if (sub === 'Double') return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      {frac > 0 && !fullGlass && <>
+        <rect x={X1+8}  y={glassY1} width={CX-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+        <rect x={CX+8}  y={glassY1} width={X2-CX-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+      </>}
       <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>
       <SwingArc x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}/>
       <SwingArc x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>

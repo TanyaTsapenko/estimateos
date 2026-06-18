@@ -33,6 +33,15 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
 
 // ── Casement ──────────────────────────────────────────────────────
 
+function CasementHandleOnly({ x1, y1, x2, y2, side }: {
+  x1: number; y1: number; x2: number; y2: number; side: 'left' | 'right'
+}) {
+  const my = (y1 + y2) / 2
+  return side === 'left'
+    ? <rect x={x2-8} y={my-6} width="5" height="12" rx="1.5" fill={SEC}/>
+    : <rect x={x1+3} y={my-6} width="5" height="12" rx="1.5" fill={SEC}/>
+}
+
 function CasementHinge({ x1, y1, x2, y2, side }: {
   x1: number; y1: number; x2: number; y2: number; side: 'left' | 'right'
 }) {
@@ -57,9 +66,10 @@ function CasementHinge({ x1, y1, x2, y2, side }: {
   )
 }
 
-export function CasementDrawing({ shape, sub, widthIn, heightIn, uid }: {
+export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, uid }: {
   shape?: string
   sub: string
+  activePanel?: string
   widthIn?: number
   heightIn?: number
   uid: string
@@ -74,6 +84,10 @@ export function CasementDrawing({ shape, sub, widthIn, heightIn, uid }: {
   const isFrench = sN === 'frenchcasement'
   const isFixed  = sN === 'fixedcasement'
 
+  const ap = (activePanel ?? 'both').toLowerCase()
+  const leftActive  = ap === 'left'  || ap === 'both'
+  const rightActive = ap === 'right' || ap === 'both'
+
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
@@ -84,8 +98,12 @@ export function CasementDrawing({ shape, sub, widthIn, heightIn, uid }: {
           <DashedX x1={X1} y1={Y1} x2={X2} y2={Y2}/>
         ) : isDouble || isFrench ? (
           <>
-            <CasementHinge x1={X1} y1={Y1} x2={CX} y2={Y2} side="left"/>
-            <CasementHinge x1={CX} y1={Y1} x2={X2} y2={Y2} side="right"/>
+            {leftActive
+              ? <CasementHinge    x1={X1} y1={Y1} x2={CX} y2={Y2} side="left"/>
+              : <CasementHandleOnly x1={X1} y1={Y1} x2={CX} y2={Y2} side="left"/>}
+            {rightActive
+              ? <CasementHinge    x1={CX} y1={Y1} x2={X2} y2={Y2} side="right"/>
+              : <CasementHandleOnly x1={CX} y1={Y1} x2={X2} y2={Y2} side="right"/>}
             {isDouble && <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="2"/>}
           </>
         ) : sN === 'rightcasement' ? (

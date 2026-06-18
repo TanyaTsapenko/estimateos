@@ -4,6 +4,17 @@ import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const SIDELITE_W = 30
 const TRANSOM_H  = 36
+const DOOR_FILL  = '#C5CBD4'
+
+function liteFraction(g?: string): number {
+  switch (g) {
+    case '1/4 Lite': return 0.25
+    case '1/2 Lite': return 0.50
+    case '3/4 Lite': return 0.75
+    case 'Full Lite': return 1.00
+    default:         return 0
+  }
+}
 
 type Seg = 'sidelite' | 'door'
 
@@ -41,14 +52,24 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
 
 // ── Door panel (active, shows swing) ──────────────────────────────
 
-function DoorPanel({ x1, y1, x2, y2, hingeLeft }: {
-  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean
+function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert }: {
+  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean; glassInsert?: string
 }) {
   const my = (y1 + y2) / 2
+  const frac = liteFraction(glassInsert)
+  const fullGlass = frac >= 1
+  const panelFill = fullGlass ? GLASS : DOOR_FILL
+  const innerH = (y2 - y1) - 12
+  const glassH = frac * innerH
+  const glassY1 = y1 + 6
+
   if (hingeLeft) {
     return (
       <g>
-        <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+        <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+        {frac > 0 && !fullGlass && (
+          <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+        )}
         <line x1={x1+3} y1={y1+3} x2={x1+3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
         <path d={`M${x1+3} ${y2-3} Q${x2-3} ${y2-3} ${x2-3} ${y1+3}`}
           stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
@@ -59,7 +80,10 @@ function DoorPanel({ x1, y1, x2, y2, hingeLeft }: {
   }
   return (
     <g>
-      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      {frac > 0 && !fullGlass && (
+        <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+      )}
       <line x1={x2-3} y1={y1+3} x2={x2-3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
       <path d={`M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}`}
         stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
@@ -71,13 +95,22 @@ function DoorPanel({ x1, y1, x2, y2, hingeLeft }: {
 
 // ── Door panel (inactive — no swing arc) ──────────────────────────
 
-function DoorPanelInactive({ x1, y1, x2, y2, handleLeft }: {
-  x1: number; y1: number; x2: number; y2: number; handleLeft: boolean
+function DoorPanelInactive({ x1, y1, x2, y2, handleLeft, glassInsert }: {
+  x1: number; y1: number; x2: number; y2: number; handleLeft: boolean; glassInsert?: string
 }) {
   const my = (y1 + y2) / 2
+  const frac = liteFraction(glassInsert)
+  const fullGlass = frac >= 1
+  const panelFill = fullGlass ? GLASS : DOOR_FILL
+  const innerH = (y2 - y1) - 12
+  const glassH = frac * innerH
+  const glassY1 = y1 + 6
   return (
     <g>
-      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      {frac > 0 && !fullGlass && (
+        <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+      )}
       {handleLeft
         ? <rect x={x1+4}  y={my-10} width="6" height="20" rx="2" fill={SEC}/>
         : <rect x={x2-10} y={my-10} width="6" height="20" rx="2" fill={SEC}/>}
@@ -99,9 +132,10 @@ function Sidelite({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: 
 
 // ── Entry Door ─────────────────────────────────────────────────────
 
-export function EntryDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
+export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightIn }: {
   sub: string
   doorSwing?: string
+  glassInsert?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -130,7 +164,7 @@ export function EntryDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
     // For double-door subtypes: left door hinges left, right door hinges right
     const hingeLeft = doorCount === 2 ? doorsSeen === 0 : singleHingeLeft
     doorsSeen++
-    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={hingeLeft}/>
+    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={hingeLeft} glassInsert={glassInsert}/>
   })
 
   return (
@@ -147,9 +181,10 @@ export function EntryDoorDrawing({ sub, doorSwing, widthIn, heightIn }: {
 
 // ── Double Entry Door ──────────────────────────────────────────────
 
-export function DoubleEntryDrawing({ doubleDoorSwing, astragalType, widthIn, heightIn }: {
+export function DoubleEntryDrawing({ doubleDoorSwing, astragalType, glassInsert, widthIn, heightIn }: {
   doubleDoorSwing?: string
   astragalType?: string
+  glassInsert?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -167,13 +202,13 @@ export function DoubleEntryDrawing({ doubleDoorSwing, astragalType, widthIn, hei
 
       {/* Left panel */}
       {leftActive
-        ? <DoorPanel         x1={X1} y1={Y1} x2={cx} y2={Y2} hingeLeft={true}/>
-        : <DoorPanelInactive x1={X1} y1={Y1} x2={cx} y2={Y2} handleLeft={false}/>}
+        ? <DoorPanel         x1={X1} y1={Y1} x2={cx} y2={Y2} hingeLeft={true}  glassInsert={glassInsert}/>
+        : <DoorPanelInactive x1={X1} y1={Y1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert}/>}
 
       {/* Right panel */}
       {!leftActive
-        ? <DoorPanel         x1={cx} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>
-        : <DoorPanelInactive x1={cx} y1={Y1} x2={X2} y2={Y2} handleLeft={true}/>}
+        ? <DoorPanel         x1={cx} y1={Y1} x2={X2} y2={Y2} hingeLeft={false} glassInsert={glassInsert}/>
+        : <DoorPanelInactive x1={cx} y1={Y1} x2={X2} y2={Y2} handleLeft={true}  glassInsert={glassInsert}/>}
 
       {/* Astragal center line */}
       {hasAstragal && (

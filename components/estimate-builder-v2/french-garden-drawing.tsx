@@ -43,11 +43,11 @@ function FrenchDoorPanel({ x1, y1, x2, y2, hingeLeft, showSwing, glassSize }: {
   const fullGlass = frac >= 1
   const panelFill = fullGlass ? GLASS : DOOR_FILL
 
-  // Glass lite rect bounds (inset from frame)
+  // Glass lite rect bounds (inset from frame) — top-anchored per door convention
   const innerH = (y2 - y1) - 12
   const glassH = frac * innerH
-  const glassY1 = y2 - 6 - glassH
-  const glassY2 = y2 - 6
+  const glassY1 = y1 + 6
+  const glassY2 = y1 + 6 + glassH
 
   return (
     <g>

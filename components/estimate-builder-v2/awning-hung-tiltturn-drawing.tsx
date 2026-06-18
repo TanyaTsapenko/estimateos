@@ -92,12 +92,25 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid }: {
 
 // ── Double Hung ─────────────────────────────────────────────────────
 
-export function DoubleHungDrawing({ widthIn, heightIn }: {
+function SashFixed({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+  return (
+    <g>
+      <line x1={x1+3} y1={y1+3} x2={x2-3} y2={y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+      <line x1={x2-3} y1={y1+3} x2={x1+3} y2={y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+    </g>
+  )
+}
+
+export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn }: {
+  topSashOperable?: boolean
+  bottomSashOperable?: boolean
   widthIn?: number
   heightIn?: number
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const topOp    = topSashOperable    !== false
+  const bottomOp = bottomSashOperable !== false
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -107,12 +120,24 @@ export function DoubleHungDrawing({ widthIn, heightIn }: {
 
       {/* Horizontal rail divider */}
       <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FRAME} strokeWidth="1.5"/>
-      {/* Upper sash — slides down */}
-      <path d={`M${CX} ${Y1 + 4} L${CX - 5} ${Y1 + 11} L${CX} ${Y1 + 8} L${CX + 5} ${Y1 + 11}Z`} fill={MOV}/>
-      <line x1={CX} y1={Y1 + 8} x2={CX} y2={MY - 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
-      {/* Lower sash — slides up */}
-      <path d={`M${CX} ${Y2 - 4} L${CX - 5} ${Y2 - 11} L${CX} ${Y2 - 8} L${CX + 5} ${Y2 - 11}Z`} fill={MOV}/>
-      <line x1={CX} y1={Y2 - 8} x2={CX} y2={MY + 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
+      {/* Upper sash */}
+      {topOp ? (
+        <>
+          <path d={`M${CX} ${Y1 + 4} L${CX - 5} ${Y1 + 11} L${CX} ${Y1 + 8} L${CX + 5} ${Y1 + 11}Z`} fill={MOV}/>
+          <line x1={CX} y1={Y1 + 8} x2={CX} y2={MY - 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
+        </>
+      ) : (
+        <SashFixed x1={X1} y1={Y1} x2={X2} y2={MY}/>
+      )}
+      {/* Lower sash */}
+      {bottomOp ? (
+        <>
+          <path d={`M${CX} ${Y2 - 4} L${CX - 5} ${Y2 - 11} L${CX} ${Y2 - 8} L${CX + 5} ${Y2 - 11}Z`} fill={MOV}/>
+          <line x1={CX} y1={Y2 - 8} x2={CX} y2={MY + 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
+        </>
+      ) : (
+        <SashFixed x1={X1} y1={MY} x2={X2} y2={Y2}/>
+      )}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -121,25 +146,32 @@ export function DoubleHungDrawing({ widthIn, heightIn }: {
 
 // ── Tilt & Turn ─────────────────────────────────────────────────────
 
-function TiltTurnPanel({ x1, y1, x2, y2, hingeLeft }: {
-  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean
+function TiltTurnPanel({ x1, y1, x2, y2, hingeLeft, openMode }: {
+  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean; openMode?: string
 }) {
   const my = (y1 + y2) / 2
   const mx = (x1 + x2) / 2
+  const om = (openMode ?? 'Tilt & Turn').toLowerCase().replace(/\s/g, '')
+  const showTilt = om !== 'turnonly'
+  const showTurn = om !== 'tiltonly'
 
   if (hingeLeft) {
     return (
       <g>
-        {/* Hinge on left */}
-        <line x1={x1 + 3} y1={y1 + 3} x2={x1 + 3} y2={y2 - 3} stroke={SEC} strokeWidth="1.5"/>
-        {/* Turn arc from bottom-left → top-right (casement-l sweep) */}
-        <path d={`M${x1 + 3} ${y2 - 3} Q${x2 - 3} ${y2 - 3} ${x2 - 3} ${y1 + 3}`}
-          stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
-        {/* Turn diagonal */}
-        <line x1={x1 + 3} y1={y2 - 3} x2={x2 - 3} y2={y1 + 3} stroke={MOV} strokeWidth="1.2"/>
-        {/* Tilt diagonals from top corners to bottom center */}
-        <line x1={x1 + 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
-        <line x1={x2 - 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+        {showTurn && <>
+          {/* Hinge on left */}
+          <line x1={x1 + 3} y1={y1 + 3} x2={x1 + 3} y2={y2 - 3} stroke={SEC} strokeWidth="1.5"/>
+          {/* Turn arc from bottom-left → top-right (casement-l sweep) */}
+          <path d={`M${x1 + 3} ${y2 - 3} Q${x2 - 3} ${y2 - 3} ${x2 - 3} ${y1 + 3}`}
+            stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
+          {/* Turn diagonal */}
+          <line x1={x1 + 3} y1={y2 - 3} x2={x2 - 3} y2={y1 + 3} stroke={MOV} strokeWidth="1.2"/>
+        </>}
+        {showTilt && <>
+          {/* Tilt diagonals from top corners to bottom center */}
+          <line x1={x1 + 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+          <line x1={x2 - 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+        </>}
         {/* Handle on right */}
         <rect x={x2 - 8} y={my - 6} width="5" height="12" rx="1.5" fill={SEC}/>
       </g>
@@ -147,25 +179,30 @@ function TiltTurnPanel({ x1, y1, x2, y2, hingeLeft }: {
   }
   return (
     <g>
-      {/* Hinge on right */}
-      <line x1={x2 - 3} y1={y1 + 3} x2={x2 - 3} y2={y2 - 3} stroke={SEC} strokeWidth="1.5"/>
-      {/* Turn arc from bottom-right → top-left (casement-r sweep) */}
-      <path d={`M${x2 - 3} ${y2 - 3} Q${x1 + 3} ${y2 - 3} ${x1 + 3} ${y1 + 3}`}
-        stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
-      {/* Turn diagonal */}
-      <line x1={x2 - 3} y1={y2 - 3} x2={x1 + 3} y2={y1 + 3} stroke={MOV} strokeWidth="1.2"/>
-      {/* Tilt diagonals from top corners to bottom center */}
-      <line x1={x1 + 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
-      <line x1={x2 - 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+      {showTurn && <>
+        {/* Hinge on right */}
+        <line x1={x2 - 3} y1={y1 + 3} x2={x2 - 3} y2={y2 - 3} stroke={SEC} strokeWidth="1.5"/>
+        {/* Turn arc from bottom-right → top-left (casement-r sweep) */}
+        <path d={`M${x2 - 3} ${y2 - 3} Q${x1 + 3} ${y2 - 3} ${x1 + 3} ${y1 + 3}`}
+          stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
+        {/* Turn diagonal */}
+        <line x1={x2 - 3} y1={y2 - 3} x2={x1 + 3} y2={y1 + 3} stroke={MOV} strokeWidth="1.2"/>
+      </>}
+      {showTilt && <>
+        {/* Tilt diagonals from top corners to bottom center */}
+        <line x1={x1 + 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+        <line x1={x2 - 4} y1={y1 + 4} x2={mx} y2={y2 - 4} stroke={MOV} strokeWidth="1.2"/>
+      </>}
       {/* Handle on left */}
       <rect x={x1 + 3} y={my - 6} width="5" height="12" rx="1.5" fill={SEC}/>
     </g>
   )
 }
 
-export function TiltTurnDrawing({ sub, openDir, widthIn, heightIn }: {
+export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn }: {
   sub: string
   openDir?: string
+  openMode?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -182,12 +219,12 @@ export function TiltTurnDrawing({ sub, openDir, widthIn, heightIn }: {
 
       {isDouble ? (
         <>
-          <TiltTurnPanel x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}/>
+          <TiltTurnPanel x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}  openMode={openMode}/>
           <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="2"/>
-          <TiltTurnPanel x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>
+          <TiltTurnPanel x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false} openMode={openMode}/>
         </>
       ) : (
-        <TiltTurnPanel x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft}/>
+        <TiltTurnPanel x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft} openMode={openMode}/>
       )}
 
       <DimLines wL={wL} hL={hL}/>
