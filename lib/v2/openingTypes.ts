@@ -137,6 +137,8 @@ export const F: Record<string, FieldDef> = {
                  opts: ['None','1/4 Lite','1/2 Lite','3/4 Lite','Full Lite','Decorative','Frosted'] },
   glassStyle:  { label: 'Glass style',      kind: 'select', sec: 'look',
                  opts: ['Clear','Frosted','Internal grilles','Decorative'] },
+  glassSize:   { label: 'Glass size',       kind: 'select', sec: 'look',
+                 opts: ['None','1/4 Lite','1/2 Lite','3/4 Lite','Full Lite'], half: true },
   sidelights:  { label: 'Sidelights',       kind: 'select', sec: 'look',   opts: ['None','Left','Right','Both'], half: true },
   transomAbove:{ label: 'Transom above',    kind: 'select', sec: 'look',
                  opts: ['None','Rectangular','Arched'], half: true },
@@ -197,7 +199,8 @@ export const F: Record<string, FieldDef> = {
   topSashOperable:   { label: 'Top sash operable',    kind: 'toggle', sec: 'config' },
   bottomSashOperable:{ label: 'Bottom sash operable', kind: 'toggle', sec: 'config' },
   closerType:        { label: 'Door closer',          kind: 'select', sec: 'config', opts: ['None','Hydraulic','Pneumatic'], half: true },
-  astragal:          { label: 'Astragal',             kind: 'toggle', sec: 'config', sub: 'Vertical seal between panels' },
+  astragal:          { label: 'Astragal',             kind: 'select', sec: 'config',
+                       opts: ['Standard Astragal','Removable Astragal'], half: true },
   multipointLock:    { label: 'Multipoint lock',      kind: 'toggle', sec: 'config', sub: 'Multiple locking points' },
   // legacy fields kept for backward-compat read of old estimates
   swing:   { label: 'Swing direction', kind: 'select', sec: 'config', opts: ['Left hand','Right hand'], half: true },
@@ -345,13 +348,13 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       french: { name: 'French door', subs: ['Single french','Double french','French + sidelites'],
         fields: ['width','height','qty',
-          'grid','glassInsert','sidelights',
+          'grid','glassInsert','glassSize','sidelights',
           'laminatedGlass','doorMaterial','thresholdType',
-          'hwColour','doorSwing','lockset',
+          'hwColour','doorSwing','lockset','multipointLock',
           'photos','notes'],
         extraFieldsBySubtype: {
-          'Double french':      ['activePanel','astragal','multipointLock'],
-          'French + sidelites': ['activePanel','astragal','multipointLock'],
+          'Double french':      ['activePanel','astragal'],
+          'French + sidelites': ['activePanel','astragal'],
         },
       },
 
@@ -418,7 +421,7 @@ export const DEFAULTS: Record<string, string | number | boolean> = {
   thresholdType: 'Standard',
   closerType: 'None',
   topSashOperable: true, bottomSashOperable: true,
-  astragal: false, multipointLock: false,
+  astragal: 'Standard Astragal', multipointLock: false,
 }
 
 export const NO_DEFAULT = new Set([
