@@ -12,6 +12,7 @@ import { ShapeOutlineDrawing } from './shape-outline-drawing'
 import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider-hopper-drawing'
 import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from './awning-hung-tiltturn-drawing'
 import { EntryDoorDrawing, DoubleEntryDrawing } from './entry-door-drawing'
+import { FrenchDoorDrawing, GardenDoorDrawing } from './french-garden-drawing'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -237,6 +238,31 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <DoubleEntryDrawing
                 doubleDoorSwing={op.vals.doubleDoorSwing as string | undefined}
                 astragalType={op.vals.astragalType as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'french' ? (
+            <>
+              <FrenchDoorDrawing
+                sub={op.sub}
+                doorSwing={op.vals.doorSwing as string | undefined}
+                activePanel={op.vals.activePanel as string | undefined}
+                astragal={op.vals.astragal as string | undefined}
+                glassSize={op.vals.glassSize as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'garden' ? (
+            <>
+              <GardenDoorDrawing
+                doorSwing={op.vals.doorSwing as string | undefined}
+                glassSize={op.vals.glassSize as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
