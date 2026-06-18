@@ -264,7 +264,6 @@ export const CATALOG: Record<string, CatalogGroup> = {
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
           'egress','photos','notes'] },
 
-      // TODO: section builder UI not yet implemented
       combination: { name: 'Combination', subs: ['Custom combination'],
         fields: ['owidth','oheight','qty',
           'extColour','intColour','grid','grilleType',
@@ -390,6 +389,9 @@ export const NO_DEFAULT = new Set([
 ])
 
 // ── Opening type ──────────────────────────────────────────────────
+export type CombinationSectionType = 'Casement' | 'Fixed' | 'Slider' | 'Awning' | 'Picture'
+export type CombinationSection = { type: CombinationSectionType; width: number }
+
 export type Opening = {
   typeId: string
   sub: string
@@ -398,6 +400,7 @@ export type Opening = {
   exteriorPhotoUrl?: string | null
   photo3Url?: string | null
   photo4Url?: string | null
+  sections?: CombinationSection[]
   vals: Record<string, string | number | boolean | undefined>
 }
 
@@ -409,7 +412,11 @@ export function makeOpening(typeId: string, subIndex = 0): Opening {
     if (k === 'photos') return
     if (k in DEFAULTS) vals[k] = DEFAULTS[k]
   })
-  return { typeId, sub: t.subs[subIndex] || t.subs[0], tempId: crypto.randomUUID(), vals }
+  const op: Opening = { typeId, sub: t.subs[subIndex] || t.subs[0], tempId: crypto.randomUUID(), vals }
+  if (typeId === 'combination') {
+    op.sections = [{ type: 'Picture', width: 36 }]
+  }
+  return op
 }
 
 export function missingRequired(op: Opening): string[] {

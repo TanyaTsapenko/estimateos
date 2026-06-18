@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { C, F, SECTIONS, getType, type Opening, type Palettes } from '@/lib/v2/openingTypes'
+import { C, F, SECTIONS, getType, type Opening, type Palettes, type CombinationSection } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { MiniDiagram } from './diagram'
 import { FieldLabel, SelectBox, FieldGrid, type PickerState } from './primitives'
 import { SectionTitle } from './builder-header'
 import { PhotosUpload, type PhotoSlot } from './photos-upload'
+import { SectionBuilder } from './section-builder'
 
 // Groups the type's fields into sections, merging any subtype-conditional extras
 function groupSections(op: Opening) {
@@ -57,9 +58,10 @@ type Props = {
   palettes?: Palettes
   userId?: string
   onPhotoUpdate?: (slot: PhotoSlot, url: string | null) => void
+  onSections?: (sections: CombinationSection[]) => void
 }
 
-export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes, userId, onPhotoUpdate }: Props) {
+export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes, userId, onPhotoUpdate, onSections }: Props) {
   const groups = groupSections(op)
   const basics = groups.find(g => g.id === 'basics')
   const rest = groups.filter(g => g.id !== 'basics')
@@ -90,7 +92,18 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <EBIcon name={basics.icon} size={15} color={C.inkMid} />
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{basics.label}</span>
           </div>
-          <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+          {op.typeId === 'combination' ? (
+            <>
+              <SectionBuilder
+                sections={op.sections || [{ type: 'Picture', width: 36 }]}
+                onChange={onSections ?? (() => {})}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys.filter(k => k !== 'owidth')} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : (
+            <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+          )}
         </>
       )}
 

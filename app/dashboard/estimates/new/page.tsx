@@ -127,6 +127,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     unit_cost:        unitCost,
     total_cost:       totalCost,
     sort_order:       idx,
+    sections:         op.sections ? JSON.stringify(op.sections) : null,
   }
 }
 
@@ -188,6 +189,11 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.notes) vals.notes = String(row.notes)
   if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)
 
+  let sections: Opening['sections'] = undefined
+  if (row.sections) {
+    try { sections = JSON.parse(String(row.sections)) } catch { sections = [] }
+  }
+
   return {
     typeId,
     sub: String(row.window_subtype || ''),
@@ -196,6 +202,7 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
     exteriorPhotoUrl: (row.exterior_photo_url as string | null) || null,
     photo3Url:        (row.photo_3_url        as string | null) || null,
     photo4Url:        (row.photo_4_url        as string | null) || null,
+    sections,
     vals,
   }
 }
@@ -348,6 +355,14 @@ function NewEstimateV2() {
   const setSub = useCallback((subs: string[]) => {
     const newSub = subs[0]
     setOpenings(list => list.map((o, i) => i === activeIdx ? { ...o, sub: newSub } : o))
+  }, [activeIdx])
+
+  const setSections = useCallback((sections: Opening['sections']) => {
+    const totalWidth = (sections || []).reduce((s, sec) => s + sec.width, 0)
+    setOpenings(list => list.map((o, i) => {
+      if (i !== activeIdx) return o
+      return { ...o, sections, vals: { ...o.vals, owidth: totalWidth || undefined } }
+    }))
   }, [activeIdx])
 
   const updatePhoto = useCallback((slot: PhotoSlot, url: string | null) => {
@@ -640,6 +655,7 @@ function NewEstimateV2() {
               palettes={palettes}
               userId={userId}
               onPhotoUpdate={updatePhoto}
+              onSections={setSections}
             />
           </div>
 
