@@ -55,7 +55,9 @@ function dimToSizeBucket(wIn: number, hIn: number): string {
 }
 
 const INSTALL_MAP: Record<string, string> = {
-  'Retrofit': 'retrofit', 'New construction': 'fullframe', 'Full frame': 'fullframe', 'Stud to stud': 'stud_to_stud',
+  'Retrofit': 'retrofit',
+  'Full Frame': 'fullframe', 'Full frame': 'fullframe', 'New construction': 'fullframe',
+  'Stud-to-Stud': 'stud_to_stud', 'Stud to stud': 'stud_to_stud',
 }
 const FLOOR_MAP: Record<string, string> = {
   'Ground floor': 'first', '2nd floor': 'second', '3rd floor': 'third', 'Basement': 'basement',
