@@ -181,6 +181,9 @@ export const F: Record<string, FieldDef> = {
   locksetBore:       { label: 'Lockset bore',         kind: 'select', sec: 'config', opts: ['2-1/8"','2-3/4"','Custom'], half: true },
   deadbolt:          { label: 'Deadbolt',             kind: 'select', sec: 'config',
                        opts: ['None','Single cylinder','Double cylinder'], half: true },
+  openingAngle:      { label: 'Opening angle',        kind: 'select', sec: 'config', opts: ['30°','45°','90°'], half: true },
+  openingRestrictor: { label: 'Opening restrictor',   kind: 'toggle', sec: 'config', sub: 'Limit device' },
+  securityLock:      { label: 'Security lock',        kind: 'toggle', sec: 'config' },
   tiltClean:         { label: 'Tilt-to-clean',        kind: 'toggle', sec: 'config', sub: 'Sash tilts in for cleaning' },
   topSashOperable:   { label: 'Top sash operable',    kind: 'toggle', sec: 'config' },
   bottomSashOperable:{ label: 'Bottom sash operable', kind: 'toggle', sec: 'config' },
@@ -260,7 +263,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'handle','openDir','egress','photos','notes'] },
+          'openingAngle','openingRestrictor','securityLock','photos','notes'] },
 
       tiltTurn: { name: 'Tilt & turn', subs: ['Single','Double'],
         fields: ['width','height','qty','room','floor',
