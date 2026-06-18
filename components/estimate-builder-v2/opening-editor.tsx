@@ -97,6 +97,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <SectionBuilder
                 sections={op.sections || [{ type: 'Picture', width: 36 }]}
                 onChange={onSections ?? (() => {})}
+                heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys.filter(k => k !== 'owidth')} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />

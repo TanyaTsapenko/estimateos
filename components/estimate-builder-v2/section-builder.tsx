@@ -1,81 +1,142 @@
 'use client'
-import { C } from '@/lib/v2/openingTypes'
+import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 import type { CombinationSection, CombinationSectionType } from '@/lib/v2/openingTypes'
 
 const SECTION_TYPES: CombinationSectionType[] = ['Casement', 'Fixed', 'Slider', 'Awning', 'Picture']
 
-// ── SVG constants ──────────────────────────────────────────────────
-const SVG_W = 300
-const SVG_H = 128
-const FX = 15          // frame left x
-const FY = 10          // frame top y
-const FW = 270         // frame width
-const FH = 62          // frame height
-const MID_Y = FY + FH / 2  // vertical midpoint of frame
-const DIM_Y = FY + FH + 12 // dimension line y
-const TICK = 5          // half-tick height
-const LBL_Y = DIM_Y + 14  // width label y
-const TYPE_Y = DIM_Y + 25  // type name y
+// ── SVG layout ─────────────────────────────────────────────────────
+const SVG_W = 430
+const SVG_H = 200
 
-type SegInfo = { x: number; w: number; sec: CombinationSection }
+const FX = 10        // frame left x
+const FY = 10        // frame top y
+const FW = 370       // frame width  → right edge = 380
+const FH = 120       // frame height → bottom edge = 130
+const FR = FX + FW   // 380
+const FB = FY + FH   // 130
+const MID_Y = FY + FH / 2  // 70
+
+const SI = 6         // inset inside each segment
+const sT = FY + SI   // shared top inset y   = 16
+const sB = FB - SI   // shared bottom inset y = 124
+
+const DIM_Y  = FB + 14       // 144  width dimension line y
+const TICK   = 5             // half-tick height
+const LBL_Y  = DIM_Y + 16   // 160  segment width label
+const TYPE_Y = LBL_Y + 14   // 174  segment type label
+
+const DIM_R  = FR + 10      // 390  height dimension x
+
+// ── Segment geometry ───────────────────────────────────────────────
+type SegInfo = {
+  segX: number
+  segW: number
+  sL: number   // left inset x
+  sR: number   // right inset x
+  sCX: number  // horizontal center x
+  sec: CombinationSection
+}
 
 function buildSegs(sections: CombinationSection[]): SegInfo[] {
   const total = sections.reduce((s, sec) => s + sec.width, 0) || 1
-  const segs: SegInfo[] = []
-  let cumX = FX
-  for (const sec of sections) {
-    const w = (sec.width / total) * FW
-    segs.push({ x: cumX, w, sec })
-    cumX += w
-  }
-  return segs
+  let cumPx = 0
+  return sections.map(sec => {
+    const segW = (sec.width / total) * FW
+    const segX = FX + cumPx
+    cumPx += segW
+    return { segX, segW, sL: segX + SI, sR: segX + segW - SI, sCX: segX + segW / 2, sec }
+  })
 }
 
-function SegIndicator({ seg }: { seg: SegInfo }) {
-  const { x, w, sec } = seg
-  const topY = FY + 2
-  const botY = FY + FH - 2
-  const cx = x + w / 2
-  const lx = x + 2
-  const rx = x + w - 2
-  const s = { stroke: '#0B1220', strokeWidth: 1.2, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+// ── Per-segment type indicators (scaled from WindowDiagram patterns) ──
+function SegContent({ info }: { info: SegInfo }) {
+  const { sL, sR, sCX, segX, segW, sec } = info
+
+  if (sec.type === 'Picture' || sec.type === 'Fixed') {
+    // dashed cross, identical to window_fix
+    return (
+      <>
+        <line x1={sL} y1={sT} x2={sR} y2={sB} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+        <line x1={sR} y1={sT} x2={sL} y2={sB} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+      </>
+    )
+  }
 
   if (sec.type === 'Casement') {
+    // hinge left — geometry from window_cas, scaled to segment width
     return (
       <>
-        <line x1={lx} y1={MID_Y} x2={rx} y2={topY} {...s} />
-        <line x1={lx} y1={MID_Y} x2={rx} y2={botY} {...s} />
+        {/* hinge line */}
+        <line x1={sL} y1={sT} x2={sL} y2={sB} stroke={SEC} strokeWidth="1.5"/>
+        {/* dashed sweep arc: bottom-hinge → top-right */}
+        <path d={`M${sL},${sB} Q${sR},${sB} ${sR},${sT}`}
+          stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+        {/* dashed top edge (sash top in open position) */}
+        <line x1={sL} y1={sT} x2={sR} y2={sT}
+          stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
+        {/* solid diagonal: sash leading edge when open */}
+        <line x1={sL} y1={sB} x2={sR} y2={sT} stroke={MOV} strokeWidth="1.5"/>
+        {/* handle near opposite edge */}
+        <rect x={sR - 5} y={MID_Y - 4} width={4} height={8} rx="1.5" fill={SEC}/>
       </>
     )
   }
+
   if (sec.type === 'Awning') {
+    // hinge top — geometry from window_awn, scaled to segment width
     return (
       <>
-        <line x1={cx} y1={topY} x2={lx} y2={botY} {...s} />
-        <line x1={cx} y1={topY} x2={rx} y2={botY} {...s} />
+        {/* hinge line */}
+        <line x1={sL} y1={sT} x2={sR} y2={sT} stroke={SEC} strokeWidth="1.5"/>
+        {/* dashed arc: top-left → bottom-centre → top-right */}
+        <path d={`M${sL},${sT} Q${sL},${sB} ${sCX},${sB} Q${sR},${sB} ${sR},${sT}`}
+          stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+        {/* left diagonal */}
+        <line x1={sL} y1={sT} x2={sCX} y2={sB} stroke={MOV} strokeWidth="1.5"/>
+        {/* right diagonal */}
+        <line x1={sR} y1={sT} x2={sCX} y2={sB} stroke={MOV} strokeWidth="1.5"/>
+        {/* handle bottom-centre */}
+        <rect x={sCX - 5} y={sB - 4} width={10} height={4} rx="1.5" fill={SEC}/>
       </>
     )
   }
+
   if (sec.type === 'Slider') {
-    const ax0 = x + w * 0.55
-    const ax1 = x + w * 0.84
+    // moving sash — geometry from window_sl (moving half only)
+    const arrTip  = segX + segW * 0.62
+    const arrLine = segX + segW * 0.26
     return (
       <>
-        <line x1={cx} y1={topY + 4} x2={cx} y2={botY - 4} {...s} />
-        <line x1={ax0} y1={MID_Y} x2={ax1} y2={MID_Y} {...s} />
-        <line x1={ax1 - 5} y1={MID_Y - 4} x2={ax1} y2={MID_Y} {...s} />
-        <line x1={ax1 - 5} y1={MID_Y + 4} x2={ax1} y2={MID_Y} {...s} />
+        {/* MOV border: whole segment is the moving sash */}
+        <rect x={sL} y={sT} width={Math.max(1, sR - sL)} height={Math.max(1, sB - sT)}
+          fill="none" stroke={MOV} strokeWidth="1.5"/>
+        {/* arrowhead pointing right */}
+        <path d={`M${arrTip},${MID_Y} L${arrTip-7},${MID_Y-5} L${arrTip-5},${MID_Y} L${arrTip-7},${MID_Y+5}Z`}
+          fill={MOV}/>
+        {/* dashed movement line */}
+        <line x1={arrLine} y1={MID_Y} x2={arrTip - 5} y2={MID_Y}
+          stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
+        {/* handle */}
+        <rect x={sR - 5} y={MID_Y - 6} width={4} height={12} rx="2" fill={SEC}/>
       </>
     )
   }
+
   return null
 }
 
-export function CombinationDrawing({ sections }: { sections: CombinationSection[] }) {
+// ── CombinationDrawing ─────────────────────────────────────────────
+interface CombinationDrawingProps {
+  sections: CombinationSection[]
+  heightIn?: number
+}
+
+export function CombinationDrawing({ sections, heightIn }: CombinationDrawingProps) {
   if (!sections.length) return null
   const segs = buildSegs(sections)
-  const rightX = FX + FW
-  const boundaries = [FX, ...segs.slice(1).map(s => s.x), rightX]
+  const hLabel = heightIn ? `${heightIn}"` : 'H'
+  // all boundary x positions including both frame edges
+  const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
 
   return (
     <svg
@@ -85,58 +146,61 @@ export function CombinationDrawing({ sections }: { sections: CombinationSection[
     >
       {/* outer frame */}
       <rect x={FX} y={FY} width={FW} height={FH}
-        fill="none" stroke="#0B1220" strokeWidth={1.5} />
+        rx="3" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
 
-      {/* vertical segment dividers */}
+      {/* internal segment dividers (not at frame edges) */}
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i}
-          x1={seg.x + seg.w} y1={FY}
-          x2={seg.x + seg.w} y2={FY + FH}
-          stroke="#0B1220" strokeWidth={0.8} />
+          x1={seg.segX + seg.segW} y1={FY}
+          x2={seg.segX + seg.segW} y2={FB}
+          stroke={FRAME} strokeWidth="1.5"/>
       ))}
 
       {/* type indicators */}
-      {segs.map((seg, i) => <SegIndicator key={i} seg={seg} />)}
+      {segs.map((seg, i) => <SegContent key={i} info={seg} />)}
 
-      {/* dimension line */}
-      <line x1={FX} y1={DIM_Y} x2={rightX} y2={DIM_Y}
-        stroke="#0B1220" strokeWidth={0.8} />
-
-      {/* boundary ticks */}
+      {/* ── Width dimension line ── */}
+      <line x1={FX} y1={DIM_Y} x2={FR} y2={DIM_Y} stroke={SEC} strokeWidth="1"/>
       {boundaries.map((bx, i) => (
         <line key={i}
-          x1={bx} y1={DIM_Y - TICK}
-          x2={bx} y2={DIM_Y + TICK}
-          stroke="#0B1220" strokeWidth={0.8} />
+          x1={bx} y1={DIM_Y - TICK} x2={bx} y2={DIM_Y + TICK}
+          stroke={SEC} strokeWidth="1.5"/>
+      ))}
+      {segs.map((seg, i) => (
+        <g key={i}>
+          <text x={seg.sCX} y={LBL_Y} textAnchor="middle"
+            fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
+            {seg.sec.width}&quot;
+          </text>
+          <text x={seg.sCX} y={TYPE_Y} textAnchor="middle"
+            fontFamily="system-ui, sans-serif" fontSize="9" fill={SEC}>
+            {seg.sec.type}
+          </text>
+        </g>
       ))}
 
-      {/* width + type labels */}
-      {segs.map((seg, i) => {
-        const cx = seg.x + seg.w / 2
-        return (
-          <g key={i}>
-            <text x={cx} y={LBL_Y} textAnchor="middle"
-              fontSize={8} fontFamily="system-ui, sans-serif" fill="#0B1220" fontWeight={700}>
-              {seg.sec.width}&quot;
-            </text>
-            <text x={cx} y={TYPE_Y} textAnchor="middle"
-              fontSize={7} fontFamily="system-ui, sans-serif" fill="#6B7280">
-              {seg.sec.type}
-            </text>
-          </g>
-        )
-      })}
+      {/* ── Height dimension line (right) ── */}
+      <line x1={DIM_R} y1={FY} x2={DIM_R} y2={FB} stroke={SEC} strokeWidth="1"/>
+      <line x1={DIM_R - 4} y1={FY} x2={DIM_R + 4} y2={FY} stroke={SEC} strokeWidth="1.5"/>
+      <line x1={DIM_R - 4} y1={FB} x2={DIM_R + 4} y2={FB} stroke={SEC} strokeWidth="1.5"/>
+      <text x={DIM_R + 6} y={MID_Y + 4} textAnchor="start"
+        fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
+        {hLabel}
+      </text>
     </svg>
   )
 }
 
-// ── SectionBuilder ────────────────────────────────────────────────
+// ── SectionBuilder ─────────────────────────────────────────────────
+import { C } from '@/lib/v2/openingTypes'
+
 interface SectionBuilderProps {
   sections: CombinationSection[]
+  heightIn?: number
   onChange: (sections: CombinationSection[]) => void
 }
 
-export function SectionBuilder({ sections, onChange }: SectionBuilderProps) {
+export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderProps) {
   const totalWidth = sections.reduce((s, sec) => s + sec.width, 0)
 
   const updateType = (i: number, type: CombinationSectionType) =>
@@ -158,7 +222,7 @@ export function SectionBuilder({ sections, onChange }: SectionBuilderProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {/* live drawing */}
       <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, padding: '12px 10px 8px' }}>
-        <CombinationDrawing sections={sections} />
+        <CombinationDrawing sections={sections} heightIn={heightIn} />
       </div>
 
       {/* list header */}
@@ -212,9 +276,8 @@ export function SectionBuilder({ sections, onChange }: SectionBuilderProps) {
               <svg width={13} height={13} viewBox="0 0 24 24" fill="none"
                 stroke={sections.length <= 1 ? C.inkFaint : C.red}
                 strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6l-1 14H6L5 6" />
-                <path d="M10 11v6M14 11v6M9 6V4h6v2" />
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
               </svg>
             </button>
           </div>

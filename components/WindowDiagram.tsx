@@ -7,11 +7,11 @@ interface WindowDiagramProps {
   size?: number
 }
 
-const GLASS = '#EEF4FF'
-const FRAME = '#334155'
-const SEC = '#94A3B8'
-const DIM = '#475569'
-const MOV = '#2563EB'
+export const GLASS = '#EEF4FF'
+export const FRAME = '#334155'
+export const SEC = '#94A3B8'
+export const DIM = '#475569'
+export const MOV = '#2563EB'
 
 export default function WindowDiagram({ type, widthIn, heightIn, size = 80 }: WindowDiagramProps) {
   const w = widthIn ? `${widthIn}"` : 'W'
