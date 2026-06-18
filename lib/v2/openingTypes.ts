@@ -184,6 +184,7 @@ export const F: Record<string, FieldDef> = {
   openingAngle:      { label: 'Opening angle',        kind: 'select', sec: 'config', opts: ['30°','45°','90°'], half: true },
   openingRestrictor: { label: 'Opening restrictor',   kind: 'toggle', sec: 'config', sub: 'Limit device' },
   securityLock:      { label: 'Security lock',        kind: 'toggle', sec: 'config' },
+  ventLock:          { label: 'Vent lock',             kind: 'select', sec: 'config', opts: ['Standard Lock','Vent Lock'], half: true },
   tiltClean:         { label: 'Tilt-to-clean',        kind: 'toggle', sec: 'config', sub: 'Sash tilts in for cleaning' },
   topSashOperable:   { label: 'Top sash operable',    kind: 'toggle', sec: 'config' },
   bottomSashOperable:{ label: 'Bottom sash operable', kind: 'toggle', sec: 'config' },
@@ -247,11 +248,11 @@ export const CATALOG: Record<string, CatalogGroup> = {
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
           'screen','screenCoverage','numPanels','operSide','egress','photos','notes'] },
 
-      singleHung: { name: 'Single hung', subs: ['Standard','Heavy duty'],
+      singleHung: { name: 'Single hung', subs: ['Standard','Tilt-In'],
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','tiltClean','egress','photos','notes'] },
+          'shape','screen','ventLock','tiltClean','photos','notes'] },
 
       doubleHung: { name: 'Double hung', subs: ['Standard','Tilt-in'],
         fields: ['width','height','qty','room','floor',
