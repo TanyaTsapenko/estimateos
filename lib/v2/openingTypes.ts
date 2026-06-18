@@ -285,7 +285,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['owidth','oheight','qty',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,'material','install',
-          'egress','photos','notes'] },
+          'photos','notes'] },
 
       special: { name: 'Special shape',
         subs: ['Arch','Half arch','Circle','Half circle','Triangle','Trapezoid','Pentagon','Octagon','Gothic','Eyebrow','Custom'],
@@ -406,7 +406,7 @@ export const NO_DEFAULT = new Set([
 ])
 
 // ── Opening type ──────────────────────────────────────────────────
-export type CombinationSectionType = 'Casement' | 'Fixed' | 'Slider' | 'Awning' | 'Picture'
+export type CombinationSectionType = 'Casement' | 'Fixed' | 'Slider' | 'Awning' | 'Picture' | 'Single Hung'
 export type CombinationSection = { type: CombinationSectionType; width: number }
 
 export type Opening = {
