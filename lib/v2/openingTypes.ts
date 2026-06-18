@@ -303,7 +303,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','customShapeDesc',
           'extColour','intColour','grilleType',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
-          'material','egress','photos','notes'] },
+          'material','photos','notes'] },
 
       transom: { name: 'Transom', subs: ['Fixed transom','Operable transom'],
         fields: ['width','height','qty','position','associatedOpening','shape','room','floor',
