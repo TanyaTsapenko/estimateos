@@ -186,6 +186,9 @@ export const F: Record<string, FieldDef> = {
   egress:            { label: 'Egress required',      kind: 'toggle', sec: 'config', sub: 'Code-compliant exit' },
   doorSwing:         { label: 'Door swing',           kind: 'select', sec: 'config',
                        opts: ['Left In-Swing','Right In-Swing','Left Out-Swing','Right Out-Swing'], half: true },
+  doubleDoorSwing:   { label: 'Door swing',           kind: 'select', sec: 'config',
+                       opts: ['Left Active In-Swing','Right Active In-Swing',
+                              'Left Active Out-Swing','Right Active Out-Swing'], half: true },
   activePanel:       { label: 'Active panel',         kind: 'select', sec: 'config', opts: ['Left','Right','Both'], half: true },
   lockset:           { label: 'Lockset',              kind: 'select', sec: 'config', opts: ['Lever','Knob','Handleset'], half: true },
   locksetBore:       { label: 'Lockset bore',         kind: 'select', sec: 'config', opts: ['2-1/8"','2-3/4"','Custom'], half: true },
@@ -203,6 +206,8 @@ export const F: Record<string, FieldDef> = {
   closerType:        { label: 'Door closer',          kind: 'select', sec: 'config', opts: ['None','Hydraulic','Pneumatic'], half: true },
   astragal:          { label: 'Astragal',             kind: 'select', sec: 'config',
                        opts: ['Standard Astragal','Removable Astragal'], half: true },
+  astragalType:      { label: 'Astragal type',        kind: 'select', sec: 'config',
+                       opts: ['None','Standard','Security Astragal'], half: true },
   multipointLock:    { label: 'Multipoint lock',      kind: 'toggle', sec: 'config', sub: 'Multiple locking points' },
   // legacy fields kept for backward-compat read of old estimates
   swing:   { label: 'Swing direction', kind: 'select', sec: 'config', opts: ['Left hand','Right hand'], half: true },
@@ -345,7 +350,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'doorExt','doorInt','doorStyle','glassInsert','glassType2','sidelights','transomAbove',
           'laminatedGlass','doorMaterial',
           'brickmould','jamb','thresholdType',
-          'hwColour','doorSwing','lockset','deadbolt',
+          'hwColour','doubleDoorSwing','lockset','deadbolt','astragalType',
           'photos','notes'] },
 
       french: { name: 'French door', subs: ['Single french','Double french','French + sidelites'],
