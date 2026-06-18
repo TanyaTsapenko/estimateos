@@ -16,7 +16,14 @@ import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } 
 function groupSections(op: Opening) {
   const t = getType(op.typeId)
   const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
-  const allKeys = [...t.fields, ...extraKeys.filter(k => !t.fields.includes(k))]
+  const extraValueKeys = Object.entries(t.extraFieldsByValue ?? {})
+    .filter(([, cond]) => op.vals[cond.field] === cond.value)
+    .map(([k]) => k)
+  const allKeys = [
+    ...t.fields,
+    ...extraKeys.filter(k => !t.fields.includes(k)),
+    ...extraValueKeys.filter(k => !t.fields.includes(k)),
+  ]
   return SECTIONS
     .map(s => ({ ...s, keys: allKeys.filter(k => F[k] && F[k].sec === s.id) }))
     .filter(s => s.keys.length > 0)

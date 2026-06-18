@@ -163,14 +163,14 @@ export const F: Record<string, FieldDef> = {
   thresholdType: { label: 'Threshold type',    kind: 'select', sec: 'install',
                    opts: ['Standard','Low Profile','Barrier Free'], half: true },
   projectionDepth:       { label: 'Projection depth',        kind: 'select', sec: 'install',
-                           opts: ['12"','18"','24"','Custom'], half: true },
+                           opts: ['12"','18"','24"','30"','Custom'], half: true },
   projectionDepthCustom: { label: 'Specify projection depth', kind: 'text',   sec: 'install', ph: 'e.g. 30"' },
   supportType:           { label: 'Support type',             kind: 'select', sec: 'install',
                            opts: ['Cable Support','Knee Brace','Seat Support'], half: true },
 
   // ── Operation & hardware
   centerWindowType:  { label: 'Center window type',   kind: 'select', sec: 'config',
-                       opts: ['Fixed','Picture','Casement'], half: true },
+                       opts: ['Picture','Casement'], half: true },
   screen:            { label: 'Screen type',         kind: 'select', sec: 'config', opts: ['None','Standard','Retractable','BetterVue'], half: true },
   screenCoverage:    { label: 'Screen coverage',      kind: 'select', sec: 'config', opts: ['Half Screen','Full Screen','No Screen'], half: true },
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
@@ -213,6 +213,7 @@ export type TypeDef = {
   subs: string[]
   fields: string[]
   extraFieldsBySubtype?: Record<string, string[]>
+  extraFieldsByValue?: Record<string, { field: string; value: string | number | boolean }>
 }
 
 export type CatalogGroup = {
@@ -281,10 +282,11 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       bay: { name: 'Bay', subs: ['3 lite','4 lite','5 lite'],
         fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard','bayAngle',
-          'roofType','extColour','intColour','grid','grilleType',
+          'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,
           'material','install','condition','projectionDepth','supportType',
-          'centerWindowType','egress','photos','notes'] },
+          'centerWindowType','egress','photos','notes'],
+        extraFieldsByValue: { roofType: { field: 'seatBoard', value: true } } },
 
       bow: { name: 'Bow', subs: ['4 lite','5 lite','6 lite','7 lite'],
         fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard',
