@@ -118,7 +118,6 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     transom:          0,
     transom_above:    Boolean(v.transomAbove),
     core_type:        String(v.coreType || '').toLowerCase(),
-    handle_type:      String(v.handle   || '').toLowerCase(),
     egress_required:  Boolean(v.egress),
     notes:            String(v.notes    || ''),
     custom_shape_label: (v.customShapeDesc as string) || null,
@@ -186,7 +185,6 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.transom_panes) vals.transomPanes = String(row.transom_panes)
   if (row.transom_above != null) vals.transomAbove = Boolean(row.transom_above)
   if (row.core_type) vals.coreType = capitalize(String(row.core_type))
-  if (row.handle_type) vals.handle = capitalize(String(row.handle_type))
   if (row.egress_required != null) vals.egress = Boolean(row.egress_required)
   if (row.notes) vals.notes = String(row.notes)
   if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)

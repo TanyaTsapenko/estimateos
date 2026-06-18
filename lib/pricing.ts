@@ -73,7 +73,6 @@ export interface Opening {
   transom_above: boolean
   glass_type: string
   core_type: string
-  handle_type: string | null
   combo_sections: { type: string; width: number }[] | null
   custom_shape_label: string
   custom_colour_label: string

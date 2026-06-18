@@ -139,7 +139,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
-  glass_type: '', core_type: '', handle_type: '', combo_sections: null,
+  glass_type: '', core_type: '', combo_sections: null,
   custom_shape_label: '', custom_colour_label: '',
   interior_photo_url: null, exterior_photo_url: null, photo_3_url: null, photo_4_url: null,
   interior_colour: 'white', interior_colour_palette_id: null, interior_colour_name: null,
@@ -246,7 +246,7 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
     installation4a: true,
     typeconfig: !!op.opening_direction || !!op.panels_count || !!op.bay_angle || !!op.transom_panes ||
       op.sidelight_left > 0 || op.sidelight_right > 0 || op.transom_above || op.has_screen ||
-      op.tilt_clean || !!op.glass_type || !!op.core_type || !!op.handle_type || !!op.combo_sections,
+      op.tilt_clean || !!op.glass_type || !!op.core_type || !!op.combo_sections,
     notes: !!(op.notes || op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url),
   }))
   const toggle = (g: keyof typeof openGroup) => setOpenGroup(p => ({ ...p, [g]: !p[g] }))
@@ -795,28 +795,6 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                   </select>
                 </div>
               )}
-              {opts.showHandleType && (
-                <div style={{ padding: '8px 0', borderBottom: '0.5px solid #F1F5F9' }}>
-                  <div style={lblStyle}>Handle type</div>
-                  <select value={op.handle_type || ''} onChange={e => updateOpening(op.id, 'handle_type', e.target.value)}
-                    style={{ ...selStyle, color: op.handle_type ? '#0A1628' : '#94A3B8' }}>
-                    <option value=''>Select...</option>
-                    {['window_cas', 'window_awn', 'window_tilt'].includes(op.type) ? <>
-                      <option value='casement_lever'>Casement lever</option>
-                      <option value='tilt_latch'>Tilt latch</option>
-                      <option value='lift_rail'>Lift rail</option>
-                      <option value='push_bar'>Push bar</option>
-                    </> : <>
-                      <option value='lever'>Lever handle</option>
-                      <option value='knob'>Knob</option>
-                      <option value='pull_bar'>Pull bar</option>
-                      <option value='passage_set'>Passage set</option>
-                      <option value='deadbolt_lever'>Deadbolt + lever</option>
-                      <option value='dummy'>Dummy handle</option>
-                    </>}
-                  </select>
-                </div>
-              )}
               {opts.showComboSections && (() => {
                 const sections: { type: string; width: number }[] = op.combo_sections || [{ type: 'window_fix', width: 24 }, { type: 'window_cas', width: 14 }]
                 const typeLabels: Record<string, string> = { window_dh: 'D-Hung', window_sh: 'S-Hung', window_cas: 'Casement', window_awn: 'Awning', window_sl: 'Slider', window_fix: 'Fixed', window_trans: 'Transom' }
@@ -1155,7 +1133,6 @@ function NewEstimateForm() {
             low_e: op.low_e != null ? op.low_e : op.glass === 'lowe',
             tempered: op.tempered != null ? op.tempered : op.glass === 'tempered',
             glass_type: op.glass_type || '', core_type: op.core_type || '',
-            handle_type: (op as any).handle_type || '',
             combo_sections: (op as any).combo_sections || null,
             custom_shape_label: (op as any).custom_shape_label || '',
             custom_colour_label: (op as any).custom_colour_label || '',
@@ -1391,7 +1368,6 @@ function NewEstimateForm() {
       transom_above: op.transom_above === true || op.transom_above === ('true' as any) ? true : false,
       glass_type: op.glass_type || '',
       core_type: op.core_type || '',
-      handle_type: op.handle_type || '',
       combo_sections: (op as any).combo_sections ? JSON.stringify((op as any).combo_sections) : null,
       custom_shape_label: op.custom_shape_label || null,
       custom_colour_label: op.custom_colour_label || null,

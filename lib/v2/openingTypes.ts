@@ -176,8 +176,6 @@ export const F: Record<string, FieldDef> = {
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
   operSide:          { label: 'Operating side',       kind: 'select', sec: 'config', opts: ['Left (XO)','Right (OX)'], half: true },
   openMode:          { label: 'Opening mode',         kind: 'select', sec: 'config', opts: ['Tilt','Turn','Tilt & turn'], half: true },
-  handle:            { label: 'Handle type',          kind: 'select', sec: 'config', opts: ['Standard Operator','Folding Handle','Nesting Handle','Custom'], half: true },
-  handleCustom:      { label: 'Specify handle type',  kind: 'text',   sec: 'config', ph: 'e.g. Multi-point lock handle' },
   hwColour:          { label: 'Hardware colour',      kind: 'color',  sec: 'config', palette: 'hw' },
   egress:            { label: 'Egress required',      kind: 'toggle', sec: 'config', sub: 'Code-compliant exit' },
   doorSwing:         { label: 'Door swing',           kind: 'select', sec: 'config',
@@ -231,7 +229,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','shape','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','handle','hwColour','egress','photos','notes'],
+          'screen','hwColour','egress','photos','notes'],
         extraFieldsBySubtype: {
           'Double casement': ['activePanel'],
         } },
@@ -240,7 +238,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','openDir','handle','hwColour','egress','photos','notes'] },
+          'screen','openDir','hwColour','egress','photos','notes'] },
 
       picture: { name: 'Picture', subs: [],
         fields: ['width','height','qty','shape','room','floor',
@@ -279,7 +277,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'openMode','handle','hwColour','egress','photos','notes'] },
+          'openMode','hwColour','egress','photos','notes'] },
 
       bay: { name: 'Bay', subs: ['3 lite','4 lite','5 lite'],
         fields: ['owidth','oheight','qty','sideUnit','bayAngle','seatBoard','headBoard','room','floor',
@@ -414,7 +412,7 @@ export const DEFAULTS: Record<string, string | number | boolean> = {
 
 export const NO_DEFAULT = new Set([
   'width','height','owidth','oheight','room',
-  'openDir','operSide','openMode','handle',
+  'openDir','operSide','openMode',
   'doorSwing','locksetBore',
   'swing','inOut','activePanel',
 ])
