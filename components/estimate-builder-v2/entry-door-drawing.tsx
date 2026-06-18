@@ -47,70 +47,90 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
   )
 }
 
-// ── Door panel (active, shows swing) ──────────────────────────────
+// ── Door slab helpers ─────────────────────────────────────────────
+
+function doorSlabBase(x1: number, y1: number, x2: number, y2: number,
+  panelFill: string, frac: number, fullGlass: boolean) {
+  const innerH = (y2 - y1) - 12
+  const glassH = frac * innerH
+  const glassY1 = y1 + 6
+  return (
+    <>
+      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      {frac > 0 && !fullGlass && (
+        <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={SEC} strokeWidth="1"/>
+      )}
+    </>
+  )
+}
+
+function doorHinges(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean) {
+  const H  = y2 - y1
+  const hy1 = y1 + Math.round(H * 0.20)
+  const hy2 = y1 + Math.round(H * 0.67)
+  const hx  = hingeLeft ? x1 + 2 : x2 - 7
+  return (
+    <>
+      <rect x={hx} y={hy1} width="5" height="10" rx="1" fill={SEC}/>
+      <rect x={hx} y={hy2} width="5" height="10" rx="1" fill={SEC}/>
+    </>
+  )
+}
+
+function doorKnob(x1: number, y1: number, x2: number, y2: number, handleLeft: boolean) {
+  const my = (y1 + y2) / 2
+  if (handleLeft) return (
+    <>
+      <circle cx={x1+14} cy={my} r="4" fill={SEC}/>
+      <rect x={x1+12} y={my-9} width="5" height="18" rx="2" fill={SEC}/>
+    </>
+  )
+  return (
+    <>
+      <circle cx={x2-14} cy={my} r="4" fill={SEC}/>
+      <rect x={x2-17} y={my-9} width="5" height="18" rx="2" fill={SEC}/>
+    </>
+  )
+}
+
+// ── Door panel (active, shows swing arc) ──────────────────────────
 
 function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert }: {
   x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean; glassInsert?: string
 }) {
-  const my = (y1 + y2) / 2
   const frac = liteFraction(glassInsert)
   const fullGlass = frac >= 1
   const panelFill = fullGlass ? GLASS : DOOR_FILL
-  const innerH = (y2 - y1) - 12
-  const glassH = frac * innerH
-  const glassY1 = y1 + 6
 
-  if (hingeLeft) {
-    return (
-      <g>
-        <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
-        {frac > 0 && !fullGlass && (
-          <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
-        )}
-        <line x1={x1+3} y1={y1+3} x2={x1+3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
-        <path d={`M${x1+3} ${y2-3} Q${x2-3} ${y2-3} ${x2-3} ${y1+3}`}
-          stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
-        <line x1={x1+3} y1={y2-3} x2={x2-3} y2={y1+3} stroke={MOV} strokeWidth="1.2"/>
-        <rect x={x2-10} y={my-10} width="6" height="20" rx="2" fill={SEC}/>
-      </g>
-    )
-  }
+  // Thin dashed arc from bottom hinge corner → along hinge edge → opposite top corner
+  const arc = hingeLeft
+    ? `M${x1+3} ${y2-3} Q${x1+3} ${y1+3} ${x2-3} ${y1+3}`
+    : `M${x2-3} ${y2-3} Q${x2-3} ${y1+3} ${x1+3} ${y1+3}`
+
   return (
     <g>
-      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
-      {frac > 0 && !fullGlass && (
-        <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
-      )}
-      <line x1={x2-3} y1={y1+3} x2={x2-3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
-      <path d={`M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}`}
-        stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
-      <line x1={x2-3} y1={y2-3} x2={x1+3} y2={y1+3} stroke={MOV} strokeWidth="1.2"/>
-      <rect x={x1+4} y={my-10} width="6" height="20" rx="2" fill={SEC}/>
+      {doorSlabBase(x1, y1, x2, y2, panelFill, frac, fullGlass)}
+      {doorHinges(x1, y1, x2, y2, hingeLeft)}
+      {doorKnob(x1, y1, x2, y2, !hingeLeft)}
+      <path d={arc} stroke={MOV} strokeWidth="1" strokeDasharray="5 3" fill="none"/>
     </g>
   )
 }
 
-// ── Door panel (inactive — no swing arc) ──────────────────────────
+// ── Door panel (inactive — slab with hardware, no swing arc) ──────
 
 function DoorPanelInactive({ x1, y1, x2, y2, handleLeft, glassInsert }: {
   x1: number; y1: number; x2: number; y2: number; handleLeft: boolean; glassInsert?: string
 }) {
-  const my = (y1 + y2) / 2
   const frac = liteFraction(glassInsert)
   const fullGlass = frac >= 1
   const panelFill = fullGlass ? GLASS : DOOR_FILL
-  const innerH = (y2 - y1) - 12
-  const glassH = frac * innerH
-  const glassY1 = y1 + 6
+  const hingeLeft = !handleLeft
   return (
     <g>
-      <rect x={x1} y={y1} width={x2-x1} height={y2-y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
-      {frac > 0 && !fullGlass && (
-        <rect x={x1+8} y={glassY1} width={x2-x1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
-      )}
-      {handleLeft
-        ? <rect x={x1+4}  y={my-10} width="6" height="20" rx="2" fill={SEC}/>
-        : <rect x={x2-10} y={my-10} width="6" height="20" rx="2" fill={SEC}/>}
+      {doorSlabBase(x1, y1, x2, y2, panelFill, frac, fullGlass)}
+      {doorHinges(x1, y1, x2, y2, hingeLeft)}
+      {doorKnob(x1, y1, x2, y2, handleLeft)}
     </g>
   )
 }
