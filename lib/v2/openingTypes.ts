@@ -88,7 +88,7 @@ export type FieldDef = {
   opts?: string[]
   palette?: string
   sub?: string
-  visibleWhen?: { field: string; value: string }
+  visibleWhen?: { field: string; value: string | boolean }
 }
 
 export const F: Record<string, FieldDef> = {
@@ -134,7 +134,7 @@ export const F: Record<string, FieldDef> = {
   doorStyle:   { label: 'Door style',       kind: 'select', sec: 'look',
                  opts: ['Flush','2-panel','4-panel','6-panel','Shaker','Full glass'] },
   glassInsert: { label: 'Glass insert',     kind: 'select', sec: 'look',
-                 opts: ['None','Clear','Frosted','Decorative','1/2 lite','3/4 lite','Full lite'] },
+                 opts: ['None','1/4 Lite','1/2 Lite','3/4 Lite','Full Lite','Decorative','Frosted'] },
   glassStyle:  { label: 'Glass style',      kind: 'select', sec: 'look',
                  opts: ['Clear','Frosted','Internal grilles','Decorative'] },
   sidelights:  { label: 'Sidelights',       kind: 'select', sec: 'look',   opts: ['None','Left','Right','Both'], half: true },
@@ -185,8 +185,10 @@ export const F: Record<string, FieldDef> = {
   activePanel:       { label: 'Active panel',         kind: 'select', sec: 'config', opts: ['Left','Right','Both'], half: true },
   lockset:           { label: 'Lockset',              kind: 'select', sec: 'config', opts: ['Lever','Knob','Handleset'], half: true },
   locksetBore:       { label: 'Lockset bore',         kind: 'select', sec: 'config', opts: ['2-1/8"','2-3/4"','Custom'], half: true },
-  deadbolt:          { label: 'Deadbolt',             kind: 'select', sec: 'config',
-                       opts: ['None','Single cylinder','Double cylinder'], half: true },
+  deadbolt:          { label: 'Deadbolt',             kind: 'toggle', sec: 'config' },
+  deadboltType:      { label: 'Deadbolt type',        kind: 'select', sec: 'config',
+                       opts: ['Single Cylinder','Double Cylinder'], half: true,
+                       visibleWhen: { field: 'deadbolt', value: true } },
   openingAngle:      { label: 'Opening angle',        kind: 'select', sec: 'config', opts: ['30°','45°','90°'], half: true },
   openingRestrictor: { label: 'Opening restrictor',   kind: 'toggle', sec: 'config', sub: 'Limit device' },
   securityLock:      { label: 'Security lock',        kind: 'toggle', sec: 'config' },
@@ -321,12 +323,16 @@ export const CATALOG: Record<string, CatalogGroup> = {
   door: {
     label: 'Doors', icon: 'door',
     types: {
-      entry: { name: 'Entry door', subs: ['Single door','Left sidelite','Right sidelite','Double sidelite','Transom'],
+      entry: { name: 'Entry door',
+        subs: ['Single Door','Single + Left Sidelite','Single + Right Sidelite',
+          'Single + Double Sidelite','Single + Transom',
+          'Single + Sidelites + Transom','Double Door',
+          'Double Door + Sidelites','Double Door + Transom'],
         fields: ['width','height','qty',
-          'doorExt','doorInt','doorStyle','glassInsert','sidelights','transomAbove',
+          'doorExt','doorInt','doorStyle','glassInsert',
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
-          'hwColour','doorSwing','lockset','locksetBore','deadbolt',
+          'hwColour','doorSwing','lockset','deadbolt','deadboltType',
           'photos','notes'] },
 
       doubleEntry: { name: 'Double entry', subs: ['Equal double','Unequal double'],
@@ -403,7 +409,7 @@ export const DEFAULTS: Record<string, string | number | boolean> = {
   material: 'Vinyl', doorMaterial: 'Fiberglass', install: 'Retrofit', condition: 'Good',
   glassStyle: 'Clear', glassInsert: 'None', doorStyle: 'Flush', screen: 'Standard',
   screenCoverage: 'Half Screen',
-  hwColour: 'White', lockset: 'Lever', deadbolt: 'Single cylinder',
+  hwColour: 'White', lockset: 'Lever', deadbolt: false,
   brickmould: 'Standard', jamb: '4 9/16"', sideUnit: 'Casement', numSections: '5',
   numPanels: '2', seatBoard: true, headBoard: true, egress: false,
   coreType: 'Solid', transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,
