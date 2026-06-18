@@ -139,10 +139,10 @@ export function BayDrawing({
 
 // ── Bow drawing ────────────────────────────────────────────────────
 export function BowDrawing({
-  sub, sideUnit, heightIn, widthIn,
+  sub, panelType, heightIn, widthIn,
 }: {
   sub: string
-  sideUnit?: string
+  panelType?: string
   heightIn?: number
   widthIn?: number
 }) {
@@ -162,7 +162,10 @@ export function BowDrawing({
     const x2 = x1 + pw
     const isLeft  = i === 0
     const isRight = i === N - 1
-    const style: PanelStyle = isRight ? styleFromUnit(sideUnit, true) : styleFromUnit(sideUnit, false)
+    const flipHinge = i >= N / 2
+    const style: PanelStyle = panelType === 'Casement'
+      ? (flipHinge ? 'casement-r' : 'casement-l')
+      : 'fixed'
 
     if (isLeft) {
       const pts = `${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}`

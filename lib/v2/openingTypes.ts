@@ -171,6 +171,8 @@ export const F: Record<string, FieldDef> = {
   // ── Operation & hardware
   centerWindowType:  { label: 'Center window type',   kind: 'select', sec: 'config',
                        opts: ['Picture','Casement'], half: true },
+  panelType:         { label: 'Panel type',           kind: 'select', sec: 'config',
+                       opts: ['Fixed','Casement'], half: true },
   screen:            { label: 'Screen type',         kind: 'select', sec: 'config', opts: ['None','Standard','Retractable','BetterVue'], half: true },
   screenCoverage:    { label: 'Screen coverage',      kind: 'select', sec: 'config', opts: ['Half Screen','Full Screen','No Screen'], half: true },
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
@@ -213,7 +215,7 @@ export type TypeDef = {
   subs: string[]
   fields: string[]
   extraFieldsBySubtype?: Record<string, string[]>
-  extraFieldsByValue?: Record<string, { field: string; value: string | number | boolean }>
+  extraFieldsByValue?: Record<string, { field: string; value?: string | number | boolean; notEmpty?: boolean }>
 }
 
 export type CatalogGroup = {
@@ -292,7 +294,9 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'egress','photos','notes'] },
+          'projectionDepth','supportType',
+          'panelType','photos','notes'],
+        extraFieldsByValue: { roofType: { field: 'supportType', notEmpty: true } } },
 
       combination: { name: 'Combination', subs: ['Custom combination'],
         fields: ['owidth','oheight','qty',

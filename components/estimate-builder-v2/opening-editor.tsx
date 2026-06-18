@@ -17,7 +17,11 @@ function groupSections(op: Opening) {
   const t = getType(op.typeId)
   const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
   const extraValueKeys = Object.entries(t.extraFieldsByValue ?? {})
-    .filter(([, cond]) => op.vals[cond.field] === cond.value)
+    .filter(([, cond]) => {
+      const v = op.vals[cond.field]
+      if (cond.notEmpty) return v !== undefined && v !== null && v !== '' && v !== false
+      return v === cond.value
+    })
     .map(([k]) => k)
   const allKeys = [
     ...t.fields,
@@ -137,7 +141,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <>
               <BowDrawing
                 sub={op.sub}
-                sideUnit={op.vals.sideUnit as string | undefined}
+                panelType={op.vals.panelType as string | undefined}
                 widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
                 heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
               />
