@@ -1815,23 +1815,6 @@ export default function SettingsPage() {
                 </div>
               ))}
             </div>
-            <div style={{ padding: '0 16px 24px', marginTop: 24 }}>
-              <button
-                onClick={async () => {
-                  const supabase = createClient()
-                  await supabase.auth.signOut()
-                  router.push('/auth')
-                }}
-                style={{
-                  width: '100%', padding: '14px', borderRadius: 12,
-                  background: '#FEF2F2', border: '1px solid #FECACA',
-                  color: '#DC2626', fontSize: 14, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
-                Sign out
-              </button>
-            </div>
           </div>
         ) : (
           // Detail view
@@ -1875,10 +1858,6 @@ export default function SettingsPage() {
             </div>
           </div>
           <Pill tone="blue">PRO PLAN</Pill>
-          <button onClick={() => supabase.auth.signOut().then(() => router.push('/auth'))}
-            style={{ padding: '8px 14px', background: '#fff', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <SIcon name="logout" size={14} /> Sign out
-          </button>
         </div>
 
         {/* Two-pane */}
