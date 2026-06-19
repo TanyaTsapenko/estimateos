@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import BottomNav from '@/components/BottomNav'
 import { fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClipboardList, ArrowLeft } from 'lucide-react'
@@ -953,7 +952,6 @@ export default function PriceListPage() {
           </div>
         )}
 
-        <BottomNav />
       </div>
     </>
   )

@@ -692,9 +692,12 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   }
 }
 
-/* ── BOTTOM TAB BAR (hide on desktop) ── */
-@media (min-width: 768px) {
-  .bottom-tab-bar { display: none !important; }
+/* ── DRAWER NAV (mobile only) ── */
+.dashboard-mobile-nav { display: none; }
+@media (max-width: 767px) {
+  .dashboard-mobile-nav { display: block; }
+  /* FAB needs room at bottom */
+  .main-content { padding-bottom: calc(104px + env(safe-area-inset-bottom)) !important; }
 }
 
 /* ── SIDEBAR CONTAINER (hide on mobile) ── */

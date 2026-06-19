@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, Settings2, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
 import BellButton, { type AppNotification } from '@/components/BellButton'
@@ -714,21 +714,14 @@ const [dashToast, setDashToast] = useState('')
           <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.45) 0%, transparent 70%)', top: -130, right: -100, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
 
-          {/* Welcome row */}
-          <div style={{ padding: '20px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-            <div>
-              {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />
-              <button
-                onClick={() => router.push('/dashboard/settings')}
-                style={{ background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: 10, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-              >
-                <Settings2 size={18} color="rgba(255,255,255,0.8)" strokeWidth={1.8} />
-              </button>
-            </div>
+          {/* Welcome row — burger lives top-left via DrawerNav (fixed), bell top-right */}
+          <div style={{ padding: '14px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', position: 'relative' }}>
+            <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />
+          </div>
+          {/* Greeting (below burger zone) */}
+          <div style={{ padding: '6px 20px 0', position: 'relative' }}>
+            {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
+            <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: 2 }}>{userName || '—'}</div>
           </div>
 
           {/* Day + done count */}
