@@ -1,5 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy,
+  useSortable, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { C } from '@/lib/v2/openingTypes'
 import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 import type { CombinationSection, CombinationSectionType } from '@/lib/v2/openingTypes'
@@ -96,14 +105,10 @@ function SegContent({ info }: { info: SegInfo }) {
     const arrLine = midSectY + (sB - midSectY) * 0.72
     return (
       <>
-        {/* fixed top: dashed X */}
         <line x1={sL} y1={sT} x2={sR} y2={midSectY} stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
         <line x1={sR} y1={sT} x2={sL} y2={midSectY} stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
-        {/* separator */}
         <line x1={sL} y1={midSectY} x2={sR} y2={midSectY} stroke={FRAME} strokeWidth="1.5"/>
-        {/* moving bottom: MOV border */}
         <rect x={sL} y={midSectY} width={Math.max(1, sR - sL)} height={Math.max(1, sB - midSectY)} fill="none" stroke={MOV} strokeWidth="1.5"/>
-        {/* upward arrow */}
         <path d={`M${sCX},${arrTip} L${sCX-5},${arrTip+8} L${sCX},${arrTip+6} L${sCX+5},${arrTip+8}Z`} fill={MOV}/>
         <line x1={sCX} y1={arrTip+6} x2={sCX} y2={arrLine} stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
       </>
@@ -150,6 +155,139 @@ export function CombinationDrawing({ sections, heightIn }: { sections: Combinati
   )
 }
 
+// ── Grip handle icon ───────────────────────────────────────────────
+function GripIcon() {
+  return (
+    <svg width="14" height="16" viewBox="0 0 14 16" fill={SEC} aria-hidden>
+      {([3, 8, 13] as number[]).flatMap(y => ([3, 9] as number[]).map(x => (
+        <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5"/>
+      )))}
+    </svg>
+  )
+}
+
+// ── Sortable section row ───────────────────────────────────────────
+interface SortableRowProps {
+  id: string
+  index: number
+  sec: CombinationSection
+  totalSections: number
+  widthMode: 'equal' | 'custom'
+  displayW: number
+  onTypeChange: (type: CombinationSectionType) => void
+  onWidthChange: (raw: string) => void
+  onRemove: () => void
+}
+
+function SortableRow({
+  id, index, sec, totalSections, widthMode, displayW,
+  onTypeChange, onWidthChange, onRemove,
+}: SortableRowProps) {
+  const {
+    attributes, listeners, setNodeRef, setActivatorNodeRef,
+    transform, transition, isDragging,
+  } = useSortable({ id })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+        position: 'relative',
+        zIndex: isDragging ? 10 : undefined,
+      }}
+    >
+      {/* drag handle — touch target padded to ~44px */}
+      <div
+        ref={setActivatorNodeRef}
+        {...attributes}
+        {...listeners}
+        style={{
+          touchAction: 'none',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 44, flexShrink: 0,
+        }}
+      >
+        <GripIcon />
+      </div>
+
+      {/* numbered badge */}
+      <div style={{
+        width: 22, height: 22, borderRadius: 99,
+        background: C.blueSoft, border: `1px solid ${C.blueLine}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, fontSize: 10, fontWeight: 700, color: C.blue,
+      }}>
+        {index + 1}
+      </div>
+
+      {/* type select */}
+      <select
+        value={sec.type}
+        onChange={e => onTypeChange(e.target.value as CombinationSectionType)}
+        style={{
+          flex: 1, height: 38, padding: '0 8px', borderRadius: 9,
+          border: `1px solid ${C.borderStrong}`, background: C.card,
+          fontSize: 13, fontWeight: 600, color: C.ink,
+          fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+        }}
+      >
+        {SECTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+      </select>
+
+      {/* width: editable in custom mode, read-only in equal mode */}
+      {widthMode === 'custom' ? (
+        <div style={{ position: 'relative', width: 72, flexShrink: 0 }}>
+          <input
+            type="number" min="1" step="0.5" value={sec.width}
+            onChange={e => onWidthChange(e.target.value)}
+            style={{
+              width: '100%', height: 38, padding: '0 20px 0 8px', borderRadius: 9,
+              border: `1px solid ${C.borderStrong}`, background: C.card,
+              fontSize: 13, fontWeight: 600, color: C.ink,
+              fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+          <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: C.inkSoft, pointerEvents: 'none' }}>&quot;</span>
+        </div>
+      ) : (
+        <div style={{
+          width: 72, height: 38, display: 'flex', alignItems: 'center',
+          justifyContent: 'flex-end', gap: 2, paddingRight: 10,
+          borderRadius: 9, border: `1px solid ${C.border}`, background: C.bg, flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: C.inkMid }}>{displayW}</span>
+          <span style={{ fontSize: 11, color: C.inkFaint }}>&quot;</span>
+        </div>
+      )}
+
+      {/* delete */}
+      <button
+        onClick={onRemove}
+        disabled={totalSections <= 1}
+        aria-label="Remove section"
+        style={{
+          width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`,
+          background: totalSections <= 1 ? C.bg : C.card,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: totalSections <= 1 ? 'not-allowed' : 'pointer', flexShrink: 0,
+        }}
+      >
+        <svg width={13} height={13} viewBox="0 0 24 24" fill="none"
+          stroke={totalSections <= 1 ? C.inkFaint : C.red}
+          strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 // ── SectionBuilder ─────────────────────────────────────────────────
 interface SectionBuilderProps {
   sections: CombinationSection[]
@@ -174,17 +312,49 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
   const parsedTotal = parseFloat(equalTotal) || 72
   const displayW = eqW(parsedTotal, sections.length)
 
+  // ── Stable IDs for DnD (parallel array to sections) ─────────────
+  const counterRef = useRef(0)
+  const idsRef = useRef<string[]>([])
+
+  // Sync idsRef length with sections length (runs synchronously in render)
+  if (idsRef.current.length < sections.length) {
+    while (idsRef.current.length < sections.length) {
+      idsRef.current.push(String(counterRef.current++))
+    }
+  } else if (idsRef.current.length > sections.length) {
+    idsRef.current = idsRef.current.slice(0, sections.length)
+  }
+  const ids = idsRef.current
+
+  // ── DnD sensors (pointer for mouse/stylus, touch for finger) ─────
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 6 } }),
+  )
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+    const oldIndex = ids.indexOf(String(active.id))
+    const newIndex = ids.indexOf(String(over.id))
+    if (oldIndex === -1 || newIndex === -1) return
+    idsRef.current = arrayMove(ids, oldIndex, newIndex)
+    onChange(arrayMove(sections, oldIndex, newIndex))
+  }
+
   // ── Presets ──────────────────────────────────────────────────────
   const handlePreset = (preset: Preset) => {
     const total = parsedTotal
     if (!preset.types) {
-      // "Start from scratch" → single Picture section
+      // reset IDs for the single new section
+      idsRef.current = [String(counterRef.current++)]
       onChange([{ type: 'Picture', width: total }])
       setEqualTotal(String(total))
       setWidthMode('equal')
       return
     }
     const types = preset.types
+    // generate fresh IDs for all preset sections
+    idsRef.current = types.map(() => String(counterRef.current++))
     const w = eqW(total, types.length)
     onChange(types.map(type => ({ type, width: w })))
     setEqualTotal(String(total))
@@ -219,7 +389,6 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
       setEqualTotal(String(total))
       onChange(sections.map(s => ({ ...s, width: eqW(total, sections.length) })))
     }
-    // custom → equal: sections already have materialized widths from equal mode, no re-emit needed
     setWidthMode(newMode)
   }
 
@@ -348,65 +517,34 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
         </div>
       )}
 
-      {/* section list */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {sections.map((sec, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* numbered badge */}
-            <div style={{ width: 22, height: 22, borderRadius: 99, background: C.blueSoft, border: `1px solid ${C.blueLine}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, fontWeight: 700, color: C.blue }}>
-              {i + 1}
-            </div>
+      {/* section list with drag-and-drop */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {sections.map((sec, i) => (
+              <SortableRow
+                key={ids[i]}
+                id={ids[i]}
+                index={i}
+                sec={sec}
+                totalSections={sections.length}
+                widthMode={widthMode}
+                displayW={displayW}
+                onTypeChange={type => updateType(i, type)}
+                onWidthChange={raw => updateWidth(i, raw)}
+                onRemove={() => remove(i)}
+              />
+            ))}
 
-            {/* type select */}
-            <select
-              value={sec.type}
-              onChange={e => updateType(i, e.target.value as CombinationSectionType)}
-              style={{ flex: 1, height: 38, padding: '0 8px', borderRadius: 9, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-            >
-              {SECTION_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-
-            {/* width: editable in custom mode, read-only in equal mode */}
-            {widthMode === 'custom' ? (
-              <div style={{ position: 'relative', width: 72, flexShrink: 0 }}>
-                <input
-                  type="number" min="1" step="0.5" value={sec.width}
-                  onChange={e => updateWidth(i, e.target.value)}
-                  style={{ width: '100%', height: 38, padding: '0 20px 0 8px', borderRadius: 9, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-                />
-                <span style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: C.inkSoft, pointerEvents: 'none' }}>&quot;</span>
-              </div>
-            ) : (
-              <div style={{ width: 72, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2, paddingRight: 10, borderRadius: 9, border: `1px solid ${C.border}`, background: C.bg, flexShrink: 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.inkMid }}>{displayW}</span>
-                <span style={{ fontSize: 11, color: C.inkFaint }}>&quot;</span>
-              </div>
-            )}
-
-            {/* delete */}
             <button
-              onClick={() => remove(i)}
-              disabled={sections.length <= 1}
-              aria-label="Remove section"
-              style={{ width: 32, height: 32, borderRadius: 8, border: `1px solid ${C.border}`, background: sections.length <= 1 ? C.bg : C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: sections.length <= 1 ? 'not-allowed' : 'pointer', flexShrink: 0 }}
+              onClick={add}
+              style={{ width: '100%', height: 38, borderRadius: 9, border: `1.5px dashed ${C.blueLine}`, background: C.card, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 2 }}
             >
-              <svg width={13} height={13} viewBox="0 0 24 24" fill="none"
-                stroke={sections.length <= 1 ? C.inkFaint : C.red}
-                strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
-              </svg>
+              + Add section
             </button>
           </div>
-        ))}
-
-        <button
-          onClick={add}
-          style={{ width: '100%', height: 38, borderRadius: 9, border: `1.5px dashed ${C.blueLine}`, background: C.card, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', marginTop: 2 }}
-        >
-          + Add section
-        </button>
-      </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
