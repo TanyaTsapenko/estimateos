@@ -64,7 +64,7 @@ function doorSlabBase(x1: number, y1: number, x2: number, y2: number,
   )
 }
 
-function doorHinges(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean) {
+export function doorHinges(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean) {
   const H  = y2 - y1
   const hy1 = y1 + Math.round(H * 0.20)
   const hy2 = y1 + Math.round(H * 0.67)
@@ -77,7 +77,7 @@ function doorHinges(x1: number, y1: number, x2: number, y2: number, hingeLeft: b
   )
 }
 
-function doorKnob(x1: number, y1: number, x2: number, y2: number, handleLeft: boolean) {
+export function doorKnob(x1: number, y1: number, x2: number, y2: number, handleLeft: boolean) {
   const my = (y1 + y2) / 2
   if (handleLeft) return (
     <>

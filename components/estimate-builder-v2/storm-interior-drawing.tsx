@@ -1,5 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
+import { doorHinges, doorKnob } from './entry-door-drawing'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115
@@ -32,28 +33,19 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
   )
 }
 
-// Swing arc for a single door panel (entry-style casement arc)
+// Door-style swing indicator: edge arc + hinge rects + knob
 function SwingArc({ x1, y1, x2, y2, hingeLeft, color = MOV, dash }: {
   x1: number; y1: number; x2: number; y2: number
   hingeLeft: boolean; color?: string; dash?: string
 }) {
-  const my = (y1 + y2) / 2
-  if (hingeLeft) return (
-    <g>
-      <line x1={x1+3} y1={y1+3} x2={x1+3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
-      <path d={`M${x1+3} ${y2-3} Q${x2-3} ${y2-3} ${x2-3} ${y1+3}`}
-        stroke={color} strokeWidth="1.2" strokeDasharray={dash ?? '4 2'} fill="none"/>
-      <line x1={x1+3} y1={y2-3} x2={x2-3} y2={y1+3} stroke={color} strokeWidth="1.2" strokeDasharray={dash}/>
-      <rect x={x2-10} y={my-10} width="6" height="20" rx="2" fill={SEC}/>
-    </g>
-  )
+  const arc = hingeLeft
+    ? `M${x1+3} ${y2-3} Q${x1+3} ${y1+3} ${x2-3} ${y1+3}`
+    : `M${x2-3} ${y2-3} Q${x2-3} ${y1+3} ${x1+3} ${y1+3}`
   return (
     <g>
-      <line x1={x2-3} y1={y1+3} x2={x2-3} y2={y2-3} stroke={SEC} strokeWidth="1.5"/>
-      <path d={`M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}`}
-        stroke={color} strokeWidth="1.2" strokeDasharray={dash ?? '4 2'} fill="none"/>
-      <line x1={x2-3} y1={y2-3} x2={x1+3} y2={y1+3} stroke={color} strokeWidth="1.2" strokeDasharray={dash}/>
-      <rect x={x1+4} y={my-10} width="6" height="20" rx="2" fill={SEC}/>
+      {doorHinges(x1, y1, x2, y2, hingeLeft)}
+      {doorKnob(x1, y1, x2, y2, !hingeLeft)}
+      <path d={arc} stroke={color} strokeWidth="1" strokeDasharray={dash ?? '5 3'} fill="none"/>
     </g>
   )
 }
