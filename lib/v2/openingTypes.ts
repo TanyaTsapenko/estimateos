@@ -185,7 +185,7 @@ export const F: Record<string, FieldDef> = {
   screenCoverage:    { label: 'Screen coverage',      kind: 'select', sec: 'config', opts: ['Half Screen','Full Screen','No Screen'], half: true },
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
   operSide:          { label: 'Operating side',       kind: 'select', sec: 'config', opts: ['Left (XO)','Right (OX)'], half: true },
-  openMode:          { label: 'Opening mode',         kind: 'select', sec: 'config', opts: ['Tilt','Turn','Tilt & turn'], half: true },
+  openMode:          { label: 'Opening mode',         kind: 'select', sec: 'config', opts: ['Tilt Only','Turn Only','Tilt & Turn'], half: true },
   hwColour:          { label: 'Hardware colour',      kind: 'color',  sec: 'config', palette: 'hw' },
   egress:            { label: 'Egress required',      kind: 'toggle', sec: 'config', sub: 'Code-compliant exit' },
   hingeSide:         { label: 'Hinge side',            kind: 'select', sec: 'config',
@@ -299,9 +299,9 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       tiltTurn: { name: 'Tilt & turn', subs: ['Single','Double'],
         fields: ['width','height','qty','room','floor',
-          'extColour','intColour','grid','grilleType',
+          'extColour','intColour','grid',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'openMode','hwColour','egress','photos','notes'] },
+          'openDir','openMode','egress','photos','notes'] },
 
       bay: { name: 'Bay', subs: ['3 lite','4 lite','5 lite'],
         fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard','bayAngle',
@@ -323,7 +323,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['owidth','oheight','qty',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,'material','install',
-          'photos','notes'] },
+          'egress','photos','notes'] },
 
       special: { name: 'Special shape',
         subs: ['Arch','Half arch','Circle','Half circle','Triangle','Trapezoid','Pentagon','Octagon','Gothic','Eyebrow','Custom'],
