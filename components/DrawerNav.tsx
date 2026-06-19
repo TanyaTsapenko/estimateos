@@ -112,6 +112,12 @@ export default function DrawerNav() {
 
   const settingsActive = pathname.startsWith('/dashboard/settings')
 
+  // Glass style on dark/gradient pages; solid style on white-topbar pages
+  const isGradientPage = pathname === '/dashboard' || pathname.startsWith('/dashboard/marketing')
+  const burgerBg    = isGradientPage ? 'rgba(255,255,255,0.15)' : '#F4F6FB'
+  const burgerBorder= isGradientPage ? 'none'                   : '1px solid rgba(15,23,42,0.10)'
+  const burgerIcon  = isGradientPage ? '#fff'                   : '#475467'
+
   return (
     <div className="dashboard-mobile-nav">
 
@@ -125,12 +131,12 @@ export default function DrawerNav() {
           left: 20,
           zIndex: 50,
           width: 42, height: 42, borderRadius: 13,
-          background: 'rgba(255,255,255,0.15)',
-          border: 'none', cursor: 'pointer',
+          background: burgerBg,
+          border: burgerBorder, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
       >
-        <NIcon name="menu" size={21} color="#fff" stroke={1.8} />
+        <NIcon name="menu" size={21} color={burgerIcon} stroke={1.8} />
       </button>
 
       {/* ── FAB scrim (behind FAB, above page) ─────────────────── */}
