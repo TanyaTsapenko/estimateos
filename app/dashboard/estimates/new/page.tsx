@@ -207,6 +207,48 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   }
 }
 
+// ── Estimate Notes collapsible block ──────────────────────────────
+function EstimateNotesBlock({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const hasNotes = value.trim().length > 0
+  return (
+    <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, background: C.card, overflow: 'hidden' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '13px 14px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+      >
+        <div style={{ width: 30, height: 30, borderRadius: 9, background: open ? C.blueSoft : C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <EBIcon name="note" size={16} color={open ? C.blue : C.inkMid} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={{ fontSize: 13.5, fontWeight: 800, color: C.ink, letterSpacing: '0.01em' }}>Estimate Notes</span>
+          <div style={{ fontSize: 11, color: hasNotes ? C.blue : C.inkFaint, marginTop: 1 }}>
+            {open ? 'Applied to whole estimate' : hasNotes ? 'Added · tap to edit' : 'Not added · tap to add'}
+          </div>
+        </div>
+        <EBIcon name={open ? 'chev-u' : 'chev-d'} size={17} color={C.inkSoft} />
+      </button>
+      {open && (
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: '14px 14px 16px' }}>
+          <textarea
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            placeholder="Add scope of work, special instructions, or any notes for this estimate…"
+            rows={5}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              padding: '11px 13px', borderRadius: 12,
+              border: `1px solid ${C.borderStrong}`, background: C.card,
+              fontSize: 13, color: C.ink, fontFamily: 'inherit',
+              lineHeight: 1.6, resize: 'vertical', outline: 'none',
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 type Mode = 'client' | 'list' | 'edit' | 'review'
 
@@ -236,6 +278,7 @@ function NewEstimateV2() {
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState('')
   const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
+  const [scopeNotes, setScopeNotes] = useState('')
 
   // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
@@ -285,7 +328,7 @@ function NewEstimateV2() {
     if (!editId) return
     async function loadEstimate() {
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
       ])
       if (!est) return
@@ -315,6 +358,7 @@ function NewEstimateV2() {
         dripCap:                   Boolean(e.trim_drip_cap),
         blueSkin:                  Boolean(e.trim_blue_skin),
       })
+      setScopeNotes(String(e.scope_notes || ''))
       if (ops && ops.length > 0) {
         setOpenings((ops as Record<string, unknown>[]).map(reverseMapOpeningRow))
       }
@@ -465,6 +509,7 @@ function NewEstimateV2() {
       }
 
       const trimFields = {
+        scope_notes:                      scopeNotes || null,
         trim_casing:                      trimState.casing,
         trim_casing_size:                 trimState.casing !== 'none' ? trimState.casingSize : null,
         trim_jamb:                        trimState.jamb,
@@ -626,6 +671,9 @@ function NewEstimateV2() {
               <div style={{ marginTop: 16 }}>
                 <TrimSection value={trimState} onChange={setTrimState} palette={palettes.frame} openings={openings} />
               </div>
+              <div style={{ marginTop: 16 }}>
+                <EstimateNotesBlock value={scopeNotes} onChange={setScopeNotes} />
+              </div>
             </>
           )}
         </div>
@@ -684,6 +732,7 @@ function NewEstimateV2() {
           openings={openings}
           prices={openings.map(o => computePrice(o, customPricing))}
           trimState={trimState}
+          scopeNotes={scopeNotes}
           onEditOpenings={() => setMode('list')}
           onSave={saveEstimate}
           saving={saving}

@@ -33,12 +33,13 @@ type Props = {
   openings: Opening[]
   prices: number[]
   trimState?: TrimState
+  scopeNotes?: string
   onEditOpenings: () => void
   onSave: (p: SaveParams) => void
   saving?: boolean
 }
 
-export function ReviewStep({ clientInfo, openings, prices, trimState, onEditOpenings, onSave, saving = false }: Props) {
+export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes, onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
 
@@ -132,6 +133,16 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, onEditOpen
           })}
         </div>
       </div>
+
+      {/* ── Estimate Notes ── */}
+      {scopeNotes && scopeNotes.trim() && (
+        <div>
+          <SectionLabel>Estimate Notes</SectionLabel>
+          <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, background: C.card, padding: '12px 14px' }}>
+            <span style={{ fontSize: 13, color: C.inkMid, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{scopeNotes}</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Trim & Finishing ── */}
       {trimState && hasTrim({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_jamb_extension_depth: trimState.jambExtensionDepth, trim_jamb_extension_depth_custom: trimState.jambExtensionDepthCustom, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }) && (
