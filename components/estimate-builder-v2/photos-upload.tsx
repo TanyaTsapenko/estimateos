@@ -23,6 +23,15 @@ const SLOT_FIELD: Record<PhotoSlot, 'interiorPhotoUrl' | 'exteriorPhotoUrl' | 'p
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
 
+const SLOT_DOWNLOAD_NAME: Record<PhotoSlot, string> = {
+  interior: 'interior', exterior: 'exterior', photo3: 'measurement', photo4: 'additional',
+}
+
+function downloadName(url: string, typeId: string, slot: PhotoSlot) {
+  const ext = url.split('/').pop()?.split('.').pop()?.split('?')[0] || 'jpg'
+  return `${typeId}-${SLOT_DOWNLOAD_NAME[slot]}.${ext}`
+}
+
 type Props = {
   op: Opening
   userId: string
@@ -106,6 +115,15 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                       <input id={`${inputId}-replace`} type="file" accept="image/*" capture="environment"
                         style={{ display: 'none' }} onChange={e => handleUpload(slot, e)} />
                     </label>
+                    {/* Download — opens in new tab (iOS fallback) + triggers save on desktop */}
+                    <a href={url} download={downloadName(url, op.typeId, slot)} target="_blank" rel="noopener noreferrer"
+                      style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </a>
                     <button onClick={() => handleDelete(slot)}
                       style={{ background: 'rgba(192,52,26,0.75)', border: 'none', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">

@@ -464,16 +464,39 @@ export default function EstimateDetailPage() {
                 {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
                   <div style={{ padding: '8px 14px 12px', borderTop: '0.5px solid #F1F5F9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {[
-                      { url: op.interior_photo_url, label: 'Interior' },
-                      { url: op.exterior_photo_url, label: 'Exterior' },
-                      { url: op.photo_3_url, label: 'Additional 1' },
-                      { url: op.photo_4_url, label: 'Additional 2' },
-                    ].filter(p => p.url).map(p => (
-                      <a key={p.label} href={p.url!} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <img src={p.url!} alt={p.label} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
-                        <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 500 }}>{p.label}</span>
-                      </a>
-                    ))}
+                      { url: op.interior_photo_url, label: 'Interior',     slug: 'interior' },
+                      { url: op.exterior_photo_url, label: 'Exterior',     slug: 'exterior' },
+                      { url: op.photo_3_url,        label: 'Measurement',  slug: 'measurement' },
+                      { url: op.photo_4_url,        label: 'Additional',   slug: 'additional' },
+                    ].filter(p => p.url).map(p => {
+                      const photoUrl = p.url!
+                      const ext = photoUrl.split('/').pop()?.split('.').pop()?.split('?')[0] || 'jpg'
+                      const filename = `${op.type}-${p.slug}.${ext}`
+                      return (
+                        <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                          <div style={{ position: 'relative' }}>
+                            <a href={photoUrl} target="_blank" rel="noopener noreferrer">
+                              <img src={photoUrl} alt={p.label} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
+                            </a>
+                            <a
+                              href={photoUrl}
+                              download={filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '3px 4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+                              title={`Download ${p.label}`}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                              </svg>
+                            </a>
+                          </div>
+                          <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 500 }}>{p.label}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
               </div>
