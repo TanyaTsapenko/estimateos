@@ -50,13 +50,15 @@ export default function DrawerNav() {
   const pathname = usePathname()
   const supabase = createClient()
 
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [fabOpen,    setFabOpen]    = useState(false)
-  const [draftCount, setDraftCount] = useState(0)
-  const [userName,   setUserName]   = useState('')
-  const [companyName,setCompanyName]= useState('')
-  const [initial,    setInitial]    = useState('')
+  const [drawerOpen,  setDrawerOpen]  = useState(false)
+  const [fabOpen,     setFabOpen]     = useState(false)
+  const [draftCount,  setDraftCount]  = useState(0)
+  const [userName,    setUserName]    = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [initial,     setInitial]     = useState('')
+  const [ownerId,     setOwnerId]     = useState<string | null>(null)
 
+  // Load profile + initial draft count once
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -78,16 +80,43 @@ export default function DrawerNav() {
       setCompanyName(company)
       setInitial(name.charAt(0).toUpperCase())
 
-      const ownerId = (prof as any)?.team_owner_id || user.id
+      const owner = (prof as any)?.team_owner_id || user.id
+      setOwnerId(owner)
+
       const { count } = await supabase
         .from('estimates')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', ownerId)
+        .eq('user_id', owner)
         .eq('status', 'draft')
       setDraftCount(count ?? 0)
     }
     load()
   }, [])
+
+  // Realtime subscription — re-fetch count on any INSERT/UPDATE/DELETE
+  useEffect(() => {
+    if (!ownerId) return
+
+    async function refreshCount() {
+      const { count } = await supabase
+        .from('estimates')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', ownerId!)
+        .eq('status', 'draft')
+      setDraftCount(count ?? 0)
+    }
+
+    const channel = supabase
+      .channel('drawer-nav-draft-count')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'estimates', filter: `user_id=eq.${ownerId}` },
+        () => { refreshCount() }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [ownerId])
 
   function go(path: string) {
     setDrawerOpen(false)
