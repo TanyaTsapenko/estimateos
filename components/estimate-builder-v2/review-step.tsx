@@ -134,11 +134,11 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, onEditOpen
       </div>
 
       {/* ── Trim & Finishing ── */}
-      {trimState && hasTrim({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }) && (
+      {trimState && hasTrim({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_jamb_extension_depth: trimState.jambExtensionDepth, trim_jamb_extension_depth_custom: trimState.jambExtensionDepthCustom, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }) && (
         <div>
           <SectionLabel>Trim &amp; Finishing</SectionLabel>
           <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, background: C.card, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {trimSummaryLines({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }).map(line => (
+            {trimSummaryLines({ trim_casing: trimState.casing, trim_casing_size: trimState.casingSize, trim_jamb: trimState.jamb, trim_jamb_extension_depth: trimState.jambExtensionDepth, trim_jamb_extension_depth_custom: trimState.jambExtensionDepthCustom, trim_brickmold: trimState.brickmold, trim_brickmold_colour_name: trimState.brickmoldColourName, trim_rosettes: trimState.rosettes, trim_caping: trimState.caping, trim_nail_fin: trimState.nailFin, trim_drip_cap: trimState.dripCap, trim_blue_skin: trimState.blueSkin }).map(line => (
               <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 13, color: C.inkMid }}>{line.label}</span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{line.value}</span>

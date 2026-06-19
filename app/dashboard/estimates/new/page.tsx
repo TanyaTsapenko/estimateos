@@ -285,7 +285,7 @@ function NewEstimateV2() {
     if (!editId) return
     async function loadEstimate() {
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, trim_casing, trim_casing_size, trim_jamb, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
       ])
       if (!est) return
@@ -302,16 +302,18 @@ function NewEstimateV2() {
       })
       const e = est as Record<string, unknown>
       setTrimState({
-        casing:               String(e.trim_casing              || 'none'),
-        casingSize:           String(e.trim_casing_size         || '2_3_8'),
-        jamb:                 String(e.trim_jamb                || 'none'),
-        brickmold:            Boolean(e.trim_brickmold),
-        brickmoldColourName:  (e.trim_brickmold_colour_name as string | null) || null,
-        rosettes:             String(e.trim_rosettes            || 'none'),
-        caping:               Boolean(e.trim_caping),
-        nailFin:              Boolean(e.trim_nail_fin),
-        dripCap:              Boolean(e.trim_drip_cap),
-        blueSkin:             Boolean(e.trim_blue_skin),
+        casing:                    String(e.trim_casing                    || 'none'),
+        casingSize:                String(e.trim_casing_size               || '2_3_8'),
+        jamb:                      String(e.trim_jamb                      || 'none'),
+        jambExtensionDepth:        String(e.trim_jamb_extension_depth      || '4-9/16"'),
+        jambExtensionDepthCustom:  String(e.trim_jamb_extension_depth_custom || ''),
+        brickmold:                 Boolean(e.trim_brickmold),
+        brickmoldColourName:       (e.trim_brickmold_colour_name as string | null) || null,
+        rosettes:                  String(e.trim_rosettes                  || 'none'),
+        caping:                    Boolean(e.trim_caping),
+        nailFin:                   Boolean(e.trim_nail_fin),
+        dripCap:                   Boolean(e.trim_drip_cap),
+        blueSkin:                  Boolean(e.trim_blue_skin),
       })
       if (ops && ops.length > 0) {
         setOpenings((ops as Record<string, unknown>[]).map(reverseMapOpeningRow))
@@ -463,16 +465,19 @@ function NewEstimateV2() {
       }
 
       const trimFields = {
-        trim_casing:              trimState.casing,
-        trim_casing_size:         trimState.casing !== 'none' ? trimState.casingSize : null,
-        trim_jamb:                trimState.jamb,
-        trim_brickmold:           trimState.brickmold,
-        trim_brickmold_colour_name: trimState.brickmold ? trimState.brickmoldColourName : null,
-        trim_rosettes:            trimState.rosettes,
-        trim_caping:              trimState.caping,
-        trim_nail_fin:            trimState.nailFin,
-        trim_drip_cap:            trimState.dripCap,
-        trim_blue_skin:           trimState.blueSkin,
+        trim_casing:                      trimState.casing,
+        trim_casing_size:                 trimState.casing !== 'none' ? trimState.casingSize : null,
+        trim_jamb:                        trimState.jamb,
+        trim_jamb_extension_depth:        trimState.jamb !== 'none' ? trimState.jambExtensionDepth : null,
+        trim_jamb_extension_depth_custom: trimState.jamb !== 'none' && trimState.jambExtensionDepth === 'Custom'
+          ? trimState.jambExtensionDepthCustom || null : null,
+        trim_brickmold:                   trimState.brickmold,
+        trim_brickmold_colour_name:       trimState.brickmold ? trimState.brickmoldColourName : null,
+        trim_rosettes:                    trimState.rosettes,
+        trim_caping:                      trimState.caping,
+        trim_nail_fin:                    trimState.nailFin,
+        trim_drip_cap:                    trimState.dripCap,
+        trim_blue_skin:                   trimState.blueSkin,
       }
 
       const clientFields = {
@@ -619,7 +624,7 @@ function NewEstimateV2() {
               </button>
 
               <div style={{ marginTop: 16 }}>
-                <TrimSection value={trimState} onChange={setTrimState} palette={palettes.frame} />
+                <TrimSection value={trimState} onChange={setTrimState} palette={palettes.frame} openings={openings} />
               </div>
             </>
           )}

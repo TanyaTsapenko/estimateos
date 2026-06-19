@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { C, type PaletteEntry } from '@/lib/v2/openingTypes'
+import { C, type PaletteEntry, type Opening } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { FieldLabel, Toggle, Swatches } from './primitives'
 
@@ -8,6 +8,8 @@ export type TrimState = {
   casing: string
   casingSize: string
   jamb: string
+  jambExtensionDepth: string
+  jambExtensionDepthCustom: string
   brickmold: boolean
   brickmoldColourName: string | null
   rosettes: string
@@ -19,6 +21,7 @@ export type TrimState = {
 
 export const TRIM_DEFAULTS: TrimState = {
   casing: 'none', casingSize: '2_3_8', jamb: 'none',
+  jambExtensionDepth: '4-9/16"', jambExtensionDepthCustom: '',
   brickmold: false, brickmoldColourName: null,
   rosettes: 'none', caping: false, nailFin: false, dripCap: false, blueSkin: false,
 }
@@ -27,6 +30,7 @@ type Props = {
   value: TrimState
   onChange: (v: TrimState) => void
   palette: PaletteEntry[]
+  openings?: Opening[]
 }
 
 const selWrap: React.CSSProperties = { position: 'relative' }
@@ -50,9 +54,20 @@ function Sel({ value, onChange, children }: { value: string; onChange: (v: strin
   )
 }
 
-export function TrimSection({ value, onChange, palette }: Props) {
+const inputEl: React.CSSProperties = {
+  width: '100%', height: 46, padding: '0 13px',
+  borderRadius: 12, border: `1px solid ${C.borderStrong}`,
+  background: C.card, fontSize: 13, fontWeight: 600, color: C.ink,
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+}
+
+export function TrimSection({ value, onChange, palette, openings }: Props) {
   const [open, setOpen] = useState(false)
   const set = <K extends keyof TrimState>(k: K, v: TrimState[K]) => onChange({ ...value, [k]: v })
+
+  // Nail Fin only applies to full-frame / stud-to-stud installations
+  const showNailFin = !openings || openings.length === 0 ||
+    openings.some(o => o.vals.install !== 'Retrofit')
 
   const hasAny = value.casing !== 'none' || value.jamb !== 'none' || value.brickmold ||
     value.rosettes !== 'none' || value.caping || value.nailFin || value.dripCap || value.blueSkin
@@ -113,6 +128,27 @@ export function TrimSection({ value, onChange, palette }: Props) {
               <option value="plywood">Plywood</option>
               <option value="custom">Custom</option>
             </Sel>
+            {value.jamb !== 'none' && (
+              <div style={{ marginTop: 10 }}>
+                <FieldLabel>Depth</FieldLabel>
+                <Sel value={value.jambExtensionDepth} onChange={v => set('jambExtensionDepth', v)}>
+                  <option value='4-9/16"'>4-9/16&quot;</option>
+                  <option value='6-9/16"'>6-9/16&quot;</option>
+                  <option value="Custom">Custom</option>
+                </Sel>
+                {value.jambExtensionDepth === 'Custom' && (
+                  <div style={{ marginTop: 8 }}>
+                    <FieldLabel>Specify depth</FieldLabel>
+                    <input
+                      style={inputEl}
+                      value={value.jambExtensionDepthCustom}
+                      placeholder='e.g. 5-1/4"'
+                      onChange={e => set('jambExtensionDepthCustom', e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Brickmold */}
@@ -147,19 +183,27 @@ export function TrimSection({ value, onChange, palette }: Props) {
             </Sel>
           </div>
 
-          {/* Extras 2×2 */}
+          {/* Extras */}
           <div>
             <FieldLabel>Extras</FieldLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {([
                 { label: 'Caping',    key: 'caping'   },
-                { label: 'Nail fin',  key: 'nailFin'  },
+                showNailFin ? { label: 'Nail fin', key: 'nailFin' } : null,
                 { label: 'Drip cap',  key: 'dripCap'  },
-                { label: 'Blue skin', key: 'blueSkin' },
-              ] as { label: string; key: 'caping' | 'nailFin' | 'dripCap' | 'blueSkin' }[]).map(({ label, key }) => (
-                <Toggle key={key} on={value[key]} onChange={v => set(key, v)} label={label} />
-              ))}
+                { label: 'Self-Adhesive Flashing Membrane', key: 'blueSkin' },
+              ] as ({ label: string; key: 'caping' | 'nailFin' | 'dripCap' | 'blueSkin' } | null)[])
+                .filter(Boolean)
+                .map(item => {
+                  const { label, key } = item!
+                  return <Toggle key={key} on={value[key]} onChange={v => set(key, v)} label={label} />
+                })}
             </div>
+            {!showNailFin && (
+              <div style={{ marginTop: 6, fontSize: 11, color: C.inkFaint }}>
+                Nail fin not applicable for retrofit installations
+              </div>
+            )}
           </div>
 
         </div>
