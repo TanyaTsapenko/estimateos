@@ -137,6 +137,49 @@ function nth(n: number): string {
 const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
 const PAYMENT_EVENTS  = new Set(['deposit_paid', 'final_paid'])
 
+type ActivityGroup =
+  | { kind: 'single'; item: ActivityItem }
+  | { kind: 'group'; entity_id: string; entity_number: string; client_name: string; items: ActivityItem[] }
+
+const STATUS_PRIORITY: Record<string, number> = {
+  final_paid: 10, contract_signed: 8, deposit_paid: 6,
+  final_invoice_sent: 4, deposit_invoice_sent: 4,
+  reminder_sent: 2, estimate_sent: 1, estimate_auto_expired: 0,
+}
+const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+  final_paid:           { label: 'Paid in full', bg: '#ECFDF5', color: '#059669' },
+  contract_signed:      { label: 'Signed',        bg: '#ECFDF5', color: '#059669' },
+  deposit_paid:         { label: 'Deposit paid',  bg: '#ECFDF5', color: '#059669' },
+  deposit_invoice_sent: { label: 'Invoice sent',  bg: '#EFF6FF', color: '#2563EB' },
+  final_invoice_sent:   { label: 'Invoice sent',  bg: '#EFF6FF', color: '#2563EB' },
+  reminder_sent:        { label: 'Reminder sent', bg: '#EFF6FF', color: '#2563EB' },
+  estimate_sent:        { label: 'Estimate sent', bg: '#EFF6FF', color: '#2563EB' },
+  estimate_auto_expired:{ label: 'Expired',       bg: '#FEF3C7', color: '#D97706' },
+}
+
+function groupActivity(items: ActivityItem[]): ActivityGroup[] {
+  const result: ActivityGroup[] = []
+  let i = 0
+  while (i < items.length) {
+    const cur = items[i]
+    if (cur.entity_id) {
+      let j = i + 1
+      while (j < items.length && items[j].entity_id === cur.entity_id) j++
+      if (j - i >= 2) {
+        result.push({ kind: 'group', entity_id: cur.entity_id, entity_number: cur.entity_number, client_name: cur.client_name, items: items.slice(i, j) })
+        i = j
+      } else {
+        result.push({ kind: 'single', item: cur })
+        i++
+      }
+    } else {
+      result.push({ kind: 'single', item: cur })
+      i++
+    }
+  }
+  return result
+}
+
 export default function DashboardPage() {
   const [userName, setUserName] = useState('')
   const [companyName, setCompanyName] = useState('')
@@ -1085,32 +1128,75 @@ const [dashToast, setDashToast] = useState('')
                       No activity yet. Send your first estimate to get started.
                     </div>
                   )
+                  const groups = groupActivity(filtered)
+                  const visibleGroups = showAllActivity ? groups : groups.slice(0, 5)
                   return (<>
                     <div style={{ marginTop: 8 }}>
-                      {filtered.slice(0, showAllActivity ? filtered.length : 5).map((item, i, arr) => {
-                        const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                        const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
-                        const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                      {visibleGroups.map((g, gi) => {
+                        if (g.kind === 'single') {
+                          const item = g.item
+                          const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                          const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
+                          const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                          return (
+                            <div key={gi} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: gi < visibleGroups.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
+                              onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}>
+                              <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
+                                {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                              <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                            </div>
+                          )
+                        }
+                        const topEvent = g.items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, g.items[0])
+                        const badge = STATUS_BADGE[topEvent.event_type]
+                        const topAmt = topEvent.amount ?? g.items.find(it => it.amount != null)?.amount ?? null
                         return (
-                          <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
-                            onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                          <div key={gi} style={{ marginTop: 4, marginLeft: 12, marginRight: 12, marginBottom: gi < visibleGroups.length - 1 ? 4 : 8, borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden', cursor: 'pointer' }}
+                            onClick={() => router.push(`/dashboard/estimates/${g.entity_id}`)}>
+                            <div style={{ padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628' }}>{g.entity_number}</span>
+                              <span style={{ fontSize: 12, color: '#CBD5E1' }}>·</span>
+                              <span style={{ fontSize: 12, color: '#475467', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.client_name}</span>
+                              {topAmt != null && <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtAmt(topAmt)}</span>}
+                              {badge && <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge.label}</span>}
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
-                              {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                            <div style={{ padding: '8px 12px' }}>
+                              {g.items.map((it, idx) => {
+                                const cfg = ACTIVITY_CFG[it.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                                const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
+                                return (
+                                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 16 }}>
+                                      <div style={{ width: 16, height: 16, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <cfg.icon size={8} color={cfg.color} strokeWidth={2.5} />
+                                      </div>
+                                      {idx < g.items.length - 1 && <div style={{ width: 1, height: 14, background: '#E2E8F0', marginTop: 2 }} />}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < g.items.length - 1 ? 4 : 0 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{actorLabel} {cfg.label}</span>
+                                        {it.amount != null && <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>{fmtAmt(it.amount)}</span>}
+                                      </div>
+                                      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{it.time}</div>
+                                    </div>
+                                  </div>
+                                )
+                              })}
                             </div>
-                            <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                            <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                           </div>
                         )
                       })}
                     </div>
-                    {filtered.length > 5 && (
+                    {groups.length > 5 && (
                       <div style={{ padding: '8px 12px 12px' }}>
                         <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          {showAllActivity ? 'Show less' : `Show all (${filtered.length})`}
+                          {showAllActivity ? 'Show less' : `Show all (${groups.length})`}
                         </button>
                       </div>
                     )}
@@ -1202,34 +1288,79 @@ const [dashToast, setDashToast] = useState('')
                     No activity yet. Send your first estimate to get started.
                   </div>
                 )
+                const groups = groupActivity(filtered)
+                const visibleGroups = showAllActivity ? groups : groups.slice(0, 5)
                 return (<>
                   <div style={{ marginTop: 8 }}>
-                    {filtered.slice(0, showAllActivity ? filtered.length : 5).map((item, i, arr) => {
-                      const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                      const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
-                      const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                    {visibleGroups.map((g, gi) => {
+                      if (g.kind === 'single') {
+                        const item = g.item
+                        const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                        const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
+                        const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                        return (
+                          <div key={gi} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: gi < visibleGroups.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
+                            onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}
+                            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
+                            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+                            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
+                              {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
+                            <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                          </div>
+                        )
+                      }
+                      const topEvent = g.items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, g.items[0])
+                      const badge = STATUS_BADGE[topEvent.event_type]
+                      const topAmt = topEvent.amount ?? g.items.find(it => it.amount != null)?.amount ?? null
                       return (
-                        <div key={i} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
-                          onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}
+                        <div key={gi} style={{ marginTop: 4, marginLeft: 12, marginRight: 12, marginBottom: gi < visibleGroups.length - 1 ? 4 : 8, borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden', cursor: 'pointer' }}
+                          onClick={() => router.push(`/dashboard/estimates/${g.entity_id}`)}
                           onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
                           onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-                          <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                          <div style={{ padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628' }}>{g.entity_number}</span>
+                            <span style={{ fontSize: 12, color: '#CBD5E1' }}>·</span>
+                            <span style={{ fontSize: 12, color: '#475467', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.client_name}</span>
+                            {topAmt != null && <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtAmt(topAmt)}</span>}
+                            {badge && <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge.label}</span>}
                           </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
-                            {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                          <div style={{ padding: '8px 12px' }}>
+                            {g.items.map((it, idx) => {
+                              const cfg = ACTIVITY_CFG[it.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
+                              const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
+                              return (
+                                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 16 }}>
+                                    <div style={{ width: 16, height: 16, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      <cfg.icon size={8} color={cfg.color} strokeWidth={2.5} />
+                                    </div>
+                                    {idx < g.items.length - 1 && <div style={{ width: 1, height: 14, background: '#E2E8F0', marginTop: 2 }} />}
+                                  </div>
+                                  <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < g.items.length - 1 ? 4 : 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{actorLabel} {cfg.label}</span>
+                                      {it.amount != null && <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>{fmtAmt(it.amount)}</span>}
+                                    </div>
+                                    <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{it.time}</div>
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
-                          <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                          <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
                         </div>
                       )
                     })}
                   </div>
-                  {filtered.length > 5 && (
+                  {groups.length > 5 && (
                     <div style={{ padding: '8px 12px 12px' }}>
                       <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {showAllActivity ? 'Show less' : `Show all (${filtered.length})`}
+                        {showAllActivity ? 'Show less' : `Show all (${groups.length})`}
                       </button>
                     </div>
                   )}
