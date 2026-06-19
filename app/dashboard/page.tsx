@@ -708,7 +708,7 @@ const [dashToast, setDashToast] = useState('')
       {isMobile && (
         <div style={{
           background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)',
-          position: 'relative', overflow: 'visible', paddingBottom: 28,
+          position: 'relative', overflow: 'hidden', paddingBottom: 28,
         }}>
           {/* Glow blobs */}
           <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.45) 0%, transparent 70%)', top: -130, right: -100, pointerEvents: 'none' }} />
