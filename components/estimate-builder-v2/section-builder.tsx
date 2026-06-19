@@ -11,13 +11,13 @@ const SECTION_TYPES: CombinationSectionType[] = [
 // ── Presets ────────────────────────────────────────────────────────
 type Preset = { label: string; types: CombinationSectionType[] | null }
 const PRESETS: Preset[] = [
-  { label: 'Pic + Cas',       types: ['Picture', 'Casement'] },
-  { label: 'Cas + Pic + Cas', types: ['Casement', 'Picture', 'Casement'] },
-  { label: 'Pic + Awn',       types: ['Picture', 'Awning'] },
-  { label: 'Awn + Pic + Awn', types: ['Awning', 'Picture', 'Awning'] },
-  { label: 'S.Hung + Pic',    types: ['Single Hung', 'Picture'] },
-  { label: 'Slider + Pic',    types: ['Slider', 'Picture'] },
-  { label: 'Custom',          types: null },
+  { label: 'Picture + Casement',            types: ['Picture', 'Casement'] },
+  { label: 'Casement + Picture + Casement', types: ['Casement', 'Picture', 'Casement'] },
+  { label: 'Picture + Awning',              types: ['Picture', 'Awning'] },
+  { label: 'Awning + Picture + Awning',     types: ['Awning', 'Picture', 'Awning'] },
+  { label: 'Single Hung + Picture',         types: ['Single Hung', 'Picture'] },
+  { label: 'Slider + Picture',              types: ['Slider', 'Picture'] },
+  { label: 'Start from scratch (Custom)',   types: null },
 ]
 
 const UNIT_OPTS = ['2', '3', '4', '5', 'Custom']
@@ -176,12 +176,19 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
 
   // ── Presets ──────────────────────────────────────────────────────
   const handlePreset = (preset: Preset) => {
-    if (!preset.types) return
-    const types = preset.types
     const total = parsedTotal
+    if (!preset.types) {
+      // "Start from scratch" → single Picture section
+      onChange([{ type: 'Picture', width: total }])
+      setEqualTotal(String(total))
+      setWidthMode('equal')
+      return
+    }
+    const types = preset.types
     const w = eqW(total, types.length)
     onChange(types.map(type => ({ type, width: w })))
     setEqualTotal(String(total))
+    setWidthMode('equal')
   }
 
   // ── Unit count ───────────────────────────────────────────────────
@@ -255,11 +262,6 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
   }
 
   // ── Styles ───────────────────────────────────────────────────────
-  const chipBase: React.CSSProperties = {
-    height: 30, padding: '0 10px', borderRadius: 8, border: `1px solid ${C.border}`,
-    background: C.card, fontSize: 12, fontWeight: 600, color: C.inkMid,
-    cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-  }
   const toggleBtn = (active: boolean): React.CSSProperties => ({
     height: 34, padding: '0 12px', border: 'none', cursor: 'pointer',
     fontFamily: 'inherit', fontSize: 12, fontWeight: 700,
@@ -275,13 +277,34 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
         <CombinationDrawing sections={sections} heightIn={heightIn} />
       </div>
 
-      {/* preset chips */}
-      <div style={{ overflowX: 'auto', display: 'flex', gap: 5, paddingBottom: 2 }}>
-        {PRESETS.map((preset, i) => (
-          <button key={i} onClick={() => handlePreset(preset)} style={chipBase}>
-            {preset.label}
-          </button>
-        ))}
+      {/* presets card */}
+      <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, overflow: 'hidden' }}>
+        <div style={{ padding: '11px 14px 8px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.blue} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.ink }}>Presets</div>
+            <div style={{ fontSize: 10, color: C.inkSoft, marginTop: 1 }}>Tap to fill in sections, then customize</div>
+          </div>
+        </div>
+        <div style={{ borderTop: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+          {PRESETS.map((preset, i) => (
+            <button
+              key={i}
+              onClick={() => handlePreset(preset)}
+              style={{
+                width: '100%', padding: '10px 14px', textAlign: 'left', background: 'transparent',
+                border: 'none', borderBottom: i < PRESETS.length - 1 ? `1px solid ${C.border}` : 'none',
+                cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                color: preset.types === null ? C.inkSoft : C.ink,
+              }}
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* controls row: unit count + width mode */}

@@ -319,7 +319,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'panelType','photos','notes'],
         extraFieldsByValue: { roofType: { field: 'supportType', notEmpty: true } } },
 
-      combination: { name: 'Combination', subs: ['Custom combination'],
+      combination: { name: 'Combination', subs: [],
         fields: ['owidth','oheight','qty',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,'material','install',
