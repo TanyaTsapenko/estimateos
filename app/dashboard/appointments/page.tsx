@@ -1043,7 +1043,7 @@ export default function AppointmentsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F3F4F6', fontFamily: '-apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
 
         {/* Header */}
-        <div style={{ background: '#fff', padding: '2px 18px 12px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 2px))', flexShrink: 0 }}>
+        <div className="page-hd" style={{ background: '#fff', padding: '2px 18px 12px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 2px))', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>

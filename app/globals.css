@@ -714,8 +714,8 @@ body { font-family: 'Inter', sans-serif; background: #F5F6F8; min-height: 100vh;
   /* Main content: full width, no extra top offset */
   .main-content { margin-left: 0 !important; width: 100% !important; }
 
-  /* Page sticky headers: stick to top, respect notch */
-  .page-hd { top: 0 !important; padding-top: max(16px, calc(env(safe-area-inset-top) + 8px)) !important; }
+  /* Page sticky headers: stick to top, respect notch, clear burger (left:20+42=62px → 72px gap) */
+  .page-hd { top: 0 !important; padding-top: max(16px, calc(env(safe-area-inset-top) + 8px)) !important; padding-left: 72px !important; }
 
   /* Dashboard page */
   .dash-bg { padding: 12px 16px 90px; border-radius: 0; margin-top: 0; }
