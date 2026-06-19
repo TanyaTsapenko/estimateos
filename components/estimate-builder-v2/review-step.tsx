@@ -5,6 +5,16 @@ import { type ClientInfo } from './client-step'
 import { MiniDiagram } from './diagram'
 import { type TrimState } from './trim-section'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
+import { EBIcon } from './icons'
+import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider-hopper-drawing'
+import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from './awning-hung-tiltturn-drawing'
+import { EntryDoorDrawing, DoubleEntryDrawing } from './entry-door-drawing'
+import { FrenchDoorDrawing, GardenDoorDrawing } from './french-garden-drawing'
+import { PatioDoorDrawing } from './patio-door-drawing'
+import { StormDoorDrawing, InteriorDoorDrawing } from './storm-interior-drawing'
+import { ShapeOutlineDrawing } from './shape-outline-drawing'
+import { BayDrawing, BowDrawing } from './bay-bow-drawing'
+import { CombinationDrawing } from './section-builder'
 
 function money(n: number) {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
@@ -15,6 +25,90 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: C.inkSoft, marginBottom: 8 }}>
       {children}
     </div>
+  )
+}
+
+// ── Drawing thumbnail ──────────────────────────────────────────────
+function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
+  const v = op.vals
+  const pf = (k: string) => v[k] !== undefined ? parseFloat(String(v[k])) || undefined : undefined
+  const w = compact ? 32 : 44
+  const maxH = compact ? 36 : 56
+
+  let node: React.ReactNode
+  switch (op.typeId) {
+    case 'casement':
+      node = <CasementDrawing sub={op.sub} shape={v.shape as string|undefined} activePanel={v.activePanel as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
+    case 'slider':
+      node = <SliderDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'hopper':
+      node = <HopperDrawing openingAngle={v.openingAngle as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'awning':
+      node = <AwningDrawing widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'singleHung':
+      node = <SingleHungDrawing shape={v.shape as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
+    case 'doubleHung':
+      node = <DoubleHungDrawing topSashOperable={v.topSashOperable as boolean|undefined} bottomSashOperable={v.bottomSashOperable as boolean|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'tiltTurn':
+      node = <TiltTurnDrawing sub={op.sub} openDir={v.openDir as string|undefined} openMode={v.openMode as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'bay':
+      node = <BayDrawing bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} />; break
+    case 'bow':
+      node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} />; break
+    case 'combination':
+      node = <CombinationDrawing sections={op.sections || []} heightIn={pf('oheight')} />; break
+    case 'picture':
+    case 'transom':
+    case 'special':
+      node = <ShapeOutlineDrawing shape={op.typeId === 'special' ? op.sub : v.shape as string|undefined} transomPanes={op.typeId === 'transom' ? v.transomPanes as string|undefined : undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
+    case 'entry':
+      node = <EntryDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'doubleEntry':
+      node = <DoubleEntryDrawing sub={op.sub} doubleDoorSwing={v.doubleDoorSwing as string|undefined} astragalType={v.astragalType as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'french':
+      node = <FrenchDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} activePanel={v.activePanel as string|undefined} astragal={v.astragal as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'garden':
+      node = <GardenDoorDrawing doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'patio':
+      node = <PatioDoorDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
+    case 'storm':
+      node = <StormDoorDrawing sub={op.sub} hingeSide={v.hingeSide as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
+    case 'interior':
+      node = <InteriorDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
+  }
+
+  return (
+    <div style={{ width: w, maxHeight: maxH, flexShrink: 0, overflow: 'hidden', borderRadius: 7, background: C.bg, pointerEvents: 'none', alignSelf: 'flex-start' }}>
+      {node ?? (
+        <div style={{ width: w, height: maxH, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <MiniDiagram typeId={op.typeId} size={compact ? 20 : 28} color={C.blue} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Compact spec line ──────────────────────────────────────────────
+function specLine(op: Opening): string {
+  const v = op.vals
+  const colour = [v.extColour, v.doorExt, v.colour].find(c => c && c !== '') as string | undefined
+  const material = [v.material, v.doorMaterial, v.stormDoorMaterial].find(m => m && m !== '') as string | undefined
+  const pane = v.pane as string | undefined
+  return [colour, material, pane].filter(Boolean).slice(0, 3).join(' · ')
+}
+
+// ── Photo count ────────────────────────────────────────────────────
+const PHOTO_KEYS = ['interiorPhotoUrl', 'exteriorPhotoUrl', 'photo3Url', 'photo4Url'] as const
+function photoCount(op: Opening): number {
+  return PHOTO_KEYS.filter(k => op.vals[k]).length
+}
+
+function CameraIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.inkSoft} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
   )
 }
 
@@ -42,6 +136,13 @@ type Props = {
 export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes, onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
+
+  const isCollapsible = openings.length > 3
+  const [expanded, setExpanded] = useState<Set<number>>(
+    () => new Set(openings.length <= 3 ? openings.map((_, i) => i) : [])
+  )
+  const toggleExpand = (i: number) =>
+    setExpanded(s => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n })
 
   const subtotal = prices.reduce((s, p) => s + p, 0)
   const discountAmt = discountValue
@@ -109,24 +210,70 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes
             const room = op.vals.room as string | undefined
             const qty = (op.vals.qty as number) || 1
             const unitPrice = prices[i] / qty
-            return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: i < openings.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: C.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <MiniDiagram typeId={op.typeId} size={22} color={C.blue} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+            const spec = specLine(op)
+            const photos = photoCount(op)
+            const isOpen = expanded.has(i)
+            const borderBottom = i < openings.length - 1 ? `1px solid ${C.border}` : 'none'
+
+            // Collapsed one-liner (only when collapsible and not open)
+            if (isCollapsible && !isOpen) {
+              return (
+                <button
+                  key={i}
+                  onClick={() => toggleExpand(i)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: borderBottom as string, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <DrawingThumb op={op} compact />
+                  <div style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 700, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {qty > 1 ? `${qty}× ` : ''}{t.name}
+                    {op.sub && <span style={{ fontWeight: 500, color: C.inkSoft }}> · {op.sub}</span>}
+                    {dimStr && <span style={{ fontWeight: 500, color: C.inkSoft }}> · {dimStr}</span>}
                   </div>
-                  <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {[op.sub, dimStr, room].filter(Boolean).join(' · ')}
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, flexShrink: 0 }}>{money(prices[i])}</div>
+                  <EBIcon name="chev-d" size={14} color={C.inkSoft} />
+                </button>
+              )
+            }
+
+            // Expanded row
+            return (
+              <div key={i} style={{ borderBottom }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px' }}>
+                  <DrawingThumb op={op} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>
+                      {qty > 1 ? `${qty}× ` : ''}{t.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {[op.sub, dimStr, room].filter(Boolean).join(' · ')}
+                    </div>
+                    {spec && (
+                      <div style={{ fontSize: 12, color: C.inkMid, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {spec}
+                      </div>
+                    )}
+                    {photos > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 5 }}>
+                        <CameraIcon />
+                        <span style={{ fontSize: 11, color: C.inkSoft }}>{photos}/4 photos</span>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{money(prices[i])}</div>
-                  {qty > 1 && (
-                    <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 2 }}>{money(unitPrice)} ea</div>
-                  )}
+                  <div style={{ textAlign: 'right', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{money(prices[i])}</div>
+                    {qty > 1 && (
+                      <div style={{ fontSize: 11, color: C.inkSoft }}>{money(unitPrice)} ea</div>
+                    )}
+                    {isCollapsible && (
+                      <button
+                        onClick={() => toggleExpand(i)}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, marginTop: 2 }}
+                        aria-label="Collapse"
+                      >
+                        <EBIcon name="chev-u" size={14} color={C.inkSoft} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )
@@ -155,7 +302,6 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{line.value}</span>
               </div>
             ))}
-            {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
             <div style={{ fontSize: 11, color: C.inkFaint, borderTop: `1px solid ${C.border}`, paddingTop: 6, marginTop: 2 }}>
               Included — no extra charge
             </div>
