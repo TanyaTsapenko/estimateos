@@ -77,6 +77,8 @@ export default function EstimateDetailPage() {
   const [loading,             setLoading]             = useState(true)
   const [sending,             setSending]             = useState(false)
   const [showEmailModal,      setShowEmailModal]      = useState(false)
+  const [sendEmail,           setSendEmail]           = useState('')
+  const [editingEmail,        setEditingEmail]        = useState(false)
   const [deleteOpen,          setDeleteOpen]          = useState(false)
   const [showDuplicateModal,  setShowDuplicateModal]  = useState(false)
   const [duplicating,         setDuplicating]         = useState(false)
@@ -142,10 +144,22 @@ export default function EstimateDetailPage() {
     setTimeout(() => setToast(''), 2500)
   }
 
+  function openSendModal() {
+    setSendEmail(estimate?.client_email || '')
+    setEditingEmail(false)
+    setShowEmailModal(true)
+  }
+
   async function handleSendEmail() {
-    if (!estimate?.client_email) { showToast('⚠️ No client email on this estimate'); return }
+    const email = sendEmail.trim() || estimate?.client_email
+    if (!email) { showToast('⚠️ No client email on this estimate'); return }
     setSending(true); setShowEmailModal(false)
     try {
+      // If email was changed in the modal, persist it first
+      if (email !== estimate?.client_email) {
+        await supabase.from('estimates').update({ client_email: email }).eq('id', id)
+        setEstimate(p => p ? { ...p, client_email: email } : p)
+      }
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -155,7 +169,7 @@ export default function EstimateDetailPage() {
       if (!res.ok) throw new Error(json.error || 'Failed')
       await supabase.from('estimates').update({ status: 'sent', sent_method: 'email_estimate' }).eq('id', id)
       setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'email_estimate' } : p)
-      showToast('📧 Sent to ' + (json.sentTo || estimate.client_email))
+      showToast('📧 Sent to ' + (json.sentTo || email))
     } catch (e: any) {
       showToast('⚠️ ' + e.message)
     }
@@ -612,7 +626,7 @@ export default function EstimateDetailPage() {
                     </div>
                   </div>
                   <button
-                    onClick={canEmail ? () => setShowEmailModal(true) : () => showToast('⚠️ No client email on this estimate')}
+                    onClick={canEmail ? openSendModal : () => showToast('⚠️ No client email on this estimate')}
                     disabled={sending}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.7 : 1 }}>
                     {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
@@ -736,41 +750,55 @@ export default function EstimateDetailPage() {
 
       {/* ── EMAIL MODAL ── */}
       {showEmailModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={() => setShowEmailModal(false)}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: '28px 24px', width: 320, textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}
+          onClick={() => { setShowEmailModal(false); setEditingEmail(false) }}>
+          <div style={{ background: '#E8EAFB', borderRadius: 24, padding: 24, width: '100%', maxWidth: 390, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
             onClick={e => e.stopPropagation()}>
-            {/* Icon */}
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#EFF4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
-              </svg>
-            </div>
-            {/* Title */}
-            <div style={{ fontSize: 17, fontWeight: 600, color: '#0B1220', marginBottom: 8 }}>Send estimate</div>
-            {/* Description */}
-            <div style={{ fontSize: 13, color: '#8A94A6', marginBottom: 4 }}>
-              Sending {estimate.estimate_number} to
-            </div>
-            <div style={{ fontSize: 13, color: '#2563EB', fontWeight: 500, marginBottom: profile?.contract_terms ? 8 : 20 }}>
-              {estimate.client_email}
-            </div>
-            {profile?.contract_terms && profile.contract_terms !== 'тут компанія щось напише' && (
-              <div style={{ fontSize: 12, color: '#B3BAC6', marginBottom: 20, lineHeight: 1.5 }}>
-                Terms &amp; conditions included for client review.
+            {/* Icon + title */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B47E5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="M2 7l10 7 10-7"/>
+                </svg>
               </div>
-            )}
-            {/* Buttons */}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowEmailModal(false)}
-                style={{ flex: 1, background: '#fff', color: '#475467', border: '1px solid #e5e7eb', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                Cancel
-              </button>
-              <button onClick={handleSendEmail} disabled={sending}
-                style={{ flex: 1.6, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '11px 0', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {sending ? 'Sending…' : 'Send'}
+              <div style={{ fontSize: 20, fontWeight: 500, color: '#111111', marginTop: 4 }}>Send estimate</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: '#3B47E5' }}>
+                So {estimate.client_name || 'your client'} can review it anytime
+              </div>
+            </div>
+            {/* Email row */}
+            <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+              {editingEmail ? (
+                <input
+                  value={sendEmail}
+                  onChange={e => setSendEmail(e.target.value)}
+                  autoFocus
+                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: '#111111', background: 'transparent', fontFamily: 'inherit' }}
+                />
+              ) : (
+                <span style={{ flex: 1, fontSize: 15, color: '#111111' }}>{sendEmail || estimate.client_email}</span>
+              )}
+              <button
+                onClick={() => setEditingEmail(v => !v)}
+                style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 500, color: '#3B47E5', cursor: 'pointer', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
+                {editingEmail ? 'Done' : 'Change'}
               </button>
             </div>
+            {/* Send now button */}
+            <button onClick={handleSendEmail} disabled={sending}
+              style={{ width: '100%', padding: 16, background: '#3B47E5', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 500, cursor: sending ? 'default' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: sending ? 0.7 : 1 }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M2 7l10 7 10-7"/>
+              </svg>
+              {sending ? 'Sending…' : 'Send now'}
+            </button>
+            {/* Cancel */}
+            <button onClick={() => { setShowEmailModal(false); setEditingEmail(false) }}
+              style={{ background: 'none', border: 'none', fontSize: 15, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit', padding: 0, textAlign: 'center' }}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
