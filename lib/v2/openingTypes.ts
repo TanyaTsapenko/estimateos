@@ -23,8 +23,8 @@ export const C = {
 
 export const SETTINGS = {
   currency: 'CA$',
-  taxLabel: 'HST (15%)',
-  taxRate: 0.15,
+  taxLabel: 'GST (5%)',
+  taxRate: 0.05,
   validDays: 30,
   palettes: {
     frame: [
