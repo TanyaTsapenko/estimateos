@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Home, Calendar, FileText, Users } from 'lucide-react'
@@ -52,6 +53,7 @@ export default function DrawerNav() {
   const pathname = usePathname()
   const supabase = createClient()
 
+  const [mounted,     setMounted]     = useState(false)
   const [drawerOpen,  setDrawerOpen]  = useState(false)
   const [fabOpen,     setFabOpen]     = useState(false)
   const [userName,    setUserName]    = useState('')
@@ -93,6 +95,8 @@ export default function DrawerNav() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [drawerOpen, fabOpen])
 
+  useEffect(() => { setMounted(true) }, [])
+
   function go(path: string) {
     setDrawerOpen(false)
     router.push(path)
@@ -122,7 +126,8 @@ export default function DrawerNav() {
   const burgerBorder= isGradientPage ? 'none'                   : '1px solid rgba(15,23,42,0.10)'
   const burgerIcon  = isGradientPage ? '#fff'                   : '#2563EB'
 
-  return (
+  if (!mounted) return null
+  return createPortal(
     <div className="dashboard-mobile-nav">
 
       {/* ── Burger ─────────────────────────────────────────────── */}
@@ -372,6 +377,7 @@ export default function DrawerNav() {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
