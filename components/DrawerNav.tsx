@@ -111,9 +111,14 @@ export default function DrawerNav() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'estimates', filter: `user_id=eq.${ownerId}` },
-        () => { refreshCount() }
+        (payload) => {
+          console.log('[DrawerNav RT] event received:', payload)
+          refreshCount()
+        }
       )
-      .subscribe()
+      .subscribe((status, err) => {
+        console.log('[DrawerNav RT] channel status:', status, err ?? '')
+      })
 
     return () => { supabase.removeChannel(channel) }
   }, [ownerId])
