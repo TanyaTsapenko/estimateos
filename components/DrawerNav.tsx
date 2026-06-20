@@ -123,6 +123,16 @@ export default function DrawerNav() {
     return () => { supabase.removeChannel(channel) }
   }, [ownerId])
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return
+      if (drawerOpen) setDrawerOpen(false)
+      if (fabOpen) setFabOpen(false)
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [drawerOpen, fabOpen])
+
   function go(path: string) {
     setDrawerOpen(false)
     router.push(path)
@@ -174,77 +184,84 @@ export default function DrawerNav() {
       </button>
 
       {/* ── FAB scrim (behind FAB, above page) ─────────────────── */}
-      {fabOpen && (
-        <div
-          onClick={() => setFabOpen(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 30,
-            background: 'rgba(244,246,251,0.55)',
-            backdropFilter: 'blur(1px)',
-            WebkitBackdropFilter: 'blur(1px)',
-          }}
-        />
-      )}
+      <div
+        onClick={() => setFabOpen(false)}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 46,
+          background: 'rgba(244,246,251,0.55)',
+          backdropFilter: 'blur(1px)',
+          WebkitBackdropFilter: 'blur(1px)',
+          opacity: fabOpen ? 1 : 0,
+          pointerEvents: fabOpen ? 'auto' : 'none',
+          transition: 'opacity .25s',
+        }}
+      />
 
       {/* ── FAB + speed-dial ───────────────────────────────────── */}
       <div style={{
         position: 'fixed',
         right: 18,
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 26px)',
-        zIndex: 40,
+        zIndex: 47,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
       }}>
-        {fabOpen && (
-          <>
-            {/* New estimate */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <div style={{
-                background: C.card, borderRadius: 12,
-                boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
-                padding: '7px 13px', textAlign: 'right',
-              }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New estimate</div>
-                <div style={{ fontSize: 11, color: C.inkSoft }}>Build a quote</div>
-              </div>
-              <button
-                onClick={() => { setFabOpen(false); router.push('/dashboard/estimates/new') }}
-                style={{
-                  width: 48, height: 48, borderRadius: 15,
-                  background: C.card, border: `1px solid ${C.border}`,
-                  boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <NIcon name="doc" size={21} color={C.blue} />
-              </button>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
+          opacity: fabOpen ? 1 : 0,
+          transform: fabOpen ? 'translateY(0)' : 'translateY(10px)',
+          pointerEvents: fabOpen ? 'auto' : 'none',
+          transition: 'opacity .18s, transform .18s',
+        }}>
+          {/* New estimate */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <div style={{
+              background: C.card, borderRadius: 12,
+              boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
+              padding: '7px 13px', textAlign: 'right',
+            }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New estimate</div>
+              <div style={{ fontSize: 11, color: C.inkSoft }}>Build a quote</div>
             </div>
+            <button
+              aria-label="New estimate"
+              onClick={() => { setFabOpen(false); router.push('/dashboard/estimates/new') }}
+              style={{
+                width: 48, height: 48, borderRadius: 15,
+                background: C.card, border: `1px solid ${C.border}`,
+                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <NIcon name="doc" size={21} color={C.blue} />
+            </button>
+          </div>
 
-            {/* New appointment */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <div style={{
-                background: C.card, borderRadius: 12,
-                boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
-                padding: '7px 13px', textAlign: 'right',
-              }}>
-                <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New appointment</div>
-                <div style={{ fontSize: 11, color: C.inkSoft }}>Schedule a visit</div>
-              </div>
-              <button
-                onClick={() => { setFabOpen(false); router.push('/dashboard/appointments/new') }}
-                style={{
-                  width: 48, height: 48, borderRadius: 15,
-                  background: C.card, border: `1px solid ${C.border}`,
-                  boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <NIcon name="calendar" size={21} color={C.blue} />
-              </button>
+          {/* New appointment */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <div style={{
+              background: C.card, borderRadius: 12,
+              boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
+              padding: '7px 13px', textAlign: 'right',
+            }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New appointment</div>
+              <div style={{ fontSize: 11, color: C.inkSoft }}>Schedule a visit</div>
             </div>
-          </>
-        )}
+            <button
+              aria-label="New appointment"
+              onClick={() => { setFabOpen(false); router.push('/dashboard/appointments/new') }}
+              style={{
+                width: 48, height: 48, borderRadius: 15,
+                background: C.card, border: `1px solid ${C.border}`,
+                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <NIcon name="calendar" size={21} color={C.blue} />
+            </button>
+          </div>
+        </div>
 
         {/* FAB button */}
         <button
@@ -256,7 +273,8 @@ export default function DrawerNav() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 12px 26px rgba(37,99,235,0.45)',
             transition: 'transform .2s',
-            transform: fabOpen ? 'rotate(45deg)' : 'none',
+            transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+            willChange: 'transform',
           }}
         >
           <NIcon name="plus" size={28} color="#fff" stroke={2.4} />
@@ -285,6 +303,7 @@ export default function DrawerNav() {
         transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform .28s cubic-bezier(.4,0,.2,1)',
         display: 'flex', flexDirection: 'column',
+        willChange: 'transform',
       }}>
 
         {/* Profile head */}
@@ -311,6 +330,7 @@ export default function DrawerNav() {
               </div>
             </div>
             <button
+              aria-label="Close menu"
               onClick={() => setDrawerOpen(false)}
               style={{
                 width: 32, height: 32, borderRadius: 9,
