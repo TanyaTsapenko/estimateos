@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Home, Calendar, FileText, Users } from 'lucide-react'
 
 const C = {
   bg: '#F4F6FB', card: '#FFFFFF',
@@ -36,13 +37,14 @@ function NIcon({ name, size = 22, color = 'currentColor', stroke = 1.8 }: {
   }
 }
 
-const MENU = [
-  { id: 'home',      path: '/dashboard',              label: 'Home',      icon: 'home',     exact: true,  badge: false },
-  { id: 'schedule',  path: '/dashboard/appointments', label: 'Schedule',  icon: 'calendar', exact: false, badge: false },
-  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', icon: 'doc',      exact: false, badge: false },
-  { id: 'invoices',  path: '/dashboard/invoices',     label: 'Invoices',  icon: 'invoice',  exact: false, badge: false },
-  { id: 'clients',   path: '/dashboard/clients',      label: 'Clients',   icon: 'users',    exact: false, badge: false },
-  { id: 'marketing', path: '/dashboard/marketing',    label: 'Marketing', icon: 'mega',     exact: false, badge: false },
+type LucideIcon = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
+const MENU: { id: string; path: string; label: string; LIcon?: LucideIcon; icon?: string; exact: boolean; badge: boolean }[] = [
+  { id: 'home',      path: '/dashboard',              label: 'Home',      LIcon: Home,     exact: true,  badge: false },
+  { id: 'schedule',  path: '/dashboard/appointments', label: 'Schedule',  LIcon: Calendar, exact: false, badge: false },
+  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', LIcon: FileText, exact: false, badge: false },
+  { id: 'invoices',  path: '/dashboard/invoices',     label: 'Invoices',  icon: 'invoice', exact: false, badge: false },
+  { id: 'clients',   path: '/dashboard/clients',      label: 'Clients',   LIcon: Users,    exact: false, badge: false },
+  { id: 'marketing', path: '/dashboard/marketing',    label: 'Marketing', icon: 'mega',    exact: false, badge: false },
 ]
 
 export default function DrawerNav() {
@@ -317,7 +319,10 @@ export default function DrawerNav() {
                   marginBottom: 2, fontFamily: 'inherit',
                 }}
               >
-                <NIcon name={m.icon} size={21} color={active ? C.blue : C.inkMid} stroke={active ? 2 : 1.8} />
+                {m.LIcon
+                  ? <m.LIcon size={21} color={active ? C.blue : C.inkMid} strokeWidth={active ? 2 : 1.7} />
+                  : <NIcon name={m.icon!} size={21} color={active ? C.blue : C.inkMid} stroke={active ? 2 : 1.8} />
+                }
                 <span style={{ flex: 1, fontSize: 15, fontWeight: active ? 800 : 600, color: active ? C.blueDeep : C.ink }}>
                   {m.label}
                 </span>
