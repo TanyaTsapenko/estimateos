@@ -118,7 +118,7 @@ export default function DrawerNav() {
   const isGradientPage = pathname === '/dashboard' || pathname.startsWith('/dashboard/marketing')
   const burgerBg    = isGradientPage ? 'rgba(255,255,255,0.15)' : '#F4F6FB'
   const burgerBorder= isGradientPage ? 'none'                   : '1px solid rgba(15,23,42,0.10)'
-  const burgerIcon  = isGradientPage ? '#fff'                   : '#475467'
+  const burgerIcon  = isGradientPage ? '#fff'                   : '#2563EB'
 
   return (
     <div className="dashboard-mobile-nav">
@@ -147,8 +147,8 @@ export default function DrawerNav() {
         style={{
           position: 'fixed', inset: 0, zIndex: 46,
           background: 'rgba(244,246,251,0.55)',
-          backdropFilter: 'blur(1px)',
-          WebkitBackdropFilter: 'blur(1px)',
+          backdropFilter: fabOpen ? 'blur(1px)' : 'none',
+          WebkitBackdropFilter: fabOpen ? 'blur(1px)' : 'none',
           opacity: fabOpen ? 1 : 0,
           pointerEvents: fabOpen ? 'auto' : 'none',
           transition: 'opacity .25s',
@@ -232,7 +232,6 @@ export default function DrawerNav() {
             boxShadow: '0 12px 26px rgba(37,99,235,0.45)',
             transition: 'transform .2s',
             transform: fabOpen ? 'rotate(45deg)' : 'rotate(0deg)',
-            willChange: 'transform',
           }}
         >
           <NIcon name="plus" size={28} color="#fff" stroke={2.4} />
@@ -261,7 +260,6 @@ export default function DrawerNav() {
         transform: drawerOpen ? 'translateX(0)' : 'translateX(-100%)',
         transition: 'transform .28s cubic-bezier(.4,0,.2,1)',
         display: 'flex', flexDirection: 'column',
-        willChange: 'transform',
       }}>
 
         {/* Profile head */}
