@@ -758,7 +758,7 @@ const [dashToast, setDashToast] = useState('')
           <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
 
           {/* Header row: burger (fixed left:20) | company+name | bell — all vertically centred */}
-          <div style={{ padding: '20px 20px 0 72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+          <div style={{ padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 0 72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
             <div>
               {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
               <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: companyName ? 2 : 0 }}>{userName || '—'}</div>
@@ -902,11 +902,11 @@ const [dashToast, setDashToast] = useState('')
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.7)' }}>All visits complete for today!</div>
               </div>
             ) : (
-              <div style={{ background: 'rgba(249,115,22,0.18)', borderRadius: 16, padding: '16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 99, background: 'rgba(249,115,22,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div style={{ background: 'rgba(217,119,6,0.22)', borderRadius: 16, padding: '16px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 99, background: 'rgba(217,119,6,0.32)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FCD34D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(249,115,22,0.9)' }}>{needFollowUpCount} visit{needFollowUpCount !== 1 ? 's' : ''} need follow-up</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#FCD34D' }}>{needFollowUpCount} visit{needFollowUpCount !== 1 ? 's' : ''} need follow-up</div>
               </div>
             )}
           </div>
