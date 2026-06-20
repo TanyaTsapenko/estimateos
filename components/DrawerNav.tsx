@@ -98,12 +98,15 @@ export default function DrawerNav() {
     if (!ownerId) return
 
     async function refreshCount() {
-      const { count } = await supabase
+      console.log('[DrawerNav RT] refreshCount() ownerId:', ownerId)
+      const { count, error } = await supabase
         .from('estimates')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', ownerId!)
         .eq('status', 'draft')
+      console.log('[DrawerNav RT] refreshCount() → count:', count, '| error:', error)
       setDraftCount(count ?? 0)
+      console.log('[DrawerNav RT] setDraftCount called with:', count ?? 0)
     }
 
     const channel = supabase
@@ -118,6 +121,7 @@ export default function DrawerNav() {
       )
       .subscribe((status, err) => {
         console.log('[DrawerNav RT] channel status:', status, err ?? '')
+        if (status === 'SUBSCRIBED') refreshCount()
       })
 
     return () => { supabase.removeChannel(channel) }
