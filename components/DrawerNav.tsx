@@ -39,7 +39,7 @@ function NIcon({ name, size = 22, color = 'currentColor', stroke = 1.8 }: {
 const MENU = [
   { id: 'home',      path: '/dashboard',              label: 'Home',      icon: 'home',     exact: true,  badge: false },
   { id: 'schedule',  path: '/dashboard/appointments', label: 'Schedule',  icon: 'calendar', exact: false, badge: false },
-  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', icon: 'doc',      exact: false, badge: true  },
+  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', icon: 'doc',      exact: false, badge: false },
   { id: 'invoices',  path: '/dashboard/invoices',     label: 'Invoices',  icon: 'invoice',  exact: false, badge: false },
   { id: 'clients',   path: '/dashboard/clients',      label: 'Clients',   icon: 'users',    exact: false, badge: false },
   { id: 'marketing', path: '/dashboard/marketing',    label: 'Marketing', icon: 'mega',     exact: false, badge: false },
@@ -52,13 +52,11 @@ export default function DrawerNav() {
 
   const [drawerOpen,  setDrawerOpen]  = useState(false)
   const [fabOpen,     setFabOpen]     = useState(false)
-  const [draftCount,  setDraftCount]  = useState(0)
   const [userName,    setUserName]    = useState('')
   const [companyName, setCompanyName] = useState('')
   const [initial,     setInitial]     = useState('')
-  const [ownerId,     setOwnerId]     = useState<string | null>(null)
 
-  // Load profile + initial draft count once
+  // Load profile once
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -66,7 +64,7 @@ export default function DrawerNav() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('first_name, last_name, company_name, team_owner_id')
+        .select('first_name, last_name, company_name')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -79,53 +77,9 @@ export default function DrawerNav() {
       setUserName(name)
       setCompanyName(company)
       setInitial(name.charAt(0).toUpperCase())
-
-      const owner = (prof as any)?.team_owner_id || user.id
-      setOwnerId(owner)
-
-      const { count } = await supabase
-        .from('estimates')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', owner)
-        .eq('status', 'draft')
-      setDraftCount(count ?? 0)
     }
     load()
   }, [])
-
-  // Realtime subscription — re-fetch count on any INSERT/UPDATE/DELETE
-  useEffect(() => {
-    if (!ownerId) return
-
-    async function refreshCount() {
-      console.log('[DrawerNav RT] refreshCount() ownerId:', ownerId)
-      const { count, error } = await supabase
-        .from('estimates')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', ownerId!)
-        .eq('status', 'draft')
-      console.log('[DrawerNav RT] refreshCount() → count:', count, '| error:', error)
-      setDraftCount(count ?? 0)
-      console.log('[DrawerNav RT] setDraftCount called with:', count ?? 0)
-    }
-
-    const channel = supabase
-      .channel('drawer-nav-draft-count')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'estimates', filter: `user_id=eq.${ownerId}` },
-        (payload) => {
-          console.log('[DrawerNav RT] event received:', payload)
-          refreshCount()
-        }
-      )
-      .subscribe((status, err) => {
-        console.log('[DrawerNav RT] channel status:', status, err ?? '')
-        if (status === 'SUBSCRIBED') refreshCount()
-      })
-
-    return () => { supabase.removeChannel(channel) }
-  }, [ownerId])
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -369,17 +323,6 @@ export default function DrawerNav() {
                 <span style={{ flex: 1, fontSize: 15, fontWeight: active ? 800 : 600, color: active ? C.blueDeep : C.ink }}>
                   {m.label}
                 </span>
-                {m.badge && draftCount > 0 && (
-                  <span style={{
-                    minWidth: 22, height: 22, padding: '0 6px', borderRadius: 99,
-                    background: active ? C.blue : C.bg,
-                    color: active ? '#fff' : C.inkSoft,
-                    fontSize: 11.5, fontWeight: 800,
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {draftCount}
-                  </span>
-                )}
               </button>
             )
           })}
