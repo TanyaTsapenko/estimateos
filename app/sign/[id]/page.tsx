@@ -31,10 +31,11 @@ export default function PublicSignPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
+      const res = await fetch(`/api/public/estimate/${id}`)
+      if (!res.ok) return
+      const { estimate: est, profile: prof } = await res.json()
       if (!est) return
       setEstimate(est)
-      const { data: prof } = await supabase.from('profiles').select('company_name, contract_terms').eq('id', est.user_id).single()
       setProfile(prof)
     }
     load()

@@ -1,0 +1,32 @@
+-- Remove open public SELECT policy on estimates.
+-- Public reads are now routed through /api/public/estimate/[id] (service role, limited projection).
+drop policy if exists "Public read estimate by id" on public.estimates;
+
+-- ─── contracts table ────────────────────────────────────────────────────────
+-- Run these in Supabase SQL Editor to verify and lock down the contracts table.
+-- Check current RLS state:
+--   SELECT relrowsecurity, relforcerowsecurity
+--   FROM pg_class WHERE relname = 'contracts';
+--
+-- Check existing policies:
+--   SELECT policyname, cmd, qual FROM pg_policies WHERE tablename = 'contracts';
+--
+-- If RLS is disabled (relrowsecurity = false), enable it:
+--   ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
+--
+-- If there is a public using(true) SELECT policy, drop it:
+--   DROP POLICY IF EXISTS "<policy name>" ON public.contracts;
+--
+-- Add policies that allow only owners/team members to read their contracts:
+--   CREATE POLICY "Owner sees own contracts"
+--     ON public.contracts FOR SELECT
+--     USING (auth.uid() = profile_id
+--       OR auth.uid() = (SELECT team_owner_id FROM public.profiles WHERE id = profile_id));
+--
+--   CREATE POLICY "Owner updates own contracts"
+--     ON public.contracts FOR UPDATE
+--     USING (auth.uid() = profile_id
+--       OR auth.uid() = (SELECT team_owner_id FROM public.profiles WHERE id = profile_id));
+--
+-- Public reads (for /sign/contract/[id]) now go through /api/public/contract/[id]
+-- which uses createServiceClient() (service role) on the server — no RLS bypass needed.

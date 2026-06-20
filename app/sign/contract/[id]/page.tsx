@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+// reads/decline go through /api/public/contract/[id] (service role, limited projection)
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
@@ -66,7 +66,6 @@ function CardHeader({ title }: { title: string }) {
 export default function SignContractPage() {
   const params = useParams()
   const contractId = Array.isArray(params?.id) ? params.id[0] : params?.id as string
-  const supabase = createClient()
   const searchParams = useSearchParams()
   const isPdf = searchParams.get('pdf') === 'true'
 
@@ -110,15 +109,10 @@ export default function SignContractPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: con } = await supabase.from('contracts').select('*').eq('id', contractId).single()
-      if (!con) { setLoading(false); return }
+      const res = await fetch(`/api/public/contract/${contractId}`)
+      if (!res.ok) { setLoading(false); return }
+      const { contract: con, estimate: est, openings: ops, profile: prof } = await res.json()
       setContract(con)
-
-      const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('*').eq('id', con.estimate_id).single(),
-        supabase.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-        supabase.from('profiles').select('deposit_percent, deposit_required, signature_url, warranty_period, cancellation_policy, contract_terms, completion_timeframe, payment_methods, customer_responsibilities, buyer_right_to_cancel, damage_disclaimer, permits_responsibility, project_manager, logo_url, phone, website, city, province, address, postal, contract_clauses, deposit_timing').eq('id', con.profile_id).single(),
-      ])
       if (est) setEstimate(est)
       setOpenings(ops || [])
       if (prof) setProfile(prof as Profile)
@@ -231,8 +225,12 @@ export default function SignContractPage() {
 
   async function handleDecline() {
     if (!confirm('Are you sure you want to decline this contract?')) return
-    await supabase.from('contracts').update({ status: 'declined' }).eq('id', contractId)
-    setContract(prev => prev ? { ...prev, status: 'declined' } : prev)
+    const res = await fetch(`/api/public/contract/${contractId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'decline' }),
+    })
+    if (res.ok) setContract(prev => prev ? { ...prev, status: 'declined' } : prev)
   }
 
   // ── Loading / not found ─────────────────────────────────────────────────────

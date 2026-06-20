@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+// reads go through /api/public/estimate/[id] (service role, limited projection)
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
@@ -71,7 +71,6 @@ function MRow({ label, value, mono, blue, last }: { label: string; value: string
 
 export default function ClientEstimatePage() {
   const { id } = useParams<{ id: string }>()
-  const supabase = createClient()
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -79,10 +78,13 @@ export default function ClientEstimatePage() {
 
   useEffect(() => {
     async function load() {
-      const { data: est } = await supabase.from('estimates').select('*').eq('id', id).single()
+      const res = await fetch(`/api/public/estimate/${id}`)
+      if (!res.ok) return
+      const { estimate: est, profile: prof, openings: ops } = await res.json()
       if (!est) return
       setEstimate(est)
-      // Track view
+      setOpenings(ops || [])
+      setProfile(prof)
       if (est.status !== 'signed' && est.status !== 'declined') {
         fetch('/api/track-estimate-view', {
           method: 'POST',
@@ -93,14 +95,6 @@ export default function ClientEstimatePage() {
       if (est.status === 'signed') setDocStatus('signed')
       else if (est.status === 'declined') setDocStatus('declined')
       else setDocStatus('active')
-
-      const [{ data: ops }, { data: prof }] = await Promise.all([
-        supabase.from('estimate_openings').select('id, type, qty, total_cost, room, install, shape, colour, glass, frame, floor, width_in, height_in, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour').eq('estimate_id', id).order('sort_order'),
-        supabase.from('profiles').select('company_name, address, city, province, postal, phone, logo_url, contract_terms, deposit_percent').eq('id', (est as any).user_id).single(),
-      ])
-      setOpenings(ops || [])
-      setProfile(prof)
-
     }
     load()
   }, [id])
