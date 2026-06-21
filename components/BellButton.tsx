@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export interface AppNotification {
@@ -242,11 +242,10 @@ export default function BellButton({
                         width: 26, height: 26, borderRadius: 8, flexShrink: 0,
                         background: C.card, border: `1px solid ${C.hairStrong}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', color: C.inkMid, fontSize: 14, lineHeight: 1,
-                        fontFamily: 'inherit',
+                        cursor: 'pointer', padding: 0,
                       }}
                     >
-                      ×
+                      <X size={13} strokeWidth={2.2} color={C.inkMid} />
                     </button>
                   </div>
                 ))}
