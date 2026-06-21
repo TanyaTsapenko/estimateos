@@ -9,6 +9,7 @@ import {
   FileText, PenLine, DollarSign, Receipt,
   Star, Plus, Pencil, Users, X,
 } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
@@ -410,46 +411,38 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
 
       {/* ── HERO ── */}
-      <div style={{ background: T.hero, paddingLeft: 18, paddingRight: 18, paddingBottom: 20, paddingTop: 'max(8px, env(safe-area-inset-top))' }}>
-
-        {/* Top bar */}
-        <div style={{ height: 42, display: 'flex', alignItems: 'center', position: 'relative' }}>
+      <AppTopBar
+        variant="dark"
+        onBack={() => router.back()}
+        backLabel="Clients"
+        right={<div ref={menuRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => router.back()}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px 4px 4px 0', color: '#fff' }}
+            onClick={() => setMenuOpen(o => !o)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'rgba(255,255,255,0.75)', padding: '4px 0 4px 8px', letterSpacing: 3, fontFamily: 'inherit' }}
           >
-            <ChevronLeft size={22} color="#fff" strokeWidth={2} />
+            ···
           </button>
-          <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.6)', pointerEvents: 'none' }}>
-            Client
-          </div>
-          <div ref={menuRef} style={{ marginLeft: 'auto', position: 'relative' }}>
-            <button
-              onClick={() => setMenuOpen(o => !o)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'rgba(255,255,255,0.75)', padding: '4px 0 4px 8px', letterSpacing: 3, fontFamily: 'inherit' }}
-            >
-              ···
-            </button>
-            {menuOpen && (
-              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.18)', border: `1px solid ${T.border}`, overflow: 'hidden', minWidth: 180, zIndex: 50 }}>
-                <button
-                  onClick={() => { setMenuOpen(false); setEditForm({ name: client.name, phone: client.phone || '', email: client.email || '', address: client.address || '', city: client.city || '', province: client.province || '', postal_code: client.postal_code || '' }); setEditOpen(true) }}
-                  style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.ink, textAlign: 'left', borderBottom: `1px solid ${T.border}` }}
-                >
-                  <Pencil size={15} color={T.inkMid} strokeWidth={1.8} />
-                  Edit client
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
-                  style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.red, textAlign: 'left' }}
-                >
-                  <X size={15} color={T.red} strokeWidth={2} />
-                  Delete client
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+          {menuOpen && (
+            <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(15,23,42,0.18)', border: `1px solid ${T.border}`, overflow: 'hidden', minWidth: 180, zIndex: 50 }}>
+              <button
+                onClick={() => { setMenuOpen(false); setEditForm({ name: client.name, phone: client.phone || '', email: client.email || '', address: client.address || '', city: client.city || '', province: client.province || '', postal_code: client.postal_code || '' }); setEditOpen(true) }}
+                style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.ink, textAlign: 'left', borderBottom: `1px solid ${T.border}` }}
+              >
+                <Pencil size={15} color={T.inkMid} strokeWidth={1.8} />
+                Edit client
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
+                style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.red, textAlign: 'left' }}
+              >
+                <X size={15} color={T.red} strokeWidth={2} />
+                Delete client
+              </button>
+            </div>
+          )}
+        </div>}
+      />
+      <div style={{ background: T.hero, paddingLeft: 18, paddingRight: 18, paddingBottom: 20, paddingTop: 16 }}>
 
         {/* Identity row */}
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'flex-start', gap: 14 }}>

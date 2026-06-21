@@ -6,6 +6,7 @@ import { fmtCAD, OPENING_TYPES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import { ClipboardList, ArrowLeft } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
+import AppTopBar from '@/components/AppTopBar'
 
 interface PriceItem {
   key: string
@@ -406,12 +407,7 @@ export default function PriceListPage() {
   if (roleLoading) return null
   if (role === 'estimator') return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: F }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <button onClick={() => router.push('/dashboard/settings')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0A1628', fontFamily: F }}>
-          <ArrowLeft size={18} strokeWidth={2} color="#0A1628" />
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>Price List</span>
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.push('/dashboard/settings')} title="Price List" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Access restricted</div>
         <div style={{ fontSize: 14, color: '#64748B', marginBottom: 24, maxWidth: 280, lineHeight: 1.6 }}>Price List is managed by your account owner or manager.</div>
@@ -621,35 +617,20 @@ export default function PriceListPage() {
       <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F }}>
 
         {/* ── TOPBAR ── */}
-        <div className="page-hd" style={{
-          background: '#fff', borderBottom: '1px solid #EEF0F4',
-          padding: '16px 20px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          position: 'sticky', top: 0,
-          paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-          zIndex: 10,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => router.push('/dashboard/settings')} style={{
-              width: 32, height: 32, background: '#F5F6F8', border: 'none',
-              borderRadius: 8, cursor: 'pointer', fontSize: 16, color: '#64748B',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>←</button>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>BUSINESS</div>
-              <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Price List</div>
-              {!isOwner && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Only the account owner can edit the price list.</div>}
-            </div>
-          </div>
-          {hasItems && isOwner && activeTab === 'items' && (
+        <AppTopBar
+          onBack={() => router.push('/dashboard/settings')}
+          backLabel="Settings"
+          eyebrow="BUSINESS"
+          title="Price List"
+          right={hasItems && isOwner && activeTab === 'items' ? (
             <button
               onClick={() => openAddModal()}
               style={{ padding: '8px 16px', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F }}
             >
               + Add Item
             </button>
-          )}
-        </div>
+          ) : undefined}
+        />
 
         {/* ── TAB SWITCHER ── */}
         <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 10, padding: 3, margin: '12px 16px 0', gap: 2 }}>

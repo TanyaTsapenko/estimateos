@@ -4,6 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { ArrowLeft, Landmark, FileText, Banknote, CreditCard } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 const PAYMENT_OPTIONS = [
   { key: 'E-Transfer', label: 'E-Transfer', Icon: Landmark   },
@@ -96,27 +97,7 @@ export default function PaymentSetupPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
 
       {/* Topbar */}
-      <div className="page-hd" style={{
-        background: '#fff', borderBottom: '1px solid #EEF0F4',
-        padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12,
-        position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10,
-      }}>
-        <button onClick={() => router.back()} style={{
-          background: '#F5F6F8', border: 'none', borderRadius: 8,
-          width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', flexShrink: 0,
-        }}>
-          <ArrowLeft size={16} color="#64748B" />
-        </button>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>
-            {estimate.estimate_number}
-          </div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px' }}>
-            Payment Setup
-          </div>
-        </div>
-      </div>
+      <AppTopBar onBack={() => router.back()} backLabel="Back" title="Payment Setup" />
 
       {/* Body */}
       <div style={{ padding: '24px 16px 200px', flex: 1 }}>

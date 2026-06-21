@@ -7,6 +7,7 @@ import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, t
 import { TAX_RATES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
+import AppTopBar from '@/components/AppTopBar'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -1043,32 +1044,20 @@ export default function AppointmentsPage() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F3F4F6', fontFamily: '-apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
 
         {/* Header */}
-        <div className="page-hd" style={{ background: '#fff', padding: '2px 18px 12px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 2px))', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>
-                {getEyebrow(selectedDay)}
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#0B1220', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-                {dayTitle}
-              </div>
-              <div style={{ fontSize: 13, color: '#8A94A6', marginTop: 3 }}>
-                <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
-                {' · '}{doneCount} done
-                {cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
-                {needsFollowUpCount > 0 ? <span style={{ color: '#F97316', fontWeight: 700 }}> · {needsFollowUpCount} needs follow-up</span> : ''}
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 4 }}>
-              <button
-                onClick={() => router.push('/dashboard/appointments/new')}
-                style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 16px -5px rgba(37,99,235,0.6)' }}
-              >
-                + New
-              </button>
+        <AppTopBar
+          right={<button onClick={() => router.push('/dashboard/appointments/new')} style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 16px -5px rgba(37,99,235,0.6)' }}>+ New</button>}
+        >
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{getEyebrow(selectedDay)}</div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#0B1220', letterSpacing: '-0.02em', lineHeight: 1.1 }}>{dayTitle}</div>
+            <div style={{ fontSize: 13, color: '#8A94A6', marginTop: 3 }}>
+              <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
+              {' · '}{doneCount} done
+              {cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
+              {needsFollowUpCount > 0 ? <span style={{ color: '#F97316', fontWeight: 700 }}> · {needsFollowUpCount} needs follow-up</span> : ''}
             </div>
           </div>
-        </div>
+        </AppTopBar>
 
         {/* Day filter pills */}
         <div style={{ padding: '0 16px 12px', display: 'flex', gap: 8, background: '#fff', flexShrink: 0 }}>

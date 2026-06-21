@@ -6,6 +6,7 @@ import { formatPhone, validateName, validatePhone, validateEmail, validateAddres
 import { TAX_RATES } from '@/lib/pricing'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
+import AppTopBar from '@/components/AppTopBar'
 
 const LEAD_SOURCES = ['Phone call', 'Website', 'Referral', 'Google', 'Kijiji', 'Other']
 const STATUSES = [
@@ -197,28 +198,7 @@ export default function NewAppointmentPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <div className="page-hd" style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        position: 'sticky',
-        top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <button onClick={() => router.back()} style={{
-          background: '#F5F6F8', border: 'none', borderRadius: 8,
-          width: 32, height: 32, cursor: 'pointer', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', color: '#64748B',
-        }}>←</button>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase' }}>SCHEDULE</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>New Appointment</div>
-        </div>
-      </div>
+      <AppTopBar onBack={() => router.back()} backLabel="Back" eyebrow="SCHEDULE" title="New Appointment" />
 
       <div className="card screen-enter">
         {error && <div className="error-msg">{error}</div>}

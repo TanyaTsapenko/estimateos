@@ -7,6 +7,7 @@ import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, Cre
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
 import BellButton, { type AppNotification } from '@/components/BellButton'
+import AppTopBar from '@/components/AppTopBar'
 
 interface Appointment {
   id: string; time: string; endTime: string; client: string; address: string; phone: string
@@ -749,6 +750,13 @@ const [dashToast, setDashToast] = useState('')
 
       {/* ── MOBILE GRADIENT HEADER + HERO ── */}
       {isMobile && (
+        <>
+        <AppTopBar
+          variant="dark"
+          eyebrow={companyName || undefined}
+          title={userName || '—'}
+          right={<BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />}
+        />
         <div style={{
           background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)',
           position: 'relative', overflow: 'hidden', paddingBottom: 28,
@@ -756,15 +764,6 @@ const [dashToast, setDashToast] = useState('')
           {/* Glow blobs */}
           <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.45) 0%, transparent 70%)', top: -130, right: -100, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
-
-          {/* Header row: burger (fixed left:20) | company+name | bell — all vertically centred */}
-          <div style={{ padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 0 72px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-            <div>
-              {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{companyName}</div>}
-              <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px', marginTop: companyName ? 2 : 0 }}>{userName || '—'}</div>
-            </div>
-            <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />
-          </div>
 
           {/* Day + done count */}
           <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
@@ -943,6 +942,7 @@ const [dashToast, setDashToast] = useState('')
             </button>
           </div>
         </div>
+        </>
       )}
 
       {/* ── DESKTOP HERO ── */}

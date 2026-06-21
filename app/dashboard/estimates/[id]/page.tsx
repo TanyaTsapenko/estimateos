@@ -8,6 +8,7 @@ import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 import ConfirmModal from '@/components/ConfirmModal'
 import WindowDiagram from '@/components/WindowDiagram'
 interface Opening {
@@ -244,12 +245,7 @@ export default function EstimateDetailPage() {
   // ── LOADING ──────────────────────────────────────────
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
-        <button onClick={() => router.push('/dashboard/estimates')}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
-          <ArrowLeft size={15} strokeWidth={2} /> Estimates
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.push('/dashboard/estimates')} backLabel="Estimates" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#94A3B8', fontSize: 13 }}>
         Loading…
       </div>
@@ -259,12 +255,7 @@ export default function EstimateDetailPage() {
   // ── NOT FOUND ────────────────────────────────────────
   if (!estimate) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
-        <button onClick={() => router.push('/dashboard/estimates')}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
-          <ArrowLeft size={15} strokeWidth={2} /> Estimates
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.push('/dashboard/estimates')} backLabel="Estimates" />
       <div style={{ textAlign: 'center', padding: '80px 20px' }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>Estimate not found</div>
         <button onClick={() => router.push('/dashboard/estimates')}
@@ -318,23 +309,10 @@ export default function EstimateDetailPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
-      <div className="page-hd" style={{
-        background: '#fff', borderBottom: '1px solid #EEF0F4',
-        padding: '14px 28px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 20,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
-          <button onClick={() => router.push('/dashboard/estimates')}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
-            <ArrowLeft size={15} strokeWidth={2} /> Estimates
-          </button>
-          <div style={{ width: 1, height: 18, background: '#EEF0F4', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', flexShrink: 0 }}>
-            {estimate.estimate_number}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 16 }}>
+      <AppTopBar
+        onBack={() => router.push('/dashboard/estimates')}
+        backLabel="Estimates"
+        right={<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {estimate.status === 'draft' && (
             <button
               onClick={() => router.push(`/dashboard/estimates/new?edit=${id}`)}
@@ -359,8 +337,12 @@ export default function EstimateDetailPage() {
           }}>
             {estimate.status === 'signed' ? 'ACCEPTED' : estimate.status.toUpperCase()}
           </span>
-        </div>
-      </div>
+        </div>}
+      >
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>
+          {estimate.estimate_number}
+        </span>
+      </AppTopBar>
 
       {/* ── BODY ── */}
       <div className="est-detail-body" style={{ padding: '24px 28px 100px' }}>

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { usePermissions } from '@/lib/usePermissions'
 import { Search, Plus, ChevronRight } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
@@ -98,27 +99,10 @@ export default function EstimatesPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
-      <div className="page-hd" style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
-            YOUR WORK
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
-            Estimates
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <AppTopBar
+        eyebrow="YOUR WORK"
+        title="Estimates"
+        right={<>
           <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
           {role !== 'admin' && (
           <button
@@ -127,8 +111,8 @@ export default function EstimatesPage() {
             <Plus size={14} strokeWidth={2.5} /> New Estimate
           </button>
           )}
-        </div>
-      </div>
+        </>}
+      />
 
       {/* ── BODY ── */}
       <div className="page-body" style={{ padding: '20px 16px 100px' }}>

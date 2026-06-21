@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { useRole } from '@/lib/useRole'
 import { ChevronRight } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 interface Invoice {
   id: string; invoice_number: string; status: string; amount: number
@@ -156,30 +157,11 @@ export default function InvoicesPage() {
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
-      <div className="page-hd" style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>
-            BILLING
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>
-            Invoices
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtCAD(totalPending)} pending · {fmtCAD(totalPaid)} paid</span>
-        </div>
-      </div>
+      <AppTopBar
+        eyebrow="BILLING"
+        title="Invoices"
+        right={<span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtCAD(totalPending)} pending · {fmtCAD(totalPaid)} paid</span>}
+      />
 
       {/* ── BODY ── */}
       <div style={{ padding: '20px 16px 100px' }}>

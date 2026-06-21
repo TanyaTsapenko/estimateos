@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { ArrowLeft, Info, Send } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string; user_id: string }
 interface DepositInvoice { id: string; amount: number; status: string }
@@ -163,25 +164,7 @@ export default function CreateInvoicePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
       {/* TOPBAR */}
-      <div className="page-hd" style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        position: 'sticky',
-        top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <button
-          onClick={() => router.push(`/dashboard/estimates/${id}`)}
-          style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
-          <ArrowLeft size={16} strokeWidth={2} />
-        </button>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628' }}>Send Final Invoice</div>
-      </div>
+      <AppTopBar onBack={() => router.back()} backLabel="Back" title="Send Final Invoice" />
 
       {/* BODY */}
       <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100 }}>
@@ -355,36 +338,15 @@ export default function CreateInvoicePage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
       {/* TOPBAR */}
-      <div className="page-hd" style={{
-        background: '#fff',
-        borderBottom: '1px solid #EEF0F4',
-        padding: '16px 28px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-        zIndex: 10,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button
-            onClick={() => router.push(`/dashboard/estimates/${id}`)}
-            style={{ width: 32, height: 32, background: '#F5F6F8', borderRadius: 8, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B', flexShrink: 0 }}>
-            <ArrowLeft size={16} strokeWidth={2} />
-          </button>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 1 }}>
-              FROM {estimate.estimate_number}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Send Final Invoice</div>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
+      <AppTopBar
+        onBack={() => router.back()}
+        backLabel="Back"
+        title="Send Final Invoice"
+        right={<div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
           <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtCAD(estimate.total)} project total</div>
-        </div>
-      </div>
+        </div>}
+      />
 
       {/* BODY */}
       <div style={{ flex: 1, padding: '20px 16px', paddingBottom: 100, overflowY: 'auto' }}>

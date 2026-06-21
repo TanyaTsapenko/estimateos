@@ -6,6 +6,7 @@ import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus, Eye, EyeOff } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import AppTopBar from '@/components/AppTopBar'
 
 import { usePermissions } from '@/lib/usePermissions'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -1776,23 +1777,7 @@ export default function SettingsPage() {
         {!mobileDetail ? (
           // Section list
           <div>
-            <div className="page-hd" style={{
-              background: '#fff',
-              borderBottom: '1px solid #EEF0F4',
-              padding: '16px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              position: 'sticky',
-              top: 0,
-              paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))',
-              zIndex: 10,
-            }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 2 }}>WORKSPACE</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.4px' }}>Settings</div>
-              </div>
-            </div>
+            <AppTopBar eyebrow="WORKSPACE" title="Settings" />
             <div style={{ padding: '16px 16px 0' }}>
               {visibleGroups.map(g => (
                 <div key={g.title} style={{ marginBottom: 24 }}>
@@ -1819,11 +1804,7 @@ export default function SettingsPage() {
         ) : (
           // Detail view
           <div>
-            <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 20 }}>
-              <button onClick={() => setMobileDetail(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#2563EB', display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, fontWeight: 600, fontFamily: 'inherit' }}>
-                <SIcon name="back" size={16} /> Settings
-              </button>
-            </div>
+            <AppTopBar onBack={() => setMobileDetail(false)} backLabel="Settings" />
             <div style={{ padding: '20px 16px 100px' }}>
               {role === 'estimator' && (
                 <div style={{ marginBottom: 16, padding: '12px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, fontSize: 13, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: 10 }}>

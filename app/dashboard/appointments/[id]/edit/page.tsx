@@ -6,6 +6,7 @@ import { formatPhone, validateName, validatePhone, validateEmail, hasErrors, typ
 import { TAX_RATES } from '@/lib/pricing'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 import ConfirmModal from '@/components/ConfirmModal'
+import AppTopBar from '@/components/AppTopBar'
 
 interface TeamMember { id: string; name: string }
 
@@ -191,27 +192,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
         WebkitFontSmoothing: 'antialiased',
       }}>
         {/* Top bar */}
-        <div className="page-hd" style={{
-          background: T.card, borderBottom: `1px solid ${T.border}`,
-          padding: '16px 20px',
-          paddingTop: 'max(60px, calc(env(safe-area-inset-top) + 16px))',
-          display: 'flex', alignItems: 'center', gap: 12,
-          position: 'sticky', top: 0, zIndex: 10,
-        }}>
-          <button onClick={() => router.back()} style={{
-            width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border}`,
-            background: T.card, color: T.inkMid, display: 'flex', alignItems: 'center',
-            justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 6l-6 6 6 6" />
-            </svg>
-          </button>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase' }}>Schedule</div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>Edit appointment</div>
-          </div>
-        </div>
+        <AppTopBar onBack={() => router.back()} backLabel="Back" eyebrow="SCHEDULE" title="Edit appointment" />
 
         {/* Form */}
         <div style={{ padding: '8px 16px 40px', maxWidth: 640, margin: '0 auto' }}>

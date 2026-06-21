@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ImagePlus, ArrowLeft } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { usePermissions } from '@/lib/usePermissions'
 
@@ -287,12 +288,7 @@ export default function CompanySettingsPage() {
   if (roleLoading) return null
   if (role === 'estimator') return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <button onClick={() => router.push('/dashboard/settings')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0A1628', fontFamily: 'inherit' }}>
-          <ArrowLeft size={18} strokeWidth={2} color="#0A1628" />
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>Company</span>
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.back()} backLabel="Settings" title="Company" />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 32px', textAlign: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 600, color: '#0A1628', marginBottom: 8 }}>Access restricted</div>
         <div style={{ fontSize: 14, color: '#64748B', marginBottom: 24, maxWidth: 280, lineHeight: 1.6 }}>Company Settings is managed by your account owner or manager.</div>
@@ -312,15 +308,7 @@ export default function CompanySettingsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8F9FB', fontFamily: 'Inter, sans-serif' }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '0.5px solid #F1F3F5', padding: 'max(48px, calc(env(safe-area-inset-top) + 16px)) 20px 14px', position: 'sticky', top: 0, zIndex: 50 }}>
-        <button
-          onClick={() => router.push('/dashboard/settings')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#0A1628', fontFamily: 'inherit' }}
-        >
-          <ArrowLeft size={18} strokeWidth={2} color="#0A1628" />
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#0A1628' }}>Company</span>
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.back()} backLabel="Settings" title="Company" />
 
       <div style={{ padding: '20px 20px 40px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 

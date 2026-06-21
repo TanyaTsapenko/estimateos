@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { ArrowLeft } from 'lucide-react'
+import AppTopBar from '@/components/AppTopBar'
 
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Estimate {
@@ -41,12 +42,7 @@ export default function SignPage() {
 
   if (!estimate) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 28px', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
-        <button onClick={() => router.push('/dashboard/estimates')}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0 }}>
-          <ArrowLeft size={15} strokeWidth={2} /> Estimates
-        </button>
-      </div>
+      <AppTopBar onBack={() => router.push('/dashboard/estimates')} backLabel="Estimates" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#94A3B8', fontSize: 13 }}>
         Loading…
       </div>
@@ -60,24 +56,13 @@ export default function SignPage() {
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
 
       {/* Topbar */}
-      <div className="page-hd" style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '14px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))', zIndex: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, minWidth: 0 }}>
-          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, fontWeight: 600, color: '#64748B', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
-            <ArrowLeft size={15} strokeWidth={2} /> Back
-          </button>
-          <div style={{ width: 1, height: 18, background: '#EEF0F4', flexShrink: 0 }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace', flexShrink: 0 }}>
-            {estimate.estimate_number}
-          </span>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', letterSpacing: '-0.3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {estimate.client_name || 'Client'}
-          </span>
-        </div>
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2563EB', background: 'rgba(37,99,235,.08)', border: '1px solid rgba(37,99,235,.2)', borderRadius: 6, padding: '4px 10px', flexShrink: 0, marginLeft: 16 }}>
+      <AppTopBar
+        onBack={() => router.back()}
+        backLabel="Back"
+        right={<span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2563EB', background: 'rgba(37,99,235,.08)', border: '1px solid rgba(37,99,235,.2)', borderRadius: 6, padding: '4px 10px' }}>
           CONTRACTOR VIEW
-        </span>
-      </div>
+        </span>}
+      />
 
       {/* Body */}
       <div className="card" style={{ paddingTop: 72, paddingBottom: 'calc(100px + env(safe-area-inset-bottom))' }}>
