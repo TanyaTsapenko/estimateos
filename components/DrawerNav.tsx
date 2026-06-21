@@ -220,7 +220,7 @@ export default function DrawerNav() {
             </div>
             <button
               aria-label="New client"
-              onClick={() => { setFabOpen(false); router.push('/dashboard/clients') }}
+              onClick={() => { setFabOpen(false); router.push('/dashboard/clients/new') }}
               style={{
                 width: 48, height: 48, borderRadius: 15,
                 background: C.card, border: `1px solid ${C.border}`,
