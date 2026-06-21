@@ -202,6 +202,7 @@ const [dashToast, setDashToast] = useState('')
     clientEmail: string; address: string; message: string; reminderCount: number
   } | null>(null)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
+  const [unreadCount,   setUnreadCount]   = useState(0)
   const [currentUserId, setCurrentUserId] = useState('')
   const { role, permissions } = usePermissions()
   const isRestrictedRole = role === 'estimator' || role === 'admin'
@@ -219,8 +220,10 @@ const [dashToast, setDashToast] = useState('')
     const { userIds, isOwnerOrManager: ownerOrManager } = await getTeamUserIds(supabase, user.id)
     console.log('Team userIds:', userIds, 'isOwnerOrManager:', ownerOrManager)
     setIsOwnerOrManager(ownerOrManager)
-    supabase.from('notifications').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(20)
+    supabase.from('notifications').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(50)
       .then(({ data }) => { if (data) setNotifications(data as AppNotification[]) })
+    supabase.from('notifications').select('*', { count: 'exact', head: true }).in('user_id', userIds).eq('read', false)
+      .then(({ count }) => setUnreadCount(count ?? 0))
     const nameMap: Record<string, string> = {}
     if (ownerOrManager && userIds.length > 1) {
       const { data: teamProfs } = await supabase
@@ -457,6 +460,7 @@ const [dashToast, setDashToast] = useState('')
   async function handleMarkRead(id: string) {
     const supabase = createClient()
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
+    setUnreadCount(prev => Math.max(0, prev - 1))
     await supabase.from('notifications').update({ read: true }).eq('id', id)
   }
 
@@ -464,7 +468,25 @@ const [dashToast, setDashToast] = useState('')
     const supabase = createClient()
     const unreadIds = notifications.filter(n => !n.read).map(n => n.id)
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setUnreadCount(0)
     if (unreadIds.length > 0) await supabase.from('notifications').update({ read: true }).in('id', unreadIds)
+  }
+
+  async function handleDeleteOne(id: string) {
+    const supabase = createClient()
+    const wasUnread = notifications.find(n => n.id === id)?.read === false
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    if (wasUnread) setUnreadCount(prev => Math.max(0, prev - 1))
+    await supabase.from('notifications').delete().eq('id', id)
+  }
+
+  async function handleClearAll() {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    setNotifications([])
+    setUnreadCount(0)
+    await supabase.from('notifications').delete().eq('user_id', user.id)
   }
 
   async function handleMarkPaid(invoiceId: string, invoiceType?: string, estimateId?: string) {
@@ -735,7 +757,7 @@ const [dashToast, setDashToast] = useState('')
               <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
             </div>
           </div>
-          <BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="light" isMobile={false} />
+          <BellButton notifications={notifications} unreadCount={unreadCount} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} onDeleteOne={handleDeleteOne} onClearAll={handleClearAll} variant="light" isMobile={false} />
           <button onClick={() => router.push('/dashboard/estimates/new')} className="db-header-btn" style={{
             display: 'flex', alignItems: 'center', gap: 6, background: '#2045B8',
             color: '#fff', border: 'none', borderRadius: 9, padding: '8px 14px',
@@ -755,7 +777,7 @@ const [dashToast, setDashToast] = useState('')
           variant="dark"
           eyebrow={companyName || undefined}
           title={userName || '—'}
-          right={<BellButton notifications={notifications} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} variant="dark" isMobile={isMobile} />}
+          right={<BellButton notifications={notifications} unreadCount={unreadCount} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} onDeleteOne={handleDeleteOne} onClearAll={handleClearAll} variant="dark" isMobile={isMobile} />}
         />
         <div style={{
           background: 'linear-gradient(160deg, #1a4fd6 0%, #2045B8 40%, #1535a0 100%)',
