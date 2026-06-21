@@ -780,9 +780,10 @@ export default function AppointmentsPage() {
   const [dayAppts, setDayAppts]         = useState<TimelineAppt[]>([])
   const [dayLoading, setDayLoading]     = useState(true)
   const _now = new Date()
-  const [calYear,   setCalYear]   = useState(_now.getFullYear())
-  const [calMonth,  setCalMonth]  = useState(_now.getMonth())
-  const [monthDots, setMonthDots] = useState<Set<string>>(new Set())
+  const [calYear,     setCalYear]     = useState(_now.getFullYear())
+  const [calMonth,    setCalMonth]    = useState(_now.getMonth())
+  const [monthDots,   setMonthDots]   = useState<Set<string>>(new Set())
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
 
@@ -1082,89 +1083,6 @@ export default function AppointmentsPage() {
           </div>
         </AppTopBar>
 
-        {/* ── Mini month calendar ───────────────────────────────────────── */}
-        {(() => {
-          const DAYS_OF_WEEK = ['S','M','T','W','T','F','S']
-          const firstWeekday = new Date(calYear, calMonth, 1).getDay()
-          const daysInMonth  = new Date(calYear, calMonth + 1, 0).getDate()
-          const totalCells   = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
-          const todayStr2    = getDayDateStr('today')
-          const selectedDateStr =
-            selectedDay === 'today'     ? getDayDateStr('today')     :
-            selectedDay === 'yesterday' ? getDayDateStr('yesterday') :
-            selectedDay === 'tomorrow'  ? getDayDateStr('tomorrow')  : selectedDay
-          const monthLabel = new Date(calYear, calMonth, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
-
-          function navMonth(delta: number) {
-            let m = calMonth + delta, y = calYear
-            if (m < 0)  { m = 11; y-- }
-            if (m > 11) { m = 0;  y++ }
-            setCalMonth(m); setCalYear(y)
-          }
-
-          function clickDay(cellIdx: number) {
-            const dayNum = cellIdx - firstWeekday + 1
-            if (dayNum < 1 || dayNum > daysInMonth) return
-            const ds = toDateStr(calYear, calMonth, dayNum)
-            if (ds === getDayDateStr('today'))     setSelectedDay('today')
-            else if (ds === getDayDateStr('yesterday')) setSelectedDay('yesterday')
-            else if (ds === getDayDateStr('tomorrow'))  setSelectedDay('tomorrow')
-            else setSelectedDay(ds)
-          }
-
-          return (
-            <div style={{ background: '#fff', borderBottom: '1px solid rgba(15,23,42,0.07)', flexShrink: 0, padding: '12px 16px 8px' }}>
-              {/* Month nav */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <button onClick={() => navMonth(-1)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(15,23,42,0.10)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475467' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-                </button>
-                <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220', letterSpacing: '-0.01em' }}>{monthLabel}</span>
-                <button onClick={() => navMonth(1)} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(15,23,42,0.10)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475467' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
-                </button>
-              </div>
-              {/* Day-of-week headers */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
-                {DAYS_OF_WEEK.map((d, i) => (
-                  <div key={i} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.04em', paddingBottom: 4 }}>{d}</div>
-                ))}
-              </div>
-              {/* Date cells */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px 0' }}>
-                {Array.from({ length: totalCells }, (_, i) => {
-                  const dayNum = i - firstWeekday + 1
-                  const isValid   = dayNum >= 1 && dayNum <= daysInMonth
-                  const ds        = isValid ? toDateStr(calYear, calMonth, dayNum) : ''
-                  const isToday   = ds === todayStr2
-                  const isSelected = ds === selectedDateStr
-                  const hasDot    = isValid && monthDots.has(ds)
-                  return (
-                    <div
-                      key={i}
-                      onClick={() => isValid && clickDay(i)}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 6, cursor: isValid ? 'pointer' : 'default' }}
-                    >
-                      <div style={{
-                        width: 32, height: 32, borderRadius: '50%',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 13, fontWeight: isToday || isSelected ? 800 : 500,
-                        background: isSelected ? '#2563EB' : isToday ? '#EFF4FF' : 'transparent',
-                        color: isSelected ? '#fff' : isToday ? '#2563EB' : isValid ? '#0B1220' : 'transparent',
-                        border: isToday && !isSelected ? '1.5px solid #2563EB' : '1.5px solid transparent',
-                      }}>
-                        {isValid ? dayNum : ''}
-                      </div>
-                      {/* Dot indicator */}
-                      <div style={{ width: 4, height: 4, borderRadius: '50%', marginTop: 2, background: hasDot ? (isSelected ? '#fff' : '#2563EB') : 'transparent' }} />
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })()}
-
         {/* Day filter pills */}
         <div style={{ padding: '0 16px 12px', display: 'flex', gap: 8, background: '#fff', flexShrink: 0 }}>
           {(['yesterday', 'today', 'tomorrow'] as const).map(day => {
@@ -1191,23 +1109,101 @@ export default function AppointmentsPage() {
               </button>
             )
           })}
-          <label style={{ width: 46, height: 42, borderRadius: 11, border: '1px solid #E2E8F0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative', flexShrink: 0 }}>
-            <Calendar size={20} strokeWidth={1.8} color="#64748B" />
-            <input
-              type="date"
-              style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }}
-              onChange={e => {
-                if (!e.target.value) return
-                const today = new Date(); today.setHours(0,0,0,0)
-                const selected = new Date(e.target.value + 'T00:00:00'); selected.setHours(0,0,0,0)
-                const diff = Math.round((selected.getTime() - today.getTime()) / 86400000)
-                if (diff === -1) setSelectedDay('yesterday')
-                else if (diff === 0) setSelectedDay('today')
-                else if (diff === 1) setSelectedDay('tomorrow')
-                else setSelectedDay(e.target.value as 'yesterday' | 'today' | 'tomorrow')
-              }}
-            />
-          </label>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              onClick={() => setCalendarOpen(v => !v)}
+              style={{ width: 46, height: 46, borderRadius: 11, border: calendarOpen ? '1px solid #2563EB' : '1px solid #E2E8F0', background: calendarOpen ? '#EFF4FF' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <Calendar size={20} strokeWidth={1.8} color={calendarOpen ? '#2563EB' : '#64748B'} />
+            </button>
+
+            {calendarOpen && (() => {
+              const DAYS_OF_WEEK = ['S','M','T','W','T','F','S']
+              const firstWeekday = new Date(calYear, calMonth, 1).getDay()
+              const daysInMonth  = new Date(calYear, calMonth + 1, 0).getDate()
+              const totalCells   = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
+              const todayStr2    = getDayDateStr('today')
+              const selectedDateStr =
+                selectedDay === 'today'     ? getDayDateStr('today')     :
+                selectedDay === 'yesterday' ? getDayDateStr('yesterday') :
+                selectedDay === 'tomorrow'  ? getDayDateStr('tomorrow')  : selectedDay
+              const monthLabel = new Date(calYear, calMonth, 1).toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
+
+              function navMonth(delta: number) {
+                let m = calMonth + delta, y = calYear
+                if (m < 0)  { m = 11; y-- }
+                if (m > 11) { m = 0;  y++ }
+                setCalMonth(m); setCalYear(y)
+              }
+
+              function clickDay(cellIdx: number) {
+                const dayNum = cellIdx - firstWeekday + 1
+                if (dayNum < 1 || dayNum > daysInMonth) return
+                const ds = toDateStr(calYear, calMonth, dayNum)
+                if (ds === getDayDateStr('today'))          setSelectedDay('today')
+                else if (ds === getDayDateStr('yesterday')) setSelectedDay('yesterday')
+                else if (ds === getDayDateStr('tomorrow'))  setSelectedDay('tomorrow')
+                else setSelectedDay(ds)
+                setCalendarOpen(false)
+              }
+
+              return (
+                <>
+                  {/* Scrim — closes popup on outside click */}
+                  <div onClick={() => setCalendarOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 98 }} />
+                  {/* Calendar popup */}
+                  <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 99, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(15,23,42,0.16)', padding: '12px 14px 10px', width: 'min(calc(100vw - 32px), 320px)' }}>
+                    {/* Month nav */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <button onClick={e => { e.stopPropagation(); navMonth(-1) }} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(15,23,42,0.10)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475467' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+                      </button>
+                      <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220', letterSpacing: '-0.01em' }}>{monthLabel}</span>
+                      <button onClick={e => { e.stopPropagation(); navMonth(1) }} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(15,23,42,0.10)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475467' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                      </button>
+                    </div>
+                    {/* Day-of-week headers */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
+                      {DAYS_OF_WEEK.map((d, i) => (
+                        <div key={i} style={{ textAlign: 'center', fontSize: 10.5, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.04em', paddingBottom: 4 }}>{d}</div>
+                      ))}
+                    </div>
+                    {/* Date cells */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px 0' }}>
+                      {Array.from({ length: totalCells }, (_, i) => {
+                        const dayNum    = i - firstWeekday + 1
+                        const isValid   = dayNum >= 1 && dayNum <= daysInMonth
+                        const ds        = isValid ? toDateStr(calYear, calMonth, dayNum) : ''
+                        const isToday   = ds === todayStr2
+                        const isSelected = ds === selectedDateStr
+                        const hasDot    = isValid && monthDots.has(ds)
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => isValid && clickDay(i)}
+                            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: 6, cursor: isValid ? 'pointer' : 'default' }}
+                          >
+                            <div style={{
+                              width: 32, height: 32, borderRadius: '50%',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 13, fontWeight: isToday || isSelected ? 800 : 500,
+                              background: isSelected ? '#2563EB' : isToday ? '#EFF4FF' : 'transparent',
+                              color: isSelected ? '#fff' : isToday ? '#2563EB' : isValid ? '#0B1220' : 'transparent',
+                              border: isToday && !isSelected ? '1.5px solid #2563EB' : '1.5px solid transparent',
+                            }}>
+                              {isValid ? dayNum : ''}
+                            </div>
+                            <div style={{ width: 4, height: 4, borderRadius: '50%', marginTop: 2, background: hasDot ? (isSelected ? '#fff' : '#2563EB') : 'transparent' }} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
         </div>
 
         {/* Timeline scroll area */}
