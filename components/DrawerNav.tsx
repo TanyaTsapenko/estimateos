@@ -31,6 +31,7 @@ function NIcon({ name, size = 22, color = 'currentColor', stroke = 1.8 }: {
     case 'users':    return <svg {...p}><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0111 0"/><path d="M16 5.2a3.2 3.2 0 010 6M19.5 20a5.5 5.5 0 00-3-4.9"/></svg>
     case 'mega':     return <svg {...p}><path d="M4 10v4a1 1 0 001 1h2l5 4V5L7 9H5a1 1 0 00-1 1z"/><path d="M16 9a3 3 0 010 6M18.5 6.5a6.5 6.5 0 010 11"/></svg>
     case 'gear':     return <svg {...p}><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+    case 'user-plus': return <svg {...p}><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
     case 'plus':     return <svg {...p} strokeWidth={2.4}><path d="M12 5v14M5 12h14"/></svg>
     case 'x':        return <svg {...p} strokeWidth={2.2}><path d="M6 6l12 12M18 6L6 18"/></svg>
     case 'chev':     return <svg {...p} strokeWidth={2}><path d="M9 6l6 6-6 6"/></svg>
@@ -204,6 +205,31 @@ export default function DrawerNav() {
               }}
             >
               <NIcon name="calendar" size={21} color={C.blue} />
+            </button>
+          </div>
+
+          {/* New client */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+            <div style={{
+              background: C.card, borderRadius: 12,
+              boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
+              padding: '7px 13px', textAlign: 'right',
+            }}>
+              <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New client</div>
+              <div style={{ fontSize: 11, color: C.inkSoft }}>Add a new lead</div>
+            </div>
+            <button
+              aria-label="New client"
+              onClick={() => { setFabOpen(false); router.push('/dashboard/clients') }}
+              style={{
+                width: 48, height: 48, borderRadius: 15,
+                background: C.card, border: `1px solid ${C.border}`,
+                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}
+            >
+              <NIcon name="user-plus" size={21} color={C.blue} />
             </button>
           </div>
         </div>
