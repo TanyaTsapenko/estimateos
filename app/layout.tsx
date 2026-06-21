@@ -43,6 +43,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
+            var refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+              if (refreshing) return;
+              refreshing = true;
+              window.location.reload();
+            });
             window.addEventListener('load', function() {
               navigator.serviceWorker.register('/sw.js').then(function(reg) {
                 reg.addEventListener('updatefound', function() {
@@ -51,7 +57,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     newSW.addEventListener('statechange', function() {
                       if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                         newSW.postMessage({ type: 'SKIP_WAITING' });
-                        window.location.reload();
                       }
                     });
                   }
