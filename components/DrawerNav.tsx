@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Home, Calendar, FileText, Users } from 'lucide-react'
+import { registerOpenDrawer } from '@/lib/drawer-bus'
 
 const C = {
   bg: '#F4F6FB', card: '#FFFFFF',
@@ -97,14 +98,17 @@ export default function DrawerNav() {
 
   useEffect(() => { setMounted(true) }, [])
 
+  // Register openDrawer with the bus so AppTopBar's burger can trigger it
+  useEffect(() => {
+    return registerOpenDrawer(() => {
+      setDrawerOpen(true)
+      setFabOpen(false)
+    })
+  }, [])
+
   function go(path: string) {
     setDrawerOpen(false)
     router.push(path)
-  }
-
-  function openDrawer() {
-    setDrawerOpen(true)
-    setFabOpen(false)
   }
 
   function toggleFab() {
@@ -120,33 +124,9 @@ export default function DrawerNav() {
 
   const settingsActive = pathname.startsWith('/dashboard/settings')
 
-  // Glass style on dark/gradient pages; solid style on white-topbar pages
-  const isGradientPage = pathname === '/dashboard' || pathname.startsWith('/dashboard/marketing')
-  const burgerBg    = isGradientPage ? 'rgba(255,255,255,0.15)' : '#F4F6FB'
-  const burgerBorder= isGradientPage ? 'none'                   : '1px solid rgba(15,23,42,0.10)'
-  const burgerIcon  = isGradientPage ? '#fff'                   : '#2563EB'
-
   if (!mounted) return null
   return createPortal(
     <div className="dashboard-mobile-nav">
-
-      {/* ── Burger ─────────────────────────────────────────────── */}
-      <button
-        onClick={openDrawer}
-        aria-label="Open menu"
-        style={{
-          position: 'fixed',
-          top: 'calc(env(safe-area-inset-top, 0px) + 20px)',
-          left: 20,
-          zIndex: 50,
-          width: 42, height: 42, borderRadius: 13,
-          background: burgerBg,
-          border: burgerBorder, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}
-      >
-        <NIcon name="menu" size={21} color={burgerIcon} stroke={1.8} />
-      </button>
 
       {/* ── FAB scrim (behind FAB, above page) ─────────────────── */}
       <div
