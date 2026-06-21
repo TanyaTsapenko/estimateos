@@ -1211,13 +1211,13 @@ export default function AppointmentsPage() {
           </div>
         </div>
 
-        {/* Timeline scroll area */}
+        {/* Hourly day-view */}
         <div
           className="appt-tl-scroll"
           style={{ flex: 1, overflowY: 'auto', background: '#F3F4F6', scrollbarWidth: 'none' } as React.CSSProperties}
           onClick={() => setExpandedId(null)}
         >
-          <div style={{ padding: '16px 16px 40px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '16px 12px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
 
             {dayLoading && (
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A94A6', fontSize: 13 }}>Loading…</div>
@@ -1239,27 +1239,110 @@ export default function AppointmentsPage() {
               </div>
             )}
 
-            {!dayLoading && dayAppts.length > 0 && dayAppts.flatMap((appt, i) => {
-              const rows: React.ReactNode[] = []
-              if (selectedDay === 'today' && i === nowInsertIdx) {
-                rows.push(<NowRow key="now" />)
-              }
-              rows.push(
-                <TimelineRow
-                  key={appt.id}
-                  appt={appt}
-                  isLast={i === dayAppts.length - 1}
-                  expanded={expandedId === appt.id}
-                  onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)}
-                  onNavigate={path => router.push(path)}
-                  isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW}
-                />
+            {!dayLoading && dayAppts.length > 0 && (() => {
+              const GRID_START = 7, GRID_END = 20, HOUR_H = 56
+              const totalH = (GRID_END - GRID_START) * HOUR_H
+              const tickCount = GRID_END - GRID_START + 1
+              const showNow = selectedDay === 'today' && NOW >= GRID_START && NOW <= GRID_END
+              const nowTop = (NOW - GRID_START) * HOUR_H
+              const nowTimeStr = `${String(nowDate.getHours()).padStart(2, '0')}:${String(nowDate.getMinutes()).padStart(2, '0')}`
+
+              return (
+                <div style={{ position: 'relative', height: totalH }}>
+
+                  {/* Hour lines + labels */}
+                  {Array.from({ length: tickCount }, (_, i) => {
+                    const h = GRID_START + i
+                    const label = `${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`
+                    return (
+                      <div key={h} style={{ position: 'absolute', top: i * HOUR_H, left: 0, right: 0, display: 'flex', alignItems: 'center' }}>
+                        <div style={{ width: 52, textAlign: 'right', paddingRight: 10, fontSize: 11, fontWeight: 600, color: '#8A94A6', transform: 'translateY(-50%)', lineHeight: 1, flexShrink: 0 }}>
+                          {label}
+                        </div>
+                        <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+                      </div>
+                    )
+                  })}
+
+                  {/* Appointment cards */}
+                  {dayAppts.map(appt => {
+                    const startH = appt.rawTime ? toHour(appt.rawTime) : GRID_START
+                    const endH = appt.endTime ? toHour(appt.endTime) : startH + 1
+                    const cardTop = Math.max(0, (startH - GRID_START) * HOUR_H)
+                    const cardHeight = Math.max((endH - startH) * HOUR_H, 48)
+                    const timeLabel = appt.rawTime
+                      ? fmt12h(appt.rawTime) + (appt.endTime ? ` – ${fmt12h(appt.endTime)}` : '')
+                      : 'No time set'
+                    return (
+                      <div
+                        key={appt.id}
+                        onClick={() => router.push(`/dashboard/appointments/${appt.id}/edit`)}
+                        style={{
+                          position: 'absolute',
+                          top: cardTop,
+                          left: 64,
+                          right: 4,
+                          height: cardHeight,
+                          background: '#EFF6FF',
+                          borderLeft: '3px solid #2563EB',
+                          borderRadius: 8,
+                          padding: '5px 8px 5px 10px',
+                          cursor: 'pointer',
+                          boxSizing: 'border-box',
+                          overflow: 'hidden',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'space-between',
+                          gap: 6,
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 10, fontWeight: 800, color: '#1D4ED8', marginBottom: 2, lineHeight: 1 }}>{timeLabel}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appt.name}</div>
+                          {appt.address && cardHeight >= 56 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8A94A6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                <circle cx="12" cy="9" r="2.5"/>
+                              </svg>
+                              <span style={{ fontSize: 11, color: '#8A94A6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{appt.address}</span>
+                            </div>
+                          )}
+                        </div>
+                        {appt.phone && (
+                          <a
+                            href={`tel:${appt.phone}`}
+                            onClick={e => e.stopPropagation()}
+                            style={{
+                              width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                              background: '#fff', border: '1px solid rgba(15,23,42,0.12)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              textDecoration: 'none', marginTop: 1,
+                            }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.07 1.18C.07.61.5.07 1.07.07h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L5.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 14.92z"/>
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    )
+                  })}
+
+                  {/* Now indicator */}
+                  {showNow && (
+                    <div style={{ position: 'absolute', top: nowTop, left: 52, right: 4, zIndex: 10, pointerEvents: 'none', display: 'flex', alignItems: 'center', transform: 'translateY(-50%)' }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#2563EB', flexShrink: 0, boxShadow: '0 0 0 3px rgba(37,99,235,0.2)' }} />
+                      <div style={{ flex: 1, height: 2, background: '#2563EB' }} />
+                      <div style={{ background: '#2563EB', color: '#fff', fontSize: 10, fontWeight: 700, borderRadius: 6, padding: '2px 7px', flexShrink: 0, letterSpacing: 0.3, marginLeft: 4 }}>
+                        Now · {fmt12h(nowTimeStr)}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
               )
-              return rows
-            })}
-            {!dayLoading && selectedDay === 'today' && nowInsertIdx === dayAppts.length && dayAppts.length > 0 && (
-              <NowRow key="now-end" />
-            )}
+            })()}
 
           </div>
         </div>
