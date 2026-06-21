@@ -41,6 +41,7 @@ interface Appt {
   postal_code: string | null
   appointment_date: string
   appointment_time: string | null
+  appointment_end_time: string | null
   notes: string | null
   lead_source: string | null
   status: string
@@ -659,7 +660,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: { appt: Appt; on
   const clearErr = (k: keyof ClientErrors) => setErr(k, null)
 
   useEffect(() => {
-    setDraft({ client_name: appt.client_name, client_phone: appt.client_phone ?? '', client_email: appt.client_email ?? '', client_address: appt.client_address ?? '', client_city: appt.client_city ?? '', client_province: appt.client_province ?? '', postal_code: appt.postal_code ?? '', lead_source: appt.lead_source ?? '', appointment_date: appt.appointment_date, appointment_time: appt.appointment_time ?? '', notes: appt.notes ?? '' })
+    setDraft({ client_name: appt.client_name, client_phone: appt.client_phone ?? '', client_email: appt.client_email ?? '', client_address: appt.client_address ?? '', client_city: appt.client_city ?? '', client_province: appt.client_province ?? '', postal_code: appt.postal_code ?? '', lead_source: appt.lead_source ?? '', appointment_date: appt.appointment_date, appointment_time: appt.appointment_time ?? '', appointment_end_time: appt.appointment_end_time ?? '', notes: appt.notes ?? '' })
     setErrors({})
   }, [appt.id])
 
@@ -729,7 +730,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: { appt: Appt; on
             </div>
           </div>
           <div style={{ ...secHdr, paddingTop: 20 }}>When</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
             <div>
               <label style={fldLbl}>Date</label>
               <input type="date" lang="en" value={draft.appointment_date ?? ''} onChange={e => set('appointment_date')(e.target.value)} style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
@@ -737,6 +738,10 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: { appt: Appt; on
             <div>
               <label style={fldLbl}>Time</label>
               <TimePickerDropdown value={draft.appointment_time ?? ''} date={draft.appointment_date ?? ''} onChange={v => set('appointment_time')(v)} />
+            </div>
+            <div>
+              <label style={fldLbl}>Until (optional)</label>
+              <TimePickerDropdown value={draft.appointment_end_time ?? ''} date={draft.appointment_date ?? ''} onChange={v => set('appointment_end_time')(v)} allowNone noTodayFilter minAfter={draft.appointment_time ?? ''} />
             </div>
           </div>
           <div style={{ ...secHdr, paddingTop: 20 }}>Notes</div>
@@ -963,7 +968,7 @@ export default function AppointmentsPage() {
   }
 
   async function desktopSaveEdit(id: string, patch: Partial<Appt>) {
-    await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null, notes: patch.notes?.trim() || null }).eq('id', id)
+    await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null, appointment_end_time: patch.appointment_end_time || null, notes: patch.notes?.trim() || null }).eq('id', id)
     setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
     setDesktopEditing(false); flash('Saved')
   }

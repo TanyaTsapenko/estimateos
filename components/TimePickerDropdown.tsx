@@ -35,14 +35,15 @@ interface Props {
   style?: React.CSSProperties
   allowNone?: boolean  // show "—" as first option; value="" means no selection
   minAfter?: string    // "HH:MM" — only show slots strictly after this time
+  noTodayFilter?: boolean  // skip filtering by current time-of-day (for end-time pickers)
 }
 
-export default function TimePickerDropdown({ value, date, onChange, style, allowNone, minAfter }: Props) {
+export default function TimePickerDropdown({ value, date, onChange, style, allowNone, minAfter, noTodayFilter }: Props) {
   const [open, setOpen] = useState(false)
   const ref     = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  const isToday = date === todayStr()
+  const isToday = !noTodayFilter && date === todayStr()
   const baseSlots = isToday
     ? ALL_SLOTS.filter(s => {
         const [h, m] = s.value.split(':').map(Number)

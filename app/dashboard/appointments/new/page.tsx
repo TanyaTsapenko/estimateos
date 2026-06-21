@@ -321,6 +321,7 @@ export default function NewAppointmentPage() {
               date={form.appointment_date}
               onChange={v => set('appointment_end_time', v)}
               allowNone
+              noTodayFilter
               minAfter={form.appointment_time}
             />
           </div>
