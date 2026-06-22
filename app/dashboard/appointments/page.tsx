@@ -1211,76 +1211,56 @@ export default function AppointmentsPage() {
           </div>
         </div>
 
-        {/* Hourly day-view */}
+        {/* Timeline scroll area */}
         <div
           className="appt-tl-scroll"
-          style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#F3F4F6', scrollbarWidth: 'none' } as React.CSSProperties}
+          style={{ flex: 1, overflowY: 'auto', background: '#F3F4F6', scrollbarWidth: 'none' } as React.CSSProperties}
           onClick={() => setExpandedId(null)}
         >
-          <div style={{ padding: '16px 16px 40px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', position: 'relative' }} onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '16px 16px 40px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
 
-            {/* Decorative hourly background — absolute, behind flow cards, no interaction */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 0 }}>
-              {Array.from({ length: 14 }, (_, i) => {
-                const h = 7 + i
-                const label = `${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`
-                return (
-                  <div key={h} style={{ position: 'absolute', top: i * 56, left: 16, right: 0, display: 'flex', alignItems: 'center' }}>
-                    <div style={{ width: 52, textAlign: 'right', paddingRight: 8, fontSize: 11, fontWeight: 600, color: '#C4CDD6', transform: 'translateY(-50%)', lineHeight: 1, flexShrink: 0 }}>
-                      {label}
-                    </div>
-                    <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
-                  </div>
-                )
-              })}
-            </div>
+            {dayLoading && (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A94A6', fontSize: 13 }}>Loading…</div>
+            )}
 
-            {/* Flow content — same z-index layer on top of background */}
-            <div style={{ position: 'relative', zIndex: 1 }}>
-
-              {dayLoading && (
-                <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A94A6', fontSize: 13 }}>Loading…</div>
-              )}
-
-              {!dayLoading && dayAppts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                  <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                    <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No visits yet</div>
-                  <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Schedule your first appointment to get started.</div>
-                  <button
-                    onClick={() => router.push('/dashboard/appointments/new')}
-                    style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    + Schedule one
-                  </button>
+            {!dayLoading && dayAppts.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
                 </div>
-              )}
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No visits yet</div>
+                <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Schedule your first appointment to get started.</div>
+                <button
+                  onClick={() => router.push('/dashboard/appointments/new')}
+                  style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  + Schedule one
+                </button>
+              </div>
+            )}
 
-              {!dayLoading && dayAppts.length > 0 && dayAppts.flatMap((appt, i) => {
-                const rows: React.ReactNode[] = []
-                if (selectedDay === 'today' && i === nowInsertIdx) {
-                  rows.push(<NowRow key="now" />)
-                }
-                rows.push(
-                  <TimelineRow
-                    key={appt.id}
-                    appt={appt}
-                    isLast={i === dayAppts.length - 1}
-                    expanded={expandedId === appt.id}
-                    onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)}
-                    onNavigate={path => router.push(path)}
-                    isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW}
-                  />
-                )
-                return rows
-              })}
-              {!dayLoading && selectedDay === 'today' && nowInsertIdx === dayAppts.length && dayAppts.length > 0 && (
-                <NowRow key="now-end" />
-              )}
+            {!dayLoading && dayAppts.length > 0 && dayAppts.flatMap((appt, i) => {
+              const rows: React.ReactNode[] = []
+              if (selectedDay === 'today' && i === nowInsertIdx) {
+                rows.push(<NowRow key="now" />)
+              }
+              rows.push(
+                <TimelineRow
+                  key={appt.id}
+                  appt={appt}
+                  isLast={i === dayAppts.length - 1}
+                  expanded={expandedId === appt.id}
+                  onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)}
+                  onNavigate={path => router.push(path)}
+                  isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW}
+                />
+              )
+              return rows
+            })}
+            {!dayLoading && selectedDay === 'today' && nowInsertIdx === dayAppts.length && dayAppts.length > 0 && (
+              <NowRow key="now-end" />
+            )}
 
-            </div>
           </div>
         </div>
 
