@@ -1214,7 +1214,7 @@ export default function AppointmentsPage() {
         {/* Hourly day-view */}
         <div
           className="appt-tl-scroll"
-          style={{ flex: 1, overflowY: 'auto', background: '#F3F4F6', scrollbarWidth: 'none' } as React.CSSProperties}
+          style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: '#F3F4F6', scrollbarWidth: 'none' } as React.CSSProperties}
           onClick={() => setExpandedId(null)}
         >
           <div style={{ padding: '16px 16px 40px', paddingBottom: 'calc(88px + env(safe-area-inset-bottom))' }} onClick={e => e.stopPropagation()}>
@@ -1270,7 +1270,7 @@ export default function AppointmentsPage() {
                     const startH = appt.rawTime ? toHour(appt.rawTime) : GRID_START
                     const cardTop = Math.max(0, (startH - GRID_START) * HOUR_H)
                     return (
-                      <div key={appt.id} style={{ position: 'absolute', top: cardTop, left: 0, right: 0, zIndex: 5 }}>
+                      <div key={appt.id} style={{ position: 'absolute', top: cardTop, left: 0, right: 0, zIndex: 5, background: 'linear-gradient(to right, #F3F4F6 52px, transparent 52px)' }}>
                         <TimelineRow
                           appt={appt}
                           isLast={true}
