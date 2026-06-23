@@ -1,3 +1,5 @@
+import { type Opening as V2Opening, SETTINGS } from '@/lib/v2/openingTypes'
+
 export const OPENING_TYPES: Record<string, { name: string; base: number; lab: number; icon: string }> = {
   window_combo: { name: 'Combination Window',   base: 1200, lab: 400, icon: '' },
   window_dh:    { name: 'Double-Hung Window',  base: 700,  lab: 300, icon: '' },
@@ -141,9 +143,36 @@ export interface CustomPrices {
     blue_skin?: number
     triple_pane?: number
     egress_required?: number
+    // Glass & energy
+    argon?: number
+    laminated_glass?: number
+    // Material (windows)
+    material_wood?: number
+    material_aluminum?: number
+    material_fiberglass?: number
+    material_composite?: number
+    material_clad_wood?: number
+    // Material (doors)
+    door_fiberglass?: number
+    door_wood?: number
+    // Grid / grille
+    grid_upcharge?: number
+    // Hardware & security
+    deadbolt?: number
+    multipoint_lock?: number
+    // Screen upgrades
+    screen_retractable?: number
+    screen_premium?: number
+    // Pet door
+    pet_door_s?: number
+    pet_door_m?: number
+    pet_door_l?: number
+    // Non-standard jamb depth (per opening)
+    jamb_nonstandard?: number
   }
 }
 
+/** @deprecated use computePrice() instead */
 export function opCost(op: Opening, custom?: CustomPrices): number {
   const customType = custom?.types[op.type]
   const s = custom?.surcharges || {}
@@ -188,4 +217,132 @@ export function opCost(op: Opening, custom?: CustomPrices): number {
 
 export function fmtCAD(n: number): string {
   return 'CA$' + Math.round(n).toLocaleString('en-CA')
+}
+
+// ── v2 pricing (computePrice / computeTrimCost) ───────────────────
+
+export type CustomPricing = {
+  base?: Record<string, number>
+  areaRatePerSqFt?: number
+  surcharges?: Record<string, number>
+}
+
+const DOOR_TYPES = new Set(['entry', 'doubleEntry', 'french', 'garden', 'patio', 'storm', 'interior'])
+
+export function computePrice(op: V2Opening, custom?: CustomPricing): number {
+  const v = op.vals
+  const base = (custom?.base ?? SETTINGS.pricing.base)[op.typeId] ?? 800
+  const rate = custom?.areaRatePerSqFt ?? SETTINGS.pricing.areaRatePerSqFt
+  const s = custom?.surcharges ?? {}
+
+  const w = +(v.width || v.owidth || 32)
+  const h = +(v.height || v.oheight || 48)
+  let p = base + Math.round((w * h) / 144 * rate)
+
+  // Installation type
+  if (v.install === 'Full Frame') p += s.fullframe ?? 0
+  else if (v.install === 'Stud-to-Stud') p += s.stud_to_stud ?? 0
+
+  // Floor
+  if (v.floor === '2nd floor') p += s.second_floor ?? 0
+  else if (v.floor === '3rd floor') p += s.third_floor ?? 0
+
+  // Frame condition
+  if (v.condition === 'Needs Repair') p += s.frame_repair ?? 0
+  else if (v.condition === 'Rotted') p += s.frame_rotted ?? 0
+
+  // Egress
+  if (v.egress === true) p += s.egress_required ?? 0
+
+  // Pane & glass — $0 if surcharge not configured in Price List
+  if (v.pane === 'Triple') p += s.triple_pane ?? 0
+  if (v.lowE) p += s.lowe ?? 0
+  if (v.argon) p += s.argon ?? 0
+  if (v.tempered) p += s.tempered ?? 0
+  if (v.laminatedGlass) p += s.laminated_glass ?? 0
+  const glassType = String(v.glassType || '')
+  if (glassType === 'Frosted') p += s.frosted ?? 0
+  else if (glassType === 'Tinted') p += s.tinted ?? 0
+  else if (glassType === 'Obscure') p += s.obscure ?? 0
+
+  // Grid / grille
+  if ((v.grid && v.grid !== 'None') || (v.grilleType && v.grilleType !== 'None')) {
+    p += s.grid_upcharge ?? 0
+  }
+
+  // Screen type
+  if (v.screen === 'Retractable') p += s.screen_retractable ?? 0
+  else if (v.screen === 'Premium Mesh') p += s.screen_premium ?? 0
+
+  // Colour
+  const anyColour = String(v.extColour || v.doorExt || v.colour || '')
+  if (anyColour && anyColour !== 'White') p += s.custom_colour ?? 0
+
+  // Material (door vs window distinguished by typeId)
+  if (DOOR_TYPES.has(op.typeId)) {
+    const dm = String(v.doorMaterial || '')
+    if (dm === 'Wood') p += s.door_wood ?? 0
+    else if (dm === 'Fiberglass') p += s.door_fiberglass ?? 0
+  } else {
+    const mat = String(v.material || '')
+    if (mat === 'Wood') p += s.material_wood ?? 0
+    else if (mat === 'Aluminum') p += s.material_aluminum ?? 0
+    else if (mat === 'Fiberglass') p += s.material_fiberglass ?? 0
+    else if (mat === 'Composite') p += s.material_composite ?? 0
+    else if (mat === 'Clad Wood') p += s.material_clad_wood ?? 0
+  }
+
+  // Hardware & security
+  if (v.deadbolt) p += s.deadbolt ?? 0
+  if (v.multipointLock) p += s.multipoint_lock ?? 0
+
+  // Pet door
+  const petDoor = String(v.petDoor || '')
+  if (petDoor === 'Small') p += s.pet_door_s ?? 0
+  else if (petDoor === 'Medium') p += s.pet_door_m ?? 0
+  else if (petDoor === 'Large') p += s.pet_door_l ?? 0
+
+  // Non-standard brickmould or jamb depth (per-opening trim)
+  const brickmould = String(v.brickmould || 'None')
+  if (brickmould !== 'None') p += s.brickmold ?? 0
+  const jambDepth = String(v.jamb || '4 9/16"')
+  if (jambDepth !== '4 9/16"' && jambDepth !== '') p += s.jamb_nonstandard ?? 0
+
+  // Shape multiplier (applied last, on the full unit cost)
+  const shape = String(v.shape || '')
+  if (shape === 'Arch') p = Math.round(p * (1 + (s.arch_pct ?? 0) / 100))
+  else if (shape === 'Custom Shape') p = Math.round(p * (1 + (s.custom_shape_pct ?? 0) / 100))
+
+  return p * ((v.qty as number) || 1)
+}
+
+// Structural type — matches TrimState from trim-section without creating a
+// components→lib import cycle.
+type TrimCostInput = {
+  casing: string; casingSize: string; jamb: string
+  brickmold: boolean; rosettes: string
+  caping: boolean; nailFin: boolean; dripCap: boolean; blueSkin: boolean
+}
+
+export function computeTrimCost(trim: TrimCostInput, s: Record<string, number>): number {
+  let cost = 0
+  if (trim.casing === 'oak') cost += s.casing_oak ?? 0
+  else if (trim.casing === 'vinyl') cost += s.casing_vinyl ?? 0
+  else if (trim.casing === 'mdf') cost += s.casing_mdf ?? 0
+  else if (trim.casing === 'custom') cost += s.casing_custom ?? 0
+  if (trim.casing !== 'none' && trim.casingSize === '3_3_8') cost += s.casing_size_3_3_8 ?? 0
+  if (trim.jamb === 'oak') cost += s.jamb_oak ?? 0
+  else if (trim.jamb === 'wood') cost += s.jamb_wood ?? 0
+  else if (trim.jamb === 'vinyl') cost += s.jamb_vinyl ?? 0
+  else if (trim.jamb === 'plywood') cost += s.jamb_plywood ?? 0
+  else if (trim.jamb === 'custom') cost += s.jamb_custom ?? 0
+  if (trim.brickmold) cost += s.brickmold ?? 0
+  if (trim.rosettes === 'round') cost += s.rosettes_round ?? 0
+  else if (trim.rosettes === '45') cost += s.rosettes_45 ?? 0
+  else if (trim.rosettes === 'flat') cost += s.rosettes_flat ?? 0
+  if (trim.caping) cost += s.caping ?? 0
+  if (trim.nailFin) cost += s.nail_fin ?? 0
+  if (trim.dripCap) cost += s.drip_cap ?? 0
+  if (trim.blueSkin) cost += s.blue_skin ?? 0
+  return cost
 }
