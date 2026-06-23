@@ -126,6 +126,7 @@ type Props = {
   clientInfo: ClientInfo
   openings: Opening[]
   prices: number[]
+  trimCost?: number
   trimState?: TrimState
   scopeNotes?: string
   onEditOpenings: () => void
@@ -133,7 +134,7 @@ type Props = {
   saving?: boolean
 }
 
-export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes, onEditOpenings, onSave, saving = false }: Props) {
+export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimState, scopeNotes, onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
 
@@ -144,7 +145,7 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes
   const toggleExpand = (i: number) =>
     setExpanded(s => { const n = new Set(s); n.has(i) ? n.delete(i) : n.add(i); return n })
 
-  const subtotal = prices.reduce((s, p) => s + p, 0)
+  const subtotal = prices.reduce((s, p) => s + p, 0) + trimCost
   const discountAmt = discountValue
     ? discountType === 'percent'
       ? subtotal * (Math.min(parseFloat(discountValue) || 0, 100) / 100)
@@ -340,6 +341,12 @@ export function ReviewStep({ clientInfo, openings, prices, trimState, scopeNotes
 
       {/* ── Summary ── */}
       <div style={{ borderRadius: 14, border: `1px solid ${C.border}`, background: C.card, padding: '14px 14px 12px' }}>
+        {trimCost > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: C.inkMid, fontWeight: 500 }}>Trim & Finishing</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{money(trimCost)}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <span style={{ fontSize: 14, color: C.inkMid, fontWeight: 500 }}>Subtotal</span>
           <span style={{ fontSize: 14, fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{money(subtotal)}</span>
