@@ -34,12 +34,31 @@ function computePrice(op: Opening, custom?: CustomPricing): number {
   const h = +(v.height || v.oheight || 48)
   let p = base + Math.round((w * h) / 144 * rate)
 
+  // Installation type
+  if (v.install === 'Full Frame') p += s.fullframe ?? 0
+  else if (v.install === 'Stud-to-Stud') p += s.stud_to_stud ?? 0
+
+  // Floor
+  if (v.floor === '2nd floor') p += s.second_floor ?? 0
+  else if (v.floor === '3rd floor') p += s.third_floor ?? 0
+
+  // Frame condition
+  if (v.condition === 'Needs Repair') p += s.frame_repair ?? 0
+  else if (v.condition === 'Rotted') p += s.frame_rotted ?? 0
+
+  // Egress
+  if (v.egress === true) p += s.egress_required ?? 0
+
   // Pane & glass — $0 if surcharge not configured in Price List
   if (v.pane === 'Triple') p += s.triple_pane ?? 0
   if (v.lowE) p += s.lowe ?? 0
   if (v.argon) p += s.argon ?? 0
   if (v.tempered) p += s.tempered ?? 0
   if (v.laminatedGlass) p += s.laminated_glass ?? 0
+  const glassType = String(v.glassType || '')
+  if (glassType === 'Frosted') p += s.frosted ?? 0
+  else if (glassType === 'Tinted') p += s.tinted ?? 0
+  else if (glassType === 'Obscure') p += s.obscure ?? 0
 
   // Grid / grille
   if ((v.grid && v.grid !== 'None') || (v.grilleType && v.grilleType !== 'None')) {
@@ -51,9 +70,8 @@ function computePrice(op: Opening, custom?: CustomPricing): number {
   else if (v.screen === 'Premium Mesh') p += s.screen_premium ?? 0
 
   // Colour
-  if ((v.extColour && v.extColour !== 'White') || (v.doorExt && v.doorExt !== 'White')) {
-    p += s.custom_colour ?? 0
-  }
+  const anyColour = String(v.extColour || v.doorExt || v.colour || '')
+  if (anyColour && anyColour !== 'White') p += s.custom_colour ?? 0
 
   // Material (door vs window distinguished by typeId)
   if (DOOR_TYPES.has(op.typeId)) {
@@ -84,6 +102,11 @@ function computePrice(op: Opening, custom?: CustomPricing): number {
   if (brickmould !== 'None') p += s.brickmold ?? 0
   const jambDepth = String(v.jamb || '4 9/16"')
   if (jambDepth !== '4 9/16"' && jambDepth !== '') p += s.jamb_nonstandard ?? 0
+
+  // Shape multiplier (applied last, on the full unit cost)
+  const shape = String(v.shape || '')
+  if (shape === 'Arch') p = Math.round(p * (1 + (s.arch_pct ?? 0) / 100))
+  else if (shape === 'Custom Shape') p = Math.round(p * (1 + (s.custom_shape_pct ?? 0) / 100))
 
   return p * ((v.qty as number) || 1)
 }
