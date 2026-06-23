@@ -225,6 +225,7 @@ export type CustomPricing = {
   base?: Record<string, number>
   areaRatePerSqFt?: number
   surcharges?: Record<string, number>
+  colourPalette?: Record<string, number>  // colour name → price_addon
 }
 
 const DOOR_TYPES = new Set(['entry', 'doubleEntry', 'french', 'garden', 'patio', 'storm', 'interior'])
@@ -274,9 +275,12 @@ export function computePrice(op: V2Opening, custom?: CustomPricing): number {
   if (v.screen === 'Retractable') p += s.screen_retractable ?? 0
   else if (v.screen === 'Premium Mesh') p += s.screen_premium ?? 0
 
-  // Colour
+  // Colour — specific palette price overrides generic surcharge
   const anyColour = String(v.extColour || v.doorExt || v.colour || '')
-  if (anyColour && anyColour !== 'White') p += s.custom_colour ?? 0
+  if (anyColour && anyColour !== 'White') {
+    const paletteAddon = custom?.colourPalette?.[anyColour]
+    p += (paletteAddon != null && paletteAddon > 0) ? paletteAddon : (s.custom_colour ?? 0)
+  }
 
   // Material (door vs window distinguished by typeId)
   if (DOOR_TYPES.has(op.typeId)) {

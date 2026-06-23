@@ -260,7 +260,7 @@ function NewEstimateV2() {
 
       const [priceResult, paletteResult, profileResult] = await Promise.all([
         supabase.from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', user.id),
-        supabase.from('color_palette').select('id, name, hex_color, category').eq('user_id', user.id).order('sort_order').order('created_at'),
+        supabase.from('color_palette').select('id, name, hex_color, category, price_addon').eq('user_id', user.id).order('sort_order').order('created_at'),
         supabase.from('profiles').select('surcharges, team_owner_id').eq('id', user.id).single(),
       ])
 
@@ -291,19 +291,28 @@ function NewEstimateV2() {
 
       const { data: paletteRows } = paletteResult
       if (paletteRows && paletteRows.length > 0) {
-        type RawEntry = { id: string; name: string; hex_color: string | null; category: string }
+        type RawEntry = { id: string; name: string; hex_color: string | null; category: string; price_addon: number | null }
+        const rows = paletteRows as RawEntry[]
+
+        // Visual swatches
         const toEntry = (r: RawEntry) => ({
           id: r.name,
           hex: r.hex_color || '#E5E7EB',
           ring: (r.hex_color || '').toUpperCase() === '#FFFFFF',
         })
-        const rows = paletteRows as RawEntry[]
         const frameRows = rows.filter(r => r.category !== 'Hardware')
         const hwRows    = rows.filter(r => r.category === 'Hardware')
         setPalettes({
           frame: frameRows.length > 0 ? frameRows.map(toEntry) : FRAME_COLOURS,
           hw:    hwRows.length    > 0 ? hwRows.map(toEntry)    : HW_COLOURS,
         })
+
+        // Pricing map: colour name → price_addon
+        const colourPalette: Record<string, number> = {}
+        rows.forEach(r => { if (r.name && r.price_addon) colourPalette[r.name] = r.price_addon })
+        if (Object.keys(colourPalette).length > 0) {
+          setCustomPricing(prev => ({ ...prev, colourPalette }))
+        }
       }
     }
     load()
