@@ -230,15 +230,49 @@ export type CustomPricing = {
 
 const DOOR_TYPES = new Set(['entry', 'doubleEntry', 'french', 'garden', 'patio', 'storm', 'interior'])
 
+const SIDE_UNIT_MAP: Record<string, string> = {
+  'Casement': 'casement', 'Fixed': 'picture', 'Awning': 'awning',
+  'Single Hung': 'singleHung', 'Double Hung': 'doubleHung',
+}
+const COMBO_SECTION_MAP: Record<string, string> = {
+  'Picture': 'picture', 'Fixed': 'picture', 'Casement': 'casement',
+  'Awning': 'awning', 'Slider': 'slider', 'Single Hung': 'singleHung',
+}
+
+function sectionPrice(typeId: string, w: number, h: number, custom?: CustomPricing): number {
+  const base = (custom?.base ?? SETTINGS.pricing.base)[typeId] ?? 800
+  const rate = custom?.areaRatePerSqFt ?? SETTINGS.pricing.areaRatePerSqFt
+  return base + Math.round((w * h) / 144 * rate)
+}
+
 export function computePrice(op: V2Opening, custom?: CustomPricing): number {
   const v = op.vals
-  const base = (custom?.base ?? SETTINGS.pricing.base)[op.typeId] ?? 800
-  const rate = custom?.areaRatePerSqFt ?? SETTINGS.pricing.areaRatePerSqFt
   const s = custom?.surcharges ?? {}
 
   const w = +(v.width || v.owidth || 32)
   const h = +(v.height || v.oheight || 48)
-  let p = base + Math.round((w * h) / 144 * rate)
+
+  let p: number
+  if (op.typeId === 'bay' || op.typeId === 'bow') {
+    const liteCount = parseInt(op.sub || '3') || 3
+    const sectionW = w / liteCount
+    const sideTypeId = SIDE_UNIT_MAP[String(v.sideUnit || 'Casement')] ?? 'casement'
+    const centerKey = op.typeId === 'bow' ? v.panelType : v.centerWindowType
+    const centerTypeId = SIDE_UNIT_MAP[String(centerKey || 'Fixed')] ?? 'picture'
+    p = 2 * sectionPrice(sideTypeId, sectionW, h, custom)
+      + (liteCount - 2) * sectionPrice(centerTypeId, sectionW, h, custom)
+    p = Math.round(p * (1 + (s[op.typeId === 'bow' ? 'bow_surcharge' : 'bay_surcharge'] ?? 0) / 100))
+  } else if (op.typeId === 'combination') {
+    p = (op.sections ?? []).reduce((sum, sec) => {
+      const secTypeId = COMBO_SECTION_MAP[sec.type] ?? 'picture'
+      return sum + sectionPrice(secTypeId, sec.width, h, custom)
+    }, 0)
+    p = Math.round(p * (1 + (s.combination_surcharge ?? 0) / 100))
+  } else {
+    const base = (custom?.base ?? SETTINGS.pricing.base)[op.typeId] ?? 800
+    const rate = custom?.areaRatePerSqFt ?? SETTINGS.pricing.areaRatePerSqFt
+    p = base + Math.round((w * h) / 144 * rate)
+  }
 
   // Installation type
   if (v.install === 'Full Frame') p += s.fullframe ?? 0

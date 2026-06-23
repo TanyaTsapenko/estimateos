@@ -52,15 +52,24 @@ export default function PriceListPage() {
     arch_pct: 0, custom_shape_pct: 0,
     black_grey: 0, custom_colour: 0,
     lowe: 0, frosted: 0, tinted: 0, tempered: 0, obscure: 0, triple_pane: 0, egress_required: 0,
+    argon: 0, laminated_glass: 0,
     fullframe: 0, stud_to_stud: 0,
     second_floor: 0, third_floor: 0,
     frame_repair: 0, frame_rotted: 0,
+    material_wood: 0, material_aluminum: 0, material_fiberglass: 0, material_composite: 0, material_clad_wood: 0,
+    door_fiberglass: 0, door_wood: 0,
+    grid_upcharge: 0,
+    deadbolt: 0, multipoint_lock: 0,
+    screen_retractable: 0, screen_premium: 0,
+    pet_door_s: 0, pet_door_m: 0, pet_door_l: 0,
     casing_oak: 0, casing_vinyl: 0, casing_mdf: 0, casing_custom: 0,
     casing_size_3_3_8: 0,
     jamb_oak: 0, jamb_wood: 0, jamb_vinyl: 0, jamb_plywood: 0, jamb_custom: 0,
+    jamb_nonstandard: 0,
     brickmold: 0,
     rosettes_round: 0, rosettes_45: 0, rosettes_flat: 0,
     caping: 0, nail_fin: 0, drip_cap: 0, blue_skin: 0,
+    bay_surcharge: 0, bow_surcharge: 0, combination_surcharge: 0,
   })
   const [savingSurcharges, setSavingSurcharges] = useState(false)
   const [isOwner, setIsOwner] = useState(true)
@@ -779,56 +788,71 @@ export default function PriceListPage() {
               />
             </div>
             {[
-              { label: 'Shape', fields: [
-                { key: 'arch_pct', label: 'Arch', unit: '%' },
-                { key: 'custom_shape_pct', label: 'Custom shape', unit: '%' },
-              ]},
-              { label: 'Colour', fields: [
-                { key: 'black_grey', label: 'Black / Grey', unit: '$' },
-                { key: 'custom_colour', label: 'Custom colour', unit: '$' },
-              ]},
-              { label: 'Glass', fields: [
+              { label: 'Glass & Energy', fields: [
                 { key: 'triple_pane', label: 'Triple Pane upgrade', unit: '$' },
                 { key: 'lowe', label: 'Low-E', unit: '$' },
                 { key: 'tempered', label: 'Tempered', unit: '$' },
                 { key: 'frosted', label: 'Frosted', unit: '$' },
                 { key: 'tinted', label: 'Tinted', unit: '$' },
                 { key: 'obscure', label: 'Obscure', unit: '$' },
-                { key: 'egress_required', label: 'Egress Required', unit: '$' },
+                { key: 'argon', label: 'Argon gas fill', unit: '$' },
+                { key: 'laminated_glass', label: 'Laminated glass', unit: '$' },
+                { key: 'egress_required', label: 'Egress required', unit: '$' },
               ]},
-              { label: 'Installation', fields: [
+              { label: 'Material & Profile', fields: [
+                { key: 'material_wood', label: 'Wood (window)', unit: '$' },
+                { key: 'material_aluminum', label: 'Aluminum', unit: '$' },
+                { key: 'material_fiberglass', label: 'Fiberglass (window)', unit: '$' },
+                { key: 'material_composite', label: 'Composite', unit: '$' },
+                { key: 'material_clad_wood', label: 'Clad wood', unit: '$' },
+                { key: 'door_wood', label: 'Wood (door)', unit: '$' },
+                { key: 'door_fiberglass', label: 'Fiberglass (door)', unit: '$' },
+                { key: 'grid_upcharge', label: 'Grid / grille upcharge', unit: '$' },
+              ]},
+              { label: 'Colour & Shape', fields: [
+                { key: 'black_grey', label: 'Black / Grey', unit: '$' },
+                { key: 'custom_colour', label: 'Custom colour', unit: '$' },
+                { key: 'arch_pct', label: 'Arch shape', unit: '%' },
+                { key: 'custom_shape_pct', label: 'Custom shape', unit: '%' },
+              ]},
+              { label: 'Installation & Conditions', fields: [
                 { key: 'fullframe', label: 'Full Frame', unit: '$' },
                 { key: 'stud_to_stud', label: 'Stud to Stud', unit: '$' },
-              ]},
-              { label: 'Floor', fields: [
                 { key: 'second_floor', label: '2nd floor', unit: '$' },
                 { key: 'third_floor', label: '3rd floor', unit: '$' },
-              ]},
-              { label: 'Frame condition', fields: [
-                { key: 'frame_repair', label: 'Needs repair', unit: '$' },
+                { key: 'frame_repair', label: 'Frame repair', unit: '$' },
                 { key: 'frame_rotted', label: 'Rotted frame', unit: '$' },
+                { key: 'jamb_nonstandard', label: 'Non-standard jamb depth', unit: '$' },
               ]},
-              { label: 'Trim & Accessories — Casing', fields: [
+              { label: 'Hardware & Security', fields: [
+                { key: 'deadbolt', label: 'Deadbolt', unit: '$' },
+                { key: 'multipoint_lock', label: 'Multipoint lock', unit: '$' },
+                { key: 'screen_retractable', label: 'Retractable screen', unit: '$' },
+                { key: 'screen_premium', label: 'Premium mesh screen', unit: '$' },
+                { key: 'pet_door_s', label: 'Pet door — Small', unit: '$' },
+                { key: 'pet_door_m', label: 'Pet door — Medium', unit: '$' },
+                { key: 'pet_door_l', label: 'Pet door — Large', unit: '$' },
+              ]},
+              { label: 'Assembly — Bay / Bow / Combination', fields: [
+                { key: 'bay_surcharge', label: 'Bay window assembly', unit: '%' },
+                { key: 'bow_surcharge', label: 'Bow window assembly', unit: '%' },
+                { key: 'combination_surcharge', label: 'Combination assembly', unit: '%' },
+              ]},
+              { label: 'Trim & Finishing — applied per estimate', fields: [
                 { key: 'casing_oak', label: 'Oak casing', unit: '$' },
                 { key: 'casing_vinyl', label: 'Vinyl casing', unit: '$' },
                 { key: 'casing_mdf', label: 'MDF casing', unit: '$' },
                 { key: 'casing_custom', label: 'Custom casing', unit: '$' },
                 { key: 'casing_size_3_3_8', label: '3-3/8" size upcharge', unit: '$' },
-              ]},
-              { label: 'Trim & Accessories — Jamb', fields: [
                 { key: 'jamb_oak', label: 'Oak jamb', unit: '$' },
                 { key: 'jamb_wood', label: 'Wood jamb', unit: '$' },
                 { key: 'jamb_vinyl', label: 'Vinyl jamb', unit: '$' },
                 { key: 'jamb_plywood', label: 'Plywood jamb', unit: '$' },
                 { key: 'jamb_custom', label: 'Custom jamb', unit: '$' },
-              ]},
-              { label: 'Trim & Accessories — Brickmold & Rosettes', fields: [
                 { key: 'brickmold', label: 'Brickmold', unit: '$' },
                 { key: 'rosettes_round', label: 'Round rosettes', unit: '$' },
                 { key: 'rosettes_45', label: '45° rosettes', unit: '$' },
                 { key: 'rosettes_flat', label: 'Flat rosettes', unit: '$' },
-              ]},
-              { label: 'Trim & Accessories — Other', fields: [
                 { key: 'caping', label: 'Caping', unit: '$' },
                 { key: 'nail_fin', label: 'Nail fin', unit: '$' },
                 { key: 'drip_cap', label: 'Drip cap', unit: '$' },
