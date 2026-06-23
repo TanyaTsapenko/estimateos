@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { C, makeOpening, getType, type Opening, FRAME_COLOURS, HW_COLOURS, type Palettes } from '@/lib/v2/openingTypes'
+import { C, makeOpening, getType, type Opening, FRAME_COLOURS, HW_COLOURS, type Palettes, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { computePrice, computeTrimCost, type CustomPricing } from '@/lib/pricing'
 import { BuilderHeader, BottomBar } from '@/components/estimate-builder-v2/builder-header'
 import { OpeningRow } from '@/components/estimate-builder-v2/opening-row'
@@ -268,9 +268,16 @@ function NewEstimateV2() {
       if (priceErr) {
         console.error('[price_lists] fetch failed, falling back to default pricing:', priceErr)
       } else if (priceRows && priceRows.length > 0) {
+        // Invert V2_TO_OLD_TYPE_KEY: { window_cas: 'casement', ... } so we can
+        // convert DB opening_type keys back to the v2 typeIds that computePrice() uses.
+        const dbToV2: Record<string, string> = {}
+        for (const [typeId, dbKey] of Object.entries(V2_TO_OLD_TYPE_KEY)) {
+          dbToV2[dbKey] = typeId
+        }
         const base: Record<string, number> = {}
         priceRows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
-          base[r.opening_type] = (r.base_price || 0) + (r.labour_price || 0)
+          const typeId = dbToV2[r.opening_type] ?? r.opening_type
+          base[typeId] = (r.base_price || 0) + (r.labour_price || 0)
         })
         setCustomPricing(prev => ({ ...prev, base }))
       }
