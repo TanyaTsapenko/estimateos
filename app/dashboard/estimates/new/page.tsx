@@ -18,31 +18,97 @@ import { TrimSection, type TrimState, TRIM_DEFAULTS } from '@/components/estimat
 // ── Pricing ───────────────────────────────────────────────────────
 type CustomPricing = {
   base?: Record<string, number>
-  addons?: Partial<typeof SETTINGS.pricing.addons>
   areaRatePerSqFt?: number
+  surcharges?: Record<string, number>
 }
+
+const DOOR_TYPES = new Set(['entry', 'doubleEntry', 'french', 'garden', 'patio', 'storm', 'interior'])
 
 function computePrice(op: Opening, custom?: CustomPricing): number {
   const v = op.vals
   const base = (custom?.base ?? SETTINGS.pricing.base)[op.typeId] ?? 800
   const rate = custom?.areaRatePerSqFt ?? SETTINGS.pricing.areaRatePerSqFt
-  const addons = { ...SETTINGS.pricing.addons, ...custom?.addons }
+  const s = custom?.surcharges ?? {}
 
   const w = +(v.width || v.owidth || 32)
   const h = +(v.height || v.oheight || 48)
   let p = base + Math.round((w * h) / 144 * rate)
 
-  if (v.pane === 'Triple') p += addons.triplePane
-  if (v.lowE) p += addons.lowE
-  if (v.argon) p += addons.argon
-  if (v.tempered) p += addons.tempered
-  if (v.grid && v.grid !== 'None') p += addons.grid
-  if (v.screen && v.screen !== 'None') p += addons.screen
-  if ((v.extColour && v.extColour !== 'White') || (v.doorExt && v.doorExt !== 'White')) p += addons.customColour
-  if (v.material === 'Wood' || v.doorMaterial === 'Wood') p += addons.wood
-  if (v.material === 'Fiberglass') p += addons.fiberglass
+  // Pane & glass — $0 if surcharge not configured in Price List
+  if (v.pane === 'Triple') p += s.triple_pane ?? 0
+  if (v.lowE) p += s.lowe ?? 0
+  if (v.argon) p += s.argon ?? 0
+  if (v.tempered) p += s.tempered ?? 0
+  if (v.laminatedGlass) p += s.laminated_glass ?? 0
+
+  // Grid / grille
+  if ((v.grid && v.grid !== 'None') || (v.grilleType && v.grilleType !== 'None')) {
+    p += s.grid_upcharge ?? 0
+  }
+
+  // Screen type
+  if (v.screen === 'Retractable') p += s.screen_retractable ?? 0
+  else if (v.screen === 'Premium Mesh') p += s.screen_premium ?? 0
+
+  // Colour
+  if ((v.extColour && v.extColour !== 'White') || (v.doorExt && v.doorExt !== 'White')) {
+    p += s.custom_colour ?? 0
+  }
+
+  // Material (door vs window distinguished by typeId)
+  if (DOOR_TYPES.has(op.typeId)) {
+    const dm = String(v.doorMaterial || '')
+    if (dm === 'Wood') p += s.door_wood ?? 0
+    else if (dm === 'Fiberglass') p += s.door_fiberglass ?? 0
+  } else {
+    const mat = String(v.material || '')
+    if (mat === 'Wood') p += s.material_wood ?? 0
+    else if (mat === 'Aluminum') p += s.material_aluminum ?? 0
+    else if (mat === 'Fiberglass') p += s.material_fiberglass ?? 0
+    else if (mat === 'Composite') p += s.material_composite ?? 0
+    else if (mat === 'Clad Wood') p += s.material_clad_wood ?? 0
+  }
+
+  // Hardware & security
+  if (v.deadbolt) p += s.deadbolt ?? 0
+  if (v.multipointLock) p += s.multipoint_lock ?? 0
+
+  // Pet door
+  const petDoor = String(v.petDoor || '')
+  if (petDoor === 'Small') p += s.pet_door_s ?? 0
+  else if (petDoor === 'Medium') p += s.pet_door_m ?? 0
+  else if (petDoor === 'Large') p += s.pet_door_l ?? 0
+
+  // Non-standard brickmould or jamb depth (per-opening trim)
+  const brickmould = String(v.brickmould || 'None')
+  if (brickmould !== 'None') p += s.brickmold ?? 0
+  const jambDepth = String(v.jamb || '4 9/16"')
+  if (jambDepth !== '4 9/16"' && jambDepth !== '') p += s.jamb_nonstandard ?? 0
 
   return p * ((v.qty as number) || 1)
+}
+
+function computeTrimCost(trim: TrimState, s: Record<string, number>): number {
+  let cost = 0
+  if (trim.casing === 'oak') cost += s.casing_oak ?? 0
+  else if (trim.casing === 'vinyl') cost += s.casing_vinyl ?? 0
+  else if (trim.casing === 'mdf') cost += s.casing_mdf ?? 0
+  else if (trim.casing === 'custom') cost += s.casing_custom ?? 0
+  if (trim.casing !== 'none' && trim.casingSize === '3_3_8') cost += s.casing_size_3_3_8 ?? 0
+  if (trim.jamb === 'oak') cost += s.jamb_oak ?? 0
+  else if (trim.jamb === 'wood') cost += s.jamb_wood ?? 0
+  else if (trim.jamb === 'vinyl') cost += s.jamb_vinyl ?? 0
+  else if (trim.jamb === 'plywood') cost += s.jamb_plywood ?? 0
+  else if (trim.jamb === 'custom') cost += s.jamb_custom ?? 0
+  if (trim.brickmold) cost += s.brickmold ?? 0
+  if (trim.rosettes === 'round') cost += s.rosettes_round ?? 0
+  else if (trim.rosettes === '45') cost += s.rosettes_45 ?? 0
+  else if (trim.rosettes === 'flat') cost += s.rosettes_flat ?? 0
+  if (trim.caping) cost += s.caping ?? 0
+  if (trim.nailFin) cost += s.nail_fin ?? 0
+  if (trim.dripCap) cost += s.drip_cap ?? 0
+  if (trim.blueSkin) cost += s.blue_skin ?? 0
+  return cost
 }
 
 function money(n: number) {
@@ -287,9 +353,10 @@ function NewEstimateV2() {
       if (!user) { router.push('/auth'); return }
       setUserId(user.id)
 
-      const [priceResult, paletteResult] = await Promise.all([
+      const [priceResult, paletteResult, profileResult] = await Promise.all([
         supabase.from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', user.id),
         supabase.from('color_palette').select('id, name, hex_color, category').eq('user_id', user.id).order('sort_order').order('created_at'),
+        supabase.from('profiles').select('surcharges, team_owner_id').eq('id', user.id).single(),
       ])
 
       const { data: priceRows, error: priceErr } = priceResult
@@ -301,6 +368,20 @@ function NewEstimateV2() {
           base[r.opening_type] = (r.base_price || 0) + (r.labour_price || 0)
         })
         setCustomPricing(prev => ({ ...prev, base }))
+      }
+
+      // Load surcharges (from owner profile for team members)
+      const { data: profRow } = profileResult
+      if (profRow) {
+        let rawSurcharges: Record<string, number> = (profRow as any).surcharges || {}
+        if ((profRow as any).team_owner_id && Object.keys(rawSurcharges).length === 0) {
+          const { data: ownerProf } = await supabase
+            .from('profiles').select('surcharges').eq('id', (profRow as any).team_owner_id).single()
+          rawSurcharges = (ownerProf as any)?.surcharges || {}
+        }
+        if (Object.keys(rawSurcharges).length > 0) {
+          setCustomPricing(prev => ({ ...prev, surcharges: rawSurcharges }))
+        }
       }
 
       const { data: paletteRows } = paletteResult
@@ -391,7 +472,8 @@ function NewEstimateV2() {
     fetchAppt()
   }, [apptId])
 
-  const total = openings.reduce((s, o) => s + computePrice(o, customPricing), 0)
+  const trimCost = computeTrimCost(trimState, customPricing?.surcharges ?? {})
+  const total = openings.reduce((s, o) => s + computePrice(o, customPricing), 0) + trimCost
   const op = openings[activeIdx]
 
   const setVal = useCallback((k: string, v: string | number | boolean) => {
@@ -731,6 +813,7 @@ function NewEstimateV2() {
           clientInfo={clientInfo}
           openings={openings}
           prices={openings.map(o => computePrice(o, customPricing))}
+          trimCost={trimCost}
           trimState={trimState}
           scopeNotes={scopeNotes}
           onEditOpenings={() => setMode('list')}
