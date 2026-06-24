@@ -105,6 +105,7 @@ export function shapeElements(shape: string, fillColor?: string, frameColor?: st
 export function ShapeOutlineDrawing({
   shape,
   transomPanes,
+  position,
   widthIn,
   heightIn,
   uid,
@@ -115,6 +116,7 @@ export function ShapeOutlineDrawing({
 }: {
   shape?: string
   transomPanes?: string
+  position?: string
   widthIn?: number
   heightIn?: number
   uid: string
@@ -126,6 +128,7 @@ export function ShapeOutlineDrawing({
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
 
+  const isSide = (position ?? '').toLowerCase() === 'side'
   const FR = frameColor ?? FRAME
   const s    = (shape ?? '').trim()
   const sN   = s.toLowerCase().replace(/[\s-]+/g, '')
@@ -142,7 +145,8 @@ export function ShapeOutlineDrawing({
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto',
+        ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 
       <defs>
         <clipPath id={clipId}>{clipEl}</clipPath>

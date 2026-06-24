@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useId } from 'react'
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor,
   useSensor, useSensors, type DragEndEvent,
@@ -12,7 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { C } from '@/lib/v2/openingTypes'
 import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 import type { CombinationSection, CombinationSectionType } from '@/lib/v2/openingTypes'
-import { glassColor } from '@/lib/v2/svgHelpers'
+import { glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const SECTION_TYPES: CombinationSectionType[] = [
   'Picture', 'Fixed', 'Casement', 'Awning', 'Slider', 'Single Hung',
@@ -120,6 +120,8 @@ function SegContent({ info, fr }: { info: SegInfo; fr?: string }) {
 
 // ── CombinationDrawing ─────────────────────────────────────────────
 export function CombinationDrawing({ sections, heightIn, glassType, frameColor }: { sections: CombinationSection[]; heightIn?: number; glassType?: string; frameColor?: string }) {
+  const rawId = useId()
+  const uid = rawId.replace(/:/g, 'c')
   if (!sections.length) return null
   const FC = frameColor ?? FRAME
   const segs = buildSegs(sections)
@@ -128,7 +130,9 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor }
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
+      <GlassPatternDefs uid={uid} glassType={glassType}/>
       <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={glassColor(glassType)} stroke={FC} strokeWidth="2.5"/>
+      <GlassEffects x1={FX} y1={FY} x2={FR} y2={FB} glassType={glassType} uid={uid}/>
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth="1.5"/>
       ))}

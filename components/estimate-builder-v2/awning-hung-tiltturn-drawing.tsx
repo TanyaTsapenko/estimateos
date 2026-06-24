@@ -23,9 +23,38 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
   )
 }
 
+// ── Awning pane indicator (hinge at top, opens downward) ───────────
+
+function AwningPane({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+  const cx = (x1 + x2) / 2
+  const arcOff = y2 - y1 > 150 ? 25 : 16
+  return (
+    <>
+      <line x1={x1+5} y1={y1+5} x2={x2-5} y2={y1+5} stroke={SEC} strokeWidth="1.5"/>
+      <line x1={x1+5} y1={y1+5} x2={cx} y2={y2-5} stroke={MOV} strokeWidth="1.2"/>
+      <line x1={x2-5} y1={y1+5} x2={cx} y2={y2-5} stroke={MOV} strokeWidth="1.2"/>
+      <path d={`M${x1+5} ${y2-5} Q${cx} ${y2-arcOff} ${x2-5} ${y2-5}`}
+        stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
+      <rect x={cx-6} y={y2-12} width="12" height="5" rx="1.5" fill={SEC}/>
+    </>
+  )
+}
+
+// ── Fixed pane indicator (dashed X) ───────────────────────────────
+
+function FixedPane({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+  return (
+    <>
+      <line x1={x1+4} y1={y1+4} x2={x2-4} y2={y2-4} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+      <line x1={x2-4} y1={y1+4} x2={x1+4} y2={y2-4} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+    </>
+  )
+}
+
 // ── Awning ─────────────────────────────────────────────────────────
 
-export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
+export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
+  sub?: string
   widthIn?: number
   heightIn?: number
   uid?: string
@@ -38,6 +67,11 @@ export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassT
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
   const FR = frameColor ?? FRAME
+  const sN = (sub ?? '').toLowerCase().replace(/[^a-z]/g, '')
+  const isDouble      = sN === 'doubleawning'
+  const isAwningFixed = sN === 'awningfixed'
+  const isFixedAwning = sN === 'fixedawning'
+  const isMulti = isDouble || isAwningFixed || isFixedAwning
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -47,18 +81,24 @@ export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassT
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
 
-      {/* Hinge at top */}
-      <line x1={X1 + 5} y1={Y1 + 5} x2={X2 - 5} y2={Y1 + 5} stroke={SEC} strokeWidth="1.5"/>
-      {/* MOV diagonals from top corners to bottom center */}
-      <line x1={X1 + 5} y1={Y1 + 5} x2={CX} y2={Y2 - 5} stroke={MOV} strokeWidth="1.2"/>
-      <line x1={X2 - 5} y1={Y1 + 5} x2={CX} y2={Y2 - 5} stroke={MOV} strokeWidth="1.2"/>
-      {/* Dashed arc from left bottom corner to right bottom corner */}
-      <path d={`M${X1 + 5} ${Y2 - 5} Q${CX} ${Y2 - 25} ${X2 - 5} ${Y2 - 5}`}
-        stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
-      {/* Handle at bottom center */}
-      <rect x={CX - 6} y={Y2 - 12} width="12" height="5" rx="1.5" fill={SEC}/>
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>}
+      {isMulti ? (
+        <>
+          {/* Horizontal panel divider */}
+          <line x1={X1+3} y1={MY} x2={X2-3} y2={MY} stroke={FR} strokeWidth="1.5"/>
+          {/* Top panel */}
+          {(isDouble || isAwningFixed)
+            ? <AwningPane x1={X1} y1={Y1} x2={X2} y2={MY}/>
+            : <FixedPane  x1={X1} y1={Y1} x2={X2} y2={MY}/>}
+          {/* Bottom panel */}
+          {(isDouble || isFixedAwning)
+            ? <AwningPane x1={X1} y1={MY} x2={X2} y2={Y2}/>
+            : <FixedPane  x1={X1} y1={MY} x2={X2} y2={Y2}/>}
+        </>
+      ) : (
+        <AwningPane x1={X1} y1={Y1} x2={X2} y2={Y2}/>
+      )}
 
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>}
       <DimLines wL={wL} hL={hL}/>
     </svg>
   )

@@ -232,6 +232,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : op.typeId === 'awning' ? (
             <>
               <AwningDrawing
+                sub={op.sub}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
@@ -397,6 +398,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <ShapeOutlineDrawing
                 shape={op.typeId === 'special' ? op.sub : op.vals.shape as string | undefined}
                 transomPanes={op.typeId === 'transom' ? op.vals.transomPanes as string | undefined : undefined}
+                position={op.vals.position as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
