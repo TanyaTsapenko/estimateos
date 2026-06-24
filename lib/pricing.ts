@@ -26,7 +26,7 @@ export const OPENING_TYPES: Record<string, { name: string; base: number; lab: nu
 
 export const TAX_RATES: Record<string, [number, string]> = {
   AB: [0.05,    'GST (5%)'],
-  BC: [0.12,    'HST (12%)'],
+  BC: [0.12,    'GST+PST (12%)'],
   MB: [0.12,    'GST+PST (12%)'],
   NB: [0.15,    'HST (15%)'],
   NL: [0.15,    'HST (15%)'],

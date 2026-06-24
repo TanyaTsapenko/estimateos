@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { C, SETTINGS, getType, type Opening } from '@/lib/v2/openingTypes'
+import { C, getType, type Opening } from '@/lib/v2/openingTypes'
+import { TAX_RATES } from '@/lib/pricing'
 import { type ClientInfo } from './client-step'
 import { MiniDiagram } from './diagram'
 import { type TrimState } from './trim-section'
@@ -171,6 +172,8 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
   const [discountValue, setDiscountValue] = useState('')
 
+  const [taxRate, taxLabel] = TAX_RATES[(clientInfo.province ?? '').toUpperCase()] ?? [0.05, 'GST (5%)']
+
   const isCollapsible = openings.length > 3
   const [expanded, setExpanded] = useState<Set<number>>(
     () => new Set(openings.length <= 3 ? openings.map((_, i) => i) : [])
@@ -185,7 +188,7 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
       : Math.min(parseFloat(discountValue) || 0, subtotal)
     : 0
   const afterDiscount = subtotal - discountAmt
-  const taxAmount = afterDiscount * SETTINGS.taxRate
+  const taxAmount = afterDiscount * taxRate
   const total = afterDiscount + taxAmount
 
   const handleSave = () => {
@@ -194,7 +197,7 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
       discountValue: discountValue ? parseFloat(discountValue) : null,
       discountAmount: discountAmt,
       subtotal,
-      taxRate: SETTINGS.taxRate,
+      taxRate,
       taxAmount,
       total,
     })
@@ -398,7 +401,7 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.border}` }}>
-          <span style={{ fontSize: 14, color: C.inkMid, fontWeight: 500 }}>{SETTINGS.taxLabel}</span>
+          <span style={{ fontSize: 14, color: C.inkMid, fontWeight: 500 }}>{taxLabel}</span>
           <span style={{ fontSize: 14, fontWeight: 700, color: C.ink, fontVariantNumeric: 'tabular-nums' }}>{money(taxAmount)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
