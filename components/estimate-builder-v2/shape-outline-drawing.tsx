@@ -11,59 +11,60 @@ const CX = 100, CY = 115, RX = 90, RY = 105
 
 type Pair = [ReactElement, ReactElement]
 
-function rectPair(fill = GLASS): Pair {
+function rectPair(fill = GLASS, fr = FRAME): Pair {
   return [
     <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1}/>,
-    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
+    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
-function pathPair(d: string, fill = GLASS): Pair {
+function pathPair(d: string, fill = GLASS, fr = FRAME): Pair {
   return [
     <path d={d}/>,
-    <path d={d} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
+    <path d={d} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
-function polyPair(pts: string, fill = GLASS): Pair {
+function polyPair(pts: string, fill = GLASS, fr = FRAME): Pair {
   return [
     <polygon points={pts}/>,
-    <polygon points={pts} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
+    <polygon points={pts} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
-export function shapeElements(shape: string, fillColor?: string): Pair {
+export function shapeElements(shape: string, fillColor?: string, frameColor?: string): Pair {
   const fill = fillColor ?? GLASS
+  const fr   = frameColor ?? FRAME
   const s = shape.toLowerCase().replace(/[\s-]+/g, '')
 
-  if (s === '' || s.startsWith('custom')) return rectPair(fill)
+  if (s === '' || s.startsWith('custom')) return rectPair(fill, fr)
 
   switch (s) {
     case 'rectangle':
     case 'rectangular':
-      return rectPair(fill)
+      return rectPair(fill, fr)
 
     case 'arch':
     case 'arched':
       return pathPair(
         `M${X1} ${Y2} L${X1} 110 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 110 L${X2} ${Y2} Z`,
-        fill
+        fill, fr
       )
 
     case 'halfarch':
       return pathPair(
         `M${X1} ${Y2} L${X1} 155 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 155 L${X2} ${Y2} Z`,
-        fill
+        fill, fr
       )
 
     case 'halfround':
     case 'halfcircle':
-      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 1 ${X2} ${Y2} Z`, fill)
+      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 1 ${X2} ${Y2} Z`, fill, fr)
 
     case 'circle':
       return [
         <ellipse cx={CX} cy={CY} rx={RX} ry={RY}/>,
-        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
+        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={fill} stroke={fr} strokeWidth="2.5"/>,
       ]
 
     case 'octagon': {
@@ -71,31 +72,31 @@ export function shapeElements(shape: string, fillColor?: string): Pair {
       return polyPair(
         `${X1+c},${Y1} ${X2-c},${Y1} ${X2},${Y1+c} ${X2},${Y2-c} ` +
         `${X2-c},${Y2} ${X1+c},${Y2} ${X1},${Y2-c} ${X1},${Y1+c}`,
-        fill
+        fill, fr
       )
     }
 
     case 'triangle':
-      return polyPair(`${CX},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill)
+      return polyPair(`${CX},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill, fr)
 
     case 'trapezoid':
-      return polyPair(`${X1+35},${Y1} ${X2-35},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill)
+      return polyPair(`${X1+35},${Y1} ${X2-35},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill, fr)
 
     case 'pentagon':
-      return polyPair(`${CX},${Y1} ${X2},91 156,${Y2} 44,${Y2} ${X1},91`, fill)
+      return polyPair(`${CX},${Y1} ${X2},91 156,${Y2} 44,${Y2} ${X1},91`, fill, fr)
 
     case 'gothic':
       return pathPair(
         `M${X1} ${Y2} L${X1} 160 C${X1} 50 90 ${Y1} ${CX} ${Y1} ` +
         `C110 ${Y1} ${X2} 50 ${X2} 160 L${X2} ${Y2} Z`,
-        fill
+        fill, fr
       )
 
     case 'eyebrow':
-      return pathPair(`M${X1} ${Y2} L${X1} 50 Q${CX} ${Y1} ${X2} 50 L${X2} ${Y2} Z`, fill)
+      return pathPair(`M${X1} ${Y2} L${X1} 50 Q${CX} ${Y1} ${X2} 50 L${X2} ${Y2} Z`, fill, fr)
 
     default:
-      return rectPair(fill)
+      return rectPair(fill, fr)
   }
 }
 
@@ -110,6 +111,7 @@ export function ShapeOutlineDrawing({
   grid,
   grilleType,
   glassType,
+  frameColor,
 }: {
   shape?: string
   transomPanes?: string
@@ -119,14 +121,16 @@ export function ShapeOutlineDrawing({
   grid?: string
   grilleType?: string
   glassType?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
 
+  const FR = frameColor ?? FRAME
   const s    = (shape ?? '').trim()
   const sN   = s.toLowerCase().replace(/[\s-]+/g, '')
   const isCustom = sN === '' || sN.startsWith('custom')
-  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType))
+  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
   const clipId = `so-${uid}`
 
   // Transom pane dividers — only for rectangle shape
@@ -158,7 +162,7 @@ export function ShapeOutlineDrawing({
               return (
                 <g key={i}>
                   {i > 0 && (
-                    <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>
+                    <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>
                   )}
                   <line x1={px1+3} y1={Y1+3} x2={px2-3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
                   <line x1={px2-3} y1={Y1+3} x2={px1+3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
@@ -170,7 +174,7 @@ export function ShapeOutlineDrawing({
               <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
             </>
         }
-        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>
+        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
       </g>
 
       {/* "Custom" label centred inside shape */}

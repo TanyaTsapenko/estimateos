@@ -58,16 +58,18 @@ function SlidingPanel({ x1, y1, x2, y2, dir }: {
   )
 }
 
-export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, uid }: {
+export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, uid, frameColor }: {
   sub: string
   widthIn?: number
   heightIn?: number
   glassType?: string
   screen?: string
   uid?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const panels = PATIO_CONFIGS[sub] ?? PATIO_CONFIGS['XO']
   const N = panels.length
   const pw = (X2 - X1) / N
@@ -77,7 +79,7 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
 
       {panels.map((panel, i) => {
@@ -86,7 +88,7 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
         const dir: 'left' | 'right' = i < N / 2 ? 'right' : 'left'
         return (
           <g key={i}>
-            {i > 0 && <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>}
+            {i > 0 && <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>}
             {panel === 'sliding'
               ? <SlidingPanel x1={px1} y1={Y1} x2={px2} y2={Y2} dir={dir}/>
               : <FixedPanel   x1={px1} y1={Y1} x2={px2} y2={Y2}/>}

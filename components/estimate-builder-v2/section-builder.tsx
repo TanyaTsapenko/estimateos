@@ -56,7 +56,7 @@ function buildSegs(sections: CombinationSection[]): SegInfo[] {
   })
 }
 
-function SegContent({ info }: { info: SegInfo }) {
+function SegContent({ info, fr }: { info: SegInfo; fr?: string }) {
   const { sL, sR, sCX, segX, segW, sec } = info
 
   if (sec.type === 'Picture' || sec.type === 'Fixed') {
@@ -108,7 +108,7 @@ function SegContent({ info }: { info: SegInfo }) {
       <>
         <line x1={sL} y1={sT} x2={sR} y2={midSectY} stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
         <line x1={sR} y1={sT} x2={sL} y2={midSectY} stroke={SEC} strokeWidth="1" strokeDasharray="4 3"/>
-        <line x1={sL} y1={midSectY} x2={sR} y2={midSectY} stroke={FRAME} strokeWidth="1.5"/>
+        <line x1={sL} y1={midSectY} x2={sR} y2={midSectY} stroke={fr ?? FRAME} strokeWidth="1.5"/>
         <rect x={sL} y={midSectY} width={Math.max(1, sR - sL)} height={Math.max(1, sB - midSectY)} fill="none" stroke={MOV} strokeWidth="1.5"/>
         <path d={`M${sCX},${arrTip} L${sCX-5},${arrTip+8} L${sCX},${arrTip+6} L${sCX+5},${arrTip+8}Z`} fill={MOV}/>
         <line x1={sCX} y1={arrTip+6} x2={sCX} y2={arrLine} stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
@@ -119,19 +119,20 @@ function SegContent({ info }: { info: SegInfo }) {
 }
 
 // ── CombinationDrawing ─────────────────────────────────────────────
-export function CombinationDrawing({ sections, heightIn, glassType }: { sections: CombinationSection[]; heightIn?: number; glassType?: string }) {
+export function CombinationDrawing({ sections, heightIn, glassType, frameColor }: { sections: CombinationSection[]; heightIn?: number; glassType?: string; frameColor?: string }) {
   if (!sections.length) return null
+  const FC = frameColor ?? FRAME
   const segs = buildSegs(sections)
   const hLabel = heightIn ? `${heightIn}"` : 'H'
   const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
-      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={glassColor(glassType)} stroke={FC} strokeWidth="2.5"/>
       {segs.slice(0, -1).map((seg, i) => (
-        <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FRAME} strokeWidth="1.5"/>
+        <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth="1.5"/>
       ))}
-      {segs.map((seg, i) => <SegContent key={i} info={seg} />)}
+      {segs.map((seg, i) => <SegContent key={i} info={seg} fr={FC}/>)}
       <line x1={FX} y1={DIM_Y} x2={FR} y2={DIM_Y} stroke={SEC} strokeWidth="1"/>
       {boundaries.map((bx, i) => (
         <line key={i} x1={bx} y1={DIM_Y - TICK} x2={bx} y2={DIM_Y + TICK} stroke={SEC} strokeWidth="1.5"/>
@@ -294,10 +295,11 @@ interface SectionBuilderProps {
   sections: CombinationSection[]
   heightIn?: number
   glassType?: string
+  frameColor?: string
   onChange: (sections: CombinationSection[]) => void
 }
 
-export function SectionBuilder({ sections, heightIn, glassType, onChange }: SectionBuilderProps) {
+export function SectionBuilder({ sections, heightIn, glassType, frameColor, onChange }: SectionBuilderProps) {
   const totalSum = sections.reduce((s, sec) => s + sec.width, 0)
 
   // Width mode: 'equal' = one total width input, computed per-section; 'custom' = individual inputs
@@ -445,7 +447,7 @@ export function SectionBuilder({ sections, heightIn, glassType, onChange }: Sect
 
       {/* drawing */}
       <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, padding: '12px 10px 8px' }}>
-        <CombinationDrawing sections={sections} heightIn={heightIn} glassType={glassType}/>
+        <CombinationDrawing sections={sections} heightIn={heightIn} glassType={glassType} frameColor={frameColor}/>
       </div>
 
       {/* presets card */}

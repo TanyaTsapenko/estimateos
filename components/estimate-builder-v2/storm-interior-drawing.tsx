@@ -53,16 +53,18 @@ function SwingArc({ x1, y1, x2, y2, hingeLeft, color = MOV, dash }: {
 
 // ── Storm Door ─────────────────────────────────────────────────────
 
-export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glassType }: {
+export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glassType, frameColor }: {
   sub: string
   hingeSide?: string
   widthIn?: number
   heightIn?: number
   uid: string
   glassType?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const sN = sub.toLowerCase().replace(/[\s]+/g, '')
   const hs = (hingeSide ?? '').toLowerCase()
   const reversible = hs.includes('reversible')
@@ -82,18 +84,18 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
       {/* Panel fill by subtype */}
       {sN === 'halfglass' ? (
         <>
-          <rect x={X1} y={Y1}  width={X2-X1} height={MY-Y1} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
-          <rect x={X1} y={MY}  width={X2-X1} height={Y2-MY} fill={DOOR_FILL}             stroke={FRAME} strokeWidth="2.5"/>
-          <line x1={X1} y1={MY} x2={X2} y2={MY} stroke={FRAME} strokeWidth="1.5"/>
+          <rect x={X1} y={Y1}  width={X2-X1} height={MY-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
+          <rect x={X1} y={MY}  width={X2-X1} height={Y2-MY} fill={DOOR_FILL}             stroke={FR} strokeWidth="2.5"/>
+          <line x1={X1} y1={MY} x2={X2} y2={MY} stroke={FR} strokeWidth="1.5"/>
         </>
       ) : sN === 'screen' ? (
         <>
-          <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+          <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
           <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={`url(#${patId})`}      stroke="none"/>
         </>
       ) : (
         /* Full glass */
-        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       )}
 
       {/* Swing arc(s) */}
@@ -113,16 +115,18 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
 
 // ── Interior Door ──────────────────────────────────────────────────
 
-export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, widthIn, heightIn }: {
+export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, widthIn, heightIn, frameColor }: {
   sub: string
   doorSwing?: string
   glassInsert?: string
   doorStyle?: string
   widthIn?: number
   heightIn?: number
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const swing = (doorSwing ?? '').toLowerCase()
   const hingeLeft = !swing.includes('right')
 
@@ -137,11 +141,11 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
   if (sub === 'Single') return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && (
-        <rect x={X1+8} y={glassY1} width={X2-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+        <rect x={X1+8} y={glassY1} width={X2-X1-16} height={glassH} fill={GLASS} stroke={FR} strokeWidth="1.2"/>
       )}
-      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'}/>}
+      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'} frameColor={frameColor}/>}
       <SwingArc x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft}/>
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -151,13 +155,13 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
   if (sub === 'Double') return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && <>
-        <rect x={X1+8}  y={glassY1} width={CX-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
-        <rect x={CX+8}  y={glassY1} width={X2-CX-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
+        <rect x={X1+8}  y={glassY1} width={CX-X1-16} height={glassH} fill={GLASS} stroke={FR} strokeWidth="1.2"/>
+        <rect x={CX+8}  y={glassY1} width={X2-CX-16} height={glassH} fill={GLASS} stroke={FR} strokeWidth="1.2"/>
       </>}
-      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'}/>}
-      <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>
+      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'} frameColor={frameColor}/>}
+      <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FR} strokeWidth="1.5"/>
       <SwingArc x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}/>
       <SwingArc x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>
       <DimLines wL={wL} hL={hL}/>
@@ -177,7 +181,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
           : <rect x={X2-2} y={Y1-6} width="10" height={Y2-Y1+12} rx="1" fill={SEC} opacity="0.35"/>}
 
         {/* Door panel */}
-        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FRAME} strokeWidth="2.5"/>
+        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FR} strokeWidth="2.5"/>
 
         {/* Handle — on the leading edge (side the door slides toward) */}
         <rect
@@ -206,8 +210,8 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Two panels */}
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FRAME} strokeWidth="2.5"/>
-      <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FR} strokeWidth="2.5"/>
+      <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FR} strokeWidth="1.5"/>
 
       {/* Fold indicators: diagonals from outer bottom corners to top center pivot */}
       <line x1={X1+5} y1={Y2-5} x2={CX}   y2={Y1+5} stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2"/>

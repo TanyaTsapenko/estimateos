@@ -25,7 +25,7 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
 
 // ── Awning ─────────────────────────────────────────────────────────
 
-export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassType, screen }: {
+export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
   widthIn?: number
   heightIn?: number
   uid?: string
@@ -33,16 +33,18 @@ export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassT
   grilleType?: string
   glassType?: string
   screen?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
 
       {/* Hinge at top */}
@@ -55,7 +57,7 @@ export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassT
         stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
       {/* Handle at bottom center */}
       <rect x={CX - 6} y={Y2 - 12} width="12" height="5" rx="1.5" fill={SEC}/>
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -64,7 +66,7 @@ export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType, glassT
 
 // ── Single Hung ─────────────────────────────────────────────────────
 
-export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleType, glassType, screen }: {
+export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
   shape?: string
   widthIn?: number
   heightIn?: number
@@ -73,12 +75,14 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   grilleType?: string
   glassType?: string
   screen?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const s = (shape ?? '').trim()
   const clipId = `shu-${uid}`
-  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType))
+  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -91,14 +95,14 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
       <g clipPath={`url(#${clipId})`}>
         <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>
         {/* Horizontal rail divider */}
-        <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FRAME} strokeWidth="1.5"/>
+        <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FR} strokeWidth="1.5"/>
         {/* Upper sash — fixed (dashed X) */}
         <line x1={X1 + 4} y1={Y1 + 4} x2={X2 - 4} y2={MY - 2} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
         <line x1={X2 - 4} y1={Y1 + 4} x2={X1 + 4} y2={MY - 2} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
         {/* Lower sash — slides up (MOV arrow + shaft) */}
         <path d={`M${CX} ${Y2 - 4} L${CX - 5} ${Y2 - 11} L${CX} ${Y2 - 8} L${CX + 5} ${Y2 - 11}Z`} fill={MOV}/>
         <line x1={CX} y1={Y2 - 8} x2={CX} y2={MY + 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
-        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>
+        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
       </g>
 
       <DimLines wL={wL} hL={hL}/>
@@ -117,7 +121,7 @@ function SashFixed({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2:
   )
 }
 
-export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn, uid, grid, glassType, screen }: {
+export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn, uid, grid, glassType, screen, frameColor }: {
   topSashOperable?: boolean
   bottomSashOperable?: boolean
   widthIn?: number
@@ -126,9 +130,11 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
   grid?: string
   glassType?: string
   screen?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const topOp    = topSashOperable    !== false
   const bottomOp = bottomSashOperable !== false
 
@@ -137,11 +143,11 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
 
       {/* Horizontal rail divider */}
-      <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FRAME} strokeWidth="1.5"/>
+      <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FR} strokeWidth="1.5"/>
       {/* Upper sash */}
       {topOp ? (
         <>
@@ -160,7 +166,7 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
       ) : (
         <SashFixed x1={X1} y1={MY} x2={X2} y2={Y2}/>
       )}
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid}/>}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid} frameColor={frameColor}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -222,7 +228,7 @@ function TiltTurnPanel({ x1, y1, x2, y2, hingeLeft, openMode }: {
   )
 }
 
-export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid, grid, glassType }: {
+export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid, grid, glassType, frameColor }: {
   sub: string
   openDir?: string
   openMode?: string
@@ -231,9 +237,11 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
   uid?: string
   grid?: string
   glassType?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const isDouble  = sub.toLowerCase().includes('double')
   const hingeLeft = (openDir ?? 'Right').toLowerCase() === 'left'
 
@@ -242,19 +250,19 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
       {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} uid={uid}/>}
 
       {isDouble ? (
         <>
           <TiltTurnPanel x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}  openMode={openMode}/>
-          <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="2"/>
+          <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FR} strokeWidth="2"/>
           <TiltTurnPanel x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false} openMode={openMode}/>
         </>
       ) : (
         <TiltTurnPanel x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft} openMode={openMode}/>
       )}
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid}/>}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid} frameColor={frameColor}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>

@@ -16,9 +16,10 @@ function styleFromUnit(unit: string | undefined, flipHinge = false): PanelStyle 
   }
 }
 
-function PanelIndicator({ style, b: { x1, y1, x2, y2 } }: { style: PanelStyle; b: Box }) {
+function PanelIndicator({ style, b: { x1, y1, x2, y2 }, fr }: { style: PanelStyle; b: Box; fr?: string }) {
   const mx = (x1 + x2) / 2
   const my = (y1 + y2) / 2
+  const FR = fr ?? FRAME
 
   if (style === 'fixed') return (
     <g>
@@ -52,7 +53,7 @@ function PanelIndicator({ style, b: { x1, y1, x2, y2 } }: { style: PanelStyle; b
   )
   if (style === 'singleHung') return (
     <g>
-      <line x1={x1+3} y1={my} x2={x2-3} y2={my} stroke={FRAME} strokeWidth="1.5"/>
+      <line x1={x1+3} y1={my} x2={x2-3} y2={my} stroke={FR} strokeWidth="1.5"/>
       <line x1={x1+4} y1={y1+4} x2={x2-4} y2={my-2} stroke={SEC} strokeWidth="1" strokeDasharray="3 2"/>
       <line x1={x2-4} y1={y1+4} x2={x1+4} y2={my-2} stroke={SEC} strokeWidth="1" strokeDasharray="3 2"/>
       <path d={`M${mx} ${y2-4} L${mx-5} ${y2-11} L${mx} ${y2-8} L${mx+5} ${y2-11}Z`} fill={MOV}/>
@@ -61,7 +62,7 @@ function PanelIndicator({ style, b: { x1, y1, x2, y2 } }: { style: PanelStyle; b
   )
   if (style === 'doubleHung') return (
     <g>
-      <line x1={x1+3} y1={my} x2={x2-3} y2={my} stroke={FRAME} strokeWidth="1.5"/>
+      <line x1={x1+3} y1={my} x2={x2-3} y2={my} stroke={FR} strokeWidth="1.5"/>
       <path d={`M${mx} ${y1+4} L${mx-5} ${y1+11} L${mx} ${y1+8} L${mx+5} ${y1+11}Z`} fill={MOV}/>
       <line x1={mx} y1={y1+8} x2={mx} y2={my-3} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
       <path d={`M${mx} ${y2-4} L${mx-5} ${y2-11} L${mx} ${y2-8} L${mx+5} ${y2-11}Z`} fill={MOV}/>
@@ -77,7 +78,7 @@ const LEAN_MAP: Record<string, number> = {
 
 // ── Bay drawing ────────────────────────────────────────────────────
 export function BayDrawing({
-  bayAngle, centerWindowType, sideUnit, sub, heightIn, widthIn, grid, grilleType, uid, glassType,
+  bayAngle, centerWindowType, sideUnit, sub, heightIn, widthIn, grid, grilleType, uid, glassType, frameColor,
 }: {
   bayAngle?: string
   centerWindowType?: string
@@ -89,9 +90,11 @@ export function BayDrawing({
   grilleType?: string
   uid?: string
   glassType?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
   const lean = LEAN_MAP[bayAngle ?? '45°'] ?? 12
 
   // Parse lite count from sub e.g. "3 lite" → 3; clamp 3–5
@@ -122,8 +125,8 @@ export function BayDrawing({
       style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Left side panel */}
-      <polygon points={leftPts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
-      <PanelIndicator style={leftStyle} b={{ x1: lx1+4, y1: yT+lean+4, x2: lx2-4, y2: yB-4 }}/>
+      <polygon points={leftPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+      <PanelIndicator style={leftStyle} b={{ x1: lx1+4, y1: yT+lean+4, x2: lx2-4, y2: yB-4 }} fr={FR}/>
 
       {/* Center panels */}
       {Array.from({ length: numCenter }, (_, i) => {
@@ -135,20 +138,20 @@ export function BayDrawing({
           : 'fixed'
         return (
           <g key={i}>
-            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2"/>
-            <PanelIndicator style={centerStyle} b={{ x1: cx1+4, y1: yT+4, x2: cx2-4, y2: yB-4 }}/>
+            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={glassColor(glassType)} stroke={FR} strokeWidth="2"/>
+            <PanelIndicator style={centerStyle} b={{ x1: cx1+4, y1: yT+4, x2: cx2-4, y2: yB-4 }} fr={FR}/>
             {uid && i === 0 && (
-              <GridOverlay x1={lx2} y1={yT} x2={rx1} y2={yB} grid={grid} grilleType={grilleType} uid={uid}/>
+              <GridOverlay x1={lx2} y1={yT} x2={rx1} y2={yB} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
             )}
             {/* Mullion between center panels */}
-            {i > 0 && <line x1={cx1} y1={yT} x2={cx1} y2={yB} stroke={FRAME} strokeWidth="1.5"/>}
+            {i > 0 && <line x1={cx1} y1={yT} x2={cx1} y2={yB} stroke={FR} strokeWidth="1.5"/>}
           </g>
         )
       })}
 
       {/* Right side panel */}
-      <polygon points={rightPts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
-      <PanelIndicator style={rightStyle} b={{ x1: rx1+4, y1: yT+4, x2: rx2-4, y2: yB-4 }}/>
+      <polygon points={rightPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+      <PanelIndicator style={rightStyle} b={{ x1: rx1+4, y1: yT+4, x2: rx2-4, y2: yB-4 }} fr={FR}/>
 
       {/* Width dim */}
       <line x1={lx1} y1={dimY} x2={rx2} y2={dimY} stroke={SEC} strokeWidth="1"/>
@@ -167,7 +170,7 @@ export function BayDrawing({
 
 // ── Bow drawing ────────────────────────────────────────────────────
 export function BowDrawing({
-  sub, panelType, sideUnit, heightIn, widthIn, grid, grilleType, uid, glassType,
+  sub, panelType, sideUnit, heightIn, widthIn, grid, grilleType, uid, glassType, frameColor,
 }: {
   sub: string
   panelType?: string
@@ -178,9 +181,11 @@ export function BowDrawing({
   grilleType?: string
   uid?: string
   glassType?: string
+  frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
+  const FR = frameColor ?? FRAME
 
   const N = Math.max(2, parseInt(sub) || 5)
 
@@ -206,8 +211,8 @@ export function BowDrawing({
       const pts = `${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
-          <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+endLean+3, x2: x2-3, y2: yB-3 }}/>
+          <polygon points={pts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+          <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+endLean+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
         </g>
       )
     }
@@ -215,15 +220,15 @@ export function BowDrawing({
       const pts = `${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
-          <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }}/>
+          <polygon points={pts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+          <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
         </g>
       )
     }
     return (
       <g key={i}>
-        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2"/>
-        <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }}/>
+        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={glassColor(glassType)} stroke={FR} strokeWidth="2"/>
+        <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
       </g>
     )
   })
@@ -238,7 +243,7 @@ export function BowDrawing({
 
       {panels}
       {uid && N > 2 && (
-        <GridOverlay x1={gridX1} y1={yT} x2={gridX2} y2={yB} grid={grid} grilleType={grilleType} uid={uid}/>
+        <GridOverlay x1={gridX1} y1={yT} x2={gridX2} y2={yB} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
       )}
 
       {/* Width dim */}
