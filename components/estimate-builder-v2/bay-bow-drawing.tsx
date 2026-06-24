@@ -1,6 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { GridOverlay } from '@/lib/v2/svgHelpers'
+import { GridOverlay, glassColor } from '@/lib/v2/svgHelpers'
 
 type PanelStyle = 'fixed' | 'casement-l' | 'casement-r' | 'awning' | 'singleHung' | 'doubleHung'
 
@@ -77,7 +77,7 @@ const LEAN_MAP: Record<string, number> = {
 
 // ── Bay drawing ────────────────────────────────────────────────────
 export function BayDrawing({
-  bayAngle, centerWindowType, sideUnit, sub, heightIn, widthIn, grid, grilleType, uid,
+  bayAngle, centerWindowType, sideUnit, sub, heightIn, widthIn, grid, grilleType, uid, glassType,
 }: {
   bayAngle?: string
   centerWindowType?: string
@@ -88,6 +88,7 @@ export function BayDrawing({
   grid?: string
   grilleType?: string
   uid?: string
+  glassType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -121,7 +122,7 @@ export function BayDrawing({
       style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Left side panel */}
-      <polygon points={leftPts} fill={GLASS} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
+      <polygon points={leftPts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
       <PanelIndicator style={leftStyle} b={{ x1: lx1+4, y1: yT+lean+4, x2: lx2-4, y2: yB-4 }}/>
 
       {/* Center panels */}
@@ -134,7 +135,7 @@ export function BayDrawing({
           : 'fixed'
         return (
           <g key={i}>
-            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={GLASS} stroke={FRAME} strokeWidth="2"/>
+            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2"/>
             <PanelIndicator style={centerStyle} b={{ x1: cx1+4, y1: yT+4, x2: cx2-4, y2: yB-4 }}/>
             {uid && i === 0 && (
               <GridOverlay x1={lx2} y1={yT} x2={rx1} y2={yB} grid={grid} grilleType={grilleType} uid={uid}/>
@@ -146,7 +147,7 @@ export function BayDrawing({
       })}
 
       {/* Right side panel */}
-      <polygon points={rightPts} fill={GLASS} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
+      <polygon points={rightPts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
       <PanelIndicator style={rightStyle} b={{ x1: rx1+4, y1: yT+4, x2: rx2-4, y2: yB-4 }}/>
 
       {/* Width dim */}
@@ -166,7 +167,7 @@ export function BayDrawing({
 
 // ── Bow drawing ────────────────────────────────────────────────────
 export function BowDrawing({
-  sub, panelType, sideUnit, heightIn, widthIn, grid, grilleType, uid,
+  sub, panelType, sideUnit, heightIn, widthIn, grid, grilleType, uid, glassType,
 }: {
   sub: string
   panelType?: string
@@ -176,6 +177,7 @@ export function BowDrawing({
   grid?: string
   grilleType?: string
   uid?: string
+  glassType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -204,7 +206,7 @@ export function BowDrawing({
       const pts = `${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={GLASS} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
+          <polygon points={pts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
           <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+endLean+3, x2: x2-3, y2: yB-3 }}/>
         </g>
       )
@@ -213,14 +215,14 @@ export function BowDrawing({
       const pts = `${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={GLASS} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
+          <polygon points={pts} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2" strokeLinejoin="round"/>
           <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }}/>
         </g>
       )
     }
     return (
       <g key={i}>
-        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={GLASS} stroke={FRAME} strokeWidth="2"/>
+        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2"/>
         <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }}/>
       </g>
     )

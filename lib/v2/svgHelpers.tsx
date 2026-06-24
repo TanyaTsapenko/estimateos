@@ -1,6 +1,54 @@
 'use client'
 import type { JSX } from 'react'
-import { FRAME } from '@/components/WindowDiagram'
+import { GLASS, FRAME } from '@/components/WindowDiagram'
+
+export function glassColor(glassType?: string): string {
+  switch (glassType) {
+    case 'Frosted':  return 'rgba(255,255,255,0.85)'
+    case 'Tinted':   return 'rgba(100,130,160,0.5)'
+    case 'Obscure':  return 'rgba(200,210,220,0.9)'
+    default:         return GLASS
+  }
+}
+
+export function GlassPatternDefs({ uid, glassType, screen }: {
+  uid: string; glassType?: string; screen?: string
+}): JSX.Element | null {
+  const hasFrost  = glassType === 'Frosted'
+  const hasScreen = !!screen && screen !== 'None'
+  if (!hasFrost && !hasScreen) return null
+  return (
+    <defs>
+      {hasFrost && (
+        <pattern id={`frost-${uid}`} x="0" y="0" width="6" height="3" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="1.5" x2="6" y2="1.5" stroke="white" strokeWidth="0.8" opacity="0.6"/>
+        </pattern>
+      )}
+      {hasScreen && (
+        <pattern id={`mesh-${uid}`} x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="4" y2="4" stroke="#94A0B4" strokeWidth="0.5"/>
+          <line x1="4" y1="0" x2="0" y2="4" stroke="#94A0B4" strokeWidth="0.5"/>
+        </pattern>
+      )}
+    </defs>
+  )
+}
+
+export function GlassEffects({ x1, y1, x2, y2, glassType, screen, uid }: {
+  x1: number; y1: number; x2: number; y2: number
+  glassType?: string; screen?: string; uid: string
+}): JSX.Element | null {
+  const hasFrost  = glassType === 'Frosted'
+  const hasScreen = !!screen && screen !== 'None'
+  if (!hasFrost && !hasScreen) return null
+  const w = x2 - x1, h = y2 - y1
+  return (
+    <>
+      {hasFrost  && <rect x={x1} y={y1} width={w} height={h} fill={`url(#frost-${uid})`}/>}
+      {hasScreen && <rect x={x1} y={y1} width={w} height={h} fill={`url(#mesh-${uid})`} opacity="0.4"/>}
+    </>
+  )
+}
 
 export function GridOverlay({ x1, y1, x2, y2, grid, grilleType, uid }: {
   x1: number; y1: number; x2: number; y2: number

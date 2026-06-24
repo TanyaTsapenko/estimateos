@@ -1,7 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
-import { GridOverlay } from '@/lib/v2/svgHelpers'
+import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100
@@ -67,7 +67,7 @@ function CasementHinge({ x1, y1, x2, y2, side }: {
   )
 }
 
-export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, uid, grid, grilleType }: {
+export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, uid, grid, grilleType, glassType, screen }: {
   shape?: string
   sub: string
   activePanel?: string
@@ -76,12 +76,14 @@ export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, ui
   uid: string
   grid?: string
   grilleType?: string
+  glassType?: string
+  screen?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
   const s = (shape ?? '').trim()
   const clipId = `cd-${uid}`
-  const [clipEl, fillEl] = shapeElements(s)
+  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType))
   const sN = sub.toLowerCase().replace(/[\s-]+/g, '')
   const isDouble = sN === 'doublecasement'
   const isFrench = sN === 'frenchcasement'
@@ -95,8 +97,10 @@ export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, ui
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
+      <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
       {fillEl}
       <g clipPath={`url(#${clipId})`}>
+        <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>
         {isFixed ? (
           <DashedX x1={X1} y1={Y1} x2={X2} y2={Y2}/>
         ) : isDouble || isFrench ? (
@@ -156,13 +160,15 @@ function SlidingPanel({ x1, y1, x2, y2, dir }: {
   )
 }
 
-export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType }: {
+export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, glassType, screen }: {
   sub: string
   widthIn?: number
   heightIn?: number
   uid?: string
   grid?: string
   grilleType?: string
+  glassType?: string
+  screen?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -175,7 +181,9 @@ export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType }:
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+      {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
 
       {panels.map((panel, i) => {
         const px1 = X1 + pw * i
@@ -206,10 +214,12 @@ const HOPPER_MEET: Record<string, number> = {
   '90°': Y1 + 10,
 }
 
-export function HopperDrawing({ openingAngle, widthIn, heightIn }: {
+export function HopperDrawing({ openingAngle, widthIn, heightIn, glassType, uid }: {
   openingAngle?: string
   widthIn?: number
   heightIn?: number
+  glassType?: string
+  uid?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -219,7 +229,9 @@ export function HopperDrawing({ openingAngle, widthIn, heightIn }: {
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+      {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
+      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} uid={uid}/>}
 
       {/* Handle at top center (physical position on closed sash) */}
       <rect x={CX - 6} y={Y1 + 5} width="12" height="5" rx="1.5" fill={SEC}/>

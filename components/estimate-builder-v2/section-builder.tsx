@@ -12,6 +12,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { C } from '@/lib/v2/openingTypes'
 import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 import type { CombinationSection, CombinationSectionType } from '@/lib/v2/openingTypes'
+import { glassColor } from '@/lib/v2/svgHelpers'
 
 const SECTION_TYPES: CombinationSectionType[] = [
   'Picture', 'Fixed', 'Casement', 'Awning', 'Slider', 'Single Hung',
@@ -118,7 +119,7 @@ function SegContent({ info }: { info: SegInfo }) {
 }
 
 // ── CombinationDrawing ─────────────────────────────────────────────
-export function CombinationDrawing({ sections, heightIn }: { sections: CombinationSection[]; heightIn?: number }) {
+export function CombinationDrawing({ sections, heightIn, glassType }: { sections: CombinationSection[]; heightIn?: number; glassType?: string }) {
   if (!sections.length) return null
   const segs = buildSegs(sections)
   const hLabel = heightIn ? `${heightIn}"` : 'H'
@@ -126,7 +127,7 @@ export function CombinationDrawing({ sections, heightIn }: { sections: Combinati
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
-      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>
+      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={glassColor(glassType)} stroke={FRAME} strokeWidth="2.5"/>
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FRAME} strokeWidth="1.5"/>
       ))}
@@ -292,10 +293,11 @@ function SortableRow({
 interface SectionBuilderProps {
   sections: CombinationSection[]
   heightIn?: number
+  glassType?: string
   onChange: (sections: CombinationSection[]) => void
 }
 
-export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderProps) {
+export function SectionBuilder({ sections, heightIn, glassType, onChange }: SectionBuilderProps) {
   const totalSum = sections.reduce((s, sec) => s + sec.width, 0)
 
   // Width mode: 'equal' = one total width input, computed per-section; 'custom' = individual inputs
@@ -443,7 +445,7 @@ export function SectionBuilder({ sections, heightIn, onChange }: SectionBuilderP
 
       {/* drawing */}
       <div style={{ borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, padding: '12px 10px 8px' }}>
-        <CombinationDrawing sections={sections} heightIn={heightIn} />
+        <CombinationDrawing sections={sections} heightIn={heightIn} glassType={glassType}/>
       </div>
 
       {/* presets card */}

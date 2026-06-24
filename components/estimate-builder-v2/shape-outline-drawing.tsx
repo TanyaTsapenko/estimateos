@@ -1,7 +1,7 @@
 'use client'
 import type { ReactElement } from 'react'
 import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
-import { GridOverlay } from '@/lib/v2/svgHelpers'
+import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 // Drawing bounds (consistent with winDims in WindowDiagram)
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
@@ -11,94 +11,91 @@ const CX = 100, CY = 115, RX = 90, RY = 105
 
 type Pair = [ReactElement, ReactElement]
 
-function rectPair(): Pair {
+function rectPair(fill = GLASS): Pair {
   return [
     <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1}/>,
-    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>,
+    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
   ]
 }
 
-function pathPair(d: string): Pair {
+function pathPair(d: string, fill = GLASS): Pair {
   return [
     <path d={d}/>,
-    <path d={d} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>,
+    <path d={d} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
   ]
 }
 
-function polyPair(pts: string): Pair {
+function polyPair(pts: string, fill = GLASS): Pair {
   return [
     <polygon points={pts}/>,
-    <polygon points={pts} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>,
+    <polygon points={pts} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
   ]
 }
 
-export function shapeElements(shape: string): Pair {
+export function shapeElements(shape: string, fillColor?: string): Pair {
+  const fill = fillColor ?? GLASS
   const s = shape.toLowerCase().replace(/[\s-]+/g, '')
 
-  // Custom or empty → rectangle
-  if (s === '' || s.startsWith('custom')) return rectPair()
+  if (s === '' || s.startsWith('custom')) return rectPair(fill)
 
   switch (s) {
     case 'rectangle':
     case 'rectangular':
-      return rectPair()
+      return rectPair(fill)
 
     case 'arch':
     case 'arched':
-      // Rect base + full round arch (springs from y=110 on both sides)
       return pathPair(
-        `M${X1} ${Y2} L${X1} 110 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 110 L${X2} ${Y2} Z`
+        `M${X1} ${Y2} L${X1} 110 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 110 L${X2} ${Y2} Z`,
+        fill
       )
 
     case 'halfarch':
-      // Shallower arch — springs from y=155
       return pathPair(
-        `M${X1} ${Y2} L${X1} 155 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 155 L${X2} ${Y2} Z`
+        `M${X1} ${Y2} L${X1} 155 Q${X1} ${Y1} ${CX} ${Y1} Q${X2} ${Y1} ${X2} 155 L${X2} ${Y2} Z`,
+        fill
       )
 
     case 'halfround':
     case 'halfcircle':
-      // Half-ellipse: flat base at Y2, arc peaks at Y1 — spans full working height
-      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 0 ${X2} ${Y2} Z`)
+      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 0 ${X2} ${Y2} Z`, fill)
 
     case 'circle':
       return [
         <ellipse cx={CX} cy={CY} rx={RX} ry={RY}/>,
-        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={GLASS} stroke={FRAME} strokeWidth="2.5"/>,
+        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={fill} stroke={FRAME} strokeWidth="2.5"/>,
       ]
 
     case 'octagon': {
-      const c = 55  // corner cut
+      const c = 55
       return polyPair(
         `${X1+c},${Y1} ${X2-c},${Y1} ${X2},${Y1+c} ${X2},${Y2-c} ` +
-        `${X2-c},${Y2} ${X1+c},${Y2} ${X1},${Y2-c} ${X1},${Y1+c}`
+        `${X2-c},${Y2} ${X1+c},${Y2} ${X1},${Y2-c} ${X1},${Y1+c}`,
+        fill
       )
     }
 
     case 'triangle':
-      return polyPair(`${CX},${Y1} ${X2},${Y2} ${X1},${Y2}`)
+      return polyPair(`${CX},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill)
 
     case 'trapezoid':
-      // Narrower at top (35px inset each side)
-      return polyPair(`${X1+35},${Y1} ${X2-35},${Y1} ${X2},${Y2} ${X1},${Y2}`)
+      return polyPair(`${X1+35},${Y1} ${X2-35},${Y1} ${X2},${Y2} ${X1},${Y2}`, fill)
 
     case 'pentagon':
-      // Regular pentagon, top vertex at (CX,Y1); other points pre-calculated for rx≈95
-      return polyPair(`${CX},${Y1} ${X2},91 156,${Y2} 44,${Y2} ${X1},91`)
+      return polyPair(`${CX},${Y1} ${X2},91 156,${Y2} 44,${Y2} ${X1},91`, fill)
 
     case 'gothic':
-      // Pointed arch — cubic bezier curves meeting sharply at top center
       return pathPair(
         `M${X1} ${Y2} L${X1} 160 C${X1} 50 90 ${Y1} ${CX} ${Y1} ` +
-        `C110 ${Y1} ${X2} 50 ${X2} 160 L${X2} ${Y2} Z`
+        `C110 ${Y1} ${X2} 50 ${X2} 160 L${X2} ${Y2} Z`,
+        fill
       )
 
     case 'eyebrow':
-      // Very shallow arch — sides start at y=50, gentle curve peaks ~y=25
-      return pathPair(`M${X1} ${Y2} L${X1} 50 Q${CX} ${Y1} ${X2} 50 L${X2} ${Y2} Z`)
+      return pathPair(`M${X1} ${Y2} L${X1} 50 Q${CX} ${Y1} ${X2} 50 L${X2} ${Y2} Z`, fill)
 
     default:
-      return rectPair()
+      return rectPair(fill)
   }
 }
 
@@ -112,6 +109,7 @@ export function ShapeOutlineDrawing({
   uid,
   grid,
   grilleType,
+  glassType,
 }: {
   shape?: string
   transomPanes?: string
@@ -120,6 +118,7 @@ export function ShapeOutlineDrawing({
   uid: string
   grid?: string
   grilleType?: string
+  glassType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -127,7 +126,7 @@ export function ShapeOutlineDrawing({
   const s    = (shape ?? '').trim()
   const sN   = s.toLowerCase().replace(/[\s-]+/g, '')
   const isCustom = sN === '' || sN.startsWith('custom')
-  const [clipEl, fillEl] = shapeElements(s)
+  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType))
   const clipId = `so-${uid}`
 
   // Transom pane dividers — only for rectangle shape
@@ -144,12 +143,14 @@ export function ShapeOutlineDrawing({
       <defs>
         <clipPath id={clipId}>{clipEl}</clipPath>
       </defs>
+      <GlassPatternDefs uid={uid} glassType={glassType}/>
 
       {/* Shape fill + outline */}
       {fillEl}
 
       {/* Interior indicators — clipped to shape outline */}
       <g clipPath={`url(#${clipId})`}>
+        <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} uid={uid}/>
         {dividers
           ? Array.from({ length: paneN }, (_, i) => {
               const px1 = X1 + panelW * i
