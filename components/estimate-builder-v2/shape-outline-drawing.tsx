@@ -58,7 +58,7 @@ export function shapeElements(shape: string, fillColor?: string): Pair {
 
     case 'halfround':
     case 'halfcircle':
-      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 0 ${X2} ${Y2} Z`, fill)
+      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 1 ${X2} ${Y2} Z`, fill)
 
     case 'circle':
       return [
