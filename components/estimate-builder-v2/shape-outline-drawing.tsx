@@ -58,8 +58,8 @@ export function shapeElements(shape: string): Pair {
 
     case 'halfround':
     case 'halfcircle':
-      // Pure elliptic arc — flat base at y=Y2, curves up to (CX, Y2-RY)
-      return pathPair(`M${X1} ${Y2} A${RX} ${RY} 0 0 0 ${X2} ${Y2} Z`)
+      // Half-ellipse: flat base at Y2, arc peaks at Y1 — spans full working height
+      return pathPair(`M${X1} ${Y2} A${RX} ${Y2 - Y1} 0 0 0 ${X2} ${Y2} Z`)
 
     case 'circle':
       return [
