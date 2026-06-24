@@ -88,13 +88,46 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   )
 }
 
-// ── Compact spec line ──────────────────────────────────────────────
-function specLine(op: Opening): string {
+// ── Opening spec lines ─────────────────────────────────────────────
+function specLines(op: Opening): { base: string; opts: string } {
   const v = op.vals
-  const colour = [v.extColour, v.doorExt, v.colour].find(c => c && c !== '') as string | undefined
+  const bool = (k: string) => v[k] === true
+
+  const colour   = [v.extColour, v.doorExt, v.colour].find(c => c && c !== '') as string | undefined
   const material = [v.material, v.doorMaterial, v.stormDoorMaterial].find(m => m && m !== '') as string | undefined
-  const pane = v.pane as string | undefined
-  return [colour, material, pane].filter(Boolean).slice(0, 3).join(' · ')
+  const pane     = v.pane as string | undefined
+  const base = [colour, material, pane].filter(Boolean).join(' · ')
+
+  const opts: string[] = []
+
+  const glassType = v.glassType as string | undefined
+  if (glassType && glassType !== 'Clear') opts.push(glassType)
+  if (bool('lowE')) opts.push('Low-E')
+  if (bool('argon')) opts.push('Argon')
+  if (bool('tempered')) opts.push('Tempered')
+  if (bool('laminatedGlass')) opts.push('Laminated')
+
+  const grid = v.grid as string | undefined
+  if (grid && grid !== 'None') opts.push(`${grid} grid`)
+  const grilleType = v.grilleType as string | undefined
+  if (grilleType && grilleType !== 'None') opts.push(`${grilleType} grille`)
+
+  const install = v.install as string | undefined
+  if (install && install !== 'Retrofit') opts.push(install)
+  const floor = v.floor as string | undefined
+  if (floor && floor !== 'Ground') opts.push(`${floor} floor`)
+  const condition = v.condition as string | undefined
+  if (condition && condition !== 'Good') opts.push(condition)
+  if (bool('egress')) opts.push('Egress')
+
+  const screen = v.screen as string | undefined
+  if (screen && screen !== 'None') opts.push(`${screen} screen`)
+  if (bool('deadbolt')) opts.push('Deadbolt')
+  if (bool('multipointLock')) opts.push('Multipoint lock')
+  const petDoor = v.petDoor as string | undefined
+  if (petDoor && petDoor !== 'None') opts.push(`Pet door ${petDoor}`)
+
+  return { base, opts: opts.join(' · ') }
 }
 
 // ── Photo count ────────────────────────────────────────────────────
@@ -211,7 +244,7 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
             const room = op.vals.room as string | undefined
             const qty = (op.vals.qty as number) || 1
             const unitPrice = prices[i] / qty
-            const spec = specLine(op)
+            const { base, opts } = specLines(op)
             const photos = photoCount(op)
             const isOpen = expanded.has(i)
             const borderBottom = i < openings.length - 1 ? `1px solid ${C.border}` : 'none'
@@ -248,9 +281,14 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
                     <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {[op.sub, dimStr, room].filter(Boolean).join(' · ')}
                     </div>
-                    {spec && (
+                    {base && (
                       <div style={{ fontSize: 12, color: C.inkMid, marginTop: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {spec}
+                        {base}
+                      </div>
+                    )}
+                    {opts && (
+                      <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {opts}
                       </div>
                     )}
                     {photos > 0 && (
