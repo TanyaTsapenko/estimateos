@@ -522,9 +522,9 @@ export default function EstimateDetailPage() {
                     {(() => {
                       const pills: React.ReactNode[] = []
                       if (op.egress_required) pills.push(<span key="egress" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Egress ✓</span>)
-                      if (op.has_screen) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
+                      if (op.has_screen === true) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
                       if (op.tilt_clean)       pills.push(<span key="tilt"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
-                      if (op.low_e)           pills.push(<span key="lowe"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Low-E ✓</span>)
+                      if (op.low_e === true)   pills.push(<span key="lowe"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Low-E ✓</span>)
                       if (op.argon)           pills.push(<span key="argon"     style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Argon ✓</span>)
                       if (op.tempered)        pills.push(<span key="tempered"  style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tempered ✓</span>)
                       if (op.laminated_glass) pills.push(<span key="laminated" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Laminated ✓</span>)
