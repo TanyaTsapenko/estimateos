@@ -1,5 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
+import { DoorPanelLines } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const SIDELITE_W = 30
@@ -95,14 +96,13 @@ export function doorKnob(x1: number, y1: number, x2: number, y2: number, handleL
 
 // ── Door panel (active, shows swing arc) ──────────────────────────
 
-function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert }: {
-  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean; glassInsert?: string
+function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert, doorStyle }: {
+  x1: number; y1: number; x2: number; y2: number; hingeLeft: boolean; glassInsert?: string; doorStyle?: string
 }) {
   const frac = liteFraction(glassInsert)
   const fullGlass = frac >= 1
   const panelFill = fullGlass ? GLASS : DOOR_FILL
 
-  // Thin dashed arc from bottom hinge corner → along hinge edge → opposite top corner
   const arc = hingeLeft
     ? `M${x1+3} ${y2-3} Q${x1+3} ${y1+3} ${x2-3} ${y1+3}`
     : `M${x2-3} ${y2-3} Q${x2-3} ${y1+3} ${x1+3} ${y1+3}`
@@ -110,6 +110,7 @@ function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert }: {
   return (
     <g>
       {doorSlabBase(x1, y1, x2, y2, panelFill, frac, fullGlass)}
+      {!fullGlass && <DoorPanelLines x1={x1} y1={y1} x2={x2} y2={y2} doorStyle={doorStyle ?? 'Flush'}/>}
       {doorHinges(x1, y1, x2, y2, hingeLeft)}
       {doorKnob(x1, y1, x2, y2, !hingeLeft)}
       <path d={arc} stroke={MOV} strokeWidth="1" strokeDasharray="5 3" fill="none"/>
@@ -119,8 +120,8 @@ function DoorPanel({ x1, y1, x2, y2, hingeLeft, glassInsert }: {
 
 // ── Door panel (inactive — slab with hardware, no swing arc) ──────
 
-function DoorPanelInactive({ x1, y1, x2, y2, handleLeft, glassInsert }: {
-  x1: number; y1: number; x2: number; y2: number; handleLeft: boolean; glassInsert?: string
+function DoorPanelInactive({ x1, y1, x2, y2, handleLeft, glassInsert, doorStyle }: {
+  x1: number; y1: number; x2: number; y2: number; handleLeft: boolean; glassInsert?: string; doorStyle?: string
 }) {
   const frac = liteFraction(glassInsert)
   const fullGlass = frac >= 1
@@ -129,6 +130,7 @@ function DoorPanelInactive({ x1, y1, x2, y2, handleLeft, glassInsert }: {
   return (
     <g>
       {doorSlabBase(x1, y1, x2, y2, panelFill, frac, fullGlass)}
+      {!fullGlass && <DoorPanelLines x1={x1} y1={y1} x2={x2} y2={y2} doorStyle={doorStyle ?? 'Flush'}/>}
       {doorHinges(x1, y1, x2, y2, hingeLeft)}
       {doorKnob(x1, y1, x2, y2, handleLeft)}
     </g>
@@ -149,10 +151,11 @@ function Sidelite({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: 
 
 // ── Entry Door ─────────────────────────────────────────────────────
 
-export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightIn }: {
+export function EntryDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, widthIn, heightIn }: {
   sub: string
   doorSwing?: string
   glassInsert?: string
+  doorStyle?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -175,7 +178,7 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightI
     cx += w
 
     if (seg === 'sidelite') return <Sidelite key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2}/>
-    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={singleHingeLeft} glassInsert={glassInsert}/>
+    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={singleHingeLeft} glassInsert={glassInsert} doorStyle={doorStyle}/>
   })
 
   return (
@@ -192,11 +195,12 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightI
 
 // ── Double Entry Door ──────────────────────────────────────────────
 
-export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassInsert, widthIn, heightIn }: {
+export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassInsert, doorStyle, widthIn, heightIn }: {
   sub: string
   doubleDoorSwing?: string
   astragalType?: string
   glassInsert?: string
+  doorStyle?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -228,13 +232,13 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
 
       {/* Left door panel */}
       {leftActive
-        ? <DoorPanel         x1={doorX1} y1={doorY1} x2={cx} y2={Y2} hingeLeft={true}  glassInsert={glassInsert}/>
-        : <DoorPanelInactive x1={doorX1} y1={doorY1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert}/>}
+        ? <DoorPanel         x1={doorX1} y1={doorY1} x2={cx} y2={Y2} hingeLeft={true}   glassInsert={glassInsert} doorStyle={doorStyle}/>
+        : <DoorPanelInactive x1={doorX1} y1={doorY1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert} doorStyle={doorStyle}/>}
 
       {/* Right door panel */}
       {!leftActive
-        ? <DoorPanel         x1={cx} y1={doorY1} x2={doorX2} y2={Y2} hingeLeft={false} glassInsert={glassInsert}/>
-        : <DoorPanelInactive x1={cx} y1={doorY1} x2={doorX2} y2={Y2} handleLeft={true}  glassInsert={glassInsert}/>}
+        ? <DoorPanel         x1={cx} y1={doorY1} x2={doorX2} y2={Y2} hingeLeft={false}  glassInsert={glassInsert} doorStyle={doorStyle}/>
+        : <DoorPanelInactive x1={cx} y1={doorY1} x2={doorX2} y2={Y2} handleLeft={true}  glassInsert={glassInsert} doorStyle={doorStyle}/>}
 
       {/* Astragal center line */}
       {hasAstragal && (

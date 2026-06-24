@@ -1,6 +1,7 @@
 'use client'
 import type { ReactElement } from 'react'
 import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
+import { GridOverlay } from '@/lib/v2/svgHelpers'
 
 // Drawing bounds (consistent with winDims in WindowDiagram)
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
@@ -109,12 +110,16 @@ export function ShapeOutlineDrawing({
   widthIn,
   heightIn,
   uid,
+  grid,
+  grilleType,
 }: {
   shape?: string
   transomPanes?: string
   widthIn?: number
   heightIn?: number
   uid: string
+  grid?: string
+  grilleType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -164,6 +169,7 @@ export function ShapeOutlineDrawing({
               <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
             </>
         }
+        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>
       </g>
 
       {/* "Custom" label centred inside shape */}

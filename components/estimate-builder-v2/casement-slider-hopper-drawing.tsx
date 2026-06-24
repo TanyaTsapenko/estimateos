@@ -1,6 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
+import { GridOverlay } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100
@@ -66,13 +67,15 @@ function CasementHinge({ x1, y1, x2, y2, side }: {
   )
 }
 
-export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, uid }: {
+export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, uid, grid, grilleType }: {
   shape?: string
   sub: string
   activePanel?: string
   widthIn?: number
   heightIn?: number
   uid: string
+  grid?: string
+  grilleType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -111,6 +114,7 @@ export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, ui
         ) : (
           <CasementHinge x1={X1} y1={Y1} x2={X2} y2={Y2} side="left"/>
         )}
+        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>
       </g>
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -152,10 +156,13 @@ function SlidingPanel({ x1, y1, x2, y2, dir }: {
   )
 }
 
-export function SliderDrawing({ sub, widthIn, heightIn }: {
+export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType }: {
   sub: string
   widthIn?: number
   heightIn?: number
+  uid?: string
+  grid?: string
+  grilleType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -183,6 +190,7 @@ export function SliderDrawing({ sub, widthIn, heightIn }: {
           </g>
         )
       })}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>

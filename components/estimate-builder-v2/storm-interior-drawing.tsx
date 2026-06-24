@@ -1,6 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { doorHinges, doorKnob } from './entry-door-drawing'
+import { DoorPanelLines } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115
@@ -111,10 +112,11 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid }: {
 
 // ── Interior Door ──────────────────────────────────────────────────
 
-export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heightIn }: {
+export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, widthIn, heightIn }: {
   sub: string
   doorSwing?: string
   glassInsert?: string
+  doorStyle?: string
   widthIn?: number
   heightIn?: number
 }) {
@@ -138,6 +140,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heig
       {frac > 0 && !fullGlass && (
         <rect x={X1+8} y={glassY1} width={X2-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
       )}
+      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'}/>}
       <SwingArc x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft}/>
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -152,6 +155,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, widthIn, heig
         <rect x={X1+8}  y={glassY1} width={CX-X1-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
         <rect x={CX+8}  y={glassY1} width={X2-CX-16} height={glassH} fill={GLASS} stroke={FRAME} strokeWidth="1.2"/>
       </>}
+      {!fullGlass && <DoorPanelLines x1={X1} y1={Y1} x2={X2} y2={Y2} doorStyle={doorStyle ?? 'Flush'}/>}
       <line x1={CX} y1={Y1} x2={CX} y2={Y2} stroke={FRAME} strokeWidth="1.5"/>
       <SwingArc x1={X1} y1={Y1} x2={CX} y2={Y2} hingeLeft={true}/>
       <SwingArc x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>

@@ -135,8 +135,12 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 bayAngle={op.vals.bayAngle as string | undefined}
                 centerWindowType={op.vals.centerWindowType as string | undefined}
                 sideUnit={op.vals.sideUnit as string | undefined}
+                sub={op.sub}
                 widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
                 heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
+                uid={op.tempId}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -146,8 +150,12 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <BowDrawing
                 sub={op.sub}
                 panelType={op.vals.panelType as string | undefined}
+                sideUnit={op.vals.sideUnit as string | undefined}
                 widthIn={op.vals.owidth !== undefined ? parseFloat(String(op.vals.owidth)) || undefined : undefined}
                 heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
+                uid={op.tempId}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -161,6 +169,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -171,6 +181,9 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 sub={op.sub}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -190,6 +203,9 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <AwningDrawing
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -201,6 +217,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -212,6 +230,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 bottomSashOperable={op.vals.bottomSashOperable as boolean | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -224,6 +244,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 openMode={op.vals.openMode as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
@@ -234,6 +256,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 sub={op.sub}
                 doorSwing={op.vals.doorSwing as string | undefined}
                 glassInsert={op.vals.glassInsert as string | undefined}
+                doorStyle={op.vals.doorStyle as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -247,6 +270,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 doubleDoorSwing={op.vals.doubleDoorSwing as string | undefined}
                 astragalType={op.vals.astragalType as string | undefined}
                 glassInsert={op.vals.glassInsert as string | undefined}
+                doorStyle={op.vals.doorStyle as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -306,6 +330,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 sub={op.sub}
                 doorSwing={op.vals.doorSwing as string | undefined}
                 glassInsert={op.vals.glassInsert as string | undefined}
+                doorStyle={op.vals.doorStyle as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
               />
@@ -320,6 +345,8 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />

@@ -1,6 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
+import { GridOverlay } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115  // (Y1 + Y2) / 2
@@ -24,9 +25,12 @@ function DimLines({ wL, hL }: { wL: string; hL: string }) {
 
 // ── Awning ─────────────────────────────────────────────────────────
 
-export function AwningDrawing({ widthIn, heightIn }: {
+export function AwningDrawing({ widthIn, heightIn, uid, grid, grilleType }: {
   widthIn?: number
   heightIn?: number
+  uid?: string
+  grid?: string
+  grilleType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -47,6 +51,7 @@ export function AwningDrawing({ widthIn, heightIn }: {
         stroke={MOV} strokeWidth="1.2" strokeDasharray="4 2" fill="none"/>
       {/* Handle at bottom center */}
       <rect x={CX - 6} y={Y2 - 12} width="12" height="5" rx="1.5" fill={SEC}/>
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -55,11 +60,13 @@ export function AwningDrawing({ widthIn, heightIn }: {
 
 // ── Single Hung ─────────────────────────────────────────────────────
 
-export function SingleHungDrawing({ shape, widthIn, heightIn, uid }: {
+export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleType }: {
   shape?: string
   widthIn?: number
   heightIn?: number
   uid: string
+  grid?: string
+  grilleType?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -83,6 +90,7 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid }: {
         {/* Lower sash — slides up (MOV arrow + shaft) */}
         <path d={`M${CX} ${Y2 - 4} L${CX - 5} ${Y2 - 11} L${CX} ${Y2 - 8} L${CX + 5} ${Y2 - 11}Z`} fill={MOV}/>
         <line x1={CX} y1={Y2 - 8} x2={CX} y2={MY + 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
+        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid}/>
       </g>
 
       <DimLines wL={wL} hL={hL}/>
@@ -101,11 +109,13 @@ function SashFixed({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2:
   )
 }
 
-export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn }: {
+export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn, uid, grid }: {
   topSashOperable?: boolean
   bottomSashOperable?: boolean
   widthIn?: number
   heightIn?: number
+  uid?: string
+  grid?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -138,6 +148,7 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
       ) : (
         <SashFixed x1={X1} y1={MY} x2={X2} y2={Y2}/>
       )}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -199,12 +210,14 @@ function TiltTurnPanel({ x1, y1, x2, y2, hingeLeft, openMode }: {
   )
 }
 
-export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn }: {
+export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid, grid }: {
   sub: string
   openDir?: string
   openMode?: string
   widthIn?: number
   heightIn?: number
+  uid?: string
+  grid?: string
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
@@ -226,6 +239,7 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn }: {
       ) : (
         <TiltTurnPanel x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft} openMode={openMode}/>
       )}
+      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
