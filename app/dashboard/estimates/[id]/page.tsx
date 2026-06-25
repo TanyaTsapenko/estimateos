@@ -502,7 +502,7 @@ export default function EstimateDetailPage() {
                     onClick={() => setEnlargedOpening(op)}
                     style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}
                   >
-                    <div style={{ width: 116, height: 116, pointerEvents: 'none', overflow: 'hidden' }}>
+                    <div style={{ width: 116, height: 130, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
                       <OpeningDrawing op={op} />
                     </div>
                   </div>
@@ -879,7 +879,7 @@ export default function EstimateDetailPage() {
       {enlargedOpening && (
         <div onClick={() => setEnlargedOpening(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
-            <div style={{ width: 240, height: 240, margin: '0 auto', overflow: 'hidden' }}>
+            <div style={{ width: 240, height: 240, margin: '0 auto', padding: 20, boxSizing: 'border-box' }}>
               <OpeningDrawing op={enlargedOpening} />
             </div>
             <button onClick={() => setEnlargedOpening(null)} style={{ padding: '10px 28px', background: '#F1F5F9', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
