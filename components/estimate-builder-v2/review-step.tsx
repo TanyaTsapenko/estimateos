@@ -79,7 +79,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   }
 
   return (
-    <div style={{ width: w, maxHeight: maxH, flexShrink: 0, overflow: 'hidden', borderRadius: 7, background: C.bg, pointerEvents: 'none', alignSelf: 'flex-start' }}>
+    <div style={{ width: w, height: maxH, flexShrink: 0, overflow: 'hidden', borderRadius: 7, background: C.bg, pointerEvents: 'none', alignSelf: 'flex-start' }}>
       {node ?? (
         <div style={{ width: w, height: maxH, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MiniDiagram typeId={op.typeId} size={compact ? 20 : 28} color={C.blue} />

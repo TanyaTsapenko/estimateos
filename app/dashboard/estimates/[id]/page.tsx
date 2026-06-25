@@ -107,7 +107,7 @@ function OpeningDrawing({ op }: { op: Opening }) {
   const fr = op.colour ?? undefined
   const gp = op.grid_pattern ?? undefined
 
-  console.log('OpeningDrawing typeId:', typeId, 'op.type:', op.type, 'window_subtype:', op.window_subtype, 'shape:', op.shape)
+
   switch (typeId) {
     case 'casement':
       return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
@@ -879,7 +879,7 @@ export default function EstimateDetailPage() {
       {enlargedOpening && (
         <div onClick={() => setEnlargedOpening(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
-            <div style={{ width: 240 }}>
+            <div style={{ width: 240, height: 240, margin: '0 auto', overflow: 'hidden' }}>
               <OpeningDrawing op={enlargedOpening} />
             </div>
             <button onClick={() => setEnlargedOpening(null)} style={{ padding: '10px 28px', background: '#F1F5F9', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>

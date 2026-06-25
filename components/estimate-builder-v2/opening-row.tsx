@@ -69,7 +69,7 @@ export function OpeningRow({ index, op, price, onEdit, onDup, onDel }: Props) {
     <div style={{ background: C.card, borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)', overflow: 'hidden' }}>
       <button onClick={onEdit} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 14px', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer' }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, background: C.blue, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, flexShrink: 0 }}>{index}</div>
-        <div style={{ width: 42, height: 42, borderRadius: 10, background: C.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 48, height: 48, borderRadius: 10, background: C.blueSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
           <MiniDiagram typeId={op.typeId} size={36} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
