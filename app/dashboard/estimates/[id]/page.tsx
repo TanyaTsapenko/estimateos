@@ -103,25 +103,24 @@ function OpeningDrawing({ op }: { op: Opening }) {
                : op.sidelight_right ? 'Right'
                : undefined
 
-  console.log('Drawing props:', { type: op.type, grid: op.grid_pattern, glass: op.glass_kind, colour: op.colour, screen: op.has_screen })
   const gk = op.glass_kind ? op.glass_kind.charAt(0).toUpperCase() + op.glass_kind.slice(1) : undefined
   const fr = op.colour ? op.colour.charAt(0).toUpperCase() + op.colour.slice(1) : undefined
   const gp = op.grid_pattern ? op.grid_pattern.charAt(0).toUpperCase() + op.grid_pattern.slice(1) : undefined
-
+  const sc = op.has_screen === true ? 'Standard' : undefined
 
   switch (typeId) {
     case 'casement':
-      return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
+      return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} screen={sc} />
     case 'slider':
-      return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
+      return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} screen={sc} />
     case 'hopper':
       return <HopperDrawing widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'awning':
-      return <AwningDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
+      return <AwningDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} screen={sc} />
     case 'singleHung':
-      return <SingleHungDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
+      return <SingleHungDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} screen={sc} />
     case 'doubleHung':
-      return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
+      return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} screen={sc} />
     case 'tiltTurn':
       return <TiltTurnDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'bay':
@@ -143,7 +142,7 @@ function OpeningDrawing({ op }: { op: Opening }) {
     case 'garden':
       return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     case 'patio':
-      return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
+      return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} screen={sc} />
     case 'storm':
       return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'interior':
