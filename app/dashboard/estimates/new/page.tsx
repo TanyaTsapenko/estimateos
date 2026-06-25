@@ -62,7 +62,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     width_in:         widthIn  || null,
     height_in:        heightIn || null,
     width:            widthIn && heightIn ? dimToSizeBucket(widthIn, heightIn) : 'md',
-    shape:            'rect',
+    shape:            String(v.shape || 'rect').toLowerCase(),
     colour:           String(v.extColour || v.doorExt || v.colour || 'White').toLowerCase(),
     interior_colour:  String(v.intColour || v.doorInt || 'White').toLowerCase(),
     hardware_colour:  String(v.hwColour  || 'White').toLowerCase(),

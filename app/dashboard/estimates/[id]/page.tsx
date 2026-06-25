@@ -98,8 +98,7 @@ function OpeningDrawing({ op }: { op: Opening }) {
   const wIn    = op.width_in  ?? undefined
   const hIn    = op.height_in ?? undefined
   const shape  = (op.shape ? OLD_SHAPE_TO_V2[op.shape] : undefined) ?? op.shape ?? undefined
-  console.log('shape debug:', { raw: op.shape, mapped: shape, typeId })
-  const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
+const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
                : op.sidelight_left  ? 'Left'
                : op.sidelight_right ? 'Right'
                : undefined
