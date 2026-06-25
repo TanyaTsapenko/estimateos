@@ -435,7 +435,7 @@ export const DEFAULTS: Record<string, string | number | boolean | null> = {
   glassType: null, pane: null, lowE: null, tempered: false, argon: null,
   laminatedGlass: false,
   grilleType: 'None',
-  material: null, doorMaterial: 'Fiberglass', install: null, condition: 'Good',
+  material: null, doorMaterial: 'Fiberglass', install: null, condition: null,
   glassInsert: 'None', doorStyle: 'Flush', screen: null,
   screenCoverage: 'Half Screen',
   hwColour: 'White', lockset: 'Lever', deadbolt: false,
