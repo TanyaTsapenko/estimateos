@@ -145,8 +145,8 @@ export const F: Record<string, FieldDef> = {
   coreType:    { label: 'Core type',        kind: 'select', sec: 'look',   opts: ['Hollow Core','Solid Core'], half: true },
 
   // ── Glass & performance
-  glassType:      { label: 'Glass type',      kind: 'select', sec: 'glass', opts: ['Clear','Frosted','Tinted','Obscure'], half: true },
-  pane:           { label: 'Pane',            kind: 'select', sec: 'glass', opts: ['Double','Triple'], half: true },
+  glassType:      { label: 'Glass type',      kind: 'select', sec: 'glass', opts: ['Clear','Frosted','Tinted','Obscure'], half: true, optional: true },
+  pane:           { label: 'Pane',            kind: 'select', sec: 'glass', opts: ['Double','Triple'], half: true, optional: true },
   lowE:           { label: 'Low-E coating',   kind: 'toggle', sec: 'glass', sub: 'Energy-efficient' },
   tempered:       { label: 'Tempered',        kind: 'toggle', sec: 'glass', sub: 'Safety glass' },
   argon:          { label: 'Argon fill',      kind: 'toggle', sec: 'glass', sub: 'Insulating gas' },
@@ -154,12 +154,12 @@ export const F: Record<string, FieldDef> = {
 
   // ── Installation
   material:      { label: 'Material',          kind: 'select', sec: 'install',
-                   opts: ['Vinyl','Wood','Aluminum','Fiberglass','Composite','Clad Wood'], half: true },
+                   opts: ['Vinyl','Wood','Aluminum','Fiberglass','Composite','Clad Wood'], half: true, optional: true },
   doorMaterial:     { label: 'Door material',     kind: 'select', sec: 'install', opts: ['Steel','Fiberglass','Wood'], half: true },
   stormDoorMaterial:{ label: 'Door material',     kind: 'select', sec: 'install',
                       opts: ['Aluminum','Composite','Wood Core'], half: true },
   install:       { label: 'Installation type', kind: 'select', sec: 'install',
-                   opts: ['Retrofit','Full Frame','Stud-to-Stud'], half: true },
+                   opts: ['Retrofit','Full Frame','Stud-to-Stud'], half: true, optional: true },
   condition:     { label: 'Opening condition', kind: 'select', sec: 'install', opts: ['Good','Needs Repair','Rotted'], half: true },
   brickmould:    { label: 'Brickmould',        kind: 'select', sec: 'install', opts: ['None','Standard','Aluminum'], half: true },
   jamb:          { label: 'Jamb depth',        kind: 'select', sec: 'install', opts: ['4 9/16"','6 9/16"','Custom'], half: true },
@@ -177,7 +177,7 @@ export const F: Record<string, FieldDef> = {
                        opts: ['Fixed','Casement'], half: true },
   panelType:         { label: 'Panel type',           kind: 'select', sec: 'config',
                        opts: ['Fixed','Casement'], half: true },
-  screen:            { label: 'Screen type',         kind: 'select', sec: 'config', opts: ['None','Standard','Retractable','Premium Mesh'], half: true },
+  screen:            { label: 'Screen type',         kind: 'select', sec: 'config', opts: ['None','Standard','Retractable','Premium Mesh'], half: true, optional: true },
   screenType:        { label: 'Screen type',         kind: 'select', sec: 'config',
                        opts: ['None','Retractable Screen','Rolling Screen','Full View Screen'], half: true },
   screenCoverage:    { label: 'Screen coverage',      kind: 'select', sec: 'config', opts: ['Half Screen','Full Screen','No Screen'], half: true },
@@ -429,14 +429,14 @@ export function getType(id: string): FlatType {
 }
 
 // ── Smart defaults ─────────────────────────────────────────────────
-export const DEFAULTS: Record<string, string | number | boolean> = {
-  qty: 1, floor: 'Ground floor', extColour: 'White', intColour: 'White',
+export const DEFAULTS: Record<string, string | number | boolean | null> = {
+  qty: 1, floor: 'Ground floor', extColour: null, intColour: 'White',
   doorExt: 'White', doorInt: 'White', colour: 'White', grid: 'None',
-  glassType: 'Clear', pane: 'Double', lowE: true, tempered: false, argon: true,
+  glassType: null, pane: null, lowE: null, tempered: false, argon: null,
   laminatedGlass: false,
   grilleType: 'None',
-  material: 'Vinyl', doorMaterial: 'Fiberglass', install: 'Retrofit', condition: 'Good',
-  glassInsert: 'None', doorStyle: 'Flush', screen: 'Standard',
+  material: null, doorMaterial: 'Fiberglass', install: null, condition: 'Good',
+  glassInsert: 'None', doorStyle: 'Flush', screen: null,
   screenCoverage: 'Half Screen',
   hwColour: 'White', lockset: 'Lever', deadbolt: false,
   brickmould: 'Standard', jamb: '4 9/16"', sideUnit: 'Casement',
@@ -479,7 +479,7 @@ export function makeOpening(typeId: string, subIndex = 0): Opening {
   t.fields.forEach(k => {
     if (NO_DEFAULT.has(k)) return
     if (k === 'photos') return
-    if (k in DEFAULTS) vals[k] = DEFAULTS[k]
+    if (k in DEFAULTS && DEFAULTS[k] !== null) vals[k] = DEFAULTS[k] as string | number | boolean
   })
   const op: Opening = { typeId, sub: t.subs[subIndex] ?? t.subs[0] ?? '', tempId: crypto.randomUUID(), vals }
   if (typeId === 'combination') {

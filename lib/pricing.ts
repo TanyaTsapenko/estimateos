@@ -291,8 +291,8 @@ export function computePrice(op: V2Opening, custom?: CustomPricing): number {
 
   // Pane & glass — $0 if surcharge not configured in Price List
   if (v.pane === 'Triple') p += s.triple_pane ?? 0
-  if (v.lowE) p += s.lowe ?? 0
-  if (v.argon) p += s.argon ?? 0
+  if (v.lowE === true) p += s.lowe ?? 0
+  if (v.argon === true) p += s.argon ?? 0
   if (v.tempered) p += s.tempered ?? 0
   if (v.laminatedGlass) p += s.laminated_glass ?? 0
   const glassType = String(v.glassType || '')

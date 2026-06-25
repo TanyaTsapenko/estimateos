@@ -146,10 +146,11 @@ export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
     case 'select': {
       const customKey = `${k}Custom`
       const showCustomInput = (v as string) === 'Custom' && !!F[customKey]
+      const pickerOpts = def.optional ? ['', ...(def.opts ?? [])] : (def.opts ?? [])
       return (
         <div>
           <FieldLabel optional={def.optional}>{def.label}</FieldLabel>
-          <SelectBox value={v as string} placeholder={def.optional ? 'Not set' : 'Select…'} onClick={() => openPicker(k, { label: def.label, opts: def.opts! }, v as string | undefined, x => onVal(k, x))} />
+          <SelectBox value={v as string} placeholder={def.optional ? 'Not set' : 'Select…'} onClick={() => openPicker(k, { label: def.label, opts: pickerOpts }, v as string | undefined, x => onVal(k, x))} />
           {showCustomInput && <div style={{ marginTop: 8 }}><FieldControl k={customKey} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} /></div>}
         </div>
       )
@@ -215,10 +216,11 @@ export function PickerSheet({ picker, onClose }: { picker: PickerState; onClose:
         <div style={{ padding: '6px 20px 12px', fontSize: 15, fontWeight: 800, color: C.ink }}>{def.label}</div>
         <div style={{ overflowY: 'auto', padding: '0 12px' }}>
           {def.opts.map(o => {
-            const sel = value === o
+            const sel = value === o || (o === '' && (value == null || value === ''))
+            const isEmpty = o === ''
             return (
-              <button key={o} onClick={() => { onPick(o); onClose() }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderRadius: 12, border: 'none', background: sel ? C.blueSoft : 'transparent', textAlign: 'left', cursor: 'pointer', marginBottom: 2 }}>
-                <span style={{ fontSize: 15, fontWeight: sel ? 700 : 500, color: sel ? C.blueDeep : C.ink }}>{o}</span>
+              <button key={isEmpty ? '__unset' : o} onClick={() => { onPick(o); onClose() }} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px', borderRadius: 12, border: 'none', background: sel ? C.blueSoft : 'transparent', textAlign: 'left', cursor: 'pointer', marginBottom: 2 }}>
+                <span style={{ fontSize: 15, fontWeight: sel ? 700 : 500, color: sel ? C.blueDeep : isEmpty ? C.inkFaint : C.ink }}>{isEmpty ? '— Not set —' : o}</span>
                 {sel && <EBIcon name="check" size={18} color={C.blue} />}
               </button>
             )
