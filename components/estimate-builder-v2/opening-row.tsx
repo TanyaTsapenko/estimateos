@@ -74,11 +74,11 @@ export function OpeningRow({ index, op, price, onEdit, onDup, onDel }: Props) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14.5, fontWeight: 700, color: C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {op.sub}
+            {t.name}
             {(op.vals.qty as number || 1) > 1 && <span style={{ color: C.inkSoft, fontWeight: 600 }}> × {op.vals.qty}</span>}
           </div>
           <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {t.name}{sz ? ` · ${sz}` : ''}{op.vals.room ? ` · ${op.vals.room}` : ''}
+            {op.sub || ''}{op.sub && sz ? ` · ${sz}` : sz || ''}{op.vals.room ? ` · ${op.vals.room}` : ''}
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
