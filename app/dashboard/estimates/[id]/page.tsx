@@ -520,6 +520,7 @@ export default function EstimateDetailPage() {
                     </div>
                     {/* Type-specific pills */}
                     {(() => {
+                      if (process.env.NODE_ENV !== 'production') console.log('opening fields:', { id: op.id, has_screen: op.has_screen, low_e: op.low_e, typeof_screen: typeof op.has_screen, typeof_lowe: typeof op.low_e })
                       const pills: React.ReactNode[] = []
                       if (op.egress_required) pills.push(<span key="egress" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Egress ✓</span>)
                       if (op.has_screen === true) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
