@@ -53,9 +53,9 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
     case 'tiltTurn':
       node = <TiltTurnDrawing sub={op.sub} openDir={v.openDir as string|undefined} openMode={v.openMode as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'bay':
-      node = <BayDrawing bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} />; break
+      node = <BayDrawing sub={op.sub} bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'bow':
-      node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} />; break
+      node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'combination':
       node = <CombinationDrawing sections={op.sections || []} heightIn={pf('oheight')} />; break
     case 'picture':
