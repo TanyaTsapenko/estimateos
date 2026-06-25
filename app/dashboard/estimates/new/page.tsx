@@ -450,6 +450,7 @@ function NewEstimateV2() {
   const handleTypePick = useCallback((typeId: string) => {
     if (pendingAdd) {
       const n = makeOpening(typeId)
+      console.log('NEW OPENING sub:', n.sub, 'typeId:', typeId)
       setOpenings(l => [...l, n])
       setActiveIdx(openings.length)
       setMode('edit')

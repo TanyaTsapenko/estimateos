@@ -482,6 +482,7 @@ export function makeOpening(typeId: string, subIndex?: number): Opening {
     if (k in DEFAULTS && DEFAULTS[k] !== null) vals[k] = DEFAULTS[k] as string | number | boolean
   })
   const op: Opening = { typeId, sub: (subIndex != null && t.subs[subIndex] != null) ? t.subs[subIndex] : '', tempId: crypto.randomUUID(), vals }
+  console.log('makeOpening called, subIndex:', subIndex, 'sub result:', op.sub)
   if (typeId === 'combination') {
     op.sections = [{ type: 'Picture', width: 36 }]
   }
