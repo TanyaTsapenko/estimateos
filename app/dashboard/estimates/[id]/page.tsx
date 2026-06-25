@@ -103,9 +103,9 @@ function OpeningDrawing({ op }: { op: Opening }) {
                : op.sidelight_right ? 'Right'
                : undefined
 
-  const gk = op.glass_kind ?? undefined
-  const fr = op.colour ?? undefined
-  const gp = op.grid_pattern ?? undefined
+  const gk = op.glass_kind ? op.glass_kind.charAt(0).toUpperCase() + op.glass_kind.slice(1) : undefined
+  const fr = op.colour ? op.colour.charAt(0).toUpperCase() + op.colour.slice(1) : undefined
+  const gp = op.grid_pattern ? op.grid_pattern.charAt(0).toUpperCase() + op.grid_pattern.slice(1) : undefined
 
 
   switch (typeId) {
