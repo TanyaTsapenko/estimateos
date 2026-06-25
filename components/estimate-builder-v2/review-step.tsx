@@ -116,7 +116,7 @@ function specLines(op: Opening): { base: string; opts: string } {
   const install = v.install as string | undefined
   if (install && install !== 'Retrofit') opts.push(install)
   const floor = v.floor as string | undefined
-  if (floor && floor !== 'Ground floor' && floor !== 'Ground') opts.push(`${floor} floor`)
+  if (floor && floor !== 'Ground floor' && floor !== 'Ground') opts.push(floor.toLowerCase().includes('floor') ? floor : `${floor} floor`)
   const condition = v.condition as string | undefined
   if (condition && condition !== 'Good') opts.push(condition)
   if (bool('egress')) opts.push('Egress')
