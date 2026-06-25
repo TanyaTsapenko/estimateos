@@ -62,7 +62,7 @@ function EssentialsHead({ op, openType, onSub }: {
       {t.subs.length > 0 && (
         <div>
           <FieldLabel>Subtype</FieldLabel>
-          <SelectBox value={op.sub} onClick={() => onSub(t.subs)} />
+          <SelectBox value={op.sub} placeholder="— Select —" onClick={() => onSub(t.subs)} />
         </div>
       )}
     </div>
