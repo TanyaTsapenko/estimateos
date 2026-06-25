@@ -103,7 +103,6 @@ function OpeningDrawing({ op }: { op: Opening }) {
                : op.sidelight_right ? 'Right'
                : undefined
 
-  console.log('DB fields:', { type: op.type, grid_pattern: op.grid_pattern, glass_kind: op.glass_kind, colour: op.colour })
   const gk = op.glass_kind ? op.glass_kind.charAt(0).toUpperCase() + op.glass_kind.slice(1) : undefined
   const fr = op.colour ? op.colour.charAt(0).toUpperCase() + op.colour.slice(1) : undefined
   const gp = op.grid_pattern ? op.grid_pattern.charAt(0).toUpperCase() + op.grid_pattern.slice(1) : undefined
