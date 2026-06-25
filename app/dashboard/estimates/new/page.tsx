@@ -244,6 +244,7 @@ function NewEstimateV2() {
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
+  const [subtypeError, setSubtypeError] = useState('')
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
   const [saving, setSaving] = useState(false)
@@ -434,7 +435,7 @@ function NewEstimateV2() {
   const changeType = useCallback((typeId: string) => {
     setOpenings(list => list.map((o, i) => {
       if (i !== activeIdx) return o
-      const fresh = makeOpening(typeId, 0)
+      const fresh = makeOpening(typeId)
       fresh.tempId = o.tempId
       fresh.interiorPhotoUrl = o.interiorPhotoUrl
       fresh.exteriorPhotoUrl = o.exteriorPhotoUrl
@@ -448,7 +449,7 @@ function NewEstimateV2() {
 
   const handleTypePick = useCallback((typeId: string) => {
     if (pendingAdd) {
-      const n = makeOpening(typeId, 0)
+      const n = makeOpening(typeId)
       setOpenings(l => [...l, n])
       setActiveIdx(openings.length)
       setMode('edit')
@@ -745,11 +746,23 @@ function NewEstimateV2() {
 
       {/* Bottom bar (list mode, only when openings exist) */}
       {mode === 'list' && openings.length > 0 && (
-        <BottomBar
-          onBack={() => setMode('client')}
-          onContinue={() => setMode('review')}
-          ctaLabel="Continue to details"
-        />
+        <>
+          {subtypeError && (
+            <div style={{ padding: '10px 16px', background: '#FEF2F2', borderTop: '1px solid #FECACA' }}>
+              <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>{subtypeError}</span>
+            </div>
+          )}
+          <BottomBar
+            onBack={() => { setSubtypeError(''); setMode('client') }}
+            onContinue={() => {
+              const missing = openings.find(o => getType(o.typeId).subs.length > 0 && !o.sub)
+              if (missing) { setSubtypeError('Please select a subtype for all openings'); return }
+              setSubtypeError('')
+              setMode('review')
+            }}
+            ctaLabel="Continue to details"
+          />
+        </>
       )}
 
       {/* Sheets */}
