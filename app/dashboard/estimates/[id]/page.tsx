@@ -103,47 +103,51 @@ function OpeningDrawing({ op }: { op: Opening }) {
                : op.sidelight_right ? 'Right'
                : undefined
 
+  const gk = op.glass_kind ?? undefined
+  const fr = op.colour ?? undefined
+  const gp = op.grid_pattern ?? undefined
+
   switch (typeId) {
     case 'casement':
-      return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'slider':
-      return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'hopper':
-      return <HopperDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <HopperDrawing widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'awning':
-      return <AwningDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <AwningDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'singleHung':
-      return <SingleHungDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <SingleHungDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'doubleHung':
-      return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'tiltTurn':
-      return <TiltTurnDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <TiltTurnDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
     case 'bay':
-      return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} bayAngle={op.bay_angle ?? undefined} grid={gp} glassType={op.glass_type ?? undefined} frameColor={fr} />
     case 'bow':
-      return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={op.glass_type ?? undefined} frameColor={fr} />
     case 'combination':
       return <CombinationDrawing sections={(op.sections ?? []) as CombinationSection[]} heightIn={hIn} />
     case 'transom':
-      return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'special':
-      return <ShapeOutlineDrawing shape={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <ShapeOutlineDrawing shape={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'entry':
-      return <EntryDoorDrawing sub={op.window_subtype ?? ''} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
+      return <EntryDoorDrawing sub={op.window_subtype ?? ''} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     case 'doubleEntry':
-      return <DoubleEntryDrawing sub={op.window_subtype ?? ''} doubleDoorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
+      return <DoubleEntryDrawing sub={op.window_subtype ?? ''} doubleDoorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     case 'french':
-      return <FrenchDoorDrawing sub={op.window_subtype ?? 'Double french'} doorSwing={op.opening_direction ?? undefined} glassSize={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
+      return <FrenchDoorDrawing sub={op.window_subtype ?? 'Double french'} doorSwing={op.opening_direction ?? undefined} glassSize={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     case 'garden':
-      return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} />
+      return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     case 'patio':
-      return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'storm':
-      return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'interior':
-      return <InteriorDoorDrawing sub={op.window_subtype ?? 'Single'} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
+      return <InteriorDoorDrawing sub={op.window_subtype ?? 'Single'} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} frameColor={fr} />
     default:
-      return <ShapeOutlineDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <ShapeOutlineDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
   }
 }
 
