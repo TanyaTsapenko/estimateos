@@ -38,9 +38,7 @@ interface Opening {
   glass_kind: string | null; low_e: boolean | null; tempered: boolean | null
   interior_colour_palette_id: string | null; interior_colour_name: string | null; interior_colour: string | null
   pane: string | null; egress_required: boolean | null; window_subtype: string | null
-  combo_sections?: { type: string; width: number }[] | null
-  argon?: boolean | null; laminated_glass?: boolean | null
-  deadbolt?: boolean | null; multipoint_lock?: boolean | null
+  sections?: { type: string; width: number }[] | null
 }
 
 const INSTALL_LABELS: Record<string, string> = {
@@ -125,7 +123,7 @@ function OpeningDrawing({ op }: { op: Opening }) {
     case 'bow':
       return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'combination':
-      return <CombinationDrawing sections={(op.combo_sections ?? []) as CombinationSection[]} heightIn={hIn} />
+      return <CombinationDrawing sections={(op.sections ?? []) as CombinationSection[]} heightIn={hIn} />
     case 'transom':
       return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'special':
@@ -183,7 +181,7 @@ export default function EstimateDetailPage() {
 
       const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, combo_sections').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections').eq('estimate_id', id).order('sort_order'),
       ])
 
       if (estErr) console.error('[estimate-detail] query error:', estErr.message)
@@ -520,17 +518,12 @@ export default function EstimateDetailPage() {
                     </div>
                     {/* Type-specific pills */}
                     {(() => {
-                      if (process.env.NODE_ENV !== 'production') console.log('opening fields:', { id: op.id, has_screen: op.has_screen, low_e: op.low_e, typeof_screen: typeof op.has_screen, typeof_lowe: typeof op.low_e })
                       const pills: React.ReactNode[] = []
                       if (op.egress_required) pills.push(<span key="egress" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Egress ✓</span>)
                       if (op.has_screen === true) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
                       if (op.tilt_clean)       pills.push(<span key="tilt"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
                       if (op.low_e === true)   pills.push(<span key="lowe"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Low-E ✓</span>)
-                      if (op.argon)           pills.push(<span key="argon"     style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Argon ✓</span>)
                       if (op.tempered)        pills.push(<span key="tempered"  style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tempered ✓</span>)
-                      if (op.laminated_glass) pills.push(<span key="laminated" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Laminated ✓</span>)
-                      if (op.deadbolt)        pills.push(<span key="deadbolt"  style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Deadbolt ✓</span>)
-                      if (op.multipoint_lock) pills.push(<span key="mplock"    style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Multipoint lock ✓</span>)
                       if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
                       if (op.panels_count) pills.push(<span key="panels" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.panels_count} panels</span>)
                       if (op.bay_angle) pills.push(<span key="angle" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.bay_angle}°</span>)
