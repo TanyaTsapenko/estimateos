@@ -502,7 +502,7 @@ export default function EstimateDetailPage() {
                     onClick={() => setEnlargedOpening(op)}
                     style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}
                   >
-                    <div style={{ width: 116, pointerEvents: 'none' }}>
+                    <div style={{ width: 116, height: 116, pointerEvents: 'none', overflow: 'hidden' }}>
                       <OpeningDrawing op={op} />
                     </div>
                   </div>
