@@ -231,15 +231,45 @@ function NewEstimateV2() {
   const apptId  = searchParams.get('appointment_id') || ''
   const editId  = searchParams.get('edit') || ''
 
-  const [clientInfo, setClientInfo] = useState<ClientInfo>(() => ({
-    name:    searchParams.get('client_name')    || '',
-    email:   '',
-    phone:   '',
-    address: searchParams.get('client_address') || '',
-  }))
-  const [openings, setOpenings] = useState<Opening[]>([])
-  const [activeIdx, setActiveIdx] = useState(0)
-  const [mode, setMode] = useState<Mode>(editId ? 'list' : 'client')
+  const [clientInfo, setClientInfo] = useState<ClientInfo>(() => {
+    const def: ClientInfo = {
+      name:    searchParams.get('client_name')    || '',
+      email:   '',
+      phone:   '',
+      address: searchParams.get('client_address') || '',
+    }
+    if (typeof window === 'undefined' || editId) return def
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).clientInfo ?? def
+    } catch {}
+    return def
+  })
+  const [openings, setOpenings] = useState<Opening[]>(() => {
+    if (typeof window === 'undefined' || editId) return []
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).openings ?? []
+    } catch {}
+    return []
+  })
+  const [activeIdx, setActiveIdx] = useState(() => {
+    if (typeof window === 'undefined' || editId) return 0
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).activeIdx ?? 0
+    } catch {}
+    return 0
+  })
+  const [mode, setMode] = useState<Mode>(() => {
+    if (editId) return 'list'
+    if (typeof window === 'undefined') return 'client'
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).mode ?? 'client'
+    } catch {}
+    return 'client'
+  })
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
@@ -249,8 +279,28 @@ function NewEstimateV2() {
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState('')
-  const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
-  const [scopeNotes, setScopeNotes] = useState('')
+  const [trimState, setTrimState] = useState<TrimState>(() => {
+    if (typeof window === 'undefined' || editId) return TRIM_DEFAULTS
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).trimState ?? TRIM_DEFAULTS
+    } catch {}
+    return TRIM_DEFAULTS
+  })
+  const [scopeNotes, setScopeNotes] = useState(() => {
+    if (typeof window === 'undefined' || editId) return ''
+    try {
+      const draft = sessionStorage.getItem('estimate-draft')
+      if (draft) return JSON.parse(draft).scopeNotes ?? ''
+    } catch {}
+    return ''
+  })
+
+  // Persist draft to sessionStorage (new estimates only)
+  useEffect(() => {
+    if (editId) return
+    sessionStorage.setItem('estimate-draft', JSON.stringify({ clientInfo, openings, activeIdx, mode, trimState, scopeNotes }))
+  }, [clientInfo, openings, activeIdx, mode, trimState, scopeNotes, editId])
 
   // Load price_lists + color_palette from Supabase (parallel)
   useEffect(() => {
@@ -603,6 +653,7 @@ function NewEstimateV2() {
       const { error: opErr } = await supabase.from('estimate_openings').insert(rows)
       if (opErr) throw new Error('Failed to save openings: ' + opErr.message)
 
+      sessionStorage.removeItem('estimate-draft')
       router.push('/dashboard/estimates/' + savedId)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'An unexpected error occurred'
