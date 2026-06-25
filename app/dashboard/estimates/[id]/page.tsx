@@ -107,7 +107,7 @@ function OpeningDrawing({ op }: { op: Opening }) {
   const fr = op.colour ?? undefined
   const gp = op.grid_pattern ?? undefined
 
-  console.log('OpeningDrawing typeId:', typeId, 'op.type:', op.type)
+  console.log('OpeningDrawing typeId:', typeId, 'op.type:', op.type, 'window_subtype:', op.window_subtype, 'shape:', op.shape)
   switch (typeId) {
     case 'casement':
       return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} grid={gp} glassType={gk} frameColor={fr} />
