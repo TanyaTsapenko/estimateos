@@ -231,45 +231,15 @@ function NewEstimateV2() {
   const apptId  = searchParams.get('appointment_id') || ''
   const editId  = searchParams.get('edit') || ''
 
-  const [clientInfo, setClientInfo] = useState<ClientInfo>(() => {
-    const def: ClientInfo = {
-      name:    searchParams.get('client_name')    || '',
-      email:   '',
-      phone:   '',
-      address: searchParams.get('client_address') || '',
-    }
-    if (typeof window === 'undefined' || editId) return def
-    try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).clientInfo ?? def
-    } catch {}
-    return def
+  const [clientInfo, setClientInfo] = useState<ClientInfo>({
+    name:    searchParams.get('client_name')    || '',
+    email:   '',
+    phone:   '',
+    address: searchParams.get('client_address') || '',
   })
-  const [openings, setOpenings] = useState<Opening[]>(() => {
-    if (typeof window === 'undefined' || editId) return []
-    try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).openings ?? []
-    } catch {}
-    return []
-  })
-  const [activeIdx, setActiveIdx] = useState(() => {
-    if (typeof window === 'undefined' || editId) return 0
-    try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).activeIdx ?? 0
-    } catch {}
-    return 0
-  })
-  const [mode, setMode] = useState<Mode>(() => {
-    if (editId) return 'list'
-    if (typeof window === 'undefined') return 'client'
-    try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).mode ?? 'client'
-    } catch {}
-    return 'client'
-  })
+  const [openings, setOpenings] = useState<Opening[]>([])
+  const [activeIdx, setActiveIdx] = useState(0)
+  const [mode, setMode] = useState<Mode>(editId ? 'list' : 'client')
   const [picker, setPicker] = useState<PickerState>(null)
   const [typePickerOpen, setTypePickerOpen] = useState(false)
   const [pendingAdd, setPendingAdd] = useState(false)
@@ -279,22 +249,24 @@ function NewEstimateV2() {
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState('')
-  const [trimState, setTrimState] = useState<TrimState>(() => {
-    if (typeof window === 'undefined' || editId) return TRIM_DEFAULTS
+  const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
+  const [scopeNotes, setScopeNotes] = useState('')
+
+  // Restore draft from sessionStorage on mount (client-side only, new estimates only)
+  useEffect(() => {
+    if (editId) return
     try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).trimState ?? TRIM_DEFAULTS
+      const raw = sessionStorage.getItem('estimate-draft')
+      if (!raw) return
+      const draft = JSON.parse(raw)
+      if (draft.clientInfo) setClientInfo(draft.clientInfo)
+      if (draft.openings?.length) setOpenings(draft.openings)
+      if (draft.activeIdx != null) setActiveIdx(draft.activeIdx)
+      if (draft.mode) setMode(draft.mode)
+      if (draft.trimState) setTrimState(draft.trimState)
+      if (draft.scopeNotes) setScopeNotes(draft.scopeNotes)
     } catch {}
-    return TRIM_DEFAULTS
-  })
-  const [scopeNotes, setScopeNotes] = useState(() => {
-    if (typeof window === 'undefined' || editId) return ''
-    try {
-      const draft = sessionStorage.getItem('estimate-draft')
-      if (draft) return JSON.parse(draft).scopeNotes ?? ''
-    } catch {}
-    return ''
-  })
+  }, [])
 
   // Persist draft to sessionStorage (new estimates only)
   useEffect(() => {
