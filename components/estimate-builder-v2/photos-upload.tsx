@@ -107,8 +107,8 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                   />
                   <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: 4 }}>
                     <label htmlFor={`${inputId}-replace`}
-                      style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 6, padding: '7px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="3"/>
                       </svg>
@@ -117,16 +117,16 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                     </label>
                     {/* Download — opens in new tab (iOS fallback) + triggers save on desktop */}
                     <a href={url} download={downloadName(url, op.typeId, slot)} target="_blank" rel="noopener noreferrer"
-                      style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 6, padding: '7px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
                       </svg>
                     </a>
                     <button onClick={() => handleDelete(slot)}
-                      style={{ background: 'rgba(192,52,26,0.75)', border: 'none', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                      style={{ background: 'rgba(192,52,26,0.75)', border: 'none', borderRadius: 6, padding: '7px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                       </svg>
                     </button>
