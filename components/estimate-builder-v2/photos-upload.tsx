@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { C, type Opening } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { FieldLabel } from './primitives'
+import ConfirmModal from '@/components/ConfirmModal'
 
 export type PhotoSlot = 'interior' | 'exterior' | 'photo3' | 'photo4'
 
@@ -48,6 +49,7 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
     return { interior: t, exterior: t, photo3: t, photo4: t }
   })
   const [error, setError] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<PhotoSlot | null>(null)
 
   async function handleUpload(slot: PhotoSlot, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -124,7 +126,7 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                         <line x1="12" y1="15" x2="12" y2="3"/>
                       </svg>
                     </a>
-                    <button onClick={() => handleDelete(slot)}
+                    <button onClick={() => setConfirmDelete(slot)}
                       style={{ background: 'rgba(192,52,26,0.75)', border: 'none', borderRadius: 6, padding: '7px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -158,6 +160,15 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
         })}
       </div>
       {error && <div style={{ fontSize: 11, color: C.red, marginTop: 6 }}>{error}</div>}
+      <ConfirmModal
+        open={confirmDelete !== null}
+        icon="trash"
+        title="Delete photo?"
+        body="This photo will be permanently removed from this opening."
+        confirmLabel="Delete"
+        onConfirm={() => { handleDelete(confirmDelete!); setConfirmDelete(null) }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }
