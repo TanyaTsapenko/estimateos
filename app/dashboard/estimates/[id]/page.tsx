@@ -448,7 +448,12 @@ export default function EstimateDetailPage() {
               const pills: React.ReactNode[] = []
               if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipBlue}>Ext: {getColourLabel(op)}</span>)
               if (getInteriorColourLabel(op) && getInteriorColourLabel(op) !== getColourLabel(op)) pills.push(<span key="icol"     style={chipBlue}>Int: {getInteriorColourLabel(op)}</span>)
-              if (getGlassLabel(op))                              pills.push(<span key="glass"    style={chipBlue}>{getGlassLabel(op)}</span>)
+              const glassLabel = getGlassLabel(op)
+              if (glassLabel) {
+                glassLabel.split(', ').forEach((g, i) => {
+                  pills.push(<span key={`glass-${i}`} style={chipBlue}>{g}</span>)
+                })
+              }
               if (op.install && op.install !== 'retrofit')        pills.push(<span key="inst"     style={chipBlue}>{INSTALL_LABELS2[op.install] || op.install}</span>)
               if (op.frame && op.frame !== 'none')                pills.push(<span key="frame"    style={chipBlue}>{FRAME_LABELS[op.frame] || op.frame}</span>)
               if (op.floor && op.floor !== 'first')               pills.push(<span key="floor"    style={chipBlue}>{FLOOR_LABELS[op.floor] || op.floor}</span>)
