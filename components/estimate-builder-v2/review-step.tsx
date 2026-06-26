@@ -37,6 +37,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   const maxH = compact ? 36 : 56
 
   let node: React.ReactNode
+  console.log('DrawingThumb typeId:', op.typeId, 'sub:', op.sub)
   switch (op.typeId) {
     case 'casement':
       node = <CasementDrawing sub={op.sub} shape={v.shape as string|undefined} activePanel={v.activePanel as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
@@ -83,6 +84,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
     case 'interior':
       node = <InteriorDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
   }
+  console.log('DrawingThumb node:', node ? 'rendered' : 'null')
 
   return (
     <div style={{ width: w, height: maxH, flexShrink: 0, overflow: 'hidden', borderRadius: 7, background: C.bg, pointerEvents: 'none', alignSelf: 'flex-start' }}>
