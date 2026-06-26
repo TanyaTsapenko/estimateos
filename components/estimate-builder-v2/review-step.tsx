@@ -39,43 +39,43 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   let node: React.ReactNode
   switch (op.typeId) {
     case 'casement':
-      node = <CasementDrawing sub={op.sub} shape={v.shape as string|undefined} activePanel={v.activePanel as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} screen={v.screen as string|undefined} />; break
+      node = <CasementDrawing sub={op.sub} shape={v.shape as string|undefined} activePanel={v.activePanel as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'slider':
-      node = <SliderDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} screen={v.screen as string|undefined} />; break
+      node = <SliderDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'hopper':
-      node = <HopperDrawing openingAngle={v.openingAngle as string|undefined} widthIn={pf('width')} heightIn={pf('height')} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <HopperDrawing openingAngle={v.openingAngle as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'awning':
-      node = <AwningDrawing widthIn={pf('width')} heightIn={pf('height')} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} screen={v.screen as string|undefined} />; break
+      node = <AwningDrawing widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'singleHung':
-      node = <SingleHungDrawing shape={v.shape as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} screen={v.screen as string|undefined} />; break
+      node = <SingleHungDrawing shape={v.shape as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'doubleHung':
-      node = <DoubleHungDrawing topSashOperable={v.topSashOperable as boolean|undefined} bottomSashOperable={v.bottomSashOperable as boolean|undefined} widthIn={pf('width')} heightIn={pf('height')} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <DoubleHungDrawing topSashOperable={v.topSashOperable as boolean|undefined} bottomSashOperable={v.bottomSashOperable as boolean|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'tiltTurn':
-      node = <TiltTurnDrawing sub={op.sub} openDir={v.openDir as string|undefined} openMode={v.openMode as string|undefined} widthIn={pf('width')} heightIn={pf('height')} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <TiltTurnDrawing sub={op.sub} openDir={v.openDir as string|undefined} openMode={v.openMode as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'bay':
-      node = <BayDrawing sub={op.sub} bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <BayDrawing sub={op.sub} bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'bow':
-      node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} grid={v.grid as string|undefined} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'combination':
       node = <CombinationDrawing sections={op.sections || []} heightIn={pf('oheight')} />; break
     case 'picture':
     case 'transom':
     case 'special':
-      node = <ShapeOutlineDrawing shape={op.typeId === 'special' ? op.sub : v.shape as string|undefined} transomPanes={op.typeId === 'transom' ? v.transomPanes as string|undefined : undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <ShapeOutlineDrawing shape={op.typeId === 'special' ? op.sub : v.shape as string|undefined} transomPanes={op.typeId === 'transom' ? v.transomPanes as string|undefined : undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'entry':
-      node = <EntryDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} frameColor={v.extColour as string|undefined} />; break
+      node = <EntryDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'doubleEntry':
-      node = <DoubleEntryDrawing sub={op.sub} doubleDoorSwing={v.doubleDoorSwing as string|undefined} astragalType={v.astragalType as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} frameColor={v.extColour as string|undefined} />; break
+      node = <DoubleEntryDrawing sub={op.sub} doubleDoorSwing={v.doubleDoorSwing as string|undefined} astragalType={v.astragalType as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'french':
-      node = <FrenchDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} activePanel={v.activePanel as string|undefined} astragal={v.astragal as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} frameColor={v.extColour as string|undefined} />; break
+      node = <FrenchDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} activePanel={v.activePanel as string|undefined} astragal={v.astragal as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'garden':
-      node = <GardenDoorDrawing doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} frameColor={v.extColour as string|undefined} />; break
+      node = <GardenDoorDrawing doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'patio':
-      node = <PatioDoorDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} glassType={v.glassType as string|undefined} screen={v.screen as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <PatioDoorDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'storm':
-      node = <StormDoorDrawing sub={op.sub} hingeSide={v.hingeSide as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} glassType={v.glassType as string|undefined} frameColor={v.extColour as string|undefined} />; break
+      node = <StormDoorDrawing sub={op.sub} hingeSide={v.hingeSide as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'interior':
-      node = <InteriorDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} frameColor={v.extColour as string|undefined} />; break
+      node = <InteriorDoorDrawing sub={op.sub} doorSwing={v.doorSwing as string|undefined} glassInsert={v.glassInsert as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
   }
 
   return (

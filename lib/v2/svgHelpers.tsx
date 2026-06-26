@@ -57,7 +57,7 @@ export function GridOverlay({ x1, y1, x2, y2, grid, grilleType, uid, frameColor 
   const pat = grid ?? 'None'
   if (pat === 'None') return null
 
-  const FR = FRAME
+  const FR = frameColor ?? FRAME
   const isSDL = (grilleType ?? 'None') === 'SDL'
   const sw = isSDL ? 3 : 1.5
   const w = x2 - x1
