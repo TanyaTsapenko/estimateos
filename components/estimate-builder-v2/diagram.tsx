@@ -19,6 +19,8 @@ export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
       g = <>{WF}<rect x="8" y="6.5" width="8" height="11" rx="1" {...thin} /></>; break
     case 'slider':
       g = <>{WF}<line x1="12" y1="3.5" x2="12" y2="20.5" {...st} /><path d="M7 12 h3.2 M9 10.3 l1.7 1.7 l-1.7 1.7" {...thin} /></>; break
+    case 'endVent':
+      g = <>{WF}<line x1="8.5" y1="3.5" x2="8.5" y2="20.5" {...st} /><line x1="15.5" y1="3.5" x2="15.5" y2="20.5" {...st} /><path d="M5 12 h2.5 M6 10.5 l1.5 1.5 l-1.5 1.5" {...thin} /><path d="M19 12 h-2.5 M18 10.5 l-1.5 1.5 l1.5 1.5" {...thin} /></>; break
     case 'singleHung':
       g = <>{WF}<line x1="5" y1="12" x2="19" y2="12" {...st} /><path d="M12 18 v-3.4 M10.4 16.2 l1.6 -1.6 l1.6 1.6" {...thin} /></>; break
     case 'doubleHung':
@@ -45,6 +47,8 @@ export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
       g = <>{DF}<rect x="9" y="5" width="6" height="8" rx="0.6" {...thin} /><path d="M7 2.7 Q4.5 12 7 21.3" {...thin} />{dot(15, 13.5)}</>; break
     case 'patio':
       g = <><rect x="3.5" y="5" width="17" height="14" rx="1.2" {...st} /><line x1="12" y1="5" x2="12" y2="19" {...st} /><path d="M6.5 12 h4 M9 10 l2 2 l-2 2" {...thin} /></>; break
+    case 'swingPatio':
+      g = <><rect x="3.5" y="2.5" width="8.5" height="19" rx="1" {...st} /><rect x="12" y="2.5" width="8.5" height="19" rx="1" {...st} /><path d="M4 21 Q4 4 12 4" {...thin} /><path d="M20 21 Q20 4 12 4" {...thin} />{dot(10.5, 12)}{dot(13.5, 12)}</>; break
     case 'storm':
       g = <>{DF}<line x1="7" y1="11.5" x2="17" y2="11.5" {...thin} /><path d="M9 4.5 L15 9.5 M9 7.5 L13.5 11" {...thin} />{dot(15, 16)}</>; break
     default:

@@ -273,6 +273,13 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'screen','screenCoverage','egress','photos','notes'],
         extraFieldsBySubtype: { 'XO': ['operSide'], 'OX': ['operSide'] } },
 
+      endVent: { name: 'End vent', subs: ['Single end vent (XOX)','Double end vent (OXO)'],
+        fields: ['width','height','qty','room','floor',
+          'extColour','intColour','grid','grilleType',
+          'glassType','pane','lowE','argon','tempered','laminatedGlass',
+          'material','install','condition','screen',
+          'egress','tiltClean','photos','notes'] },
+
       singleHung: { name: 'Single hung', subs: ['Standard','Tilt-In'],
         fields: ['width','height','qty','room','floor','shape',
           'extColour','intColour','grid','grilleType',
@@ -394,6 +401,13 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'XO': ['operSide'],
           'OX': ['operSide'],
         } },
+
+      swingPatio: { name: 'Swinging patio', subs: ['Single swing','Double swing','Single + sidelites','Double + sidelites'],
+        fields: ['width','height','qty','room','floor',
+          'doorExt','doorInt','glassInsert','glassSize',
+          'doorMaterial','install','condition',
+          'doorSwing','lockset','deadbolt','brickmould','jamb',
+          'screen','photos','notes'] },
 
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
         fields: ['width','height','qty',

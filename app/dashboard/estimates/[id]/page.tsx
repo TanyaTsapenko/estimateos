@@ -99,6 +99,8 @@ const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
       return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'slider':
       return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+    case 'endVent':
+      return <SliderDrawing sub={(op.window_subtype ?? '').toLowerCase().includes('double') ? 'doubleendvent' : 'endvent'} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'hopper':
       return <HopperDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'awning':
@@ -129,6 +131,10 @@ const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
       return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} />
     case 'patio':
       return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} />
+    case 'swingPatio': {
+      const swingSub = (op.window_subtype ?? '').includes('Double') ? 'Double french' : 'Single french'
+      return <FrenchDoorDrawing sub={swingSub} doorSwing={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} />
+    }
     case 'storm':
       return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'interior':
