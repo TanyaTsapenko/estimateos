@@ -397,7 +397,7 @@ const [dashToast, setDashToast] = useState('')
       const threeDaysAgo = new Date(Date.now() - 3*86400000).toISOString()
       const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && (e.sent_at || e.created_at) < threeDaysAgo)
       stale.forEach((e: any) => {
-        const sentDate = e.sent_at || e.updated_at
+        const sentDate = e.sent_at || e.created_at
         const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
         const viewedDesc = e.viewed_at
           ? (() => { const vd = Math.floor((Date.now() - new Date(e.viewed_at).getTime()) / 86400000); return `viewed ${vd === 0 ? 'today' : vd === 1 ? 'yesterday' : `${vd}d ago`}, no reply` })()
@@ -586,6 +586,11 @@ const [dashToast, setDashToast] = useState('')
       supabase.from('profiles').select('company_name').eq('id', sanitizedId).single(),
     ])
     if (!est) return
+    if (!est.client_email) {
+      setDashToast('No email on file for this client. Add an email first.')
+      setTimeout(() => setDashToast(''), 4000)
+      return
+    }
     if (est.last_reminder_sent_at) {
       const hoursSince = (Date.now() - new Date(est.last_reminder_sent_at).getTime()) / 3600000
       if (hoursSince < 24) {
@@ -613,38 +618,61 @@ const [dashToast, setDashToast] = useState('')
     if (!reminderModal) return
     setReminderSending(true)
     try {
-      const res = await fetch('/api/send-email', {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const now = new Date().toISOString()
+      const newCount = (reminderModal.reminderCount ?? 0) + 1
+      const isAutoExpiring = newCount >= 3
+      const estimateUpdate: Record<string, unknown> = {
+        last_reminder_sent_at: now,
+        reminder_count: newCount,
+      }
+      if (isAutoExpiring) {
+        estimateUpdate.status = 'expired'
+        estimateUpdate.expired_reason = 'no_response_after_reminders'
+      }
+
+      // DB update first — if this fails we do NOT send the email
+      const { error: updateErr } = await supabase.from('estimates').update(estimateUpdate).eq('id', reminderModal.estimateId)
+      if (updateErr) {
+        setDashToast('Failed to send reminder: ' + updateErr.message)
+        setTimeout(() => setDashToast(''), 3500)
+        return
+      }
+
+      // Email second — failure is logged but not rolled back (cooldown is already set)
+      const emailRes = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ estimateId: reminderModal.estimateId, type: 'reminder', message: reminderModal.message }),
       })
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        setDashToast('Failed to send reminder' + (body?.error ? ': ' + body.error : ''))
-        setTimeout(() => setDashToast(''), 3500)
-        return
+      if (!emailRes.ok) {
+        const body = await emailRes.json().catch(() => ({}))
+        console.error('[handleSendReminder] email failed after DB update:', body?.error)
       }
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const now = new Date().toISOString()
-        const newCount = (reminderModal.reminderCount ?? 0) + 1
-        const isAutoExpiring = newCount === 3
-        const estimateUpdate: Record<string, unknown> = {
-          last_reminder_sent_at: now,
-          reminder_count: newCount,
-        }
-        if (isAutoExpiring) {
-          estimateUpdate.status = 'expired'
-          estimateUpdate.expired_reason = 'no_response_after_reminders'
-        }
-        await supabase.from('estimates').update(estimateUpdate).eq('id', reminderModal.estimateId)
+
+      fetch('/api/log-activity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          event_type: 'reminder_sent',
+          actor_type: 'contractor',
+          entity_type: 'estimate',
+          entity_id: reminderModal.estimateId,
+          entity_number: reminderModal.estimateNumber,
+          client_name: reminderModal.clientName,
+        }),
+      }).catch(() => {})
+      if (isAutoExpiring) {
         fetch('/api/log-activity', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             user_id: user.id,
-            event_type: 'reminder_sent',
+            event_type: 'estimate_auto_expired',
             actor_type: 'contractor',
             entity_type: 'estimate',
             entity_id: reminderModal.estimateId,
@@ -652,47 +680,32 @@ const [dashToast, setDashToast] = useState('')
             client_name: reminderModal.clientName,
           }),
         }).catch(() => {})
-        if (isAutoExpiring) {
-          fetch('/api/log-activity', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: user.id,
-              event_type: 'estimate_auto_expired',
-              actor_type: 'contractor',
-              entity_type: 'estimate',
-              entity_id: reminderModal.estimateId,
-              entity_number: reminderModal.estimateNumber,
-              client_name: reminderModal.clientName,
-            }),
-          }).catch(() => {})
-          await supabase.from('notifications').insert({
-            user_id: user.id,
-            type: 'estimate_expired',
-            title: 'Estimate expired',
-            body: `${reminderModal.estimateNumber} expired without a response${reminderModal.clientName ? ` from ${reminderModal.clientName}` : ''}`,
-            link: `/dashboard/estimates/${reminderModal.estimateId}`,
-            read: false,
-          })
-        }
-        const { data: senderProfile } = await supabase
-          .from('profiles').select('team_owner_id, first_name, last_name').eq('id', user.id).single()
-        if (senderProfile?.team_owner_id) {
-          const repName = [senderProfile.first_name, senderProfile.last_name].filter(Boolean).join(' ') || 'Team member'
-          await supabase.from('notifications').insert({
-            user_id: senderProfile.team_owner_id,
-            type: 'team_activity',
-            title: 'Team activity',
-            body: `${repName} sent a reminder for ${reminderModal.estimateNumber}`,
-            link: `/dashboard/estimates/${reminderModal.estimateId}`,
-            read: false,
-          })
-        }
+        await supabase.from('notifications').insert({
+          user_id: user.id,
+          type: 'estimate_expired',
+          title: 'Estimate expired',
+          body: `${reminderModal.estimateNumber} expired without a response${reminderModal.clientName ? ` from ${reminderModal.clientName}` : ''}`,
+          link: `/dashboard/estimates/${reminderModal.estimateId}`,
+          read: false,
+        })
       }
-      const wasAutoExpired = (reminderModal.reminderCount ?? 0) + 1 === 3
+      const { data: senderProfile } = await supabase
+        .from('profiles').select('team_owner_id, first_name, last_name').eq('id', user.id).single()
+      if (senderProfile?.team_owner_id) {
+        const repName = [senderProfile.first_name, senderProfile.last_name].filter(Boolean).join(' ') || 'Team member'
+        await supabase.from('notifications').insert({
+          user_id: senderProfile.team_owner_id,
+          type: 'team_activity',
+          title: 'Team activity',
+          body: `${repName} sent a reminder for ${reminderModal.estimateNumber}`,
+          link: `/dashboard/estimates/${reminderModal.estimateId}`,
+          read: false,
+        })
+      }
+
       setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
       setReminderModal(null)
-      setDashToast(wasAutoExpired ? 'Reminder sent — estimate marked as expired' : 'Reminder sent!')
+      setDashToast(isAutoExpiring ? 'Reminder sent — estimate marked as expired' : 'Reminder sent!')
       setTimeout(() => setDashToast(''), 3000)
     } finally {
       setReminderSending(false)

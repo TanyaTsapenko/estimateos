@@ -328,6 +328,12 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
 
   // ── REMINDER ─────────────────────────────────────────────────────────────────
   } else if (type === 'reminder') {
+    if (est.last_reminder_sent_at) {
+      const hoursSince = (Date.now() - new Date(est.last_reminder_sent_at).getTime()) / 3600000
+      if (hoursSince < 24) {
+        return NextResponse.json({ error: 'Reminder already sent recently' }, { status: 429 })
+      }
+    }
     subject = `Following up on your estimate, ${est.client_name || 'Client'}`
     const msgLines = (customMessage || '').split('\n')
     const msgHtml = msgLines.map((line: string) =>
