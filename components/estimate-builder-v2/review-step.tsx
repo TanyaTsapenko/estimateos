@@ -90,7 +90,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
 }
 
 // ── Opening spec lines ─────────────────────────────────────────────
-function specLines(op: Opening): { base: string; opts: string } {
+function specLines(op: Opening): { base: string; opts: string[] } {
   const v = op.vals
   const bool = (k: string) => v[k] === true
 
@@ -132,7 +132,7 @@ function specLines(op: Opening): { base: string; opts: string } {
   const petDoor = v.petDoor as string | undefined
   if (petDoor && petDoor !== 'None') opts.push(`Pet door ${petDoor}`)
 
-  return { base, opts: opts.join(' · ') }
+  return { base, opts }
 }
 
 // ── Photo count ────────────────────────────────────────────────────
@@ -293,9 +293,11 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
                         {base}
                       </div>
                     )}
-                    {opts && (
-                      <div style={{ fontSize: 11, color: C.inkSoft, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {opts}
+                    {opts.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 4 }}>
+                        {opts.map((chip, idx) => (
+                          <span key={idx} style={{ fontSize: 11, fontWeight: 500, padding: '3px 9px', borderRadius: 99, background: '#EEF3FF', color: '#1D4ED8' }}>{chip}</span>
+                        ))}
                       </div>
                     )}
                     {photos > 0 && (
