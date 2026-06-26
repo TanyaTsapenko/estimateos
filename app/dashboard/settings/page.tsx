@@ -12,7 +12,7 @@ import { usePermissions } from '@/lib/usePermissions'
 import ConfirmModal from '@/components/ConfirmModal'
 import { type ContractClause, DEFAULT_CLAUSES } from '@/lib/contractClauses'
 // ── TYPES ────────────────────────────────────────
-type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'quote' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
+type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'quote' | 'reminders' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
 
 // ── NAV GROUPS ───────────────────────────────────
 const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: string; desc: string }[] }[] = [
@@ -28,8 +28,9 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     title: 'BUSINESS',
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',      desc: 'Logo, address, defaults' },
-      { id: 'quote' as const, icon: 'quote' as const, label: 'Quote Settings', desc: 'Estimate validity & defaults' },
-      { id: 'team',     icon: 'team',     label: 'Team',         desc: 'Manage team members' },
+      { id: 'quote' as const,      icon: 'quote' as const, label: 'Quote Settings', desc: 'Estimate validity & defaults' },
+      { id: 'reminders' as const, icon: 'bell' as const,  label: 'Reminders',     desc: 'Follow-up timing & templates' },
+      { id: 'team',               icon: 'team',            label: 'Team',          desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
     ],
@@ -1682,6 +1683,7 @@ const SECTIONS: Record<SectionId, (props: { flash: (m: string) => void }) => Rea
   notifications: (p) => <NotificationsSection {...p} />,
   company:       (p) => <CompanySection {...p} />,
   quote:         () => <></>,
+  reminders:     () => <></>,
   team:          (p) => <TeamSection {...p} />,
   contract:      (p) => <ContractSection {...p} />,
   price:         () => <PriceListSection />,
@@ -1765,6 +1767,7 @@ export default function SettingsPage() {
 
   const handleNavClick = (id: SectionId) => {
     if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
+    if (id === 'reminders') { router.push('/dashboard/settings/reminders'); return }
     setActive(id)
     router.replace(`/dashboard/settings?section=${id}`, { scroll: false })
     if (isMobile) setMobileDetail(true)

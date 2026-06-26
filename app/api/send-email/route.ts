@@ -335,7 +335,23 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
       }
     }
     subject = `Following up on your estimate, ${est.client_name || 'Client'}`
-    const msgLines = (customMessage || '').split('\n')
+    const remSettings = (prof as any)?.quote_settings?.reminders
+    const remCount: number = est.reminder_count ?? 0
+    const rawTemplate: string =
+      (remCount <= 1 ? remSettings?.template_1 : remSettings?.template_2) || customMessage || ''
+    const expiryFmt = est.valid_until
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
+      : ''
+    const amtFmt = typeof est.total === 'number'
+      ? `CA$${est.total.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : ''
+    const resolvedMessage = rawTemplate
+      .replace(/\{client_name\}/g, est.client_name || '')
+      .replace(/\{address\}/g, est.client_address || '')
+      .replace(/\{amount\}/g, amtFmt)
+      .replace(/\{expiry_date\}/g, expiryFmt)
+      .replace(/\{estimate_number\}/g, est.estimate_number || '')
+    const msgLines = (resolvedMessage).split('\n')
     const msgHtml = msgLines.map((line: string) =>
       `<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif">${line || '&nbsp;'}</p>`
     ).join('')

@@ -298,7 +298,7 @@ const [dashToast, setDashToast] = useState('')
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const todayUTC = new Date().toISOString().slice(0, 10)
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }, { data: remProfile }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name,last_reminder_sent_at,reminder_count,viewed_at').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total,created_at,status').in('user_id', userIds).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
@@ -308,6 +308,7 @@ const [dashToast, setDashToast] = useState('')
         supabase.from('activity_log').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,status,created_at').in('user_id', userIds).in('status', ['draft', 'sent']),
         supabase.from('estimates').select('id,total,status,updated_at').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('updated_at', todayUTC + 'T00:00:00.000Z'),
+        supabase.from('profiles').select('quote_settings').eq('id', sanitizedId).single(),
       ])
       const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
@@ -394,8 +395,9 @@ const [dashToast, setDashToast] = useState('')
         })
       }
       // Stale sent estimate → blue, reminder
-      const threeDaysAgo = new Date(Date.now() - 3*86400000).toISOString()
-      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && (e.sent_at || e.created_at) < threeDaysAgo)
+      const firstAfterDays: number = (remProfile as any)?.quote_settings?.reminders?.first_after_days ?? 2
+      const staleAgo = new Date(Date.now() - firstAfterDays * 86400000).toISOString()
+      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && (e.sent_at || e.created_at) < staleAgo)
       stale.forEach((e: any) => {
         const sentDate = e.sent_at || e.created_at
         const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
