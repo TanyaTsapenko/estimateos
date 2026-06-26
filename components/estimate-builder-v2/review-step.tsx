@@ -94,12 +94,18 @@ function specLines(op: Opening): { base: string; opts: string } {
   const v = op.vals
   const bool = (k: string) => v[k] === true
 
-  const colour   = [v.extColour, v.doorExt, v.colour].find(c => c && c !== '') as string | undefined
   const material = [v.material, v.doorMaterial, v.stormDoorMaterial].find(m => m && m !== '') as string | undefined
   const pane     = v.pane as string | undefined
-  const base = [colour, material, pane].filter(Boolean).join(' · ')
+  const base = [material, pane].filter(Boolean).join(' · ')
 
   const opts: string[] = []
+
+  const extColour = (v.extColour || v.doorExt) as string | undefined
+  const intColour = (v.intColour || v.doorInt) as string | undefined
+  const singleColour = v.colour as string | undefined
+  if (singleColour) opts.push(singleColour)
+  if (extColour) opts.push(`Ext: ${extColour}`)
+  if (intColour && intColour !== extColour) opts.push(`Int: ${intColour}`)
 
   const glassType = v.glassType as string | undefined
   if (glassType && glassType !== 'Clear') opts.push(glassType)
@@ -116,9 +122,7 @@ function specLines(op: Opening): { base: string; opts: string } {
   const install = v.install as string | undefined
   if (install && install !== 'Retrofit') opts.push(install)
   const floor = v.floor as string | undefined
-  if (floor && floor !== 'Ground floor' && floor !== 'Ground') opts.push(floor.toLowerCase().includes('floor') ? floor : `${floor} floor`)
-  const condition = v.condition as string | undefined
-  if (condition && condition !== 'Good') opts.push(condition)
+  if (floor) opts.push(floor.toLowerCase().includes('floor') ? floor : `${floor} floor`)
   if (bool('egress')) opts.push('Egress')
 
   const screen = v.screen as string | undefined
