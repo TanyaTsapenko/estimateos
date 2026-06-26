@@ -136,7 +136,7 @@ const DEFAULT_OPENING: Omit<Opening, 'id'> = {
   type: 'window_dh', qty: 1, width: 'md', width_in: 0, height_in: 0,
   shape: 'rect', colour: 'white', glass: 'clear', glass_kind: 'clear', low_e: false, tempered: false, frame: 'none',
   install: 'retrofit', floor: 'first', room: '', sidelight: 0, transom: 0, screen: 0, has_screen: false,
-  material: 'vinyl', hardware_colour: 'white', grid_pattern: 'none', brand: '', notes: '',
+  material: 'vinyl', grid_pattern: 'none', brand: '', notes: '',
   tilt_clean: false, opening_direction: '', panels_count: '', bay_angle: '',
   transom_panes: '', sidelight_left: 0, sidelight_right: 0, transom_above: false,
   glass_type: '', core_type: '', combo_sections: null,
@@ -554,15 +554,6 @@ function OpeningCard({ op, idx, customOpeningTypes, customPrices, palette, openi
                 <option value="prairie">Prairie</option>
                 <option value="diamond">Diamond</option>
                 <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div><div style={lblStyle}>Hardware colour</div>
-              <select style={selStyle} value={op.hardware_colour} onChange={e => updateOpening(op.id, 'hardware_colour', e.target.value)}>
-                <option value="white">White</option>
-                <option value="black">Black</option>
-                <option value="chrome">Chrome</option>
-                <option value="brass">Brass</option>
-                <option value="bronze">Bronze</option>
               </select>
             </div>
           </div>
@@ -1122,7 +1113,7 @@ function NewEstimateForm() {
             shape: op.shape, colour: op.colour, glass: op.glass, frame: op.frame,
             install: op.install, floor: op.floor, room: op.room || '',
             sidelight: op.sidelight, transom: op.transom, screen: op.screen, has_screen: op.has_screen || false,
-            material: op.material || 'vinyl', hardware_colour: op.hardware_colour || 'white',
+            material: op.material || 'vinyl',
             grid_pattern: op.grid_pattern || 'none', brand: op.brand || '', notes: op.notes || '',
             tilt_clean: op.tilt_clean || false, opening_direction: op.opening_direction || '',
             panels_count: op.panels_count || '', bay_angle: op.bay_angle || '',
@@ -1354,7 +1345,6 @@ function NewEstimateForm() {
       sidelight: op.sidelight, transom: op.transom,
       has_screen: Boolean(op.has_screen),
       material: (op as any).material || 'vinyl',
-      hardware_colour: (op as any).hardware_colour || 'white',
       grid_pattern: (op as any).grid_pattern || 'none',
       brand: (op as any).brand || '',
       notes: (op as any).notes || '',

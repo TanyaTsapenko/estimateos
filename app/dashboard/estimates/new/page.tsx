@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { C, makeOpening, getType, type Opening, FRAME_COLOURS, HW_COLOURS, type Palettes, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
+import { C, makeOpening, getType, type Opening, FRAME_COLOURS, type Palettes, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { computePrice, computeTrimCost, type CustomPricing } from '@/lib/pricing'
 import { BuilderHeader, BottomBar } from '@/components/estimate-builder-v2/builder-header'
 import { OpeningRow } from '@/components/estimate-builder-v2/opening-row'
@@ -65,7 +65,6 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     shape:            String(v.shape || 'rect').toLowerCase(),
     colour:           String(v.extColour || v.doorExt || v.colour || 'White').toLowerCase(),
     interior_colour:  String(v.intColour || v.doorInt || 'White').toLowerCase(),
-    hardware_colour:  String(v.hwColour  || 'White').toLowerCase(),
     frame:            'none',
     glass,
     glass_kind:       glassKind,
@@ -131,7 +130,6 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (col) { vals.extColour = capitalize(col); vals.doorExt = capitalize(col) }
   const intCol = String(row.interior_colour || '')
   if (intCol) { vals.intColour = capitalize(intCol); vals.doorInt = capitalize(intCol) }
-  if (row.hardware_colour) vals.hwColour = capitalize(String(row.hardware_colour))
 
   // Glass
   if (row.glass_kind) vals.glassType = capitalize(String(row.glass_kind))
@@ -246,7 +244,7 @@ function NewEstimateV2() {
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
   const [subtypeError, setSubtypeError] = useState('')
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
-  const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS, hw: HW_COLOURS })
+  const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS })
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState('')
   const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
@@ -331,10 +329,8 @@ function NewEstimateV2() {
           ring: (r.hex_color || '').toUpperCase() === '#FFFFFF',
         })
         const frameRows = rows.filter(r => r.category !== 'Hardware')
-        const hwRows    = rows.filter(r => r.category === 'Hardware')
         setPalettes({
           frame: frameRows.length > 0 ? frameRows.map(toEntry) : FRAME_COLOURS,
-          hw:    hwRows.length    > 0 ? hwRows.map(toEntry)    : HW_COLOURS,
         })
 
         // Pricing map: colour name → price_addon

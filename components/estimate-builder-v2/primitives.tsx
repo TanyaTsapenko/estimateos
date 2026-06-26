@@ -1,5 +1,5 @@
 'use client'
-import { C, F, FRAME_COLOURS, HW_COLOURS, type Opening, type PaletteEntry, type Palettes } from '@/lib/v2/openingTypes'
+import { C, F, FRAME_COLOURS, type Opening, type PaletteEntry, type Palettes } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 
 // ── Label ─────────────────────────────────────────────────────────
@@ -62,8 +62,8 @@ export function Toggle({ on, onChange, label, sub }: { on: boolean; onChange: (v
 }
 
 // ── Swatches ──────────────────────────────────────────────────────
-function fieldPalette(palette: string): PaletteEntry[] {
-  return palette === 'hw' ? HW_COLOURS : FRAME_COLOURS
+function fieldPalette(_palette: string): PaletteEntry[] {
+  return FRAME_COLOURS
 }
 
 export function Swatches({ palette, entries, value, onChange }: { palette: string; entries?: PaletteEntry[]; value?: string; onChange: (v: string) => void }) {
@@ -156,7 +156,7 @@ export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
       )
     }
     case 'color':
-      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={def.palette === 'hw' ? palettes?.hw : palettes?.frame} value={v as string} onChange={x => onVal(k, x)} /></div>
+      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={palettes?.frame} value={v as string} onChange={x => onVal(k, x)} /></div>
     case 'toggle':
       return <Toggle on={!!v} onChange={x => onVal(k, x)} label={def.label} sub={def.sub} />
     case 'photos':

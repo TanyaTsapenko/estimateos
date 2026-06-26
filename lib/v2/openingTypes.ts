@@ -60,9 +60,8 @@ export const SETTINGS = {
 }
 
 export type PaletteEntry = { id: string; hex: string; ring?: boolean }
-export type Palettes = { frame: PaletteEntry[]; hw: PaletteEntry[] }
+export type Palettes = { frame: PaletteEntry[] }
 export const FRAME_COLOURS: PaletteEntry[] = SETTINGS.palettes.frame
-export const HW_COLOURS: PaletteEntry[] = SETTINGS.palettes.hardware
 
 // ── Sections ──────────────────────────────────────────────────────
 export type SectionDef = { id: string; label: string; icon: string }
@@ -184,7 +183,6 @@ export const F: Record<string, FieldDef> = {
   openDir:           { label: 'Opening direction',    kind: 'select', sec: 'config', opts: ['Left','Right'], half: true },
   operSide:          { label: 'Operating side',       kind: 'select', sec: 'config', opts: ['Left (XO)','Right (OX)'], half: true },
   openMode:          { label: 'Opening mode',         kind: 'select', sec: 'config', opts: ['Tilt Only','Turn Only','Tilt & Turn'], half: true },
-  hwColour:          { label: 'Hardware colour',      kind: 'color',  sec: 'config', palette: 'hw' },
   egress:            { label: 'Egress required',      kind: 'toggle', sec: 'config', sub: 'Code-compliant exit' },
   hingeSide:         { label: 'Hinge side',            kind: 'select', sec: 'config',
                        opts: ['Left Hinge','Right Hinge','Reversible Hinge'], half: true },
@@ -251,7 +249,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor','shape',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','hwColour','egress','photos','notes'],
+          'screen','egress','photos','notes'],
         extraFieldsBySubtype: {
           'Double casement': ['activePanel'],
         } },
@@ -260,7 +258,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'screen','hwColour','egress','photos','notes'] },
+          'screen','egress','photos','notes'] },
 
       picture: { name: 'Picture', subs: [],
         fields: ['width','height','qty','room','floor','shape',
@@ -349,7 +347,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'doorExt','doorInt','doorStyle','glassInsert','glassType2',
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
-          'hwColour','doorSwing','lockset','deadbolt','deadboltType',
+          'doorSwing','lockset','deadbolt','deadboltType',
           'photos','notes'] },
 
       doubleEntry: { name: 'Double entry', subs: ['Equal double','Unequal double',
@@ -358,7 +356,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'doorExt','doorInt','doorStyle','glassInsert','glassType2',
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
-          'hwColour','doubleDoorSwing','lockset','deadbolt','astragalType',
+          'doubleDoorSwing','lockset','deadbolt','astragalType',
           'photos','notes'],
         extraFieldsBySubtype: {
           'Double + Sidelites':             ['sidelights'],
@@ -370,7 +368,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty',
           'grid','glassSize','glassType2',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
-          'hwColour','doorSwing','lockset','multipointLock',
+          'doorSwing','lockset','multipointLock',
           'photos','notes'],
         extraFieldsBySubtype: {
           'Double french':      ['activePanel','astragal'],
@@ -383,14 +381,14 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'grid','glassSize','glassType2','sidelights','transomAbove',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
           'doorMaterial','install','condition','thresholdType',
-          'hwColour','doorSwing','lockset','deadbolt','deadboltType','screenType',
+          'doorSwing','lockset','deadbolt','deadboltType','screenType',
           'photos','notes'] },
 
       patio: { name: 'Patio sliding', subs: ['XO','OX','XOX','OXXO'],
         fields: ['width','height','qty',
           'extColour','intColour',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
-          'material','install','condition','thresholdType','screen','hwColour',
+          'material','install','condition','thresholdType','screen',
           'photos','notes'],
         extraFieldsBySubtype: {
           'XO': ['operSide'],
@@ -401,14 +399,14 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['width','height','qty',
           'colour','glassType','glassType2','laminatedGlass',
           'stormDoorMaterial','install','condition','screen',
-          'hwColour','hingeSide','lockset','closerType','petDoor','ventilationType',
+          'hingeSide','lockset','closerType','petDoor','ventilationType',
           'photos','notes'] },
 
       interior: { name: 'Interior door', subs: ['Single','Double','Pocket','Bifold'],
         fields: ['width','height','qty',
           'doorExt','doorInt','doorStyle','glassInsert','glassType2','coreType',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
-          'hwColour','doorSwing','lockset',
+          'doorSwing','lockset',
           'photos','notes'] },
     },
   },
@@ -438,7 +436,7 @@ export const DEFAULTS: Record<string, string | number | boolean | null> = {
   material: null, doorMaterial: 'Fiberglass', install: null, condition: null,
   glassInsert: 'None', doorStyle: 'Flush', screen: null,
   screenCoverage: 'Half Screen',
-  hwColour: 'White', lockset: 'Lever', deadbolt: false,
+  lockset: 'Lever', deadbolt: false,
   brickmould: 'Standard', jamb: '4 9/16"', sideUnit: 'Casement',
   numPanels: '2', seatBoard: true, headBoard: true, egress: false,
   coreType: 'Solid Core', transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,

@@ -59,7 +59,6 @@ export interface Opening {
   screen: number
   has_screen: boolean
   material: string
-  hardware_colour: string
   grid_pattern: string
   brand: string
   notes: string

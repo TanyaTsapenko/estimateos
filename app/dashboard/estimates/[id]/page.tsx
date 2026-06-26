@@ -25,7 +25,7 @@ interface Opening {
   total_cost: number; install: string | null
   shape: string | null; colour: string | null; glass: string | null
   frame: string | null; floor: string | null
-  material: string | null; hardware_colour: string | null; grid_pattern: string | null
+  material: string | null; grid_pattern: string | null
   brand: string | null; notes: string | null
   has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
@@ -172,7 +172,7 @@ export default function EstimateDetailPage() {
 
       const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, hardware_colour, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections').eq('estimate_id', id).order('sort_order'),
       ])
 
       if (estErr) console.error('[estimate-detail] query error:', estErr.message)
@@ -349,7 +349,6 @@ export default function EstimateDetailPage() {
   const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
   const INSTALL_LABELS2: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
   const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
-  const HARDWARE_LABELS: Record<string, string> = { white: 'White hardware', black: 'Black hardware', chrome: 'Chrome hardware', brass: 'Brass hardware', bronze: 'Bronze hardware' }
   const GRID_LABELS: Record<string, string> = { none: 'No grid', colonial: 'Colonial grid', prairie: 'Prairie grid', diamond: 'Diamond grid', custom: 'Custom grid' }
   const DIRECTION_LABELS: Record<string, string> = { left: 'Opens left', right: 'Opens right', both: 'Opens both sides' }
   const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
@@ -456,7 +455,6 @@ export default function EstimateDetailPage() {
               if (op.floor && op.floor !== 'first')               pills.push(<span key="floor"    style={chipGray}>{FLOOR_LABELS[op.floor] || op.floor}</span>)
               if (op.material && op.material !== 'vinyl')         pills.push(<span key="mat"      style={chipGray}>{MATERIAL_LABELS[op.material] || op.material}</span>)
               if (op.grid_pattern && op.grid_pattern !== 'none')  pills.push(<span key="grid"     style={chipGray}>{GRID_LABELS[op.grid_pattern] || op.grid_pattern}</span>)
-              if (op.hardware_colour && op.hardware_colour !== 'white') pills.push(<span key="hw" style={chipGray}>{HARDWARE_LABELS[op.hardware_colour]}</span>)
               if (op.bay_angle)           pills.push(<span key="angle"   style={chipGray}>{op.bay_angle}°</span>)
               if (op.opening_direction)   pills.push(<span key="dir"     style={chipGray}>{DIRECTION_LABELS[op.opening_direction]}</span>)
               if (op.panels_count)        pills.push(<span key="panels"  style={chipGray}>{op.panels_count} panels</span>)

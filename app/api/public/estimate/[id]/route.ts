@@ -21,7 +21,7 @@ const PROFILE_COLS = [
 
 const OPENING_COLS = [
   'id', 'type', 'qty', 'total_cost', 'room', 'install', 'shape', 'colour', 'glass',
-  'frame', 'floor', 'width_in', 'height_in', 'material', 'hardware_colour',
+  'frame', 'floor', 'width_in', 'height_in', 'material',
   'grid_pattern', 'brand', 'notes', 'has_screen', 'tilt_clean', 'opening_direction',
   'panels_count', 'bay_angle', 'transom_panes', 'sidelight_left', 'sidelight_right',
   'transom_above', 'glass_type', 'core_type', 'custom_shape_label', 'custom_colour_label',

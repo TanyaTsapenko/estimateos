@@ -12,7 +12,7 @@ interface Opening {
   width_in: number | null; height_in: number | null
   colour: string | null; glass: string | null; frame: string | null; floor: string | null
   install: string | null; shape: string | null; material: string | null; brand: string | null
-  room: string | null; notes: string | null; hardware_colour: string | null; grid_pattern: string | null
+  room: string | null; notes: string | null; grid_pattern: string | null
   has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
@@ -293,8 +293,6 @@ export default function ContractPage() {
   const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
   const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
   const GRID_LABELS: Record<string, string> = { none: 'No grid', colonial: 'Colonial grid', prairie: 'Prairie grid', diamond: 'Diamond grid', custom: 'Custom grid' }
-  const HARDWARE_LABELS: Record<string, string> = { white: 'White hardware', black: 'Black hardware', chrome: 'Chrome hardware', brass: 'Brass hardware', bronze: 'Bronze hardware' }
-
   const contractId  = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
   const depositPct  = urlDeposit ? parseFloat(urlDeposit) : (profile?.deposit_percent ?? 30)
@@ -459,7 +457,6 @@ export default function ContractPage() {
                           if (op.glass_type) pills.push(<span key="gt" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
                           if (op.core_type) pills.push(<span key="ct" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{CORE_LABELS[op.core_type]}</span>)
                           if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{GRID_LABELS[op.grid_pattern]}</span>)
-                          if (op.hardware_colour && op.hardware_colour !== 'white') pills.push(<span key="hw" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{HARDWARE_LABELS[op.hardware_colour]}</span>)
                           if (op.room) pills.push(<span key="room" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{op.room}</span>)
                           if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#C2410C' }}>📝 {op.notes}</span>)
                           if (pills.length === 0) return null
