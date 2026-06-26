@@ -43,7 +43,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
     case 'slider':
       node = <SliderDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'endVent':
-      node = <SliderDrawing sub={op.sub.toLowerCase().includes('double') ? 'doubleendvent' : 'endvent'} widthIn={pf('width')} heightIn={pf('height')} />; break
+      node = <SliderDrawing sub={op.sub.toLowerCase().includes('double') ? 'doubleendvent' : 'endvent'} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'hopper':
       node = <HopperDrawing openingAngle={v.openingAngle as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'awning':
