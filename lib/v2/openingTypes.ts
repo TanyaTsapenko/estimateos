@@ -428,24 +428,24 @@ export function getType(id: string): FlatType {
 
 // ── Smart defaults ─────────────────────────────────────────────────
 export const DEFAULTS: Record<string, string | number | boolean | null> = {
-  qty: 1, floor: 'Ground floor', extColour: null, intColour: 'White',
-  doorExt: 'White', doorInt: 'White', colour: 'White', grid: 'None',
+  qty: 1, floor: 'Ground floor', extColour: null, intColour: null,
+  doorExt: null, doorInt: null, colour: null, grid: 'None',
   glassType: null, pane: null, lowE: null, tempered: false, argon: null,
   laminatedGlass: false,
   grilleType: 'None',
-  material: null, doorMaterial: 'Fiberglass', install: null, condition: null,
-  glassInsert: 'None', doorStyle: 'Flush', screen: null,
-  screenCoverage: 'Half Screen',
-  lockset: 'Lever', deadbolt: false,
-  brickmould: 'Standard', jamb: '4 9/16"', sideUnit: 'Casement',
-  numPanels: '2', seatBoard: true, headBoard: true, egress: false,
-  coreType: 'Solid Core', transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,
+  material: null, doorMaterial: null, install: null, condition: null,
+  glassInsert: 'None', doorStyle: null, screen: null,
+  screenCoverage: null,
+  lockset: null, deadbolt: false,
+  brickmould: null, jamb: null, sideUnit: null,
+  numPanels: null, seatBoard: true, headBoard: true, egress: false,
+  coreType: null, transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,
   position: 'Standalone',
   sidelights: 'None', transomAbove: 'None',
-  thresholdType: 'Standard',
-  closerType: 'None',
+  thresholdType: null,
+  closerType: null,
   topSashOperable: true, bottomSashOperable: true,
-  astragal: 'Standard Astragal', multipointLock: false,
+  astragal: null, multipointLock: false,
 }
 
 export const NO_DEFAULT = new Set([
