@@ -13,6 +13,7 @@ import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider
 import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from './awning-hung-tiltturn-drawing'
 import { EntryDoorDrawing, DoubleEntryDrawing } from './entry-door-drawing'
 import { FrenchDoorDrawing, GardenDoorDrawing } from './french-garden-drawing'
+import { SwingPatioDrawing } from './swing-patio-drawing'
 import { PatioDoorDrawing } from './patio-door-drawing'
 import { StormDoorDrawing, InteriorDoorDrawing } from './storm-interior-drawing'
 
@@ -355,12 +356,11 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             </>
           ) : op.typeId === 'swingPatio' ? (
             <>
-              <FrenchDoorDrawing
-                sub={op.sub?.toLowerCase().includes('single') ? 'Single french' : 'Double french'}
-                doorSwing={op.vals.doorSwing as string | undefined}
+              <SwingPatioDrawing
+                sub={op.sub}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
-                frameColor={frameColor}
+                uid={op.tempId}
               />
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />

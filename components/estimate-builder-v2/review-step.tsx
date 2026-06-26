@@ -11,6 +11,7 @@ import { CasementDrawing, SliderDrawing, HopperDrawing } from './casement-slider
 import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from './awning-hung-tiltturn-drawing'
 import { EntryDoorDrawing, DoubleEntryDrawing } from './entry-door-drawing'
 import { FrenchDoorDrawing, GardenDoorDrawing } from './french-garden-drawing'
+import { SwingPatioDrawing } from './swing-patio-drawing'
 import { PatioDoorDrawing } from './patio-door-drawing'
 import { StormDoorDrawing, InteriorDoorDrawing } from './storm-interior-drawing'
 import { ShapeOutlineDrawing } from './shape-outline-drawing'
@@ -75,10 +76,8 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
       node = <GardenDoorDrawing doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'patio':
       node = <PatioDoorDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
-    case 'swingPatio': {
-      const swingSub = op.sub.includes('Single') ? 'Single french' : 'Double french'
-      node = <FrenchDoorDrawing sub={swingSub} doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
-    }
+    case 'swingPatio':
+      node = <SwingPatioDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'storm':
       node = <StormDoorDrawing sub={op.sub} hingeSide={v.hingeSide as string|undefined} widthIn={pf('width')} heightIn={pf('height')} uid={op.tempId} />; break
     case 'interior':
