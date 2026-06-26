@@ -509,16 +509,30 @@ export default function EstimateDetailPage() {
                           <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                             <div style={{ position: 'relative' }}>
                               <a href={photoUrl} target="_blank" rel="noopener noreferrer">
-                                <img src={photoUrl} alt={p.label} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
+                                <img src={photoUrl} alt={p.label} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
                               </a>
-                              <a href={photoUrl} download={filename} target="_blank" rel="noopener noreferrer"
-                                style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '3px 4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                  <polyline points="7 10 12 15 17 10"/>
-                                  <line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                              </a>
+                              <div style={{ position: 'absolute', bottom: 4, right: 4, display: 'flex', gap: 3 }}>
+                                <a href={photoUrl} download={filename} target="_blank" rel="noopener noreferrer"
+                                  style={{ background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '7px 8px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                  </svg>
+                                </a>
+                                <button
+                                  onClick={async () => {
+                                    const col = p.slug === 'interior' ? 'interior_photo_url' : p.slug === 'exterior' ? 'exterior_photo_url' : p.slug === 'measurement' ? 'photo_3_url' : 'photo_4_url'
+                                    await supabase.from('estimate_openings').update({ [col]: null }).eq('id', op.id)
+                                    setOpenings(prev => prev.map(o => o.id === op.id ? { ...o, [col]: null } : o))
+                                  }}
+                                  style={{ background: 'rgba(192,52,26,0.75)', border: 'none', borderRadius: 6, padding: '7px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                  </svg>
+                                </button>
+                              </div>
                             </div>
                             <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 500 }}>{p.label}</span>
                           </div>
