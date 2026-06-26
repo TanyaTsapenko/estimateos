@@ -76,7 +76,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
     case 'patio':
       node = <PatioDoorDrawing sub={op.sub} widthIn={pf('width')} heightIn={pf('height')} />; break
     case 'swingPatio': {
-      const swingSub = op.sub.includes('Double') ? 'Double french' : 'Single french'
+      const swingSub = op.sub.includes('Single') ? 'Single french' : 'Double french'
       node = <FrenchDoorDrawing sub={swingSub} doorSwing={v.doorSwing as string|undefined} glassSize={v.glassSize as string|undefined} widthIn={pf('width')} heightIn={pf('height')} />; break
     }
     case 'storm':

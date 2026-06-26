@@ -356,7 +356,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : op.typeId === 'swingPatio' ? (
             <>
               <FrenchDoorDrawing
-                sub={op.sub?.toLowerCase().includes('double') ? 'Double french' : 'Single french'}
+                sub={op.sub?.toLowerCase().includes('single') ? 'Single french' : 'Double french'}
                 doorSwing={op.vals.doorSwing as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
