@@ -356,9 +356,8 @@ export default function EstimateDetailPage() {
   // ── MAIN RENDER ──────────────────────────────────────
   const initials = (estimate.client_name || '').split(' ').map((w: string) => w[0] || '').join('').toUpperCase().slice(0, 2) || '?'
   const createdDate = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(estimate.created_at))
-  const chipBase: React.CSSProperties = { borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }
-  const chipGray:   React.CSSProperties = { ...chipBase, background: '#F4F6FB', color: '#475467' }
-  const chipBlue:   React.CSSProperties = { ...chipBase, background: '#EEF3FF', color: '#2563EB' }
+  const chipBase: React.CSSProperties = { borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 500, display: 'inline-flex', alignItems: 'center' }
+  const chipBlue:   React.CSSProperties = { ...chipBase, background: '#EEF3FF', color: '#1D4ED8' }
   const chipOrange: React.CSSProperties = { ...chipBase, background: '#FFF7ED', color: '#C2410C' }
 
   return (
@@ -447,28 +446,23 @@ export default function EstimateDetailPage() {
               const sizeStr  = op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null
               const subtitle = [stLabel, sizeStr, op.room].filter(Boolean).join(' · ')
               const pills: React.ReactNode[] = []
-              if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipGray}>Ext: {getColourLabel(op)}</span>)
-              if (getInteriorColourLabel(op) && getInteriorColourLabel(op) !== getColourLabel(op)) pills.push(<span key="icol"     style={chipGray}>Int: {getInteriorColourLabel(op)}</span>)
-              if (getGlassLabel(op))                              pills.push(<span key="glass"    style={chipGray}>{getGlassLabel(op)}</span>)
-              if (op.install && op.install !== 'retrofit')        pills.push(<span key="inst"     style={chipGray}>{INSTALL_LABELS2[op.install] || op.install}</span>)
-              if (op.frame && op.frame !== 'none')                pills.push(<span key="frame"    style={chipGray}>{FRAME_LABELS[op.frame] || op.frame}</span>)
-              if (op.floor && op.floor !== 'first')               pills.push(<span key="floor"    style={chipGray}>{FLOOR_LABELS[op.floor] || op.floor}</span>)
-              if (op.material && op.material !== 'vinyl')         pills.push(<span key="mat"      style={chipGray}>{MATERIAL_LABELS[op.material] || op.material}</span>)
-              if (op.grid_pattern && op.grid_pattern !== 'none')  pills.push(<span key="grid"     style={chipGray}>{GRID_LABELS[op.grid_pattern] || op.grid_pattern}</span>)
-              if (op.bay_angle)           pills.push(<span key="angle"   style={chipGray}>{op.bay_angle}°</span>)
-              if (op.opening_direction)   pills.push(<span key="dir"     style={chipGray}>{DIRECTION_LABELS[op.opening_direction]}</span>)
-              if (op.panels_count)        pills.push(<span key="panels"  style={chipGray}>{op.panels_count} panels</span>)
-              if (op.transom_panes)       pills.push(<span key="tpanes"  style={chipGray}>{op.transom_panes} panes</span>)
-              if (op.sidelight_left)      pills.push(<span key="sll"     style={chipGray}>← SL {op.sidelight_left}"</span>)
-              if (op.sidelight_right)     pills.push(<span key="slr"     style={chipGray}>→ SL {op.sidelight_right}"</span>)
-              if (op.transom_above)       pills.push(<span key="ta"      style={chipGray}>Transom above</span>)
-              if (op.glass_type)          pills.push(<span key="gt"      style={chipGray}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
-              if (op.core_type)           pills.push(<span key="ct"      style={chipGray}>{CORE_LABELS[op.core_type]}</span>)
-              if (op.egress_required)     pills.push(<span key="egress"  style={chipBlue}>Egress ✓</span>)
-              if (op.has_screen === true) pills.push(<span key="screen"  style={chipBlue}>Screen ✓</span>)
-              if (op.tilt_clean)          pills.push(<span key="tilt"    style={chipBlue}>Tilt-in ✓</span>)
-              if (op.low_e === true)      pills.push(<span key="lowe"    style={chipBlue}>Low-E ✓</span>)
-              if (op.tempered)            pills.push(<span key="tempered" style={chipBlue}>Tempered ✓</span>)
+              if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipBlue}>Ext: {getColourLabel(op)}</span>)
+              if (getInteriorColourLabel(op) && getInteriorColourLabel(op) !== getColourLabel(op)) pills.push(<span key="icol"     style={chipBlue}>Int: {getInteriorColourLabel(op)}</span>)
+              if (getGlassLabel(op))                              pills.push(<span key="glass"    style={chipBlue}>{getGlassLabel(op)}</span>)
+              if (op.install && op.install !== 'retrofit')        pills.push(<span key="inst"     style={chipBlue}>{INSTALL_LABELS2[op.install] || op.install}</span>)
+              if (op.frame && op.frame !== 'none')                pills.push(<span key="frame"    style={chipBlue}>{FRAME_LABELS[op.frame] || op.frame}</span>)
+              if (op.floor && op.floor !== 'first')               pills.push(<span key="floor"    style={chipBlue}>{FLOOR_LABELS[op.floor] || op.floor}</span>)
+              if (op.material && op.material !== 'vinyl')         pills.push(<span key="mat"      style={chipBlue}>{MATERIAL_LABELS[op.material] || op.material}</span>)
+              if (op.grid_pattern && op.grid_pattern !== 'none')  pills.push(<span key="grid"     style={chipBlue}>{GRID_LABELS[op.grid_pattern] || op.grid_pattern}</span>)
+              if (op.bay_angle)           pills.push(<span key="angle"   style={chipBlue}>{op.bay_angle}°</span>)
+              if (op.opening_direction)   pills.push(<span key="dir"     style={chipBlue}>{DIRECTION_LABELS[op.opening_direction]}</span>)
+              if (op.panels_count)        pills.push(<span key="panels"  style={chipBlue}>{op.panels_count} panels</span>)
+              if (op.transom_panes)       pills.push(<span key="tpanes"  style={chipBlue}>{op.transom_panes} panes</span>)
+              if (op.sidelight_left)      pills.push(<span key="sll"     style={chipBlue}>← SL {op.sidelight_left}"</span>)
+              if (op.sidelight_right)     pills.push(<span key="slr"     style={chipBlue}>→ SL {op.sidelight_right}"</span>)
+              if (op.transom_above)       pills.push(<span key="ta"      style={chipBlue}>Transom above</span>)
+              if (op.glass_type)          pills.push(<span key="gt"      style={chipBlue}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
+              if (op.core_type)           pills.push(<span key="ct"      style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
               if (op.notes)               pills.push(<span key="notes"   style={chipOrange}>📝 {op.notes}</span>)
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>

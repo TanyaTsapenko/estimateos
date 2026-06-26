@@ -96,7 +96,7 @@ export function OpeningRow({ index, op, price, onEdit, onDup, onDel }: Props) {
       {chips.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '0 14px 10px 70px' }}>
           {chips.map((c, i) => (
-            <span key={i} style={{ height: 21, padding: '0 8px', borderRadius: 6, background: C.bg, color: C.inkMid, fontSize: 10.5, fontWeight: 700, display: 'inline-flex', alignItems: 'center' }}>{c}</span>
+            <span key={i} style={{ height: 21, padding: '0 8px', borderRadius: 6, background: '#EEF3FF', color: '#1D4ED8', fontSize: 10.5, fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>{c}</span>
           ))}
         </div>
       )}
