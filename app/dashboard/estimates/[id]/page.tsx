@@ -447,8 +447,8 @@ export default function EstimateDetailPage() {
               const sizeStr  = op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null
               const subtitle = [stLabel, sizeStr, op.room].filter(Boolean).join(' · ')
               const pills: React.ReactNode[] = []
-              if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipGray}>{getColourLabel(op)}</span>)
-              if (getInteriorColourLabel(op))                     pills.push(<span key="icol"     style={chipGray}>{getInteriorColourLabel(op)}</span>)
+              if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipGray}>Ext: {getColourLabel(op)}</span>)
+              if (getInteriorColourLabel(op) && getInteriorColourLabel(op) !== getColourLabel(op)) pills.push(<span key="icol"     style={chipGray}>Int: {getInteriorColourLabel(op)}</span>)
               if (getGlassLabel(op))                              pills.push(<span key="glass"    style={chipGray}>{getGlassLabel(op)}</span>)
               if (op.install && op.install !== 'retrofit')        pills.push(<span key="inst"     style={chipGray}>{INSTALL_LABELS2[op.install] || op.install}</span>)
               if (op.frame && op.frame !== 'none')                pills.push(<span key="frame"    style={chipGray}>{FRAME_LABELS[op.frame] || op.frame}</span>)

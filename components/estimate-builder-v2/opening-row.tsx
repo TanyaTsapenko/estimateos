@@ -42,7 +42,14 @@ function summaryChips(op: Opening): string[] {
       }
       case 'color': {
         const val = v[key] as string | undefined
-        if (val && !DEFAULT_COLOURS.has(val)) chips.push(val)
+        if (!val || DEFAULT_COLOURS.has(val)) break
+        if (key === 'extColour' || key === 'doorExt') { chips.push(`Ext: ${val}`); break }
+        if (key === 'intColour' || key === 'doorInt') {
+          const extVal = (v.extColour || v.doorExt) as string | undefined
+          if (val !== extVal) chips.push(`Int: ${val}`)
+          break
+        }
+        chips.push(val)
         break
       }
       // dim / qty / text / photos / notes — skip
