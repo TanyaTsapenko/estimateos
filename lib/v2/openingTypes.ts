@@ -67,10 +67,10 @@ export const FRAME_COLOURS: PaletteEntry[] = SETTINGS.palettes.frame
 export type SectionDef = { id: string; label: string; icon: string }
 export const SECTIONS: SectionDef[] = [
   { id: 'basics',  label: 'Size & location',     icon: 'ruler' },
-  { id: 'look',    label: 'Appearance',           icon: 'paint' },
+  { id: 'look',    label: 'Appearance & glass',   icon: 'paint' },
   { id: 'glass',   label: 'Glass & performance',  icon: 'glass' },
   { id: 'install', label: 'Installation',         icon: 'tool'  },
-  { id: 'config',  label: 'Operation & hardware', icon: 'gear'  },
+  { id: 'config',  label: 'Operation', icon: 'gear'  },
   { id: 'notes',   label: 'Notes & photos',       icon: 'note'  },
 ]
 
