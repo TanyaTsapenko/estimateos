@@ -402,13 +402,6 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'OX': ['operSide'],
         } },
 
-      swingPatio: { name: 'Swinging patio', subs: ['Single swing','Double swing','Single + sidelites','Double + sidelites'],
-        fields: ['width','height','qty','room','floor',
-          'doorExt','doorInt','glassInsert','glassSize',
-          'doorMaterial','install','condition',
-          'doorSwing','lockset','deadbolt','brickmould','jamb',
-          'screen','photos','notes'] },
-
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
         fields: ['width','height','qty',
           'colour','glassType','glassType2','laminatedGlass',

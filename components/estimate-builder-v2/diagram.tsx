@@ -47,8 +47,6 @@ export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
       g = <>{DF}<rect x="9" y="5" width="6" height="8" rx="0.6" {...thin} /><path d="M7 2.7 Q4.5 12 7 21.3" {...thin} />{dot(15, 13.5)}</>; break
     case 'patio':
       g = <><rect x="3.5" y="5" width="17" height="14" rx="1.2" {...st} /><line x1="12" y1="5" x2="12" y2="19" {...st} /><path d="M6.5 12 h4 M9 10 l2 2 l-2 2" {...thin} /></>; break
-    case 'swingPatio':
-      g = <><rect x="3.5" y="2.5" width="8.5" height="19" rx="1" {...st} /><rect x="12" y="2.5" width="8.5" height="19" rx="1" {...st} /><path d="M4 21 Q4 4 12 4" {...thin} /><path d="M20 21 Q20 4 12 4" {...thin} />{dot(10.5, 12)}{dot(13.5, 12)}</>; break
     case 'storm':
       g = <>{DF}<line x1="7" y1="11.5" x2="17" y2="11.5" {...thin} /><path d="M9 4.5 L15 9.5 M9 7.5 L13.5 11" {...thin} />{dot(15, 16)}</>; break
     default:

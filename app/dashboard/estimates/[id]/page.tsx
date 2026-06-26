@@ -14,7 +14,6 @@ import { CasementDrawing, SliderDrawing, HopperDrawing } from '@/components/esti
 import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from '@/components/estimate-builder-v2/awning-hung-tiltturn-drawing'
 import { EntryDoorDrawing, DoubleEntryDrawing } from '@/components/estimate-builder-v2/entry-door-drawing'
 import { FrenchDoorDrawing, GardenDoorDrawing } from '@/components/estimate-builder-v2/french-garden-drawing'
-import { SwingPatioDrawing } from '@/components/estimate-builder-v2/swing-patio-drawing'
 import { PatioDoorDrawing } from '@/components/estimate-builder-v2/patio-door-drawing'
 import { StormDoorDrawing, InteriorDoorDrawing } from '@/components/estimate-builder-v2/storm-interior-drawing'
 import { ShapeOutlineDrawing } from '@/components/estimate-builder-v2/shape-outline-drawing'
@@ -132,8 +131,6 @@ const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
       return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} />
     case 'patio':
       return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'swingPatio':
-      return <SwingPatioDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'storm':
       return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'interior':
