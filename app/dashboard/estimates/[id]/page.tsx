@@ -67,15 +67,6 @@ const STATUS_BG: Record<string, string> = {
   signed: 'rgba(22,163,74,.1)', declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)', paid: 'rgba(5,150,105,.1)',
 }
 
-const SL: React.CSSProperties = {
-  fontSize: 10, fontWeight: 700, letterSpacing: '.12em',
-  textTransform: 'uppercase', color: '#94A3B8', marginBottom: 10,
-}
-const CARD: React.CSSProperties = {
-  background: '#fff', borderRadius: 16,
-  boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-}
-
 // ── v2 drawing dispatcher ─────────────────────────────────────────
 const OLD_TO_V2_TYPE: Record<string, string> = {
   window_dh: 'doubleHung', window_sh: 'singleHung', window_cas: 'casement',
@@ -355,21 +346,10 @@ export default function EstimateDetailPage() {
   const isSigned      = estimate.status === 'signed'
   const isInvoiced    = estimate.status === 'invoiced' || estimate.status === 'paid'
   const isDeclined    = estimate.status === 'declined'
-  const canEmail      = !!estimate.client_email && !isSigned && !isInvoiced && !isDeclined
   const signedDate    = estimate.signed_at
     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.signed_at))
     : null
 
-  const clientRows = [
-    estimate.client_email   && { label: 'Email',   value: estimate.client_email },
-    estimate.client_phone   && { label: 'Phone',   value: estimate.client_phone },
-    estimate.client_address && { label: 'Address', value: `${estimate.client_address}${estimate.client_city ? `, ${estimate.client_city}` : ''}` },
-    estimate.job_site_same_as_client === false && estimate.job_site_address && { label: 'Job Site', value: `${estimate.job_site_address}${estimate.job_site_city ? `, ${estimate.job_site_city}` : ''}` },
-    estimate.payment_method && { label: 'Payment', value: estimate.payment_method },
-  ].filter(Boolean) as { label: string; value: string }[]
-
-  const SHAPE_LABELS:   Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
-  const COLOUR_LABELS:  Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
   const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
   const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
   const INSTALL_LABELS2: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
@@ -380,6 +360,13 @@ export default function EstimateDetailPage() {
   const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
   const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
   // ── MAIN RENDER ──────────────────────────────────────
+  const initials = (estimate.client_name || '').split(' ').map((w: string) => w[0] || '').join('').toUpperCase().slice(0, 2) || '?'
+  const createdDate = new Intl.DateTimeFormat('en-CA', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(estimate.created_at))
+  const chipBase: React.CSSProperties = { borderRadius: 6, padding: '3px 8px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center' }
+  const chipGray:   React.CSSProperties = { ...chipBase, background: '#F4F6FB', color: '#475467' }
+  const chipBlue:   React.CSSProperties = { ...chipBase, background: '#EEF3FF', color: '#2563EB' }
+  const chipOrange: React.CSSProperties = { ...chipBase, background: '#FFF7ED', color: '#C2410C' }
+
   return (
     <>
     <ConfirmModal
@@ -391,7 +378,7 @@ export default function EstimateDetailPage() {
       onConfirm={() => { setDeleteOpen(false); deleteEstimate() }}
       onCancel={() => setDeleteOpen(false)}
     />
-    <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F4F6FB', fontFamily: '"Plus Jakarta Sans", system-ui, -apple-system, sans-serif' }}>
 
       {/* ── TOPBAR ── */}
       <AppTopBar
@@ -399,81 +386,218 @@ export default function EstimateDetailPage() {
         backLabel="Estimates"
         right={<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {estimate.status === 'draft' && (
-            <button
-              onClick={() => router.push(`/dashboard/estimates/new?edit=${id}`)}
+            <button onClick={() => router.push(`/dashboard/estimates/new?edit=${id}`)}
               style={{ border: '1px solid #2045B8', color: '#2045B8', borderRadius: 8, padding: '4px 12px', fontSize: 13, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500 }}>
               Edit
             </button>
           )}
           {estimate.opened_at && estimate.status === 'sent' && (
-            <span style={{
-              fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
-              color: STATUS_COLOR['opened'], background: STATUS_BG['opened'],
-              borderRadius: 6, padding: '4px 10px',
-            }}>
-              OPENED
-            </span>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: STATUS_COLOR['opened'], background: STATUS_BG['opened'], borderRadius: 6, padding: '4px 10px' }}>OPENED</span>
           )}
-          <span style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
-            color: STATUS_COLOR[estimate.status] || '#64748B',
-            background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)',
-            borderRadius: 6, padding: '4px 10px',
-          }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: STATUS_COLOR[estimate.status] || '#64748B', background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)', borderRadius: 6, padding: '4px 10px' }}>
             {estimate.status === 'signed' ? 'ACCEPTED' : estimate.status.toUpperCase()}
           </span>
         </div>}
       >
-        <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>
-          {estimate.estimate_number}
-        </span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB', fontFamily: 'ui-monospace, monospace' }}>{estimate.estimate_number}</span>
       </AppTopBar>
 
-      {/* ── BODY ── */}
-      <div className="est-detail-body" style={{ padding: '24px 28px 100px' }}>
-        <div className="est-3col">
+      {/* ── HERO ── */}
+      <div style={{ background: 'linear-gradient(160deg, #1a3a7c 0%, #2563EB 100%)', padding: '20px 20px 32px' }}>
+        {profile?.company_name && (
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+            {profile.company_name}
+          </div>
+        )}
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+          {estimate.estimate_number} · {createdDate}
+        </div>
+        <div style={{ fontSize: 48, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 6 }}>
+          {fmtCAD(estimate.total)}
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: estimate.client_name ? 20 : 0 }}>
+          inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}
+        </div>
+        {estimate.client_name && (
+          <div style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,0.22)', color: '#fff', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {initials}
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{estimate.client_name}</div>
+              {(estimate.client_address || estimate.client_city) && (
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                  {[estimate.client_address, estimate.client_city].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {estimate.client_phone && (
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{estimate.client_phone}</div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
-          {/* ── LEFT COLUMN: tier + client in one card ── */}
-          <div style={{ ...CARD, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', color: '#2563EB', lineHeight: 1, marginBottom: 6 }}>
-              {fmtCAD(estimate.total)}
+      {/* ── CONTENT ── */}
+      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+        {/* What's included */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4', marginBottom: 12 }}>
+            What's included ({openings.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {openings.map(op => {
+              const typeName = customLabels[op.type] || OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type
+              const stLabel  = (op as any).window_subtype ? getSubtypeLabel(op as any) : null
+              const sizeStr  = op.width_in && op.height_in ? `${op.width_in}" × ${op.height_in}"` : null
+              const subtitle = [stLabel, sizeStr, op.room].filter(Boolean).join(' · ')
+              const pills: React.ReactNode[] = []
+              if (op.colour && op.colour !== 'white')            pills.push(<span key="col"      style={chipGray}>{getColourLabel(op)}</span>)
+              if (getInteriorColourLabel(op))                     pills.push(<span key="icol"     style={chipGray}>{getInteriorColourLabel(op)}</span>)
+              if (getGlassLabel(op))                              pills.push(<span key="glass"    style={chipGray}>{getGlassLabel(op)}</span>)
+              if (op.install && op.install !== 'retrofit')        pills.push(<span key="inst"     style={chipGray}>{INSTALL_LABELS2[op.install] || op.install}</span>)
+              if (op.frame && op.frame !== 'none')                pills.push(<span key="frame"    style={chipGray}>{FRAME_LABELS[op.frame] || op.frame}</span>)
+              if (op.floor && op.floor !== 'first')               pills.push(<span key="floor"    style={chipGray}>{FLOOR_LABELS[op.floor] || op.floor}</span>)
+              if (op.material && op.material !== 'vinyl')         pills.push(<span key="mat"      style={chipGray}>{MATERIAL_LABELS[op.material] || op.material}</span>)
+              if (op.grid_pattern && op.grid_pattern !== 'none')  pills.push(<span key="grid"     style={chipGray}>{GRID_LABELS[op.grid_pattern] || op.grid_pattern}</span>)
+              if (op.hardware_colour && op.hardware_colour !== 'white') pills.push(<span key="hw" style={chipGray}>{HARDWARE_LABELS[op.hardware_colour]}</span>)
+              if (op.bay_angle)           pills.push(<span key="angle"   style={chipGray}>{op.bay_angle}°</span>)
+              if (op.opening_direction)   pills.push(<span key="dir"     style={chipGray}>{DIRECTION_LABELS[op.opening_direction]}</span>)
+              if (op.panels_count)        pills.push(<span key="panels"  style={chipGray}>{op.panels_count} panels</span>)
+              if (op.transom_panes)       pills.push(<span key="tpanes"  style={chipGray}>{op.transom_panes} panes</span>)
+              if (op.sidelight_left)      pills.push(<span key="sll"     style={chipGray}>← SL {op.sidelight_left}"</span>)
+              if (op.sidelight_right)     pills.push(<span key="slr"     style={chipGray}>→ SL {op.sidelight_right}"</span>)
+              if (op.transom_above)       pills.push(<span key="ta"      style={chipGray}>Transom above</span>)
+              if (op.glass_type)          pills.push(<span key="gt"      style={chipGray}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
+              if (op.core_type)           pills.push(<span key="ct"      style={chipGray}>{CORE_LABELS[op.core_type]}</span>)
+              if (op.egress_required)     pills.push(<span key="egress"  style={chipBlue}>Egress ✓</span>)
+              if (op.has_screen === true) pills.push(<span key="screen"  style={chipBlue}>Screen ✓</span>)
+              if (op.tilt_clean)          pills.push(<span key="tilt"    style={chipBlue}>Tilt-in ✓</span>)
+              if (op.low_e === true)      pills.push(<span key="lowe"    style={chipBlue}>Low-E ✓</span>)
+              if (op.tempered)            pills.push(<span key="tempered" style={chipBlue}>Tempered ✓</span>)
+              if (op.notes)               pills.push(<span key="notes"   style={chipOrange}>📝 {op.notes}</span>)
+              return (
+                <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                  <div style={{ display: 'flex' }}>
+                    <div onClick={() => setEnlargedOpening(op)} style={{ width: 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
+                      <div style={{ width: 116, height: 130, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
+                        <OpeningDrawing op={op} />
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1220', lineHeight: 1.3 }}>
+                          {typeName}{op.qty > 1 ? ` × ${op.qty}` : ''}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: '#2563EB', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                          {fmtCAD(op.total_cost)}
+                        </div>
+                      </div>
+                      {subtitle && (
+                        <div style={{ fontSize: 12, color: '#475467', marginBottom: pills.length ? 8 : 0 }}>{subtitle}</div>
+                      )}
+                      {pills.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{pills}</div>
+                      )}
+                    </div>
+                  </div>
+                  {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
+                    <div style={{ padding: '8px 14px 12px', borderTop: '1px solid #F1F5F9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {[
+                        { url: op.interior_photo_url, label: 'Interior',    slug: 'interior'    },
+                        { url: op.exterior_photo_url, label: 'Exterior',    slug: 'exterior'    },
+                        { url: op.photo_3_url,        label: 'Measurement', slug: 'measurement' },
+                        { url: op.photo_4_url,        label: 'Additional',  slug: 'additional'  },
+                      ].filter(p => p.url).map(p => {
+                        const photoUrl = p.url!
+                        const ext = photoUrl.split('/').pop()?.split('.').pop()?.split('?')[0] || 'jpg'
+                        const filename = `${op.type}-${p.slug}.${ext}`
+                        return (
+                          <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <div style={{ position: 'relative' }}>
+                              <a href={photoUrl} target="_blank" rel="noopener noreferrer">
+                                <img src={photoUrl} alt={p.label} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
+                              </a>
+                              <a href={photoUrl} download={filename} target="_blank" rel="noopener noreferrer"
+                                style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '3px 4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                  <polyline points="7 10 12 15 17 10"/>
+                                  <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                              </a>
+                            </div>
+                            <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 500 }}>{p.label}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {estimate.scope_notes && (
+            <div style={{ marginTop: 10, background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', padding: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4', marginBottom: 8 }}>Scope of Work</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
             </div>
-            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 20 }}>
-              inc. {taxLabel} · Valid until {estimate.valid_until || 'N/A'}
+          )}
+
+          {hasTrim(estimate as any) && (
+            <div style={{ marginTop: 10, background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', padding: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4', marginBottom: 8 }}>Trim &amp; Finishing</div>
+              {trimSummaryLines(estimate as any).map(line => (
+                <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '4px 0' }}>
+                  <span style={{ color: '#64748B' }}>{line.label}</span>
+                  <span style={{ fontWeight: 600, color: '#0A1628' }}>{line.value}</span>
+                </div>
+              ))}
+              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, fontStyle: 'italic' }}>Included — no extra charge</div>
             </div>
-            {estimate.viewed_at && (
-              <div style={{ fontSize: 11, color: '#16A34A', marginTop: 2 }}>
-                Viewed · {new Date(estimate.viewed_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} · {new Date(estimate.viewed_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })}
+          )}
+        </div>
+
+        {/* Price summary */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4', marginBottom: 12 }}>Price summary</div>
+          <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', padding: '4px 16px 16px' }}>
+            {estimate.additional_charges?.filter(c => c.label).map((c, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 14, color: '#475467' }}>{c.label}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0B1220' }}>{fmtCAD(c.amount)}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <span style={{ fontSize: 14, color: '#475467' }}>Subtotal</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#0B1220' }}>{fmtCAD(estimate.subtotal)}</span>
+            </div>
+            {estimate.discount_amount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 14, color: '#475467' }}>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#0F8A4D' }}>−{fmtCAD(estimate.discount_amount)}</span>
               </div>
             )}
-
-            {/* Divider */}
-            <div style={{ height: 1, background: '#EEF0F4', marginBottom: 16 }} />
-
-            {/* Client details */}
-            {clientRows.length > 0 && (
-              <>
-                <div style={SL}>Client Details</div>
-                {clientRows.map((row, i) => (
-                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, fontSize: 13, padding: '7px 0', borderBottom: i < clientRows.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
-                    <span style={{ color: '#94A3B8', flexShrink: 0 }}>{row.label}</span>
-                    <span style={{ fontWeight: 600, color: '#0A1628', textAlign: 'right' }}>{row.value}</span>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* Deposit (if any) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+              <span style={{ fontSize: 14, color: '#475467' }}>{taxLabel}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#0B1220' }}>{fmtCAD(estimate.tax_amount)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 14 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: '#0B1220' }}>Total</span>
+              <span style={{ fontSize: 22, fontWeight: 800, color: '#2563EB', letterSpacing: '-0.02em' }}>{fmtCAD(estimate.total)}</span>
+            </div>
             {depositInvoice && (
               <>
-                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
-                <div style={SL}>Deposit Invoice</div>
+                <div style={{ height: 1, background: '#F1F5F9', margin: '14px 0 10px' }} />
+                <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4', marginBottom: 8 }}>Deposit</div>
                 {[
                   { label: 'Deposit amount',    value: fmtCAD(depositInvoice.amount),                   color: '#F59E0B' },
-                  { label: 'Remaining balance', value: fmtCAD(estimate.total - depositInvoice.amount),   color: '#0A1628' },
-                  { label: 'Status',            value: depositInvoice.status,                            color: depositInvoice.status === 'paid' ? '#16a34a' : '#2563EB' },
+                  { label: 'Remaining balance', value: fmtCAD(estimate.total - depositInvoice.amount),   color: '#0B1220' },
+                  { label: 'Status',            value: depositInvoice.status,                            color: depositInvoice.status === 'paid' ? '#0F8A4D' : '#2563EB' },
                 ].map((row, i, arr) => (
-                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '7px 0', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none' }}>
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '6px 0', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
                     <span style={{ color: '#94A3B8' }}>{row.label}</span>
                     <span style={{ fontWeight: 700, color: row.color, textTransform: 'capitalize' }}>{row.value}</span>
                   </div>
@@ -481,284 +605,128 @@ export default function EstimateDetailPage() {
               </>
             )}
           </div>
+        </div>
 
-          {/* ── MIDDLE COLUMN: openings + price in one card ── */}
-          <div style={{ ...CARD, padding: 20 }}>
-            {/* Openings */}
-            <div style={SL}>Openings ({openings.length})</div>
-            {openings.map((op) => (
-              <div key={op.id} style={{ background: '#fff', borderRadius: 12, border: '0.5px solid #E5E7EB', overflow: 'hidden', marginBottom: 10 }}>
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>
-                    {customLabels[op.type] || OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
-                  </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', fontFamily: 'monospace' }}>{fmtCAD(op.total_cost)}</div>
-                </div>
-                {/* Body: diagram + specs */}
-                <div style={{ display: 'flex' }}>
-                  {/* Diagram */}
-                  <div
-                    onClick={() => setEnlargedOpening(op)}
-                    style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0, cursor: 'zoom-in' }}
-                  >
-                    <div style={{ width: 116, height: 130, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
-                      <OpeningDrawing op={op} />
-                    </div>
-                  </div>
-                  {/* Specs */}
-                  <div style={{ flex: 1, padding: '10px 12px' }}>
-                    {/* Grid specs */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
-                      {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Ext. Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{getColourLabel(op)}</span></div>}
-                      {getInteriorColourLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Int. Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{getInteriorColourLabel(op)}</span></div>}
-                      {getGlassLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{getGlassLabel(op)}</span></div>}
-                      {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{INSTALL_LABELS2[op.install] || op.install}</span></div>}
-                      {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
-                      {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                      {op.custom_shape_label && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.custom_shape_label}</span></div>}
-                      {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
-                      {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.brand}</span></div>}
-                      {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: '#0A1628' }}>{op.width_in}" × {op.height_in}"</span></div>}
-                    </div>
-                    {/* Type-specific pills */}
-                    {(() => {
-                      const pills: React.ReactNode[] = []
-                      if (op.egress_required) pills.push(<span key="egress" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Egress ✓</span>)
-                      if (op.has_screen === true) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
-                      if (op.tilt_clean)       pills.push(<span key="tilt"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
-                      if (op.low_e === true)   pills.push(<span key="lowe"      style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Low-E ✓</span>)
-                      if (op.tempered)        pills.push(<span key="tempered"  style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Tempered ✓</span>)
-                      if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
-                      if (op.panels_count) pills.push(<span key="panels" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.panels_count} panels</span>)
-                      if (op.bay_angle) pills.push(<span key="angle" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.bay_angle}°</span>)
-                      if (op.transom_panes) pills.push(<span key="tpanes" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{op.transom_panes} panes</span>)
-                      if (op.sidelight_left) pills.push(<span key="sll" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>← SL {op.sidelight_left}"</span>)
-                      if (op.sidelight_right) pills.push(<span key="slr" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>→ SL {op.sidelight_right}"</span>)
-                      if (op.transom_above) pills.push(<span key="ta" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>Transom above</span>)
-                      if (op.glass_type) pills.push(<span key="gt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
-                      if (op.core_type) pills.push(<span key="ct" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{CORE_LABELS[op.core_type]}</span>)
-                      if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{GRID_LABELS[op.grid_pattern]}</span>)
-                      if (op.hardware_colour && op.hardware_colour !== 'white') pills.push(<span key="hw" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#2563EB', border: '0.5px solid #BFDBFE' }}>{HARDWARE_LABELS[op.hardware_colour]}</span>)
-                      if (op.room) pills.push(<span key="room" style={{ background: '#F0FDF4', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#16A34A', border: '0.5px solid #BBF7D0' }}>{op.room}</span>)
-                      if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#C2410C', border: '0.5px solid #FED7AA' }}>📝 {op.notes}</span>)
-                      if (pills.length === 0) return null
-                      return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderTop: '0.5px solid #F1F5F9', paddingTop: 8 }}>{pills}</div>
-                    })()}
-                  </div>
-                </div>
-                {/* Photos */}
-                {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
-                  <div style={{ padding: '8px 14px 12px', borderTop: '0.5px solid #F1F5F9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {[
-                      { url: op.interior_photo_url, label: 'Interior',     slug: 'interior' },
-                      { url: op.exterior_photo_url, label: 'Exterior',     slug: 'exterior' },
-                      { url: op.photo_3_url,        label: 'Measurement',  slug: 'measurement' },
-                      { url: op.photo_4_url,        label: 'Additional',   slug: 'additional' },
-                    ].filter(p => p.url).map(p => {
-                      const photoUrl = p.url!
-                      const ext = photoUrl.split('/').pop()?.split('.').pop()?.split('?')[0] || 'jpg'
-                      const filename = `${op.type}-${p.slug}.${ext}`
-                      return (
-                        <div key={p.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                          <div style={{ position: 'relative' }}>
-                            <a href={photoUrl} target="_blank" rel="noopener noreferrer">
-                              <img src={photoUrl} alt={p.label} style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, border: '0.5px solid #E5E7EB', display: 'block' }} />
-                            </a>
-                            <a
-                              href={photoUrl}
-                              download={filename}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ position: 'absolute', bottom: 4, right: 4, background: 'rgba(0,0,0,0.52)', borderRadius: 5, padding: '3px 4px', display: 'flex', alignItems: 'center', textDecoration: 'none' }}
-                              title={`Download ${p.label}`}
-                            >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                              </svg>
-                            </a>
-                          </div>
-                          <span style={{ fontSize: 9, color: '#94A3B8', fontWeight: 500 }}>{p.label}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+      </div>
+
+      {/* ── ACTIONS ── */}
+      <div style={{ padding: '0 16px 48px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* Signed / Invoiced banner */}
+        {(isSigned || isInvoiced) && (() => {
+          const depositPending = depositInvoice?.status === 'pending'
+          return (
+            <div style={{ background: depositPending ? '#fff' : '#0F8A4D', borderRadius: 16, padding: 20, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', border: depositPending ? '1px solid #E2E8F0' : 'none' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: depositPending ? '#94A0B4' : 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
+                {estimate.status === 'paid' ? 'PAID' : isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
               </div>
-            ))}
-
-            {estimate.scope_notes && (
-              <>
-                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
-                <div style={SL}>Scope of Work</div>
-                <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.7 }}>{estimate.scope_notes}</div>
-              </>
-            )}
-
-            {/* Trim & Finishing */}
-            {hasTrim(estimate as any) && (
-              <>
-                <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
-                <div style={SL}>Trim &amp; Finishing</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {trimSummaryLines(estimate as any).map(line => (
-                    <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13 }}>
-                      <span style={{ color: '#64748B' }}>{line.label}</span>
-                      <span style={{ fontWeight: 600, color: '#0A1628' }}>{line.value}</span>
-                    </div>
-                  ))}
-                  {/* TODO: wire actual surcharge pricing once Settings UI for trim prices exists */}
-                  <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, fontStyle: 'italic' }}>Included — no extra charge</div>
-                </div>
-              </>
-            )}
-
-            {estimate.additional_charges?.filter(c => c.label).map((c, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #F1F5F9' }}>
-                <span style={{ fontSize: 13, color: '#475569' }}>{c.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(c.amount)}</span>
+              <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#0B1220' : '#fff', marginBottom: 16 }}>
+                {estimate.client_name || 'Client'} accepted this estimate
               </div>
-            ))}
-
-            {/* Divider before price */}
-            <div style={{ height: 1, background: '#EEF0F4', margin: '16px 0' }} />
-
-            {/* Price breakdown */}
-            {[
-              { label: 'Subtotal', value: fmtCAD(estimate.subtotal), color: '#64748B', bold: false },
-              ...(estimate.discount_amount > 0 ? [{
-                label: `Discount${estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}`,
-                value: `−${fmtCAD(estimate.discount_amount)}`, color: '#16a34a', bold: false,
-              }] : []),
-              { label: taxLabel, value: fmtCAD(estimate.tax_amount), color: '#64748B', bold: false },
-            ].map(row => (
-              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', color: row.color }}>
-                <span>{row.label}</span>
-                <span style={{ fontWeight: 600 }}>{row.value}</span>
-              </div>
-            ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: '2px solid #0A1628', marginTop: 10, paddingTop: 12 }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>Total</span>
-              <span style={{ fontSize: 24, fontWeight: 800, color: '#2563EB', letterSpacing: '-.02em' }}>{fmtCAD(estimate.total)}</span>
-            </div>
-          </div>
-
-          {/* ── RIGHT COLUMN ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 0' }}>
-
-            {/* Signed / invoiced — amber when deposit pending, green otherwise */}
-            {(isSigned || isInvoiced) && (() => {
-              const depositPending = depositInvoice?.status === 'pending'
-              return (
-              <div style={{ background: depositPending ? '#fff' : '#0F8A6B', borderRadius: 16, padding: 20, border: depositPending ? '0.5px solid #E2E8F0' : 'none' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: depositPending ? '0.1em' : '.12em', textTransform: 'uppercase', color: depositPending ? '#94A3B8' : 'rgba(255,255,255,.6)', marginBottom: 6 }}>
-                  {estimate.status === 'paid' ? 'PAID' : isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#0A1628' : '#fff', marginBottom: 16 }}>
-                  {estimate.client_name || 'Client'} accepted this estimate
-                </div>
-                {depositPending ? (
-                  <button onClick={() => router.push('/dashboard/invoices')}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '12px 16px', background: '#EEF3FF', color: '#2563EB', border: '1.5px solid #BFDBFE', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Clock size={14} color="#2563EB" />
-                    Deposit pending — {fmtCAD(depositInvoice!.amount)}
-                  </button>
-                ) : (
-                  <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A6B', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <Receipt size={14} />
-                    {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
-                  </button>
-                )}
-              </div>
-              )
-            })()}
-
-            {/* Present to client */}
-            {!isSigned && !isInvoiced && !isDeclined && (
-              <button
-                onClick={() => window.open(`/estimate/${estimate.id}`, '_blank')}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '14px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                <Tablet size={16} />
-                Present to client
-              </button>
-            )}
-
-            {/* Step cards — only when not signed/invoiced */}
-            {!isSigned && !isInvoiced && !isDeclined && (
-              <>
-                {/* ── STEP 1: Send to client ── */}
-                <div style={{ background: '#fff', border: '1.5px solid #BFDBFE', borderRadius: 16, padding: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#2563EB', color: '#fff', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>1</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', lineHeight: 1.2 }}>Send to client</div>
-                      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Share estimate for review</div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={canEmail ? openSendModal : () => showToast('⚠️ No client email on this estimate')}
-                    disabled={sending}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', padding: '11px 0', background: '#fff', color: '#0A1628', border: '1.5px solid #E5E7EB', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: sending ? 0.7 : 1 }}>
-                    {sending ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={14} />}
-                    {sending ? 'Sending…' : 'Email'}
-                  </button>
-                </div>
-
-                {/* ── STEP 2: Close the deal ── */}
-                <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', borderRadius: 16, padding: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-                    <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>2</div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Close the deal</div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>Sign contract with client</div>
-                    </div>
-                  </div>
-                  <button onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=sign`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0A0E1A', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0A0E1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                    </svg>
-                    Sign on the spot
-                  </button>
-                  <button onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=send`)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                    Send contract
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* ── MORE ACTIONS ── */}
-            <div style={{ ...CARD, overflow: 'hidden' }}>
-              <div style={{ padding: '12px 16px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8' }}>
-                MORE ACTIONS
-              </div>
-              {[
-                { icon: <FileDown       size={15} color="#64748B" />, label: 'Download Estimate PDF',          onClick: () => router.push(`/dashboard/pdf-viewer?url=${encodeURIComponent(`/api/estimate-pdf?id=${id}`)}&label=${encodeURIComponent('Estimate PDF')}`),    danger: false, show: true },
-                { icon: <FileSignature  size={15} color="#64748B" />, label: 'View signed contract',   onClick: () => router.push(`/sign/contract/${contract!.id}`),           danger: false, show: !!contract },
-                { icon: <Copy          size={15} color="#64748B" />, label: 'Duplicate estimate',     onClick: () => setShowDuplicateModal(true),                             danger: false, show: true },
-                { icon: <Trash2        size={15} color="#DC2626" />, label: 'Delete estimate',         onClick: () => setDeleteOpen(true),                                    danger: true,  show: true },
-              ].filter(item => item.show).map((item, i, arr) => (
-                <button
-                  key={item.label}
-                  onClick={item.onClick}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid #EEF0F4' : 'none', fontSize: 13, fontWeight: 500, color: item.danger ? '#DC2626' : '#0A1628', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFC')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {item.icon}
-                  {item.label}
+              {depositPending ? (
+                <button onClick={() => router.push('/dashboard/invoices')}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '12px 16px', background: '#EEF3FF', color: '#2563EB', border: '1.5px solid #BFDBFE', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Clock size={14} color="#2563EB" />
+                  Deposit pending — {fmtCAD(depositInvoice!.amount)}
                 </button>
-              ))}
+              ) : (
+                <button onClick={() => router.push(`/dashboard/estimates/${id}/invoice`)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, width: '100%', padding: '11px 0', background: '#fff', color: '#0F8A4D', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  <Receipt size={14} />
+                  {depositInvoice ? `Final invoice — ${fmtCAD(estimate.total - depositInvoice.amount)}` : 'Create invoice'}
+                </button>
+              )}
             </div>
+          )
+        })()}
 
+        {/* Send the estimate */}
+        {!isSigned && !isInvoiced && !isDeclined && (
+          <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 16px 12px' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 14, background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Mail size={20} color="#2563EB" />
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0B1220' }}>Send the estimate</div>
+                <div style={{ fontSize: 13, color: '#2563EB' }}>So {estimate.client_name || 'your client'} can review it anytime</div>
+              </div>
+            </div>
+            <div style={{ margin: '0 16px 12px', background: '#F4F6FB', borderRadius: 12, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              {editingEmail ? (
+                <input
+                  value={sendEmail}
+                  onChange={e => setSendEmail(e.target.value)}
+                  autoFocus
+                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#0B1220', background: 'transparent', fontFamily: 'inherit' }}
+                />
+              ) : (
+                <span style={{ flex: 1, fontSize: 14, color: '#0B1220' }}>{estimate.client_email || 'No email set'}</span>
+              )}
+              <button
+                onClick={() => { setSendEmail(estimate.client_email || ''); setEditingEmail(v => !v) }}
+                style={{ background: 'none', border: 'none', fontSize: 13, fontWeight: 600, color: '#2563EB', cursor: 'pointer', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
+                {editingEmail ? 'Done' : 'Change'}
+              </button>
+            </div>
+            <div style={{ padding: '0 16px 16px' }}>
+              <button
+                onClick={handleSendEmail}
+                disabled={sending}
+                style={{ width: '100%', padding: 14, background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: sending ? 'default' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: sending ? 0.7 : 1 }}>
+                {sending ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Mail size={16} />}
+                {sending ? 'Sending…' : 'Send now'}
+              </button>
+            </div>
           </div>
+        )}
+
+        {/* Close the deal */}
+        {!isSigned && !isInvoiced && !isDeclined && (
+          <>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4' }}>
+              Close the deal
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <button
+                onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=sign`)}
+                style={{ background: '#2563EB', borderRadius: 16, padding: '16px 14px', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <FileSignature size={18} color="#fff" />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', marginBottom: 3 }}>Sign now</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>Together, on this phone</div>
+              </button>
+              <button
+                onClick={() => router.push(`/dashboard/estimates/${id}/payment-setup?trigger=send`)}
+                style={{ background: '#fff', borderRadius: 16, padding: '16px 14px', border: '1px solid #E5E7EB', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
+                  <Mail size={18} color="#2563EB" />
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1220', marginBottom: 3 }}>Send contract</div>
+                <div style={{ fontSize: 11, color: '#94A0B4', lineHeight: 1.4 }}>For them to e-sign</div>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* More actions */}
+        <div style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 16px 8px', fontSize: 11, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#94A0B4' }}>
+            More actions
+          </div>
+          {[
+            { icon: <FileDown      size={16} color="#475467" />, label: 'Download Estimate PDF', onClick: () => router.push(`/dashboard/pdf-viewer?url=${encodeURIComponent(`/api/estimate-pdf?id=${id}`)}&label=${encodeURIComponent('Estimate PDF')}`), danger: false, show: true },
+            { icon: <FileSignature size={16} color="#475467" />, label: 'View signed contract',   onClick: () => router.push(`/sign/contract/${contract!.id}`),      danger: false, show: !!contract },
+            { icon: <Copy         size={16} color="#475467" />, label: 'Duplicate estimate',     onClick: () => setShowDuplicateModal(true),                          danger: false, show: true },
+            { icon: <Trash2       size={16} color="#DC2626" />, label: 'Delete estimate',        onClick: () => setDeleteOpen(true),                                  danger: true,  show: true },
+          ].filter(item => item.show).map((item, i, arr) => (
+            <button key={item.label} onClick={item.onClick}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 16px', background: 'transparent', border: 'none', borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none', fontSize: 14, fontWeight: 500, color: item.danger ? '#DC2626' : '#0B1220', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
         </div>
 
       </div>
@@ -768,17 +736,9 @@ export default function EstimateDetailPage() {
 
       {/* ── DUPLICATE SUCCESS TOAST ── */}
       {dupToast && (
-        <div style={{
-          position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom))', left: '50%',
-          transform: 'translateX(-50%)', zIndex: 1100,
-          background: '#0A1628', color: '#fff', borderRadius: 12,
-          padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.25)', whiteSpace: 'nowrap',
-          fontFamily: 'inherit', fontSize: 13, fontWeight: 500,
-        }}>
+        <div style={{ position: 'fixed', bottom: 'calc(88px + env(safe-area-inset-bottom))', left: '50%', transform: 'translateX(-50%)', zIndex: 1100, background: '#0A1628', color: '#fff', borderRadius: 12, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.25)', whiteSpace: 'nowrap', fontFamily: 'inherit', fontSize: 13, fontWeight: 500 }}>
           <span>Duplicate created — <span style={{ fontFamily: 'ui-monospace, monospace', color: '#93C5FD' }}>{dupToast.num}</span></span>
-          <button
-            onClick={() => router.push(`/dashboard/estimates/${dupToast.id}`)}
+          <button onClick={() => router.push(`/dashboard/estimates/${dupToast.id}`)}
             style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '5px 11px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
             Open →
           </button>
@@ -787,33 +747,24 @@ export default function EstimateDetailPage() {
 
       {/* ── DUPLICATE MODAL ── */}
       {showDuplicateModal && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
-          onClick={() => setShowDuplicateModal(false)}
-        >
-          <div
-            style={{ background: '#fff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#EFF4FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
+          onClick={() => setShowDuplicateModal(false)}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340, boxShadow: '0 20px 60px rgba(0,0,0,0.18)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ width: 48, height: 48, borderRadius: 12, background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
               <Copy size={22} color="#2563EB" strokeWidth={1.7} />
             </div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', textAlign: 'center', marginBottom: 8 }}>
-              Duplicate estimate?
-            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628', textAlign: 'center', marginBottom: 8 }}>Duplicate estimate?</div>
             <div style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 1.55, marginBottom: 24 }}>
               A copy will be created as a new Draft estimate. You can edit it before sending.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setShowDuplicateModal(false)}
+              <button onClick={() => setShowDuplicateModal(false)}
                 style={{ flex: 1, height: 48, borderRadius: 12, background: '#fff', border: '1.5px solid #E5E7EB', fontSize: 15, fontWeight: 600, cursor: 'pointer', color: '#374151', fontFamily: 'inherit' }}>
                 Cancel
               </button>
-              <button
-                onClick={duplicateEstimate}
-                disabled={duplicating}
-                style={{ flex: 1, height: 48, borderRadius: 12, background: '#3B6CFF', border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', color: '#fff', fontFamily: 'inherit', opacity: duplicating ? 0.7 : 1 }}>
+              <button onClick={duplicateEstimate} disabled={duplicating}
+                style={{ flex: 1, height: 48, borderRadius: 12, background: '#2563EB', border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer', color: '#fff', fontFamily: 'inherit', opacity: duplicating ? 0.7 : 1 }}>
                 {duplicating ? 'Duplicating…' : 'Duplicate'}
               </button>
             </div>
@@ -821,61 +772,7 @@ export default function EstimateDetailPage() {
         </div>
       )}
 
-      {/* ── EMAIL MODAL ── */}
-      {showEmailModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0 0 24px' }}
-          onClick={() => { setShowEmailModal(false); setEditingEmail(false) }}>
-          <div style={{ background: '#E8EAFB', borderRadius: 24, padding: 24, width: '100%', maxWidth: 390, display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.22)' }}
-            onClick={e => e.stopPropagation()}>
-            {/* Icon + title */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ width: 52, height: 52, borderRadius: 16, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B47E5" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="4" width="20" height="16" rx="2"/>
-                  <path d="M2 7l10 7 10-7"/>
-                </svg>
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 500, color: '#111111', marginTop: 4 }}>Send estimate</div>
-              <div style={{ fontSize: 15, fontWeight: 500, color: '#3B47E5' }}>
-                So {estimate.client_name || 'your client'} can review it anytime
-              </div>
-            </div>
-            {/* Email row */}
-            <div style={{ background: '#fff', borderRadius: 18, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              {editingEmail ? (
-                <input
-                  value={sendEmail}
-                  onChange={e => setSendEmail(e.target.value)}
-                  autoFocus
-                  style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, color: '#111111', background: 'transparent', fontFamily: 'inherit' }}
-                />
-              ) : (
-                <span style={{ flex: 1, fontSize: 15, color: '#111111' }}>{sendEmail || estimate.client_email}</span>
-              )}
-              <button
-                onClick={() => setEditingEmail(v => !v)}
-                style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 500, color: '#3B47E5', cursor: 'pointer', fontFamily: 'inherit', padding: 0, flexShrink: 0 }}>
-                {editingEmail ? 'Done' : 'Change'}
-              </button>
-            </div>
-            {/* Send now button */}
-            <button onClick={handleSendEmail} disabled={sending}
-              style={{ width: '100%', padding: 16, background: '#3B47E5', color: '#fff', border: 'none', borderRadius: 18, fontSize: 16, fontWeight: 500, cursor: sending ? 'default' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: sending ? 0.7 : 1 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="M2 7l10 7 10-7"/>
-              </svg>
-              {sending ? 'Sending…' : 'Send now'}
-            </button>
-            {/* Cancel */}
-            <button onClick={() => { setShowEmailModal(false); setEditingEmail(false) }}
-              style={{ background: 'none', border: 'none', fontSize: 15, color: '#6B7280', cursor: 'pointer', fontFamily: 'inherit', padding: 0, textAlign: 'center' }}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
+      {/* ── ENLARGE MODAL ── */}
       {enlargedOpening && (
         <div onClick={() => setEnlargedOpening(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
