@@ -216,6 +216,22 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
               <div style={{ height: 12 }} />
               <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
             </>
+          ) : op.typeId === 'endVent' ? (
+            <>
+              <SliderDrawing
+                sub={op.sub?.toLowerCase().includes('double') ? 'doubleendvent' : 'endvent'}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                uid={op.tempId}
+                grid={op.vals.grid as string | undefined}
+                grilleType={op.vals.grilleType as string | undefined}
+                glassType={op.vals.glassType as string | undefined}
+                screen={op.vals.screen as string | undefined}
+                frameColor={frameColor}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
           ) : op.typeId === 'hopper' ? (
             <>
               <HopperDrawing
@@ -330,6 +346,18 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
                 activePanel={op.vals.activePanel as string | undefined}
                 astragal={op.vals.astragal as string | undefined}
                 glassSize={op.vals.glassSize as string | undefined}
+                widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
+                heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
+                frameColor={frameColor}
+              />
+              <div style={{ height: 12 }} />
+              <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
+            </>
+          ) : op.typeId === 'swingPatio' ? (
+            <>
+              <FrenchDoorDrawing
+                sub={op.sub?.toLowerCase().includes('double') ? 'Double french' : 'Single french'}
+                doorSwing={op.vals.doorSwing as string | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 frameColor={frameColor}
