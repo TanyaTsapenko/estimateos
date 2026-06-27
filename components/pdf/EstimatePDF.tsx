@@ -47,8 +47,8 @@ const S = StyleSheet.create({
   cardTitle:  { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: NAVY, flex: 1 },
   cardPrice:  { fontSize: 10, fontFamily: 'Helvetica-Bold', color: BLUE },
   cardBody:   { flexDirection: 'row', padding: 10 },
-  drawingCol: { width: 100, marginRight: 12, alignItems: 'center' },
-  drawing:    { width: 100, height: 119 },
+  drawingCol: { width: 180, marginRight: 14, alignItems: 'center' },
+  drawing:    { width: 180, height: 216 },
   specsCol:   { flex: 1 },
 
   // Spec rows
