@@ -29,7 +29,7 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',      desc: 'Logo, address, defaults' },
       { id: 'quote' as const,      icon: 'quote' as const, label: 'Quote Settings', desc: 'Estimate validity & defaults' },
-      { id: 'reminders' as const, icon: 'bell' as const,  label: 'Reminders',     desc: 'Follow-up timing & templates' },
+      { id: 'reminders' as const, icon: 'bell' as const,  label: 'Follow-ups',     desc: 'Follow-up timing & templates' },
       { id: 'team',               icon: 'team',            label: 'Team',          desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
       { id: 'price',    icon: 'price',    label: 'Price list', desc: 'Opening types & rates' },
