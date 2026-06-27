@@ -724,7 +724,7 @@ export default function EstimateDetailPage() {
             More actions
           </div>
           {[
-            { icon: <FileDown      size={16} color="#475467" />, label: 'Download Estimate PDF', onClick: () => router.push(`/dashboard/pdf-viewer?url=${encodeURIComponent(`/api/estimate-pdf?id=${id}`)}&label=${encodeURIComponent('Estimate PDF')}`), danger: false, show: true },
+            { icon: <FileDown      size={16} color="#475467" />, label: 'Download Estimate PDF', onClick: () => window.open(`/api/estimate-pdf?id=${id}`, '_blank'), danger: false, show: true },
             { icon: <FileSignature size={16} color="#475467" />, label: 'View signed contract',   onClick: () => router.push(`/sign/contract/${contract!.id}`),      danger: false, show: !!contract },
             { icon: <Copy         size={16} color="#475467" />, label: 'Duplicate estimate',     onClick: () => setShowDuplicateModal(true),                          danger: false, show: true },
             { icon: <Trash2       size={16} color="#DC2626" />, label: 'Delete estimate',        onClick: () => setDeleteOpen(true),                                  danger: true,  show: true },
