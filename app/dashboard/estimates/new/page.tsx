@@ -98,7 +98,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     unit_cost:        unitCost,
     total_cost:       totalCost,
     sort_order:       idx,
-    sections:         op.sections ? JSON.stringify(op.sections) : null,
+    sections:         Array.isArray(op.sections) ? JSON.stringify(op.sections) : null,
   }
 }
 
@@ -160,7 +160,7 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {
-    try { sections = JSON.parse(String(row.sections)) } catch { sections = [] }
+    try { const p = JSON.parse(String(row.sections)); sections = Array.isArray(p) ? p : [] } catch { sections = [] }
   }
 
   return {
@@ -426,7 +426,7 @@ function NewEstimateV2() {
   }, [activeIdx])
 
   const setSections = useCallback((sections: Opening['sections']) => {
-    const totalWidth = (sections || []).reduce((s, sec) => s + sec.width, 0)
+    const totalWidth = (Array.isArray(sections) ? sections : []).reduce((s, sec) => s + sec.width, 0)
     setOpenings(list => list.map((o, i) => {
       if (i !== activeIdx) return o
       return { ...o, sections, vals: { ...o.vals, owidth: totalWidth || undefined } }

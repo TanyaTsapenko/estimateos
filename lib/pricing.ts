@@ -262,7 +262,7 @@ export function computePrice(op: V2Opening, custom?: CustomPricing): number {
       + (liteCount - 2) * sectionPrice(centerTypeId, sectionW, h, custom)
     p = Math.round(p * (1 + (s[op.typeId === 'bow' ? 'bow_surcharge' : 'bay_surcharge'] ?? 0) / 100))
   } else if (op.typeId === 'combination') {
-    p = (op.sections ?? []).reduce((sum, sec) => {
+    p = (Array.isArray(op.sections) ? op.sections : []).reduce((sum, sec) => {
       const secTypeId = COMBO_SECTION_MAP[sec.type] ?? 'picture'
       return sum + sectionPrice(secTypeId, sec.width, h, custom)
     }, 0)
