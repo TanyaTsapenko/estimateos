@@ -2,7 +2,7 @@ import sharp from 'sharp'
 import { openingSvgString } from './openingSvgString'
 
 export async function renderDrawingPng(op: any, widthPx: number, heightPx: number): Promise<string> {
-  const svg = openingSvgString(op.type ?? '')
+  const svg = openingSvgString(op)
   const buf = await sharp(Buffer.from(svg))
     .resize(widthPx, heightPx, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
     .png()
