@@ -1,287 +1,375 @@
 // Generates plain SVG markup for each opening type — no React dependency.
-// Used for PDF drawing generation (sharp PNG conversion).
+// Colors and geometry match the v2 React drawing components exactly.
+// Used for PDF HTML generation (inline SVG in estimate PDF).
 
-const G  = '#EEF4FF'  // glass fill
-const FR = '#334155'  // frame
-const SE = '#94A3B8'  // secondary
-const MV = '#2563EB'  // movement / active
+const G  = '#EEF4FF'  // glass fill  (GLASS)
+const FR = '#334155'  // frame        (FRAME)
+const SE = '#94A3B8'  // secondary   (SEC)
+const MV = '#2563EB'  // movement    (MOV)
+const DI = '#475569'  // dimension   (DIM)
+const DF = '#C5CBD4'  // door fill
 
-const W = '0 0 215 255'
+// Standard window frame: x=10,y=10 w=180 h=210 rx=3
+const WF = `<rect x="10" y="10" width="180" height="210" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
 
-function wrap(body: string, vb = W): string {
+// Dimension lines — standard (viewBox 0 0 215 255, frame Y2=220)
+const DL = `<line x1="10" y1="226" x2="190" y2="226" stroke="${SE}" stroke-width="1"/>` +
+  `<line x1="10" y1="221" x2="10" y2="231" stroke="${SE}" stroke-width="1.5"/>` +
+  `<line x1="190" y1="221" x2="190" y2="231" stroke="${SE}" stroke-width="1.5"/>` +
+  `<text x="100" y="243" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">W</text>` +
+  `<line x1="197" y1="10" x2="197" y2="220" stroke="${SE}" stroke-width="1"/>` +
+  `<line x1="193" y1="10" x2="201" y2="10" stroke="${SE}" stroke-width="1.5"/>` +
+  `<line x1="193" y1="220" x2="201" y2="220" stroke="${SE}" stroke-width="1.5"/>` +
+  `<text x="204" y="119" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">H</text>`
+
+function wrap(body: string, vb = '0 0 215 255'): string {
   return `<svg viewBox="${vb}" fill="none" xmlns="http://www.w3.org/2000/svg">${body}</svg>`
 }
 
-function r(x: number, y: number, w: number, h: number, fill: string, stroke: string, sw = 2.5, rx = 0): string {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${rx ? ` rx="${rx}"` : ''}/>`
-}
-function l(x1: number, y1: number, x2: number, y2: number, stroke: string, sw = 1.5, dash = ''): string {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`
-}
-function p(d: string, stroke: string, sw = 1.5, fill = 'none', dash = ''): string {
-  return `<path d="${d}" stroke="${stroke}" stroke-width="${sw}" fill="${fill}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`
-}
-function c(cx: number, cy: number, rad: number, fill: string): string {
-  return `<circle cx="${cx}" cy="${cy}" r="${rad}" fill="${fill}"/>`
+function bayDimLines(lx1: number, rx2: number, yT: number, yB: number, lean: number): string {
+  const dimY = yB + lean + 12
+  const my = Math.round((yT + yB) / 2)
+  return `<line x1="${lx1}" y1="${dimY}" x2="${rx2}" y2="${dimY}" stroke="${SE}" stroke-width="1"/>` +
+    `<line x1="${lx1}" y1="${dimY-5}" x2="${lx1}" y2="${dimY+5}" stroke="${SE}" stroke-width="1.5"/>` +
+    `<line x1="${rx2}" y1="${dimY-5}" x2="${rx2}" y2="${dimY+5}" stroke="${SE}" stroke-width="1.5"/>` +
+    `<text x="${Math.round((lx1+rx2)/2)}" y="${dimY+16}" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">W</text>` +
+    `<line x1="${rx2+6}" y1="${yT}" x2="${rx2+6}" y2="${yB}" stroke="${SE}" stroke-width="1"/>` +
+    `<line x1="${rx2+2}" y1="${yT}" x2="${rx2+10}" y2="${yT}" stroke="${SE}" stroke-width="1.5"/>` +
+    `<line x1="${rx2+2}" y1="${yB}" x2="${rx2+10}" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>` +
+    `<text x="${rx2+14}" y="${my+4}" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">H</text>`
 }
 
-const WF = r(10, 10, 180, 210, G, FR, 2.5, 3)
-const DF = r(20, 10, 155, 215, G, FR, 2.5, 2)
+function dashedX(x1: number, y1: number, x2: number, y2: number): string {
+  return `<line x1="${x1+4}" y1="${y1+4}" x2="${x2-4}" y2="${y2-4}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>` +
+    `<line x1="${x2-4}" y1="${y1+4}" x2="${x1+4}" y2="${y2-4}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>`
+}
+
+function doorHinges(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean): string {
+  const H   = y2 - y1
+  const hy1 = y1 + Math.round(H * 0.20)
+  const hy2 = y1 + Math.round(H * 0.67)
+  const hx  = hingeLeft ? x1 + 2 : x2 - 7
+  return `<rect x="${hx}" y="${hy1}" width="5" height="10" rx="1" fill="${SE}"/>` +
+    `<rect x="${hx}" y="${hy2}" width="5" height="10" rx="1" fill="${SE}"/>`
+}
+
+function doorKnob(x1: number, y1: number, x2: number, y2: number, handleLeft: boolean): string {
+  const my = Math.round((y1 + y2) / 2)
+  if (handleLeft) {
+    return `<circle cx="${x1+14}" cy="${my}" r="4" fill="${SE}"/>` +
+      `<rect x="${x1+12}" y="${my-9}" width="5" height="18" rx="2" fill="${SE}"/>`
+  }
+  return `<circle cx="${x2-14}" cy="${my}" r="4" fill="${SE}"/>` +
+    `<rect x="${x2-17}" y="${my-9}" width="5" height="18" rx="2" fill="${SE}"/>`
+}
+
+function swingArc(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean): string {
+  const arc = hingeLeft
+    ? `M${x1+3} ${y2-3} Q${x1+3} ${y1+3} ${x2-3} ${y1+3}`
+    : `M${x2-3} ${y2-3} Q${x2-3} ${y1+3} ${x1+3} ${y1+3}`
+  return `<path d="${arc}" stroke="${MV}" stroke-width="1" stroke-dasharray="5 3" fill="none"/>`
+}
+
+function sidelite(x1: number, y1: number, x2: number, y2: number): string {
+  return `<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
+    `<line x1="${x1+3}" y1="${y1+3}" x2="${x2-3}" y2="${y2-3}" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
+    `<line x1="${x2-3}" y1="${y1+3}" x2="${x1+3}" y2="${y2-3}" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>`
+}
+
+function doorPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean): string {
+  return `<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+    doorHinges(x1, y1, x2, y2, hingeLeft) +
+    doorKnob(x1, y1, x2, y2, !hingeLeft) +
+    swingArc(x1, y1, x2, y2, hingeLeft)
+}
 
 export function openingSvgString(type: string): string {
-  const t = type.toLowerCase().replace(/_/g, '')
+  const t = type.toLowerCase().replace(/[_\s-]+/g, '')
+
   switch (t) {
-    // ── Windows ──────────────────────────────────────────────────
+    // ── Windows ────────────────────────────────────────────────────────────
+
     case 'doublehung':
     case 'windowdh':
       return wrap(
         WF +
-        r(10, 10, 180, 106, G, MV, 1.5, 2) +
-        r(10, 114, 180, 106, G, MV, 1.5, 2) +
-        l(10, 114, 190, 114, FR, 2.5) +
-        l(10, 108, 190, 108, SE, 1) +
-        `<path d="M100 35 L94 47 L100 44 L106 47Z" fill="${MV}"/>` +
-        l(100, 44, 100, 105, MV, 1.5, '4 2') +
-        `<path d="M100 195 L94 183 L100 186 L106 183Z" fill="${MV}"/>` +
-        l(100, 125, 100, 186, MV, 1.5, '4 2')
+        `<line x1="13" y1="115" x2="187" y2="115" stroke="${FR}" stroke-width="1.5"/>` +
+        // Top sash — slides down (arrow points down)
+        `<path d="M100 14 L95 21 L100 18 L105 21 Z" fill="${MV}"/>` +
+        `<line x1="100" y1="18" x2="100" y2="111" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+        // Bottom sash — slides up (arrow points up)
+        `<path d="M100 216 L95 209 L100 212 L105 209 Z" fill="${MV}"/>` +
+        `<line x1="100" y1="212" x2="100" y2="119" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+        DL
       )
 
     case 'singlehung':
     case 'windowsh':
       return wrap(
         WF +
-        r(10, 10, 180, 106, G, MV, 1.5, 2) +
-        r(10, 114, 180, 106, G, SE, 1.5, 2) +
-        l(10, 114, 190, 114, FR, 2.5) +
-        l(10, 108, 190, 108, SE, 1) +
-        `<path d="M100 35 L94 47 L100 44 L106 47Z" fill="${MV}"/>` +
-        l(100, 44, 100, 105, MV, 1.5, '4 2')
+        `<line x1="13" y1="115" x2="187" y2="115" stroke="${FR}" stroke-width="1.5"/>` +
+        // Top sash — fixed (dashed X in upper half)
+        `<line x1="14" y1="14" x2="186" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
+        `<line x1="186" y1="14" x2="14" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
+        // Bottom sash — slides up
+        `<path d="M100 216 L95 209 L100 212 L105 209 Z" fill="${MV}"/>` +
+        `<line x1="100" y1="212" x2="100" y2="119" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+        DL
       )
 
     case 'casement':
     case 'windowcas':
+      // Left-hinged casement (default)
       return wrap(
         WF +
-        l(20, 20, 20, 215, SE, 1.5) +
-        p('M20 215 Q190 215 190 20', MV, 1.5, 'none', '5 3') +
-        l(20, 20, 190, 20, MV, 1.5, '4 2') +
-        l(20, 215, 190, 20, MV, 1.5) +
-        r(175, 108, 8, 14, SE, SE, 1, 2)
+        `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
+        `<path d="M13 217 Q187 217 187 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="13" y1="217" x2="187" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
+        `<rect x="182" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
+        DL
       )
 
     case 'awning':
     case 'windowawn':
       return wrap(
         WF +
-        l(10, 20, 190, 20, SE, 1.5) +
-        p('M10 20 Q10 215 100 215 Q190 215 190 20', MV, 1.5, 'none', '5 3') +
-        l(10, 20, 100, 215, MV, 1.5) +
-        l(190, 20, 100, 215, MV, 1.5) +
-        r(92, 195, 16, 8, SE, SE, 1, 2)
+        `<line x1="15" y1="15" x2="185" y2="15" stroke="${SE}" stroke-width="1.5"/>` +
+        `<line x1="15" y1="15" x2="100" y2="215" stroke="${MV}" stroke-width="1.2"/>` +
+        `<line x1="185" y1="15" x2="100" y2="215" stroke="${MV}" stroke-width="1.2"/>` +
+        `<path d="M15 215 Q100 195 185 215" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<rect x="94" y="208" width="12" height="5" rx="1.5" fill="${SE}"/>` +
+        DL
       )
 
     case 'hopper':
       return wrap(
         WF +
-        l(10, 210, 190, 210, SE, 1.5) +
-        p('M10 210 Q10 15 100 15 Q190 15 190 210', MV, 1.5, 'none', '5 3') +
-        l(10, 210, 100, 15, MV, 1.5) +
-        l(190, 210, 100, 15, MV, 1.5) +
-        r(92, 15, 16, 8, SE, SE, 1, 2)
+        `<rect x="94" y="15" width="12" height="5" rx="1.5" fill="${SE}"/>` +
+        `<line x1="15" y1="215" x2="185" y2="215" stroke="${SE}" stroke-width="1.5"/>` +
+        `<line x1="15" y1="215" x2="100" y2="65" stroke="${MV}" stroke-width="1.2"/>` +
+        `<line x1="185" y1="215" x2="100" y2="65" stroke="${MV}" stroke-width="1.2"/>` +
+        `<path d="M15 215 Q100 65 185 215" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        DL
       )
 
     case 'slider':
     case 'windowsl':
     case 'windowsliding':
+      // XO: left panel slides right, right panel is fixed
       return wrap(
         WF +
-        l(100, 10, 100, 220, FR, 2.5) +
-        l(115, 20, 185, 200, SE, 1, '3 3') +
-        l(185, 20, 115, 200, SE, 1, '3 3') +
-        r(12, 12, 86, 206, G, MV, 1.5) +
-        `<path d="M60 110 L48 104 L51 110 L48 116Z" fill="${MV}"/>` +
-        l(51, 110, 86, 110, MV, 1.5, '4 2') +
-        r(88, 104, 6, 12, SE, SE, 1, 2)
+        `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        // Left sliding panel
+        `<line x1="15" y1="115" x2="90" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M90 109 L97 115 L90 121 Z" fill="${MV}"/>` +
+        `<rect x="14" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
+        // Right fixed panel
+        dashedX(100, 10, 190, 220) +
+        DL
       )
 
     case 'endvent':
       return wrap(
         WF +
-        l(65, 10, 65, 220, FR, 2) +
-        l(145, 10, 145, 220, FR, 2) +
-        r(12, 12, 51, 206, G, MV, 1.5) +
-        `<path d="M38 110 L26 104 L29 110 L26 116Z" fill="${MV}"/>` +
-        l(29, 110, 61, 110, MV, 1.5, '4 2') +
-        r(148, 12, 51, 206, G, MV, 1.5) +
-        `<path d="M177 110 L189 104 L186 110 L189 116Z" fill="${MV}"/>` +
-        l(186, 110, 151, 110, MV, 1.5, '4 2') +
-        r(67, 12, 76, 206, G, SE, 1)
+        `<line x1="63" y1="10" x2="63" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        `<line x1="147" y1="10" x2="147" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        // Left sliding (→ right)
+        `<line x1="15" y1="115" x2="58" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M58 109 L65 115 L58 121 Z" fill="${MV}"/>` +
+        `<rect x="14" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
+        // Right sliding (← left)
+        `<line x1="152" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M152 109 L145 115 L152 121 Z" fill="${MV}"/>` +
+        `<rect x="181" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
+        // Center fixed panel
+        dashedX(63, 10, 147, 220) +
+        DL
       )
 
     case 'picture':
     case 'windowfix':
     case 'windowpicture':
-      return wrap(
-        WF +
-        l(15, 15, 185, 215, SE, 1.2, '5 3') +
-        l(185, 15, 15, 215, SE, 1.2, '5 3')
-      )
+      return wrap(WF + dashedX(10, 10, 190, 220) + DL)
 
     case 'tiltturn':
     case 'windowtilt':
+      // Left-hinged tilt & turn
       return wrap(
         WF +
-        l(20, 20, 20, 215, SE, 1.5) +
-        l(20, 215, 190, 20, MV, 1.5) +
-        p('M20 215 Q190 215 190 115', MV, 1.5, 'none', '5 3') +
-        c(188, 115, 4, MV) +
-        r(175, 108, 8, 14, SE, SE, 1, 2)
+        `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
+        // Turn: swing arc + diagonal
+        `<path d="M13 217 Q187 217 187 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="13" y1="217" x2="187" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
+        // Tilt: diagonals from top corners to bottom center
+        `<line x1="14" y1="14" x2="100" y2="216" stroke="${MV}" stroke-width="1.2"/>` +
+        `<line x1="186" y1="14" x2="100" y2="216" stroke="${MV}" stroke-width="1.2"/>` +
+        `<rect x="182" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
+        DL
       )
 
     case 'bay':
-    case 'windowbay':
+    case 'windowbay': {
+      const lx1=10, lx2=58, rx1=158, rx2=205
+      const yT=22, yB=218, lean=12
+      const vbH = yB + lean + 40
       return wrap(
-        `<polygon points="15,50 65,35 65,205 15,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        l(15, 135, 65, 120, FR, 1.5) +
-        r(65, 30, 85, 180, G, FR, 2.5) +
-        l(65, 120, 150, 120, FR, 1.5) +
-        l(107, 30, 107, 120, SE, 1.2) +
-        l(107, 120, 107, 210, SE, 1.2) +
-        `<polygon points="150,35 200,50 200,220 150,205" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        l(150, 120, 200, 135, FR, 1.5)
+        `<polygon points="${lx1},${yT+lean} ${lx2},${yT} ${lx2},${yB} ${lx1},${yB+lean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+        dashedX(lx1+4, yT+lean+4, lx2-4, yB-4) +
+        `<rect x="${lx2}" y="${yT}" width="${rx1-lx2}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
+        dashedX(lx2+4, yT+4, rx1-4, yB-4) +
+        `<polygon points="${rx1},${yT} ${rx2},${yT+lean} ${rx2},${yB+lean} ${rx1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+        dashedX(rx1+4, yT+4, rx2-4, yB-4) +
+        bayDimLines(lx1, rx2, yT, yB, lean),
+        `0 0 232 ${vbH}`
       )
+    }
 
     case 'bow':
-    case 'windowbow':
+    case 'windowbow': {
+      const N=5, pw=38  // totalW=190/5=38
+      const yT=22, yB=215, endLean=10
+      let panels = ''
+      for (let i = 0; i < N; i++) {
+        const x1 = 10 + i * pw
+        const x2 = x1 + pw
+        if (i === 0) {
+          panels += `<polygon points="${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+            dashedX(x1+3, yT+endLean+3, x2-3, yB-3)
+        } else if (i === N-1) {
+          panels += `<polygon points="${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+            dashedX(x1+3, yT+3, x2-3, yB-3)
+        } else {
+          panels += `<rect x="${x1}" y="${yT}" width="${pw}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
+            dashedX(x1+3, yT+3, x2-3, yB-3)
+        }
+      }
       return wrap(
-        `<polygon points="15,80 45,45 45,205 15,195" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        r(45, 38, 40, 172, G, FR, 2.5) +
-        r(85, 30, 45, 185, G, FR, 2.5) +
-        r(130, 38, 40, 172, G, FR, 2.5) +
-        `<polygon points="170,45 200,80 200,195 170,205" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        l(15, 140, 45, 135, FR, 1.5) +
-        l(45, 124, 85, 122, FR, 1.5) +
-        l(85, 122, 130, 122, FR, 1.5) +
-        l(130, 122, 170, 124, FR, 1.5) +
-        l(170, 135, 200, 140, FR, 1.5)
+        panels +
+        `<line x1="10" y1="232" x2="200" y2="232" stroke="${SE}" stroke-width="1"/>` +
+        `<line x1="10" y1="227" x2="10" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
+        `<line x1="200" y1="227" x2="200" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
+        `<text x="105" y="248" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">W</text>` +
+        `<line x1="208" y1="${yT}" x2="208" y2="${yB}" stroke="${SE}" stroke-width="1"/>` +
+        `<line x1="204" y1="${yT}" x2="212" y2="${yT}" stroke="${SE}" stroke-width="1.5"/>` +
+        `<line x1="204" y1="${yB}" x2="212" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>` +
+        `<text x="214" y="${Math.round((yT+yB)/2)+4}" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">H</text>`,
+        '0 0 232 255'
       )
+    }
 
     case 'combination':
-    case 'windowcombo':
+    case 'windowcombo': {
+      const lx1=10, lx2=58, rx1=158, rx2=205
+      const yT=22, yB=218, lean=12
+      const vbH = yB + lean + 40
       return wrap(
-        `<polygon points="15,45 65,35 65,210 15,200" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        r(65, 30, 85, 185, G, FR, 2.5) +
-        `<polygon points="150,35 200,45 200,200 150,210" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-        p('M65 120 Q18 95 15 122', MV, 1.2, 'none', '3 2') +
-        p('M150 120 Q197 95 200 122', MV, 1.2, 'none', '3 2')
+        // Left angled panel (casement-l)
+        `<polygon points="${lx1},${yT+lean} ${lx2},${yT} ${lx2},${yB} ${lx1},${yB+lean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+        `<line x1="${lx1+3}" y1="${yT+lean+3}" x2="${lx1+3}" y2="${yB-3}" stroke="${SE}" stroke-width="1.2"/>` +
+        `<path d="M${lx1+3} ${yB-3} Q${lx2-3} ${yB-3} ${lx2-3} ${yT+lean+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="${lx1+3}" y1="${yB-3}" x2="${lx2-3}" y2="${yT+lean+3}" stroke="${MV}" stroke-width="1.2"/>` +
+        // Center panel (fixed)
+        `<rect x="${lx2}" y="${yT}" width="${rx1-lx2}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
+        dashedX(lx2+4, yT+4, rx1-4, yB-4) +
+        // Right angled panel (casement-r)
+        `<polygon points="${rx1},${yT} ${rx2},${yT+lean} ${rx2},${yB+lean} ${rx1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
+        `<line x1="${rx2-3}" y1="${yT+3}" x2="${rx2-3}" y2="${yB-3}" stroke="${SE}" stroke-width="1.2"/>` +
+        `<path d="M${rx2-3} ${yB-3} Q${rx1+3} ${yB-3} ${rx1+3} ${yT+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="${rx2-3}" y1="${yB-3}" x2="${rx1+3}" y2="${yT+3}" stroke="${MV}" stroke-width="1.2"/>` +
+        bayDimLines(lx1, rx2, yT, yB, lean),
+        `0 0 232 ${vbH}`
       )
+    }
 
     case 'special':
     case 'transom':
     case 'windowarch':
       return wrap(
-        p('M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z', G, 2.5, G) +
-        p('M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z', FR, 2.5, 'none')
+        `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+        DL
       )
 
-    // ── Doors ─────────────────────────────────────────────────────
+    // ── Doors ──────────────────────────────────────────────────────────────
+
     case 'entry':
     case 'doorentry':
-      return wrap(
-        DF +
-        r(28, 18, 139, 199, '#F1F5F9', SE, 1.5) +
-        r(36, 26, 123, 78, G, SE, 1) +
-        r(36, 114, 123, 94, G, SE, 1) +
-        c(148, 170, 5, SE) +
-        r(145, 158, 6, 24, SE, SE, 1, 3) +
-        p('M20 225 Q20 10 175 10', MV, 1, 'none', '5 3')
-      )
+      return wrap(doorPanel(10, 10, 190, 220, true) + DL)
 
     case 'doubleentry':
-    case 'doordouble':
+    case 'doordouble': {
+      const cx = 100
       return wrap(
-        r(10, 10, 80, 215, G, FR, 2.5) +
-        r(15, 15, 70, 205, '#F1F5F9', SE, 1) +
-        r(21, 23, 58, 83, G, SE, 1) +
-        r(21, 114, 58, 103, G, SE, 1) +
-        r(120, 10, 80, 215, G, FR, 2.5) +
-        r(125, 15, 70, 205, '#F1F5F9', SE, 1) +
-        r(131, 23, 58, 83, G, SE, 1) +
-        r(131, 114, 58, 103, G, SE, 1) +
-        r(82, 158, 6, 20, SE, SE, 1, 3) +
-        r(107, 158, 6, 20, SE, SE, 1, 3) +
-        p('M100 225 Q10 225 10 120', MV, 1, 'none', '4 3') +
-        p('M100 225 Q190 225 190 120', MV, 1, 'none', '4 3')
+        // Left door — active (hingeLeft=true, swing shown)
+        doorPanel(10, 10, cx, 220, true) +
+        // Right door — inactive (no swing arc)
+        `<rect x="${cx}" y="10" width="${190-cx}" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+        doorHinges(cx, 10, 190, 220, false) +
+        doorKnob(cx, 10, 190, 220, true) +
+        DL
       )
+    }
 
     case 'french':
-    case 'doorfrench':
+    case 'doorfrench': {
+      const cx = 100
       return wrap(
-        r(10, 10, 85, 215, G, FR, 2.5) +
-        r(15, 15, 75, 205, '#F1F5F9', SE, 1) +
-        r(22, 23, 62, 93, G, SE, 1) +
-        r(22, 123, 62, 94, G, SE, 1) +
-        r(115, 10, 85, 215, G, FR, 2.5) +
-        r(120, 15, 75, 205, '#F1F5F9', SE, 1) +
-        r(127, 23, 62, 93, G, SE, 1) +
-        r(127, 123, 62, 94, G, SE, 1) +
-        r(83, 156, 6, 18, SE, SE, 1, 3) +
-        r(106, 156, 6, 18, SE, SE, 1, 3) +
-        p('M100 222 Q10 222 10 120', MV, 1, 'none', '4 3') +
-        p('M100 222 Q190 222 190 120', MV, 1, 'none', '4 3')
+        // Left panel (hingeLeft=true)
+        `<rect x="10" y="10" width="${cx-10}" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+        doorHinges(10, 10, cx, 220, true) +
+        doorKnob(10, 10, cx, 220, false) +
+        swingArc(10, 10, cx, 220, true) +
+        // Right panel (hingeLeft=false)
+        `<rect x="${cx}" y="10" width="${190-cx}" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+        doorHinges(cx, 10, 190, 220, false) +
+        doorKnob(cx, 10, 190, 220, true) +
+        swingArc(cx, 10, 190, 220, false) +
+        DL
       )
+    }
 
     case 'garden':
     case 'doorgarden':
-      return wrap(
-        r(10, 10, 180, 215, G, FR, 2.5) +
-        r(10, 10, 50, 215, G, FR, 2) +
-        l(15, 15, 55, 221, SE, 1, '4 3') +
-        l(55, 15, 15, 221, SE, 1, '4 3') +
-        r(62, 14, 124, 207, '#F1F5F9', SE, 1.5) +
-        r(70, 22, 108, 88, G, SE, 1) +
-        r(70, 118, 108, 97, G, SE, 1) +
-        p('M60 225 Q60 10 190 10', MV, 1, 'none', '5 3')
-      )
+      // Single slab door (same geometry as entry)
+      return wrap(doorPanel(10, 10, 190, 220, true) + DL)
 
     case 'patio':
     case 'doorpatio':
-    case 'doorpatiosl':
+    case 'doorpatiosl': {
+      // XO: fixed left, sliding right
       return wrap(
-        r(10, 10, 180, 215, G, FR, 2.5) +
-        l(100, 10, 100, 225, FR, 2.5) +
-        l(105, 15, 185, 222, SE, 1, '4 3') +
-        l(185, 15, 105, 222, SE, 1, '4 3') +
-        r(12, 12, 86, 211, G, MV, 1.5) +
-        `<path d="M55 118 L43 112 L46 118 L43 124Z" fill="${MV}"/>` +
-        l(46, 118, 85, 118, MV, 1.5, '4 2') +
-        r(87, 112, 6, 16, SE, SE, 1, 2)
+        `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+        `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        dashedX(10, 10, 100, 220) +
+        // Right panel — slides left
+        `<line x1="110" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M110 109 L103 115 L110 121 Z" fill="${MV}"/>` +
+        `<rect x="181" y="107" width="5" height="16" rx="1.5" fill="${SE}"/>` +
+        DL
       )
+    }
 
     case 'storm':
     case 'doorstorm':
       return wrap(
-        DF +
-        r(30, 18, 135, 199, 'none', SE, 1.5, 0) +
-        r(36, 24, 123, 128, G, SE, 1) +
-        r(36, 158, 123, 54, '#F1F5F9', SE, 1) +
-        r(145, 158, 6, 22, SE, SE, 1, 3)
+        `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+        doorHinges(10, 10, 190, 220, true) +
+        doorKnob(10, 10, 190, 220, false) +
+        swingArc(10, 10, 190, 220, true) +
+        DL
       )
 
     case 'interior':
     case 'doorinterior':
     case 'doorint':
       return wrap(
-        r(30, 10, 140, 215, '#F1F5F9', FR, 2.5) +
-        r(40, 20, 120, 88, '#E2E8F0', SE, 1) +
-        r(40, 118, 120, 98, '#E2E8F0', SE, 1) +
-        c(148, 168, 5, SE) +
-        r(145, 156, 6, 22, SE, SE, 1, 3) +
-        p('M30 225 Q30 10 170 10', MV, 1, 'none', '5 3')
+        `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+        doorHinges(10, 10, 190, 220, true) +
+        doorKnob(10, 10, 190, 220, false) +
+        swingArc(10, 10, 190, 220, true) +
+        DL
       )
 
-    // Default — plain glass rectangle
     default:
-      return wrap(WF + l(15, 15, 185, 215, SE, 1.2, '5 3') + l(185, 15, 15, 215, SE, 1.2, '5 3'))
+      return wrap(WF + dashedX(10, 10, 190, 220) + DL)
   }
 }
