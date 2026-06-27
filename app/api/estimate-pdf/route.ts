@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
 
     const [{ data: openings, error: opErr }, { data: company, error: compErr }, { data: priceRows }, { data: subtypeRows }] = await Promise.all([
       admin.from('estimate_openings').select('*').eq('estimate_id', estimateId).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, insurance, logo_url, signature_url, warranty_period, warranty_summary, completion_timeframe, project_manager, interac_email').eq('id', estimate.user_id).maybeSingle(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, company_contact_email, phone, address, city, province, postal, website, licence, gst_hst_number, wsib_number, logo_url, warranty_summary').eq('id', estimate.user_id).maybeSingle(),
       admin.from('price_lists').select('opening_type, custom_label').eq('user_id', estimate.user_id).neq('opening_type', '_sizes'),
       admin.from('window_subtypes').select('type_key, subtype_key, subtype_label').order('sort_order'),
     ])
