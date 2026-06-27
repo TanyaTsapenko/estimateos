@@ -7,6 +7,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { EstimatePDF } from '@/components/pdf/EstimatePDF'
+import { renderDrawingPng } from '@/lib/renderDrawingPng'
 import React from 'react'
 
 export async function GET(req: NextRequest) {
@@ -47,6 +48,15 @@ export async function GET(req: NextRequest) {
     console.log('[estimate-pdf] estimate:', estimate?.id)
     console.log('[estimate-pdf] openings count:', openings?.length)
     console.log('[estimate-pdf] company:', company?.company_name)
+    console.log('[estimate-pdf] rendering drawing PNGs...')
+    const drawingPngs = await Promise.all(
+      (openings || []).map(op =>
+        renderDrawingPng(op, 400, 480).catch(err => {
+          console.warn('[estimate-pdf] drawing render failed for', op.type, err?.message)
+          return ''
+        })
+      )
+    )
     console.log('[estimate-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
@@ -56,6 +66,7 @@ export async function GET(req: NextRequest) {
         company: company || {},
         customLabels,
         subtypesByType,
+        drawingPngs,
       }) as React.ReactElement<DocumentProps>
     )
 

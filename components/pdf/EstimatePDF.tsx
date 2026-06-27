@@ -1,5 +1,4 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
-import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
@@ -48,7 +47,8 @@ const S = StyleSheet.create({
   cardTitle:  { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: NAVY, flex: 1 },
   cardPrice:  { fontSize: 10, fontFamily: 'Helvetica-Bold', color: BLUE },
   cardBody:   { flexDirection: 'row', padding: 10 },
-  svgCol:     { width: 82, marginRight: 12, alignItems: 'center' },
+  drawingCol: { width: 100, marginRight: 12, alignItems: 'center' },
+  drawing:    { width: 100, height: 119 },
   specsCol:   { flex: 1 },
 
   // Spec rows
@@ -137,10 +137,11 @@ export interface EstimatePDFProps {
   company: any
   customLabels?: Record<string, string>
   subtypesByType?: SubtypeMap
+  drawingPngs?: string[]
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType }: EstimatePDFProps) {
+export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType, drawingPngs }: EstimatePDFProps) {
   const depositPct    = estimate.deposit_percent || 0
   const depositAmt    = (estimate.total || 0) * (depositPct / 100)
   const balanceAmt    = (estimate.total || 0) - depositAmt
@@ -241,9 +242,11 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
 
               {/* Card body */}
               <View style={S.cardBody}>
-                {/* SVG drawing */}
-                <View style={S.svgCol}>
-                  <WindowDiagramPdf type={op.type} size={80} />
+                {/* Drawing */}
+                <View style={S.drawingCol}>
+                  {drawingPngs?.[i]
+                    ? <Image src={drawingPngs[i]} style={S.drawing} />
+                    : null}
                 </View>
 
                 {/* Specs */}
