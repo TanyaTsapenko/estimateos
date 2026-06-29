@@ -155,7 +155,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       if (isDouble) {
         return wrap(
           casFrame +
-          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="2"/>` +
           // Left panel — left-hinged
           `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M13 217 Q97 217 97 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
@@ -193,16 +193,39 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     }
 
     case 'awning':
-    case 'windowawn':
+    case 'windowawn': {
+      const sNAwn = sub.replace(/[^a-z]/g, '')
+      const isDoubleAwn  = sNAwn === 'doubleawning'
+      const isAwningFixed = sNAwn === 'awningfixed'
+      const isFixedAwning = sNAwn === 'fixedawning'
+
+      const awningPane = (ax1: number, ay1: number, ax2: number, ay2: number): string => {
+        const cx = Math.round((ax1 + ax2) / 2)
+        const arcOff = (ay2 - ay1 > 150) ? 25 : 16
+        return `<line x1="${ax1+5}" y1="${ay1+5}" x2="${ax2-5}" y2="${ay1+5}" stroke="${SE}" stroke-width="1.5"/>` +
+          `<line x1="${ax1+5}" y1="${ay1+5}" x2="${cx}" y2="${ay2-5}" stroke="${MV}" stroke-width="1.2"/>` +
+          `<line x1="${ax2-5}" y1="${ay1+5}" x2="${cx}" y2="${ay2-5}" stroke="${MV}" stroke-width="1.2"/>` +
+          `<path d="M${ax1+5} ${ay2-5} Q${cx} ${ay2-arcOff} ${ax2-5} ${ay2-5}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+          `<rect x="${cx-6}" y="${ay2-12}" width="12" height="5" rx="1.5" fill="${SE}"/>`
+      }
+
+      if (isDoubleAwn || isAwningFixed || isFixedAwning) {
+        const MY = 115
+        return wrap(
+          WF +
+          `<line x1="13" y1="${MY}" x2="187" y2="${MY}" stroke="${FR}" stroke-width="1.5"/>` +
+          ((isDoubleAwn || isAwningFixed) ? awningPane(10, 10, 190, MY) : dashedX(10, 10, 190, MY)) +
+          ((isDoubleAwn || isFixedAwning) ? awningPane(10, MY, 190, 220) : dashedX(10, MY, 190, 220)) +
+          DL
+        )
+      }
+
       return wrap(
         WF +
-        `<line x1="15" y1="15" x2="185" y2="15" stroke="${SE}" stroke-width="1.5"/>` +
-        `<line x1="15" y1="15" x2="100" y2="215" stroke="${MV}" stroke-width="1.2"/>` +
-        `<line x1="185" y1="15" x2="100" y2="215" stroke="${MV}" stroke-width="1.2"/>` +
-        `<path d="M15 215 Q100 195 185 215" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
-        `<rect x="94" y="208" width="12" height="5" rx="1.5" fill="${SE}"/>` +
+        awningPane(10, 10, 190, 220) +
         DL
       )
+    }
 
     case 'hopper':
       return wrap(
@@ -228,7 +251,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
           dashedX(10, 10, 100, 220) +
           `<line x1="110" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-          `<path d="M110 109 L103 115 L110 121 Z" fill="${MV}"/>` +
+          `<path d="M110 110 L103 115 L110 120 Z" fill="${MV}"/>` +
           `<rect x="181" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
           DL
         )
@@ -240,10 +263,10 @@ export function openingSvgString(op: OpeningForSvg | string): string {
           WF +
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
           `<line x1="15" y1="115" x2="90" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-          `<path d="M90 109 L97 115 L90 121 Z" fill="${MV}"/>` +
+          `<path d="M90 110 L97 115 L90 120 Z" fill="${MV}"/>` +
           `<rect x="14" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
           `<line x1="110" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-          `<path d="M110 109 L103 115 L110 121 Z" fill="${MV}"/>` +
+          `<path d="M110 110 L103 115 L110 120 Z" fill="${MV}"/>` +
           `<rect x="181" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
           DL
         )
@@ -254,7 +277,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         WF +
         `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
         `<line x1="15" y1="115" x2="90" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-        `<path d="M90 109 L97 115 L90 121 Z" fill="${MV}"/>` +
+        `<path d="M90 110 L97 115 L90 120 Z" fill="${MV}"/>` +
         `<rect x="14" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
         dashedX(100, 10, 190, 220) +
         DL
@@ -262,17 +285,18 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     }
 
     case 'endvent':
+      // 3-panel: sliding | fixed | sliding — panels 60px wide, dividers at x=70 and x=130
       return wrap(
         WF +
-        `<line x1="63" y1="10" x2="63" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
-        `<line x1="147" y1="10" x2="147" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
-        `<line x1="15" y1="115" x2="58" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-        `<path d="M58 109 L65 115 L58 121 Z" fill="${MV}"/>` +
+        `<line x1="70" y1="10" x2="70" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        `<line x1="130" y1="10" x2="130" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+        `<line x1="15" y1="115" x2="60" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M60 110 L67 115 L60 120 Z" fill="${MV}"/>` +
         `<rect x="14" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
-        `<line x1="152" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-        `<path d="M152 109 L145 115 L152 121 Z" fill="${MV}"/>` +
+        `<line x1="140" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+        `<path d="M140 110 L133 115 L140 120 Z" fill="${MV}"/>` +
         `<rect x="181" y="108" width="5" height="14" rx="1.5" fill="${SE}"/>` +
-        dashedX(63, 10, 147, 220) +
+        dashedX(70, 10, 130, 220) +
         DL
       )
 
