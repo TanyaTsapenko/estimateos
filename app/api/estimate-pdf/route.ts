@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
     const drawingPngs = await Promise.all(
       (openings || []).map(op =>
         renderDrawingPng(op, 600, 720).catch(err => {
-          console.warn('[estimate-pdf] drawing render failed for', op.type, err?.message)
+          console.error('[estimate-pdf] drawing render FAILED for', op.type, err?.message, err?.stack)
           return ''
         })
       )
