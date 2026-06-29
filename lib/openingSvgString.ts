@@ -125,9 +125,12 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       )
 
     case 'singlehung':
-    case 'windowsh':
+    case 'windowsh': {
+      const shpFrame = shp.includes('arch')
+        ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : WF
       return wrap(
-        WF +
+        shpFrame +
         `<line x1="13" y1="115" x2="187" y2="115" stroke="${FR}" stroke-width="1.5"/>` +
         `<line x1="14" y1="14" x2="186" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
         `<line x1="186" y1="14" x2="14" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
@@ -135,6 +138,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         `<line x1="100" y1="212" x2="100" y2="119" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
         DL
       )
+    }
 
     case 'casement':
     case 'windowcas': {
@@ -142,11 +146,15 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isFixed  = sub.includes('fixed') || sub.includes('picture')
       const isDouble = sub.includes('double') || sub.includes('twin') || sub === 'oo' || sub === 'lr'
 
-      if (isFixed) return wrap(WF + dashedX(10, 10, 190, 220) + DL)
+      const casFrame = shp.includes('arch')
+        ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : WF
+
+      if (isFixed) return wrap(casFrame + dashedX(10, 10, 190, 220) + DL)
 
       if (isDouble) {
         return wrap(
-          WF +
+          casFrame +
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
           // Left panel — left-hinged
           `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
@@ -164,7 +172,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
       if (isRight) {
         return wrap(
-          WF +
+          casFrame +
           `<line x1="187" y1="13" x2="187" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M187 217 Q13 217 13 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
           `<line x1="187" y1="217" x2="13" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
@@ -175,7 +183,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
       // Default: left-hinged
       return wrap(
-        WF +
+        casFrame +
         `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
         `<path d="M13 217 Q187 217 187 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
         `<line x1="13" y1="217" x2="187" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
@@ -271,6 +279,31 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'picture':
     case 'windowfix':
     case 'windowpicture':
+      if (shp.includes('triangle') || shp.includes('peak') || shp.includes('gable')) {
+        return wrap(
+          `<polygon points="100,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          dashedX(30, 100, 170, 220) + DL
+        )
+      }
+      if (shp.includes('arch')) {
+        return wrap(
+          `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          dashedX(10, 100, 190, 220) + DL
+        )
+      }
+      if (shp.includes('circle') || shp.includes('oval')) {
+        return wrap(
+          `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          DL
+        )
+      }
+      if (shp.includes('halfround') || shp.includes('halfcircle')) {
+        return wrap(
+          `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          dashedX(10, 130, 190, 220) + DL
+        )
+      }
       return wrap(WF + dashedX(10, 10, 190, 220) + DL)
 
     case 'tiltturn':
