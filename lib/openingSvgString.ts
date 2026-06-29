@@ -151,8 +151,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isCircle    = shp.includes('circle') || shp.includes('oval')
 
       const casFrame = isHalfround
-        ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-          `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        ? `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
         : isArch
           ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
           : isCircle
@@ -160,7 +159,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
             : WF
 
       const casClipShape = isHalfround
-        ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z"/><rect x="10" y="130" width="180" height="90"/>`
+        ? `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z"/>`
         : isArch
           ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z"/>`
           : isCircle
@@ -346,8 +345,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       }
       if (shp.includes('halfround') || shp.includes('halfcircle')) {
         return wrap(
-          `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-          `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           DL
         )
       }
@@ -444,8 +442,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'windowarch': {
       if (shp.includes('halfround') || shp.includes('halfcircle') || shp === 'half' || shp.includes('semi')) {
         return wrap(
-          `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-          `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           DL
         )
       }
