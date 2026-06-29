@@ -97,6 +97,24 @@ function doorPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: bo
     swingArc(x1, y1, x2, y2, hingeLeft)
 }
 
+// Casement-style door panel (used by garden/french doors in v2)
+function frenchPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean): string {
+  const my = Math.round((y1 + y2) / 2)
+  const base = `<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>`
+  if (hingeLeft) {
+    return base +
+      `<line x1="${x1+3}" y1="${y1+3}" x2="${x1+3}" y2="${y2-3}" stroke="${SE}" stroke-width="1.5"/>` +
+      `<path d="M${x1+3} ${y2-3} Q${x2-3} ${y2-3} ${x2-3} ${y1+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+      `<line x1="${x1+3}" y1="${y2-3}" x2="${x2-3}" y2="${y1+3}" stroke="${MV}" stroke-width="1.2"/>` +
+      `<rect x="${x2-10}" y="${my-10}" width="6" height="20" rx="2" fill="${SE}"/>`
+  }
+  return base +
+    `<line x1="${x2-3}" y1="${y1+3}" x2="${x2-3}" y2="${y2-3}" stroke="${SE}" stroke-width="1.5"/>` +
+    `<path d="M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+    `<line x1="${x2-3}" y1="${y2-3}" x2="${x1+3}" y2="${y1+3}" stroke="${MV}" stroke-width="1.2"/>` +
+    `<rect x="${x1+4}" y="${my-10}" width="6" height="20" rx="2" fill="${SE}"/>`
+}
+
 export function openingSvgString(op: OpeningForSvg | string): string {
   if (typeof op === 'string') op = { type: op }
 
@@ -142,9 +160,10 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'casement':
     case 'windowcas': {
-      const isRight  = sub.includes('right') || sub === 'r' || (sub.length === 1 && sub === 'r')
+      const isRight  = sub.includes('right') && !sub.includes('french')
       const isFixed  = sub.includes('fixed') || sub.includes('picture')
-      const isDouble = sub.includes('double') || sub.includes('twin') || sub === 'oo' || sub === 'lr'
+      const isFrench = sub === 'frenchcasement'
+      const isDouble = sub.includes('double') || sub.includes('twin') || sub === 'oo' || sub === 'lr' || isFrench
 
       const isHalfround = shp.includes('halfround') || shp.includes('halfcircle') || shp === 'semi'
       const isArch      = shp.includes('arch')
@@ -175,7 +194,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         return wrap(
           casDefs + casFrame +
           `<g${CL}>` +
-          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="2"/>` +
+          (!isFrench ? `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="2"/>` : '') +
           `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M13 217 Q97 217 97 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
           `<line x1="13" y1="217" x2="97" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
@@ -368,7 +387,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'bay':
     case 'windowbay': {
       const angle = parseInt(op.bay_angle ?? '45') || 45
-      const lean  = angle === 90 ? 0 : angle === 30 ? 7 : angle === 60 ? 18 : 12
+      const lean  = angle === 90 ? 30 : angle === 30 ? 5 : angle === 60 ? 20 : 12
       const lx1=10, lx2=58, rx1=158, rx2=205
       const yT=22, yB=218
       const vbH = yB + lean + 40
@@ -483,8 +502,25 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'entry':
     case 'doorentry': {
-      const hingeLeft = !dir.includes('right')
-      return wrap(doorPanel(10, 10, 190, 220, hingeLeft) + DL)
+      const hingeLeft   = !dir.includes('right')
+      const ENTRY_SW    = 30
+      const ENTRY_TH    = 36
+      const hasTrans    = sub.includes('transom')
+      const hasDoubSide = sub.includes('double') || (sub.includes('sidelite') && hasTrans)
+      const hasLeft     = sub.includes('left') || hasDoubSide
+      const hasRight    = sub.includes('right') || hasDoubSide
+
+      const doorY1 = hasTrans ? 10 + ENTRY_TH : 10
+      const doorX1 = hasLeft  ? 10 + ENTRY_SW : 10
+      const doorX2 = hasRight ? 190 - ENTRY_SW : 190
+
+      let body = ''
+      if (hasTrans) body += sidelite(10, 10, 190, doorY1)
+      if (hasLeft)  body += sidelite(10, doorY1, doorX1, 220)
+      if (hasRight) body += sidelite(doorX2, doorY1, 190, 220)
+      body += doorPanel(doorX1, doorY1, doorX2, 220, hingeLeft)
+
+      return wrap(body + DL)
     }
 
     case 'doubleentry':
@@ -523,23 +559,17 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const hasRight   = !!op.sidelight_right
       const hasTransom = !!op.transom_above
 
-      const doorY1 = hasTransom ? 55 : 10
+      const GDN_SW = 28
+      const GDN_TH = 36
+      const doorX1 = hasLeft  ? 10 + GDN_SW : 10
+      const doorX2 = hasRight ? 190 - GDN_SW : 190
+      const doorY1 = hasTransom ? 10 + GDN_TH : 10
+
       let body = ''
-
-      if (hasTransom) {
-        body += `<rect x="10" y="10" width="180" height="40" rx="2" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
-          dashedX(10, 10, 190, 50)
-      }
-
-      if (hasLeft && hasRight) {
-        body += sidelite(10, doorY1, 60, 220) + doorPanel(60, doorY1, 140, 220, hingeLeft) + sidelite(140, doorY1, 190, 220)
-      } else if (hasLeft) {
-        body += sidelite(10, doorY1, 65, 220) + doorPanel(65, doorY1, 190, 220, hingeLeft)
-      } else if (hasRight) {
-        body += doorPanel(10, doorY1, 135, 220, hingeLeft) + sidelite(135, doorY1, 190, 220)
-      } else {
-        body += doorPanel(10, doorY1, 190, 220, hingeLeft)
-      }
+      if (hasTransom) body += sidelite(10, 10, 190, doorY1)
+      if (hasLeft)    body += sidelite(10, doorY1, doorX1, 220)
+      if (hasRight)   body += sidelite(doorX2, doorY1, 190, 220)
+      body += frenchPanel(doorX1, doorY1, doorX2, 220, hingeLeft)
 
       return wrap(body + DL)
     }
@@ -547,13 +577,50 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'patio':
     case 'doorpatio':
     case 'doorpatiosl': {
-      const isOX = sub.startsWith('ox') && !sub.startsWith('xo')
-      const isXX = sub === 'xx'
+      const isOX   = sub === 'ox'
+      const isXX   = sub === 'xx'
+      const isXOX  = sub === 'xox'
+      const isOXXO = sub === 'oxxo'
+      const patioFrame = `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+
+      if (isXOX) {
+        // XOX: fixed | sliding→ | fixed  (pw=60, dividers at 70 and 130)
+        return wrap(
+          patioFrame +
+          `<line x1="70" y1="10" x2="70" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="130" y1="10" x2="130" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          dashedX(10, 10, 70, 220) +
+          `<line x1="75" y1="115" x2="120" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+          `<path d="M120 109 L127 115 L120 121 Z" fill="${MV}"/>` +
+          `<rect x="74" y="107" width="5" height="16" rx="1.5" fill="${SE}"/>` +
+          dashedX(130, 10, 190, 220) +
+          DL
+        )
+      }
+
+      if (isOXXO) {
+        // OXXO: sliding→ | fixed | fixed | ←sliding  (pw=45, dividers at 55, 100, 145)
+        return wrap(
+          patioFrame +
+          `<line x1="55" y1="10" x2="55" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="145" y1="10" x2="145" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="15" y1="115" x2="45" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+          `<path d="M45 109 L52 115 L45 121 Z" fill="${MV}"/>` +
+          `<rect x="14" y="107" width="5" height="16" rx="1.5" fill="${SE}"/>` +
+          dashedX(55, 10, 100, 220) +
+          dashedX(100, 10, 145, 220) +
+          `<line x1="155" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+          `<path d="M155 109 L148 115 L155 121 Z" fill="${MV}"/>` +
+          `<rect x="181" y="107" width="5" height="16" rx="1.5" fill="${SE}"/>` +
+          DL
+        )
+      }
 
       if (isOX) {
-        // OX: left slides right, right fixed
+        // OX: left panel slides right, right panel fixed
         return wrap(
-          `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          patioFrame +
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
           `<line x1="15" y1="115" x2="90" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
           `<path d="M90 109 L97 115 L90 121 Z" fill="${MV}"/>` +
@@ -566,7 +633,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       if (isXX) {
         // XX: both panels slide toward center
         return wrap(
-          `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          patioFrame +
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
           `<line x1="15" y1="115" x2="90" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
           `<path d="M90 109 L97 115 L90 121 Z" fill="${MV}"/>` +
@@ -578,9 +645,9 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         )
       }
 
-      // Default: XO — fixed left, sliding right
+      // Default: XO — left panel fixed, right panel slides left
       return wrap(
-        `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+        patioFrame +
         `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
         dashedX(10, 10, 100, 220) +
         `<line x1="110" y1="115" x2="185" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
