@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
       )
     )
 
+    console.log('[estimate-pdf] drawingPngs:', drawingPngs.map(p => p ? p.substring(0, 50) : 'EMPTY'))
     console.log('[estimate-pdf] calling renderToBuffer...')
     const pdfBuffer = await renderToBuffer(
       React.createElement(EstimatePDF, {
