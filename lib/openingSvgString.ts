@@ -146,54 +146,71 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isFixed  = sub.includes('fixed') || sub.includes('picture')
       const isDouble = sub.includes('double') || sub.includes('twin') || sub === 'oo' || sub === 'lr'
 
-      const casFrame =
-        (shp.includes('halfround') || shp.includes('halfcircle') || shp === 'semi')
-          ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-            `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-          : shp.includes('arch')
-            ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-            : (shp.includes('circle') || shp.includes('oval'))
-              ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-              : WF
+      const isHalfround = shp.includes('halfround') || shp.includes('halfcircle') || shp === 'semi'
+      const isArch      = shp.includes('arch')
+      const isCircle    = shp.includes('circle') || shp.includes('oval')
 
-      if (isFixed) return wrap(casFrame + dashedX(10, 10, 190, 220) + DL)
+      const casFrame = isHalfround
+        ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isArch
+          ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+          : isCircle
+            ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+            : WF
+
+      const casClipShape = isHalfround
+        ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z"/><rect x="10" y="130" width="180" height="90"/>`
+        : isArch
+          ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z"/>`
+          : isCircle
+            ? `<ellipse cx="100" cy="115" rx="80" ry="100"/>`
+            : `<rect x="10" y="10" width="180" height="210"/>`
+      const casDefs = `<defs><clipPath id="cf-clip">${casClipShape}</clipPath></defs>`
+      const CL = ` clip-path="url(#cf-clip)"`
+
+      if (isFixed) return wrap(casDefs + casFrame + `<g${CL}>` + dashedX(10, 10, 190, 220) + `</g>` + DL)
 
       if (isDouble) {
         return wrap(
-          casFrame +
+          casDefs + casFrame +
+          `<g${CL}>` +
           `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="2"/>` +
-          // Left panel — left-hinged
           `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M13 217 Q97 217 97 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
           `<line x1="13" y1="217" x2="97" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
           `<rect x="92" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
-          // Right panel — right-hinged
           `<line x1="187" y1="13" x2="187" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M187 217 Q103 217 103 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
           `<line x1="187" y1="217" x2="103" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
           `<rect x="103" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
+          `</g>` +
           DL
         )
       }
 
       if (isRight) {
         return wrap(
-          casFrame +
+          casDefs + casFrame +
+          `<g${CL}>` +
           `<line x1="187" y1="13" x2="187" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
           `<path d="M187 217 Q13 217 13 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
           `<line x1="187" y1="217" x2="13" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
           `<rect x="13" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
+          `</g>` +
           DL
         )
       }
 
       // Default: left-hinged
       return wrap(
-        casFrame +
+        casDefs + casFrame +
+        `<g${CL}>` +
         `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
         `<path d="M13 217 Q187 217 187 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
         `<line x1="13" y1="217" x2="187" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
         `<rect x="182" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
+        `</g>` +
         DL
       )
     }
