@@ -146,9 +146,15 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isFixed  = sub.includes('fixed') || sub.includes('picture')
       const isDouble = sub.includes('double') || sub.includes('twin') || sub === 'oo' || sub === 'lr'
 
-      const casFrame = shp.includes('arch')
-        ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-        : WF
+      const casFrame =
+        (shp.includes('halfround') || shp.includes('halfcircle') || shp === 'semi')
+          ? `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+            `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+          : shp.includes('arch')
+            ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+            : (shp.includes('circle') || shp.includes('oval'))
+              ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+              : WF
 
       if (isFixed) return wrap(casFrame + dashedX(10, 10, 190, 220) + DL)
 
