@@ -282,13 +282,13 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       if (shp.includes('triangle') || shp.includes('peak') || shp.includes('gable')) {
         return wrap(
           `<polygon points="100,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
-          dashedX(30, 100, 170, 220) + DL
+          DL
         )
       }
       if (shp.includes('arch')) {
         return wrap(
           `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-          dashedX(10, 100, 190, 220) + DL
+          DL
         )
       }
       if (shp.includes('circle') || shp.includes('oval')) {
@@ -301,7 +301,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         return wrap(
           `<path d="M10 150 L10 130 Q10 10 100 10 Q190 10 190 130 L190 150 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           `<rect x="10" y="130" width="180" height="90" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-          dashedX(10, 130, 190, 220) + DL
+          DL
         )
       }
       return wrap(WF + dashedX(10, 10, 190, 220) + DL)
