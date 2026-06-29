@@ -151,7 +151,8 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isCircle    = shp.includes('circle') || shp.includes('oval')
 
       const casFrame = isHalfround
-        ? `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        ? `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${FR}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<path d="M13 220 L13 130 Q13 16 100 16 Q187 16 187 130 L187 220 Z" fill="${G}" stroke="none"/>`
         : isArch
           ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
           : isCircle
