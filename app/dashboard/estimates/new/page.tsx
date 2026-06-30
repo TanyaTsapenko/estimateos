@@ -47,7 +47,6 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
   else if (glassKind === 'frosted') glass = 'frosted'
   else if (glassKind === 'tinted')  glass = 'tinted'
 
-  console.log('bay/bow save:', { sideUnit: v.sideUnit, centerWindowType: v.centerWindowType, panelType: v.panelType, openMode: v.openMode })
   const unitCost  = Math.round(computePrice({ ...op, vals: { ...v, qty: 1 } }, custom) * 100) / 100
   const totalCost = Math.round(computePrice(op, custom) * 100) / 100
 
