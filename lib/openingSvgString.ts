@@ -23,6 +23,7 @@ export type OpeningForSvg = {
   center_window_type?: string | null
   side_unit?: string | null
   panel_type?: string | null
+  open_mode?: string | null
 }
 
 const WF = `<rect x="10" y="10" width="180" height="210" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
@@ -147,6 +148,35 @@ function panelIndicator(style: string, ix1: number, iy1: number, ix2: number, iy
   // default: fixed (dashed X)
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>` +
     `<line x1="${x2}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>`
+}
+
+function tiltTurnPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean, openMode: string): string {
+  const mx = Math.round((x1 + x2) / 2)
+  const my = Math.round((y1 + y2) / 2)
+  const om = openMode.toLowerCase().replace(/\s/g, '')
+  const showTurn = om !== 'tiltonly'
+  const showTilt = om !== 'turnonly'
+  let s = ''
+  if (hingeLeft) {
+    if (showTurn)
+      s += `<line x1="${x1+3}" y1="${y1+3}" x2="${x1+3}" y2="${y2-3}" stroke="${SE}" stroke-width="1.5"/>` +
+        `<path d="M${x1+3} ${y2-3} Q${x2-3} ${y2-3} ${x2-3} ${y1+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="${x1+3}" y1="${y2-3}" x2="${x2-3}" y2="${y1+3}" stroke="${MV}" stroke-width="1.2"/>`
+    if (showTilt)
+      s += `<line x1="${x1+4}" y1="${y1+4}" x2="${mx}" y2="${y2-4}" stroke="${MV}" stroke-width="1.2"/>` +
+        `<line x1="${x2-4}" y1="${y1+4}" x2="${mx}" y2="${y2-4}" stroke="${MV}" stroke-width="1.2"/>`
+    s += `<rect x="${x2-8}" y="${my-6}" width="5" height="12" rx="1.5" fill="${SE}"/>`
+  } else {
+    if (showTurn)
+      s += `<line x1="${x2-3}" y1="${y1+3}" x2="${x2-3}" y2="${y2-3}" stroke="${SE}" stroke-width="1.5"/>` +
+        `<path d="M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+        `<line x1="${x2-3}" y1="${y2-3}" x2="${x1+3}" y2="${y1+3}" stroke="${MV}" stroke-width="1.2"/>`
+    if (showTilt)
+      s += `<line x1="${x1+4}" y1="${y1+4}" x2="${mx}" y2="${y2-4}" stroke="${MV}" stroke-width="1.2"/>` +
+        `<line x1="${x2-4}" y1="${y1+4}" x2="${mx}" y2="${y2-4}" stroke="${MV}" stroke-width="1.2"/>`
+    s += `<rect x="${x1+3}" y="${my-6}" width="5" height="12" rx="1.5" fill="${SE}"/>`
+  }
+  return s
 }
 
 function bayStyle(unit: string, flip: boolean): string {
@@ -433,17 +463,20 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       return wrap(WF + dashedX(10, 10, 190, 220) + DL)
 
     case 'tiltturn':
-    case 'windowtilt':
-      return wrap(
-        WF +
-        `<line x1="13" y1="13" x2="13" y2="217" stroke="${SE}" stroke-width="1.5"/>` +
-        `<path d="M13 217 Q187 217 187 13" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
-        `<line x1="13" y1="217" x2="187" y2="13" stroke="${MV}" stroke-width="1.2"/>` +
-        `<line x1="14" y1="14" x2="100" y2="216" stroke="${MV}" stroke-width="1.2"/>` +
-        `<line x1="186" y1="14" x2="100" y2="216" stroke="${MV}" stroke-width="1.2"/>` +
-        `<rect x="182" y="109" width="5" height="12" rx="1.5" fill="${SE}"/>` +
-        DL
-      )
+    case 'windowtilt': {
+      const hingeLeft = dir.includes('left')
+      const isDouble  = sub.includes('double')
+      const om        = op.open_mode ?? 'Tilt & Turn'
+      let body = WF
+      if (isDouble) {
+        body += tiltTurnPanel(10, 10, 100, 220, true,  om)
+        body += `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="2"/>`
+        body += tiltTurnPanel(100, 10, 190, 220, false, om)
+      } else {
+        body += tiltTurnPanel(10, 10, 190, 220, hingeLeft, om)
+      }
+      return wrap(body + DL)
+    }
 
     case 'bay':
     case 'windowbay': {
