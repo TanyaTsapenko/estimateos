@@ -847,7 +847,51 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'interior':
     case 'doorinterior':
     case 'doorint': {
-      const hingeLeft = !dir.includes('right')
+      const hingeLeft  = !dir.includes('right')
+      const slidesLeft = hingeLeft
+
+      if (sub === 'double') {
+        return wrap(
+          `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          doorHinges(10, 10, 100, 220, true)   + doorKnob(10, 10, 100, 220, false) + swingArc(10, 10, 100, 220, true) +
+          doorHinges(100, 10, 190, 220, false)  + doorKnob(100, 10, 190, 220, true) + swingArc(100, 10, 190, 220, false) +
+          DL
+        )
+      }
+
+      if (sub === 'pocket') {
+        const wall = slidesLeft
+          ? `<rect x="2" y="4" width="10" height="222" rx="1" fill="${SE}" opacity="0.35"/>`
+          : `<rect x="188" y="4" width="10" height="222" rx="1" fill="${SE}" opacity="0.35"/>`
+        const handle = slidesLeft
+          ? `<rect x="14" y="105" width="6" height="20" rx="2" fill="${SE}"/>`
+          : `<rect x="180" y="105" width="6" height="20" rx="2" fill="${SE}"/>`
+        const arrow = slidesLeft
+          ? `<line x1="110" y1="115" x2="28" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+            `<path d="M28 109 L18 115 L28 121 Z" fill="${MV}"/>`
+          : `<line x1="90" y1="115" x2="172" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
+            `<path d="M172 109 L182 115 L172 121 Z" fill="${MV}"/>`
+        return wrap(
+          wall +
+          `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+          handle + arrow + DL
+        )
+      }
+
+      if (sub === 'bifold') {
+        return wrap(
+          `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<line x1="100" y1="10" x2="100" y2="220" stroke="${FR}" stroke-width="1.5"/>` +
+          `<line x1="15" y1="215" x2="100" y2="15" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2"/>` +
+          `<line x1="185" y1="215" x2="100" y2="15" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2"/>` +
+          `<path d="M82 15 Q100 30 118 15" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2" fill="none"/>` +
+          `<circle cx="100" cy="15" r="3" fill="${SE}"/>` +
+          DL
+        )
+      }
+
+      // Single (default)
       return wrap(
         `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
         doorHinges(10, 10, 190, 220, hingeLeft) +
