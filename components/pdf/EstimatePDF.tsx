@@ -49,7 +49,7 @@ const S = StyleSheet.create({
   cardBody:   { flexDirection: 'row', padding: 10 },
   drawingCol: { width: 212, marginRight: 2 },
   drawing:    { width: 180, height: 216 },
-  dimLblW:    { width: 180, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569', marginTop: 1 },
+  dimLblW:    { width: 180, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569', marginTop: -2 },
   dimLblH:    { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
   specsCol:   { flex: 1 },
 
