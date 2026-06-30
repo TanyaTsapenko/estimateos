@@ -1,5 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
+import { AspectBox } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const SIDELITE_W = 28
@@ -137,8 +138,9 @@ export function FrenchDoorDrawing({ sub, doorSwing, activePanel, astragal, glass
   const astragalDash = astragal === 'Removable Astragal' ? '6 3' : undefined
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {isSingle ? (
         <FrenchDoorPanel
@@ -177,6 +179,7 @@ export function FrenchDoorDrawing({ sub, doorSwing, activePanel, astragal, glass
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -207,8 +210,9 @@ export function GardenDoorDrawing({ doorSwing, glassSize, sidelights, transomAbo
   const doorY1 = hasTransom ? Y1 + TRANSOM_H : Y1
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {/* Transom (spans full X1–X2 width) */}
       {hasTransom && transomAbove === 'Arched' ? (
@@ -231,5 +235,6 @@ export function GardenDoorDrawing({ doorSwing, glassSize, sidelights, transomAbo
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }

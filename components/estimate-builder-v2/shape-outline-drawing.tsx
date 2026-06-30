@@ -1,7 +1,7 @@
 'use client'
 import type { ReactElement } from 'react'
 import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
-import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
+import { AspectBox, GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 // Drawing bounds (consistent with winDims in WindowDiagram)
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
@@ -144,8 +144,9 @@ export function ShapeOutlineDrawing({
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto',
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block',
         ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 
       <defs>
@@ -199,5 +200,6 @@ export function ShapeOutlineDrawing({
       <line x1="193" y1="220" x2="201" y2="220" stroke={SEC} strokeWidth="1.5"/>
       <text x="204" y="119" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
     </svg>
+    </AspectBox>
   )
 }

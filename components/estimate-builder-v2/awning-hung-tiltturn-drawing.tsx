@@ -1,7 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
-import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
+import { AspectBox, GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115  // (Y1 + Y2) / 2
@@ -74,8 +74,9 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
   const isMulti = isDouble || isAwningFixed || isFixedAwning
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
@@ -101,6 +102,7 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
       {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>}
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -125,8 +127,9 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
       <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
@@ -147,6 +150,7 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -179,8 +183,9 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
   const bottomOp = bottomSashOperable !== false
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
@@ -210,6 +215,7 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -286,8 +292,9 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
   const hingeLeft = (openDir ?? 'Right').toLowerCase() === 'left'
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
@@ -306,5 +313,6 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }

@@ -1,6 +1,20 @@
 'use client'
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 import { GLASS, FRAME } from '@/components/WindowDiagram'
+
+export function AspectBox({ children, ratio = 255 / 215, maxW = 240 }: {
+  children: ReactNode
+  ratio?: number
+  maxW?: number
+}) {
+  return (
+    <div style={{ position: 'relative', paddingBottom: `${(ratio * 100).toFixed(2)}%`, maxWidth: maxW, margin: '0 auto' }}>
+      <div style={{ position: 'absolute', inset: 0 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export function glassColor(glassType?: string): string {
   switch (glassType) {

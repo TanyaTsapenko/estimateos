@@ -1,6 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { DoorPanelLines } from '@/lib/v2/svgHelpers'
+import { AspectBox, DoorPanelLines } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const SIDELITE_W = 30
@@ -189,14 +189,16 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, width
   })
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
       {transom && (
         <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>
       )}
       {panels}
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -227,8 +229,9 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
   const cx     = (doorX1 + doorX2) / 2
 
   return (
-    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {/* Transom */}
       {hasTransom && <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>}
@@ -257,5 +260,6 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
+    </AspectBox>
   )
 }

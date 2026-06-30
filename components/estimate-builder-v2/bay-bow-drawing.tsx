@@ -1,6 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { GridOverlay, glassColor } from '@/lib/v2/svgHelpers'
+import { AspectBox, GridOverlay, glassColor } from '@/lib/v2/svgHelpers'
 
 type PanelStyle = 'fixed' | 'casement-l' | 'casement-r' | 'awning' | 'singleHung' | 'doubleHung'
 
@@ -121,8 +121,9 @@ export function BayDrawing({
   const vbH  = yB + lean + 40
 
   return (
-    <svg viewBox={`0 0 232 ${vbH}`} width={232} height={vbH} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 260, height: 'auto', aspectRatio: `232/${vbH}`, display: 'block', margin: '0 auto' }}>
+    <AspectBox ratio={vbH / 232} maxW={260}>
+    <svg viewBox={`0 0 232 ${vbH}`} fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {/* Left side panel */}
       <polygon points={leftPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
@@ -165,6 +166,7 @@ export function BayDrawing({
       <line x1="207" y1={yB} x2="215" y2={yB} stroke={SEC} strokeWidth="1.5"/>
       <text x="217" y={Math.round((yT + yB) / 2) + 4} textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
     </svg>
+    </AspectBox>
   )
 }
 
@@ -238,8 +240,9 @@ export function BowDrawing({
   const gridX2 = 10 + (N - 1) * pw
 
   return (
-    <svg viewBox="0 0 232 255" width={232} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 260, height: 'auto', aspectRatio: '232/255', display: 'block', margin: '0 auto' }}>
+    <AspectBox ratio={255 / 232} maxW={260}>
+    <svg viewBox="0 0 232 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', height: '100%', display: 'block' }}>
 
       {panels}
       {uid && N > 2 && (
@@ -258,5 +261,6 @@ export function BowDrawing({
       <line x1="204" y1={yB} x2="212" y2={yB} stroke={SEC} strokeWidth="1.5"/>
       <text x="214" y={Math.round((yT + yB) / 2) + 4} textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
     </svg>
+    </AspectBox>
   )
 }
