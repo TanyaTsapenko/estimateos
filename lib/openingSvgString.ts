@@ -29,11 +29,11 @@ function makeDimLines(wLabel: string, hLabel: string): string {
   return `<line x1="10" y1="226" x2="190" y2="226" stroke="${SE}" stroke-width="1"/>` +
     `<line x1="10" y1="221" x2="10" y2="231" stroke="${SE}" stroke-width="1.5"/>` +
     `<line x1="190" y1="221" x2="190" y2="231" stroke="${SE}" stroke-width="1.5"/>` +
-    `<text x="100" y="243" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
+    `<text x="100" y="243" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
     `<line x1="197" y1="10" x2="197" y2="220" stroke="${SE}" stroke-width="1"/>` +
     `<line x1="193" y1="10" x2="201" y2="10" stroke="${SE}" stroke-width="1.5"/>` +
     `<line x1="193" y1="220" x2="201" y2="220" stroke="${SE}" stroke-width="1.5"/>` +
-    `<text x="204" y="119" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`
+    `<text x="204" y="119" text-anchor="start" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`
 }
 
 function bayDimLines(lx1: number, rx2: number, yT: number, yB: number, lean: number, wLabel: string, hLabel: string): string {
@@ -42,11 +42,11 @@ function bayDimLines(lx1: number, rx2: number, yT: number, yB: number, lean: num
   return `<line x1="${lx1}" y1="${dimY}" x2="${rx2}" y2="${dimY}" stroke="${SE}" stroke-width="1"/>` +
     `<line x1="${lx1}" y1="${dimY-5}" x2="${lx1}" y2="${dimY+5}" stroke="${SE}" stroke-width="1.5"/>` +
     `<line x1="${rx2}" y1="${dimY-5}" x2="${rx2}" y2="${dimY+5}" stroke="${SE}" stroke-width="1.5"/>` +
-    `<text x="${Math.round((lx1+rx2)/2)}" y="${dimY+16}" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
+    `<text x="${Math.round((lx1+rx2)/2)}" y="${dimY+16}" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
     `<line x1="${rx2+6}" y1="${yT}" x2="${rx2+6}" y2="${yB}" stroke="${SE}" stroke-width="1"/>` +
     `<line x1="${rx2+2}" y1="${yT}" x2="${rx2+10}" y2="${yT}" stroke="${SE}" stroke-width="1.5"/>` +
     `<line x1="${rx2+2}" y1="${yB}" x2="${rx2+10}" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>` +
-    `<text x="${rx2+14}" y="${my+4}" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`
+    `<text x="${rx2+14}" y="${my+4}" text-anchor="start" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`
 }
 
 function wrap(body: string, vb = '0 0 215 255'): string {
@@ -427,11 +427,11 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         `<line x1="10" y1="232" x2="200" y2="232" stroke="${SE}" stroke-width="1"/>` +
         `<line x1="10" y1="227" x2="10" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
         `<line x1="200" y1="227" x2="200" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
-        `<text x="105" y="248" text-anchor="middle" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
+        `<text x="105" y="248" text-anchor="middle" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${wLabel}</text>` +
         `<line x1="208" y1="${yT}" x2="208" y2="${yB}" stroke="${SE}" stroke-width="1"/>` +
         `<line x1="204" y1="${yT}" x2="212" y2="${yT}" stroke="${SE}" stroke-width="1.5"/>` +
         `<line x1="204" y1="${yB}" x2="212" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>` +
-        `<text x="214" y="${Math.round((yT+yB)/2)+4}" text-anchor="start" font-family="system-ui,Arial,sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`,
+        `<text x="214" y="${Math.round((yT+yB)/2)+4}" text-anchor="start" font-family="sans-serif" font-size="10" font-weight="700" fill="${DI}">${hLabel}</text>`,
         '0 0 232 255'
       )
     }
