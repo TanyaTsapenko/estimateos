@@ -125,6 +125,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
   const wLabel = op.width_in  ? `${op.width_in}"` : 'W'
   const hLabel = op.height_in ? `${op.height_in}"` : 'H'
+  console.log('DIM LABELS:', wLabel, hLabel, 'raw width_in:', (op as any)?.width_in, 'raw height_in:', (op as any)?.height_in)
   const DL = makeDimLines(wLabel, hLabel)
 
   switch (t) {
