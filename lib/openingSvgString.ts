@@ -861,17 +861,18 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       }
 
       if (sub === 'pocket') {
+        // fill-opacity instead of opacity — librsvg handles fill-opacity more reliably
         const wall = slidesLeft
-          ? `<rect x="2" y="4" width="10" height="222" rx="1" fill="${SE}" opacity="0.35"/>`
-          : `<rect x="188" y="4" width="10" height="222" rx="1" fill="${SE}" opacity="0.35"/>`
+          ? `<rect x="2" y="4" width="10" height="222" rx="1" fill="${SE}" fill-opacity="0.35"/>`
+          : `<rect x="188" y="4" width="10" height="222" rx="1" fill="${SE}" fill-opacity="0.35"/>`
         const handle = slidesLeft
           ? `<rect x="14" y="105" width="6" height="20" rx="2" fill="${SE}"/>`
           : `<rect x="180" y="105" width="6" height="20" rx="2" fill="${SE}"/>`
         const arrow = slidesLeft
-          ? `<line x1="110" y1="115" x2="28" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-            `<path d="M28 109 L18 115 L28 121 Z" fill="${MV}"/>`
-          : `<line x1="90" y1="115" x2="172" y2="115" stroke="${MV}" stroke-width="1" stroke-dasharray="4 2"/>` +
-            `<path d="M172 109 L182 115 L172 121 Z" fill="${MV}"/>`
+          ? `<line x1="110" y1="115" x2="28" y2="115" stroke="${MV}" stroke-width="1.5" stroke-dasharray="4 2"/>` +
+            `<path d="M28 109 L20 115 L28 121 Z" fill="${MV}"/>`
+          : `<line x1="90" y1="115" x2="172" y2="115" stroke="${MV}" stroke-width="1.5" stroke-dasharray="4 2"/>` +
+            `<path d="M172 109 L180 115 L172 121 Z" fill="${MV}"/>`
         return wrap(
           wall +
           `<rect x="10" y="10" width="180" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
