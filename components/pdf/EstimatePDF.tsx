@@ -47,8 +47,11 @@ const S = StyleSheet.create({
   cardTitle:  { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: NAVY, flex: 1 },
   cardPrice:  { fontSize: 10, fontFamily: 'Helvetica-Bold', color: BLUE },
   cardBody:   { flexDirection: 'row', padding: 10 },
-  drawingCol: { width: 180, marginRight: 14, alignItems: 'center' },
-  drawing:    { width: 180, height: 216 },
+  drawingCol:  { width: 180, marginRight: 14, alignItems: 'center' },
+  drawingWrap: { width: 180, height: 216, position: 'relative' },
+  drawing:     { width: 180, height: 216 },
+  dimLblW:     { position: 'absolute', bottom: -14, left: 0, right: 0, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
+  dimLblH:     { position: 'absolute', top: '50%', right: -28, fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
   specsCol:   { flex: 1 },
 
   // Spec rows
@@ -137,11 +140,12 @@ export interface EstimatePDFProps {
   company: any
   customLabels?: Record<string, string>
   subtypesByType?: SubtypeMap
-  drawingPngs?: string[]
+  drawingPngs?:   string[]
+  drawingLabels?: { w: string; h: string }[]
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType, drawingPngs }: EstimatePDFProps) {
+export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType, drawingPngs, drawingLabels }: EstimatePDFProps) {
   const depositPct    = estimate.deposit_percent || 0
   const depositAmt    = (estimate.total || 0) * (depositPct / 100)
   const balanceAmt    = (estimate.total || 0) - depositAmt
@@ -244,9 +248,13 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
               <View style={S.cardBody}>
                 {/* Drawing */}
                 <View style={S.drawingCol}>
-                  {drawingPngs?.[i]
-                    ? <Image src={drawingPngs[i]} style={S.drawing} />
-                    : null}
+                  <View style={S.drawingWrap}>
+                    {drawingPngs?.[i]
+                      ? <Image src={drawingPngs[i]} style={S.drawing} />
+                      : null}
+                    {drawingLabels?.[i]?.w ? <Text style={S.dimLblW}>{drawingLabels[i].w}</Text> : null}
+                    {drawingLabels?.[i]?.h ? <Text style={S.dimLblH}>{drawingLabels[i].h}</Text> : null}
+                  </View>
                 </View>
 
                 {/* Specs */}

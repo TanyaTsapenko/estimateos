@@ -48,14 +48,16 @@ export async function GET(req: NextRequest) {
     console.log('[estimate-pdf] company:', company?.company_name, 'compErr:', compErr?.message)
     console.log('[estimate-pdf] rendering drawing PNGs...')
 
-    const drawingPngs = await Promise.all(
+    const drawingResults = await Promise.all(
       (openings || []).map(op =>
         renderDrawingPng(op, 600, 720).catch(err => {
           console.error('[estimate-pdf] drawing render FAILED for', op.type, err?.message, err?.stack)
-          return ''
+          return { png: '', wLabel: '', hLabel: '' }
         })
       )
     )
+    const drawingPngs   = drawingResults.map(r => r.png)
+    const drawingLabels = drawingResults.map(r => ({ w: r.wLabel, h: r.hLabel }))
 
     console.log('[estimate-pdf] drawingPngs:', drawingPngs.map(p => p ? p.substring(0, 50) : 'EMPTY'))
     console.log('[estimate-pdf] calling renderToBuffer...')
@@ -67,6 +69,7 @@ export async function GET(req: NextRequest) {
         customLabels,
         subtypesByType,
         drawingPngs,
+        drawingLabels,
       }) as React.ReactElement<DocumentProps>
     )
 
