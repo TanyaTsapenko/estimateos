@@ -121,8 +121,8 @@ export function BayDrawing({
   const vbH  = yB + lean + 40
 
   return (
-    <svg viewBox={`0 0 232 ${vbH}`} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
+    <svg viewBox={`0 0 232 ${vbH}`} width={232} height={vbH} fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', maxWidth: 260, height: 'auto', aspectRatio: `232/${vbH}`, display: 'block', margin: '0 auto' }}>
 
       {/* Left side panel */}
       <polygon points={leftPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
@@ -239,7 +239,7 @@ export function BowDrawing({
 
   return (
     <svg viewBox="0 0 232 255" width={232} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
+      style={{ width: '100%', maxWidth: 260, height: 'auto', aspectRatio: '232/255', display: 'block', margin: '0 auto' }}>
 
       {panels}
       {uid && N > 2 && (

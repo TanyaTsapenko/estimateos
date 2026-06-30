@@ -190,7 +190,7 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, width
 
   return (
     <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
       {transom && (
         <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>
       )}
@@ -228,7 +228,7 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
 
   return (
     <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: '215/255', display: 'block', margin: '0 auto' }}>
 
       {/* Transom */}
       {hasTransom && <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>}
