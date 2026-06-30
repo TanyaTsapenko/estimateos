@@ -808,14 +808,40 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'storm':
     case 'doorstorm': {
-      const hingeLeft = !dir.includes('right')
-      return wrap(
-        `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
-        doorHinges(10, 10, 190, 220, hingeLeft) +
-        doorKnob(10, 10, 190, 220, !hingeLeft) +
-        swingArc(10, 10, 190, 220, hingeLeft) +
-        DL
-      )
+      const reversible = dir.includes('reversible')
+      const hingeLeft  = reversible ? true : !dir.includes('right')
+
+      const scrnDefs = sub === 'screen'
+        ? `<defs><pattern id="scrn-s" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">` +
+          `<line x1="0" y1="5" x2="5" y2="0" stroke="${SE}" stroke-width="0.8"/></pattern></defs>`
+        : ''
+
+      let panel: string
+      if (sub === 'halfglass') {
+        panel =
+          `<rect x="10" y="10" width="180" height="105" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<rect x="10" y="115" width="180" height="105" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<line x1="10" y1="115" x2="190" y2="115" stroke="${FR}" stroke-width="1.5"/>`
+      } else if (sub === 'screen') {
+        panel =
+          `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          `<rect x="10" y="10" width="180" height="210" fill="url(#scrn-s)" stroke="none"/>`
+      } else {
+        panel = `<rect x="10" y="10" width="180" height="210" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+      }
+
+      const secArcPath = (left: boolean) => {
+        const d = left ? `M13 217 Q13 13 187 13` : `M187 217 Q187 13 13 13`
+        return `<path d="${d}" stroke="${SE}" stroke-width="1" stroke-dasharray="3 3" fill="none"/>`
+      }
+
+      const arcs = reversible
+        ? doorHinges(10, 10, 190, 220, true)  + doorKnob(10, 10, 190, 220, false) + secArcPath(true) +
+          doorHinges(10, 10, 190, 220, false) + doorKnob(10, 10, 190, 220, true)  + secArcPath(false)
+        : doorHinges(10, 10, 190, 220, hingeLeft) + doorKnob(10, 10, 190, 220, !hingeLeft) +
+          swingArc(10, 10, 190, 220, hingeLeft)
+
+      return wrap(scrnDefs + panel + arcs + DL)
     }
 
     case 'interior':
