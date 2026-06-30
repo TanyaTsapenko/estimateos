@@ -113,6 +113,12 @@ const INSTALL_UNMAP: Record<string, string> = {
 const FLOOR_UNMAP: Record<string, string> = {
   first: 'Ground floor', second: '2nd floor', third: '3rd floor', basement: 'Basement',
 }
+const SHAPE_UNMAP: Record<string, string> = {
+  rect: 'Rectangle', rectangle: 'Rectangle',
+  arch: 'Arch', halfround: 'Half Round', 'half round': 'Half Round',
+  circle: 'Circle', octagon: 'Octagon', triangle: 'Triangle',
+  trapezoid: 'Trapezoid', eyebrow: 'Eyebrow', 'custom shape': 'Custom Shape',
+}
 
 function capitalize(s: string | null | undefined): string {
   if (!s) return ''
@@ -160,6 +166,7 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.core_type) vals.coreType = capitalize(String(row.core_type))
   if (row.egress_required != null) vals.egress = Boolean(row.egress_required)
   if (row.notes) vals.notes = String(row.notes)
+  if (row.shape && row.shape !== 'rect') vals.shape = SHAPE_UNMAP[String(row.shape)] ?? capitalize(String(row.shape))
   if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)
   if (row.side_unit)          vals.sideUnit          = String(row.side_unit)
   if (row.center_window_type) vals.centerWindowType  = String(row.center_window_type)
