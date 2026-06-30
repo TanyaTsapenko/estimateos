@@ -20,6 +20,9 @@ export type OpeningForSvg = {
   transom_above?: boolean | null
   shape?: string | null
   sections?: any[] | null
+  center_window_type?: string | null
+  side_unit?: string | null
+  panel_type?: string | null
 }
 
 const WF = `<rect x="10" y="10" width="180" height="210" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
@@ -107,6 +110,52 @@ function frenchPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: 
     `<path d="M${x2-3} ${y2-3} Q${x1+3} ${y2-3} ${x1+3} ${y1+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
     `<line x1="${x2-3}" y1="${y2-3}" x2="${x1+3}" y2="${y1+3}" stroke="${MV}" stroke-width="1.2"/>` +
     `<rect x="${x1+4}" y="${my-10}" width="6" height="20" rx="2" fill="${SE}"/>`
+}
+
+// Takes pre-inset box coords (4px for bay, 3px for bow) — adds 3px more inside, matching v2 PanelIndicator exactly.
+function panelIndicator(style: string, ix1: number, iy1: number, ix2: number, iy2: number): string {
+  const x1 = ix1 + 3, y1 = iy1 + 3, x2 = ix2 - 3, y2 = iy2 - 3
+  const mx = Math.round((ix1 + ix2) / 2)
+  const my = Math.round((iy1 + iy2) / 2)
+  if (style === 'casement-l')
+    return `<line x1="${x1}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="${SE}" stroke-width="1.2"/>` +
+      `<path d="M${x1} ${y2} Q${x2} ${y2} ${x2} ${y1}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+      `<line x1="${x1}" y1="${y2}" x2="${x2}" y2="${y1}" stroke="${MV}" stroke-width="1.2"/>` +
+      `<rect x="${x2-5}" y="${my-6}" width="5" height="12" rx="1.5" fill="${SE}"/>`
+  if (style === 'casement-r')
+    return `<line x1="${x2}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${SE}" stroke-width="1.2"/>` +
+      `<path d="M${x2} ${y2} Q${x1} ${y2} ${x1} ${y1}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
+      `<line x1="${x2}" y1="${y2}" x2="${x1}" y2="${y1}" stroke="${MV}" stroke-width="1.2"/>` +
+      `<rect x="${x1}" y="${my-6}" width="5" height="12" rx="1.5" fill="${SE}"/>`
+  if (style === 'awning')
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y1}" stroke="${SE}" stroke-width="1.2"/>` +
+      `<line x1="${x1}" y1="${y1}" x2="${mx}" y2="${y2}" stroke="${MV}" stroke-width="1.2"/>` +
+      `<line x1="${x2}" y1="${y1}" x2="${mx}" y2="${y2}" stroke="${MV}" stroke-width="1.2"/>` +
+      `<rect x="${mx-6}" y="${y2-4}" width="12" height="5" rx="1.5" fill="${SE}"/>`
+  if (style === 'singlehung')
+    return `<line x1="${x1}" y1="${my}" x2="${x2}" y2="${my}" stroke="${FR}" stroke-width="1.5"/>` +
+      `<line x1="${x1+1}" y1="${y1+1}" x2="${x2-1}" y2="${my-2}" stroke="${SE}" stroke-width="1" stroke-dasharray="3 2"/>` +
+      `<line x1="${x2-1}" y1="${y1+1}" x2="${x1+1}" y2="${my-2}" stroke="${SE}" stroke-width="1" stroke-dasharray="3 2"/>` +
+      `<path d="M${mx} ${y2-1} L${mx-5} ${y2-8} L${mx} ${y2-5} L${mx+5} ${y2-8}Z" fill="${MV}"/>` +
+      `<line x1="${mx}" y1="${y2-5}" x2="${mx}" y2="${my+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>`
+  if (style === 'doublehung')
+    return `<line x1="${x1}" y1="${my}" x2="${x2}" y2="${my}" stroke="${FR}" stroke-width="1.5"/>` +
+      `<path d="M${mx} ${y1+1} L${mx-5} ${y1+8} L${mx} ${y1+5} L${mx+5} ${y1+8}Z" fill="${MV}"/>` +
+      `<line x1="${mx}" y1="${y1+5}" x2="${mx}" y2="${my-3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+      `<path d="M${mx} ${y2-1} L${mx-5} ${y2-8} L${mx} ${y2-5} L${mx+5} ${y2-8}Z" fill="${MV}"/>` +
+      `<line x1="${mx}" y1="${y2-5}" x2="${mx}" y2="${my+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>`
+  // default: fixed (dashed X)
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>` +
+    `<line x1="${x2}" y1="${y1}" x2="${x1}" y2="${y2}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>`
+}
+
+function bayStyle(unit: string, flip: boolean): string {
+  const u = unit.toLowerCase().replace(/[\s_-]/g, '')
+  if (u === 'casement') return flip ? 'casement-r' : 'casement-l'
+  if (u === 'awning') return 'awning'
+  if (u === 'singlehung') return 'singlehung'
+  if (u === 'doublehung') return 'doublehung'
+  return 'fixed'
 }
 
 export function openingSvgString(op: OpeningForSvg | string): string {
@@ -400,50 +449,80 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'windowbay': {
       const angle = parseInt(op.bay_angle ?? '45') || 45
       const lean  = angle === 90 ? 30 : angle === 30 ? 5 : angle === 60 ? 20 : 12
-      const lx1=10, lx2=58, rx1=158, rx2=205
-      const yT=22, yB=218
+      const lx1 = 10, lx2 = 58, rx1 = 158, rx2 = 205
+      const yT = 22, yB = 218
       const vbH = yB + lean + 40
-      return wrap(
-        `<polygon points="${lx1},${yT+lean} ${lx2},${yT} ${lx2},${yB} ${lx1},${yB+lean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-        dashedX(lx1+4, yT+lean+4, lx2-4, yB-4) +
-        `<rect x="${lx2}" y="${yT}" width="${rx1-lx2}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
-        dashedX(lx2+4, yT+4, rx1-4, yB-4) +
-        `<polygon points="${rx1},${yT} ${rx2},${yT+lean} ${rx2},${yB+lean} ${rx1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-        dashedX(rx1+4, yT+4, rx2-4, yB-4) +
-        bayDimLines(lx1, rx2, yT, yB, lean),
-        `0 0 232 ${vbH}`
-      )
+
+      const liteCount = Math.max(3, Math.min(5, parseInt(op.window_subtype ?? '3') || 3))
+      const numCenter = liteCount - 2
+      const cpw       = (rx1 - lx2) / numCenter
+
+      const cwt = (op.center_window_type ?? '').toLowerCase()
+      const su  = bayStyle(op.side_unit ?? '', false)
+      const suR = bayStyle(op.side_unit ?? '', true)
+
+      let body = ''
+      body += `<polygon points="${lx1},${yT+lean} ${lx2},${yT} ${lx2},${yB} ${lx1},${yB+lean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>`
+      body += panelIndicator(su, lx1+4, yT+lean+4, lx2-4, yB-4)
+
+      for (let i = 0; i < numCenter; i++) {
+        const cx1 = Math.round(lx2 + i * cpw)
+        const cx2 = i === numCenter - 1 ? rx1 : Math.round(lx2 + (i + 1) * cpw)
+        const cs  = cwt === 'casement' ? (i >= numCenter / 2 ? 'casement-r' : 'casement-l') : 'fixed'
+        body += `<rect x="${cx1}" y="${yT}" width="${cx2-cx1}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>`
+        if (i > 0) body += `<line x1="${cx1}" y1="${yT}" x2="${cx1}" y2="${yB}" stroke="${FR}" stroke-width="1.5"/>`
+        body += panelIndicator(cs, cx1+4, yT+4, cx2-4, yB-4)
+      }
+
+      body += `<polygon points="${rx1},${yT} ${rx2},${yT+lean} ${rx2},${yB+lean} ${rx1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>`
+      body += panelIndicator(suR, rx1+4, yT+4, rx2-4, yB-4)
+      body += bayDimLines(lx1, rx2, yT, yB, lean)
+
+      return wrap(body, `0 0 232 ${vbH}`)
     }
 
     case 'bow':
     case 'windowbow': {
-      const N=5, pw=38
-      const yT=22, yB=215, endLean=10
-      let panels = ''
+      const N       = Math.max(2, parseInt(op.window_subtype ?? '5') || 5)
+      const pw      = 190 / N
+      const yT = 22, yB = 215, endLean = 10
+
+      const ptRaw = (op.panel_type ?? op.center_window_type ?? '').toLowerCase()
+      const suRaw = op.side_unit ?? ''
+
+      let body = ''
       for (let i = 0; i < N; i++) {
-        const x1 = 10 + i * pw
-        const x2 = x1 + pw
-        if (i === 0) {
-          panels += `<polygon points="${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-            dashedX(x1+3, yT+endLean+3, x2-3, yB-3)
-        } else if (i === N-1) {
-          panels += `<polygon points="${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-            dashedX(x1+3, yT+3, x2-3, yB-3)
+        const x1      = Math.round(10 + i * pw)
+        const x2      = i === N - 1 ? 200 : Math.round(10 + (i + 1) * pw)
+        const isLeft  = i === 0
+        const isRight = i === N - 1
+        const unitStr = (isLeft || isRight) ? suRaw : ptRaw
+        const flip    = i >= N / 2
+        const ps      = unitStr.toLowerCase() === 'casement'
+          ? (flip ? 'casement-r' : 'casement-l')
+          : bayStyle(unitStr, flip)
+
+        if (isLeft) {
+          body += `<polygon points="${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>`
+          body += panelIndicator(ps, x1+3, yT+endLean+3, x2-3, yB-3)
+        } else if (isRight) {
+          body += `<polygon points="${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>`
+          body += panelIndicator(ps, x1+3, yT+3, x2-3, yB-3)
         } else {
-          panels += `<rect x="${x1}" y="${yT}" width="${pw}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
-            dashedX(x1+3, yT+3, x2-3, yB-3)
+          body += `<rect x="${x1}" y="${yT}" width="${x2-x1}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>`
+          body += panelIndicator(ps, x1+3, yT+3, x2-3, yB-3)
         }
       }
-      return wrap(
-        panels +
+
+      body +=
         `<line x1="10" y1="232" x2="200" y2="232" stroke="${SE}" stroke-width="1"/>` +
         `<line x1="10" y1="227" x2="10" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
         `<line x1="200" y1="227" x2="200" y2="237" stroke="${SE}" stroke-width="1.5"/>` +
         `<line x1="208" y1="${yT}" x2="208" y2="${yB}" stroke="${SE}" stroke-width="1"/>` +
         `<line x1="204" y1="${yT}" x2="212" y2="${yT}" stroke="${SE}" stroke-width="1.5"/>` +
-        `<line x1="204" y1="${yB}" x2="212" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>`,
-        '0 0 232 255'
-      )
+        `<line x1="204" y1="${yB}" x2="212" y2="${yB}" stroke="${SE}" stroke-width="1.5"/>`
+
+      return wrap(body, '0 0 232 255')
     }
 
     case 'combination':
