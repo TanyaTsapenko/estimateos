@@ -1,5 +1,4 @@
 'use client'
-import { useRef, useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
 import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
 import { AspectBox, GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
@@ -144,25 +143,7 @@ export function ShapeOutlineDrawing({
 
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
 
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [diag, setDiag] = useState('')
-  useEffect(() => {
-    const el = wrapRef.current
-    if (!el) return
-    const r = el.getBoundingClientRect()
-    const lines = [`[DIAG] box: ${Math.round(r.width)}w × ${Math.round(r.height)}h`]
-    let p: HTMLElement | null = el.parentElement
-    for (let i = 0; i < 5 && p; i++) {
-      const cs = window.getComputedStyle(p)
-      const pr = p.getBoundingClientRect()
-      lines.push(`p${i + 1}(${p.tagName.toLowerCase()}): ov=${cs.overflow}/${cs.overflowX}/${cs.overflowY} w=${Math.round(pr.width)} h=${Math.round(pr.height)}`)
-      p = p.parentElement
-    }
-    setDiag(lines.join('\n'))
-  }, [])
-
   return (
-    <div ref={wrapRef}>
     <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', height: '100%', display: 'block',
@@ -220,11 +201,5 @@ export function ShapeOutlineDrawing({
       <text x="204" y="119" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
     </svg>
     </AspectBox>
-    {diag && (
-      <pre style={{ background: 'rgba(0,0,0,0.88)', color: '#0f0', fontSize: 9, padding: 4, margin: 0, whiteSpace: 'pre', lineHeight: 1.5, fontFamily: 'monospace' }}>
-        {diag}
-      </pre>
-    )}
-    </div>
   )
 }
