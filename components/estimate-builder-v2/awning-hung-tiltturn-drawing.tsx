@@ -146,9 +146,8 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
 
   return (
     <>
-    <AspectBox>
     <svg ref={svgRef} viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
 
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
       <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
@@ -169,7 +168,6 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
     {diag && (
       <pre style={{ background: 'rgba(0,0,0,0.88)', color: '#0f0', fontSize: 9, padding: 4, margin: 0, whiteSpace: 'pre', lineHeight: 1.4, fontFamily: 'monospace', zIndex: 9999, position: 'relative' }}>
         {diag}
