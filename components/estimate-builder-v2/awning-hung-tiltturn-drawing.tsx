@@ -1,5 +1,4 @@
 'use client'
-import { useRef, useEffect, useState } from 'react'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
 import { AspectBox, GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
@@ -127,25 +126,7 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   const clipId = `shu-${uid}`
   const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
 
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [diag, setDiag] = useState('')
-  useEffect(() => {
-    const el = wrapRef.current
-    if (!el) return
-    const r = el.getBoundingClientRect()
-    const lines = [`[DIAG] box: ${Math.round(r.width)}w × ${Math.round(r.height)}h | shape="${s}"`]
-    let p: HTMLElement | null = el.parentElement
-    for (let i = 0; i < 5 && p; i++) {
-      const cs = window.getComputedStyle(p)
-      const pr = p.getBoundingClientRect()
-      lines.push(`p${i + 1}(${p.tagName.toLowerCase()}): ov=${cs.overflow}/${cs.overflowX}/${cs.overflowY} w=${Math.round(pr.width)} h=${Math.round(pr.height)}`)
-      p = p.parentElement
-    }
-    setDiag(lines.join('\n'))
-  }, [])
-
   return (
-    <div ref={wrapRef}>
     <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', height: '100%', display: 'block' }}>
@@ -170,12 +151,6 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
       <DimLines wL={wL} hL={hL}/>
     </svg>
     </AspectBox>
-    {diag && (
-      <pre style={{ background: 'rgba(0,0,0,0.88)', color: '#0f0', fontSize: 9, padding: 4, margin: 0, whiteSpace: 'pre', lineHeight: 1.5, fontFamily: 'monospace' }}>
-        {diag}
-      </pre>
-    )}
-    </div>
   )
 }
 
