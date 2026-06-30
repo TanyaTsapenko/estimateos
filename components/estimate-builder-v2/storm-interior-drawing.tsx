@@ -1,7 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { doorHinges, doorKnob } from './entry-door-drawing'
-import { AspectBox, DoorPanelLines, glassColor } from '@/lib/v2/svgHelpers'
+import { DoorPanelLines, glassColor } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115
@@ -72,9 +72,8 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
   const patId = `scrn-${uid}`
 
   return (
-    <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
 
       <defs>
         <pattern id={patId} x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
@@ -111,7 +110,6 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
   )
 }
 
@@ -141,9 +139,8 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
   // ── Single ───────────────────────────────────────────────────────
   if (sub === 'Single') return (
-    <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && (
         <rect x={X1+8} y={glassY1} width={X2-X1-16} height={glassH} fill={GLASS} stroke={FR} strokeWidth="1.2"/>
@@ -152,14 +149,12 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
       <SwingArc x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft}/>
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
   )
 
   // ── Double ───────────────────────────────────────────────────────
   if (sub === 'Double') return (
-    <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && <>
         <rect x={X1+8}  y={glassY1} width={CX-X1-16} height={glassH} fill={GLASS} stroke={FR} strokeWidth="1.2"/>
@@ -171,16 +166,14 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
       <SwingArc x1={CX} y1={Y1} x2={X2} y2={Y2} hingeLeft={false}/>
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
   )
 
   // ── Pocket ───────────────────────────────────────────────────────
   if (sub === 'Pocket') {
     const slidesLeft = hingeLeft  // left doorSwing → slides left
     return (
-      <AspectBox>
       <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-        style={{ width: '100%', height: '100%', display: 'block' }}>
+        style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
 
         {/* Wall/pocket indicator on the pocket side */}
         {slidesLeft
@@ -208,15 +201,13 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
         <DimLines wL={wL} hL={hL}/>
       </svg>
-      </AspectBox>
     )
   }
 
   // ── Bifold ───────────────────────────────────────────────────────
   return (
-    <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
 
       {/* Two panels */}
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={DOOR_FILL} stroke={FR} strokeWidth="2.5"/>
@@ -235,6 +226,5 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { AspectBox, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
+import { glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 
@@ -75,9 +75,8 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
   const pw = (X2 - X1) / N
 
   return (
-    <AspectBox>
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: '100%', display: 'block' }}>
+      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
@@ -99,6 +98,5 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
-    </AspectBox>
   )
 }
