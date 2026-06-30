@@ -49,7 +49,7 @@ const S = StyleSheet.create({
   cardBody:   { flexDirection: 'row', padding: 10 },
   drawingCol: { width: 212, marginRight: 2 },
   drawing:    { width: 180, height: 216 },
-  dimLblW:    { width: 180, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569', marginTop: 3 },
+  dimLblW:    { width: 180, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569', marginTop: 1 },
   dimLblH:    { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
   specsCol:   { flex: 1 },
 
@@ -257,7 +257,7 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
                         : null}
                     </View>
                     {drawingLabels?.[i]?.h
-                      ? <View style={{ height: 216, justifyContent: 'center', marginLeft: 4 }}>
+                      ? <View style={{ height: 216, justifyContent: 'center', marginLeft: 2 }}>
                           <Text style={S.dimLblH}>{drawingLabels[i].h}</Text>
                         </View>
                       : null}
