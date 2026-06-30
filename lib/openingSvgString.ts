@@ -460,31 +460,58 @@ export function openingSvgString(op: OpeningForSvg | string): string {
     case 'special':
     case 'transom':
     case 'windowarch': {
-      if (shp.includes('halfround') || shp.includes('halfcircle') || shp === 'half' || shp.includes('semi')) {
+      // For 'special' type, shape is encoded in window_subtype (sub), not the shape column
+      const shapeHint = t === 'special' ? sub : (shp || sub)
+
+      if (shapeHint.includes('halfround') || shapeHint.includes('halfcircle') || shapeHint === 'half' || shapeHint.includes('semi') || shapeHint.includes('halfarch')) {
         return wrap(
           `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           DL
         )
       }
-      if (shp.includes('circle') || shp.includes('oval') || shp === 'round' || shp.includes('ellipse')) {
+      if (shapeHint.includes('circle') || shapeHint.includes('oval') || shapeHint === 'round' || shapeHint.includes('ellipse')) {
         return wrap(
           `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           DL
         )
       }
-      if (shp.includes('trapez') || shp.includes('trap')) {
+      if (shapeHint.includes('trapez') || shapeHint.includes('trap')) {
         return wrap(
           `<polygon points="30,10 170,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
           DL
         )
       }
-      if (shp.includes('triangle') || shp.includes('peak') || shp.includes('gable')) {
+      if (shapeHint.includes('triangle') || shapeHint.includes('peak') || shapeHint.includes('gable')) {
         return wrap(
           `<polygon points="100,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
           DL
         )
       }
-      if (shp === 'flat' || shp === 'rectangle' || shp === 'rect' || (t === 'transom' && !shp)) {
+      if (shapeHint.includes('pentagon')) {
+        return wrap(
+          `<polygon points="100,10 190,91 156,220 44,220 10,91" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          DL
+        )
+      }
+      if (shapeHint.includes('octagon')) {
+        return wrap(
+          `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          DL
+        )
+      }
+      if (shapeHint.includes('gothic')) {
+        return wrap(
+          `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          DL
+        )
+      }
+      if (shapeHint.includes('eyebrow')) {
+        return wrap(
+          `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          DL
+        )
+      }
+      if (shapeHint === 'flat' || shapeHint === 'rectangle' || shapeHint === 'rect' || (t === 'transom' && !shapeHint)) {
         return wrap(
           `<rect x="10" y="80" width="180" height="100" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           dashedX(10, 80, 190, 180) +
