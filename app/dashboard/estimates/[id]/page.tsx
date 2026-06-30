@@ -174,7 +174,7 @@ export default function EstimateDetailPage() {
 
       const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections, side_unit, center_window_type, panel_type, open_mode').eq('estimate_id', id).order('sort_order'),
       ])
 
       if (estErr) console.error('[estimate-detail] query error:', estErr.message)
