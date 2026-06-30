@@ -135,6 +135,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <EBIcon name={basics.icon} size={15} color={C.inkMid} />
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase', color: C.inkSoft }}>{basics.label}</span>
           </div>
+          <div>
           {op.typeId === 'combination' ? (
             <>
               <SectionBuilder
@@ -429,6 +430,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : (
             <FieldGrid keys={basics.keys} op={op} onVal={onVal} openPicker={openPicker} palettes={palettes} />
           )}
+          </div>
         </>
       )}
 
