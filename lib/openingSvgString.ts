@@ -24,6 +24,8 @@ export type OpeningForSvg = {
   side_unit?: string | null
   panel_type?: string | null
   open_mode?: string | null
+  active_panel?: string | null
+  astragal?: string | null
 }
 
 const WF = `<rect x="10" y="10" width="180" height="210" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
@@ -96,9 +98,15 @@ function doorPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: bo
 }
 
 // Casement-style door panel (used by garden/french doors in v2)
-function frenchPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean): string {
+function frenchPanel(x1: number, y1: number, x2: number, y2: number, hingeLeft: boolean, showSwing = true): string {
   const my = Math.round((y1 + y2) / 2)
   const base = `<rect x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>`
+  if (!showSwing) {
+    const handle = hingeLeft
+      ? `<rect x="${x2-10}" y="${my-10}" width="6" height="20" rx="2" fill="${SE}"/>`
+      : `<rect x="${x1+4}" y="${my-10}" width="6" height="20" rx="2" fill="${SE}"/>`
+    return base + handle
+  }
   if (hingeLeft) {
     return base +
       `<line x1="${x1+3}" y1="${y1+3}" x2="${x1+3}" y2="${y2-3}" stroke="${SE}" stroke-width="1.5"/>` +
@@ -687,18 +695,41 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'french':
     case 'doorfrench': {
-      const cx = 100
-      return wrap(
-        `<rect x="10" y="10" width="${cx-10}" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
-        doorHinges(10, 10, cx, 220, true) +
-        doorKnob(10, 10, cx, 220, false) +
-        swingArc(10, 10, cx, 220, true) +
-        `<rect x="${cx}" y="10" width="${190-cx}" height="210" fill="${DF}" stroke="${FR}" stroke-width="2.5"/>` +
-        doorHinges(cx, 10, 190, 220, false) +
-        doorKnob(cx, 10, 190, 220, true) +
-        swingArc(cx, 10, 190, 220, false) +
-        DL
-      )
+      const SLITE_W = 28
+      const isSingle   = op.window_subtype === 'Single french'
+      const isSidelite = op.window_subtype === 'French + sidelites'
+
+      const ap = op.active_panel ?? 'Both'
+      const leftActive  = ap === 'Left'  || ap === 'Both'
+      const rightActive = ap === 'Right' || ap === 'Both'
+      const singleHingeLeft = !dir.includes('right')
+
+      const doorW = isSidelite ? (180 - 2 * SLITE_W) / 2 : isSingle ? 180 : 90
+      const cx = isSidelite ? 10 + SLITE_W + doorW : 10 + doorW
+
+      let body = ''
+      if (isSingle) {
+        body = frenchPanel(10, 10, 190, 220, singleHingeLeft)
+      } else if (isSidelite) {
+        body =
+          sidelite(10, 10, 10 + SLITE_W, 220) +
+          frenchPanel(10 + SLITE_W, 10, cx, 220, true, leftActive) +
+          frenchPanel(cx, 10, 190 - SLITE_W, 220, false, rightActive) +
+          sidelite(190 - SLITE_W, 10, 190, 220)
+      } else {
+        body =
+          frenchPanel(10, 10, cx, 220, true, leftActive) +
+          frenchPanel(cx, 10, 190, 220, false, rightActive)
+      }
+
+      const ast = op.astragal ?? ''
+      if (!isSingle && ast && ast !== 'None') {
+        const astDash = ast === 'Removable Astragal' ? ' stroke-dasharray="6 3"' : ''
+        const astWidth = ast === 'Removable Astragal' ? '1.5' : '2.5'
+        body += `<line x1="${cx}" y1="12" x2="${cx}" y2="218" stroke="${SE}" stroke-width="${astWidth}"${astDash}/>`
+      }
+
+      return wrap(body + DL)
     }
 
     case 'garden':
