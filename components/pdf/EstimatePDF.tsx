@@ -47,11 +47,10 @@ const S = StyleSheet.create({
   cardTitle:  { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: NAVY, flex: 1 },
   cardPrice:  { fontSize: 10, fontFamily: 'Helvetica-Bold', color: BLUE },
   cardBody:   { flexDirection: 'row', padding: 10 },
-  drawingCol:  { width: 180, marginRight: 14, alignItems: 'center' },
-  drawingWrap: { width: 180, height: 216, position: 'relative' },
-  drawing:     { width: 180, height: 216 },
-  dimLblW:     { position: 'absolute', bottom: -14, left: 0, right: 0, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
-  dimLblH:     { position: 'absolute', top: '50%', right: -28, fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
+  drawingCol: { width: 212, marginRight: 2 },
+  drawing:    { width: 180, height: 216 },
+  dimLblW:    { width: 180, textAlign: 'center', fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569', marginTop: 3 },
+  dimLblH:    { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#475569' },
   specsCol:   { flex: 1 },
 
   // Spec rows
@@ -248,12 +247,20 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
               <View style={S.cardBody}>
                 {/* Drawing */}
                 <View style={S.drawingCol}>
-                  <View style={S.drawingWrap}>
-                    {drawingPngs?.[i]
-                      ? <Image src={drawingPngs[i]} style={S.drawing} />
+                  <View style={{ flexDirection: 'row' }}>
+                    <View>
+                      {drawingPngs?.[i]
+                        ? <Image src={drawingPngs[i]} style={S.drawing} />
+                        : null}
+                      {drawingLabels?.[i]?.w
+                        ? <Text style={S.dimLblW}>{drawingLabels[i].w}</Text>
+                        : null}
+                    </View>
+                    {drawingLabels?.[i]?.h
+                      ? <View style={{ height: 216, justifyContent: 'center', marginLeft: 4 }}>
+                          <Text style={S.dimLblH}>{drawingLabels[i].h}</Text>
+                        </View>
                       : null}
-                    {drawingLabels?.[i]?.w ? <Text style={S.dimLblW}>{drawingLabels[i].w}</Text> : null}
-                    {drawingLabels?.[i]?.h ? <Text style={S.dimLblH}>{drawingLabels[i].h}</Text> : null}
                   </View>
                 </View>
 
