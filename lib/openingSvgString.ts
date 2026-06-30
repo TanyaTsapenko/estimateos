@@ -223,10 +223,11 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'singlehung':
     case 'windowsh': {
-      const isOctSH  = shp.includes('octagon')
-      const isPentSH = shp.includes('pentagon')
-      const isGothSH = shp.includes('gothic')
-      const isEyeSH  = shp.includes('eyebrow')
+      const isOctSH    = shp.includes('octagon')
+      const isPentSH   = shp.includes('pentagon')
+      const isGothSH   = shp.includes('gothic')
+      const isEyeSH    = shp.includes('eyebrow')
+      const isCircleSH = shp.includes('circle') || shp.includes('oval')
 
       const shpFrame = shp.includes('arch')
         ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
@@ -238,6 +239,8 @@ export function openingSvgString(op: OpeningForSvg | string): string {
           ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
         : isEyeSH
           ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isCircleSH
+          ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
         : WF
 
       const shpClipEl = shp.includes('arch')
@@ -250,6 +253,8 @@ export function openingSvgString(op: OpeningForSvg | string): string {
           ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z"/>`
         : isEyeSH
           ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z"/>`
+        : isCircleSH
+          ? `<ellipse cx="100" cy="115" rx="80" ry="100"/>`
         : null
 
       const shDefs = shpClipEl ? `<defs><clipPath id="sh-clip">${shpClipEl}</clipPath></defs>` : ''
