@@ -110,11 +110,11 @@ const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
     case 'doubleHung':
       return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'tiltTurn':
-      return <TiltTurnDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <TiltTurnDrawing sub={op.window_subtype ?? ''} openDir={op.opening_direction ?? undefined} openMode={(op as any).open_mode ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
     case 'bay':
-      return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} bayAngle={op.bay_angle ?? undefined} />
+      return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} bayAngle={op.bay_angle ?? undefined} centerWindowType={(op as any).center_window_type ?? undefined} sideUnit={(op as any).side_unit ?? undefined} />
     case 'bow':
-      return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
+      return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} panelType={(op as any).panel_type ?? undefined} sideUnit={(op as any).side_unit ?? undefined} />
     case 'combination':
       return <CombinationDrawing sections={(op.sections ?? []) as CombinationSection[]} heightIn={hIn} />
     case 'transom':
