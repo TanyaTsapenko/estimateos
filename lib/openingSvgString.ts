@@ -50,7 +50,7 @@ function bayDimLines(lx1: number, rx2: number, yT: number, yB: number, lean: num
 }
 
 function wrap(body: string, vb = '0 0 215 255'): string {
-  return `<svg viewBox="${vb}" fill="none" xmlns="http://www.w3.org/2000/svg">${body}</svg>`
+  return `<svg viewBox="${vb}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`
 }
 
 function dashedX(x1: number, y1: number, x2: number, y2: number): string {
@@ -168,23 +168,43 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isHalfround = shp.includes('halfround') || shp.includes('halfcircle') || shp === 'semi'
       const isArch      = shp.includes('arch')
       const isCircle    = shp.includes('circle') || shp.includes('oval')
+      const isTrapezoid = shp.includes('trapezoid') || shp.includes('trap')
+      const isTriangle  = shp.includes('triangle')
+      const isOctagon   = shp.includes('octagon')
+      const isEyebrow   = shp.includes('eyebrow')
 
       const casFrame = isHalfround
         ? `<path d="M13 220 L13 130 Q13 16 100 16 Q187 16 187 130 L187 220 Z" fill="${G}" stroke="none"/>` +
           `<path d="M13 220 L13 130 Q13 16 100 16 Q187 16 187 130 L187 220 Z" fill="none" stroke="${FR}" stroke-width="5"/>`
         : isArch
           ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-          : isCircle
-            ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
-            : WF
+        : isCircle
+          ? `<ellipse cx="100" cy="115" rx="80" ry="100" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isTrapezoid
+          ? `<polygon points="45,10 145,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isTriangle
+          ? `<polygon points="100,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isOctagon
+          ? `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isEyebrow
+          ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : WF
 
       const casClipShape = isHalfround
         ? `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z"/>`
         : isArch
           ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z"/>`
-          : isCircle
-            ? `<ellipse cx="100" cy="115" rx="80" ry="100"/>`
-            : `<rect x="10" y="10" width="180" height="210"/>`
+        : isCircle
+          ? `<ellipse cx="100" cy="115" rx="80" ry="100"/>`
+        : isTrapezoid
+          ? `<polygon points="45,10 145,10 190,220 10,220"/>`
+        : isTriangle
+          ? `<polygon points="100,10 190,220 10,220"/>`
+        : isOctagon
+          ? `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65"/>`
+        : isEyebrow
+          ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z"/>`
+        : `<rect x="10" y="10" width="180" height="210"/>`
       const casDefs = `<defs><clipPath id="cf-clip">${casClipShape}</clipPath></defs>`
       const CL = ` clip-path="url(#cf-clip)"`
 
