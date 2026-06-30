@@ -47,6 +47,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
   else if (glassKind === 'frosted') glass = 'frosted'
   else if (glassKind === 'tinted')  glass = 'tinted'
 
+  console.log('bay/bow save:', { sideUnit: v.sideUnit, centerWindowType: v.centerWindowType, panelType: v.panelType, openMode: v.openMode })
   const unitCost  = Math.round(computePrice({ ...op, vals: { ...v, qty: 1 } }, custom) * 100) / 100
   const totalCost = Math.round(computePrice(op, custom) * 100) / 100
 
@@ -161,6 +162,10 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.egress_required != null) vals.egress = Boolean(row.egress_required)
   if (row.notes) vals.notes = String(row.notes)
   if (row.custom_shape_label) vals.customShapeDesc = String(row.custom_shape_label)
+  if (row.side_unit)          vals.sideUnit          = String(row.side_unit)
+  if (row.center_window_type) vals.centerWindowType  = String(row.center_window_type)
+  if (row.panel_type)         vals.panelType         = String(row.panel_type)
+  if (row.open_mode)          vals.openMode          = String(row.open_mode)
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {
