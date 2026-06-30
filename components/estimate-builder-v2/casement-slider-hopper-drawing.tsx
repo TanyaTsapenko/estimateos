@@ -96,7 +96,7 @@ export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, ui
   const rightActive = ap === 'right' || ap === 'both'
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
       <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
@@ -182,7 +182,7 @@ export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
   const pw = (X2 - X1) / N
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
@@ -232,7 +232,7 @@ export function HopperDrawing({ openingAngle, widthIn, heightIn, glassType, uid,
   const meetY = HOPPER_MEET[openingAngle ?? '45°'] ?? HOPPER_MEET['45°']
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}

@@ -144,7 +144,7 @@ export function ShapeOutlineDrawing({
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto',
         ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 

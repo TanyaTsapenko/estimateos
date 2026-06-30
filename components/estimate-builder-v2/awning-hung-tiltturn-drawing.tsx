@@ -74,7 +74,7 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
   const isMulti = isDouble || isAwningFixed || isFixedAwning
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
@@ -125,7 +125,7 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
@@ -179,7 +179,7 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
   const bottomOp = bottomSashOperable !== false
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
@@ -286,7 +286,7 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
   const hingeLeft = (openDir ?? 'Right').toLowerCase() === 'left'
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}

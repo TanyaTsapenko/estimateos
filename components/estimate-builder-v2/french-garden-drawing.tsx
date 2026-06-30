@@ -137,7 +137,7 @@ export function FrenchDoorDrawing({ sub, doorSwing, activePanel, astragal, glass
   const astragalDash = astragal === 'Removable Astragal' ? '6 3' : undefined
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {isSingle ? (
@@ -207,7 +207,7 @@ export function GardenDoorDrawing({ doorSwing, glassSize, sidelights, transomAbo
   const doorY1 = hasTransom ? Y1 + TRANSOM_H : Y1
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Transom (spans full X1–X2 width) */}

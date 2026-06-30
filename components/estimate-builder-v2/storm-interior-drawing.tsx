@@ -72,7 +72,7 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
   const patId = `scrn-${uid}`
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       <defs>
@@ -139,7 +139,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
   // ── Single ───────────────────────────────────────────────────────
   if (sub === 'Single') return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && (
@@ -153,7 +153,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
   // ── Double ───────────────────────────────────────────────────────
   if (sub === 'Double') return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={panelFill} stroke={FR} strokeWidth="2.5"/>
       {frac > 0 && !fullGlass && <>
@@ -206,7 +206,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 
   // ── Bifold ───────────────────────────────────────────────────────
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 215 255" width={215} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Two panels */}

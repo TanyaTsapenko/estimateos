@@ -82,7 +82,7 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   return (
     <div style={{ width: w, height: maxH, flexShrink: 0, overflow: 'hidden', borderRadius: 7, background: C.bg, pointerEvents: 'none', alignSelf: 'flex-start' }}>
       {node ? (
-        <div style={{ width: 215, height: 255, transformOrigin: 'top left', transform: `scale(${w / 215})` }}>
+        <div style={{ width: 215, height: 255, transformOrigin: 'top left', transform: `scale(${w / 215})`, overflow: 'hidden' }}>
           {node}
         </div>
       ) : (

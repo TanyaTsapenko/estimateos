@@ -238,7 +238,7 @@ export function BowDrawing({
   const gridX2 = 10 + (N - 1) * pw
 
   return (
-    <svg viewBox="0 0 232 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+    <svg viewBox="0 0 232 255" width={232} height={255} fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {panels}
