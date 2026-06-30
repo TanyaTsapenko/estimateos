@@ -98,7 +98,11 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     unit_cost:        unitCost,
     total_cost:       totalCost,
     sort_order:       idx,
-    sections:         Array.isArray(op.sections) ? JSON.stringify(op.sections) : null,
+    sections:           Array.isArray(op.sections) ? JSON.stringify(op.sections) : null,
+    side_unit:          (v.sideUnit         as string) || null,
+    center_window_type: (v.centerWindowType as string) || null,
+    panel_type:         (v.panelType        as string) || null,
+    open_mode:          (v.openMode         as string) || null,
   }
 }
 

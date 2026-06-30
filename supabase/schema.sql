@@ -133,8 +133,12 @@ create table if not exists public.estimate_openings (
   screen       numeric default 0,
   unit_cost    numeric(12,2) default 0,
   total_cost   numeric(12,2) default 0,
-  sort_order   integer default 0,
-  created_at   timestamptz default now()
+  sort_order          integer default 0,
+  side_unit           text,
+  center_window_type  text,
+  panel_type          text,
+  open_mode           text,
+  created_at          timestamptz default now()
 );
 
 alter table public.estimate_openings enable row level security;
