@@ -223,16 +223,48 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'singlehung':
     case 'windowsh': {
+      const isOctSH  = shp.includes('octagon')
+      const isPentSH = shp.includes('pentagon')
+      const isGothSH = shp.includes('gothic')
+      const isEyeSH  = shp.includes('eyebrow')
+
       const shpFrame = shp.includes('arch')
         ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isOctSH
+          ? `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isPentSH
+          ? `<polygon points="100,10 190,91 156,220 44,220 10,91" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isGothSH
+          ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isEyeSH
+          ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
         : WF
+
+      const shpClipEl = shp.includes('arch')
+        ? `<path d="M10 220 L10 100 Q10 10 100 10 Q190 10 190 100 L190 220 Z"/>`
+        : isOctSH
+          ? `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65"/>`
+        : isPentSH
+          ? `<polygon points="100,10 190,91 156,220 44,220 10,91"/>`
+        : isGothSH
+          ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z"/>`
+        : isEyeSH
+          ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z"/>`
+        : null
+
+      const shDefs = shpClipEl ? `<defs><clipPath id="sh-clip">${shpClipEl}</clipPath></defs>` : ''
+      const SH_CL  = shpClipEl ? ` clip-path="url(#sh-clip)"` : ''
+
       return wrap(
+        shDefs +
         shpFrame +
+        `<g${SH_CL}>` +
         `<line x1="13" y1="115" x2="187" y2="115" stroke="${FR}" stroke-width="1.5"/>` +
         `<line x1="14" y1="14" x2="186" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
         `<line x1="186" y1="14" x2="14" y2="113" stroke="${SE}" stroke-width="1" stroke-dasharray="5 3"/>` +
         `<path d="M100 216 L95 209 L100 212 L105 209 Z" fill="${MV}"/>` +
         `<line x1="100" y1="212" x2="100" y2="119" stroke="${MV}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+        `</g>` +
         DL
       )
     }
@@ -251,6 +283,8 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       const isTriangle  = shp.includes('triangle')
       const isOctagon   = shp.includes('octagon')
       const isEyebrow   = shp.includes('eyebrow')
+      const isPentagon  = shp.includes('pentagon')
+      const isGothic    = shp.includes('gothic')
 
       const casFrame = isHalfround
         ? `<path d="M13 220 L13 130 Q13 16 100 16 Q187 16 187 130 L187 220 Z" fill="${G}" stroke="none"/>` +
@@ -264,9 +298,13 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         : isTriangle
           ? `<polygon points="100,10 190,220 10,220" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
         : isOctagon
-          ? `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+          ? `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
         : isEyebrow
           ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+        : isPentagon
+          ? `<polygon points="100,10 190,91 156,220 44,220 10,91" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>`
+        : isGothic
+          ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
         : WF
 
       const casClipShape = isHalfround
@@ -280,9 +318,13 @@ export function openingSvgString(op: OpeningForSvg | string): string {
         : isTriangle
           ? `<polygon points="100,10 190,220 10,220"/>`
         : isOctagon
-          ? `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65"/>`
+          ? `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65"/>`
         : isEyebrow
           ? `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z"/>`
+        : isPentagon
+          ? `<polygon points="100,10 190,91 156,220 44,220 10,91"/>`
+        : isGothic
+          ? `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z"/>`
         : `<rect x="10" y="10" width="180" height="210"/>`
       const casDefs = `<defs><clipPath id="cf-clip">${casClipShape}</clipPath></defs>`
       const CL = ` clip-path="url(#cf-clip)"`
@@ -465,6 +507,30 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       if (shp.includes('halfround') || shp.includes('halfcircle')) {
         return wrap(
           `<path d="M10 220 L10 130 Q10 10 100 10 Q190 10 190 130 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          DL
+        )
+      }
+      if (shp.includes('octagon')) {
+        return wrap(
+          `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          DL
+        )
+      }
+      if (shp.includes('pentagon')) {
+        return wrap(
+          `<polygon points="100,10 190,91 156,220 44,220 10,91" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          DL
+        )
+      }
+      if (shp.includes('gothic')) {
+        return wrap(
+          `<path d="M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
+          DL
+        )
+      }
+      if (shp.includes('eyebrow')) {
+        return wrap(
+          `<path d="M10 220 L10 50 Q100 10 190 50 L190 220 Z" fill="${G}" stroke="${FR}" stroke-width="2.5"/>` +
           DL
         )
       }
