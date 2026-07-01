@@ -282,6 +282,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           ) : op.typeId === 'doubleHung' ? (
             <>
               <DoubleHungDrawing
+                sub={op.sub}
                 topSashOperable={op.vals.topSashOperable as boolean | undefined}
                 bottomSashOperable={op.vals.bottomSashOperable as boolean | undefined}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}

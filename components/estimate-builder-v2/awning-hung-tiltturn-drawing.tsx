@@ -276,7 +276,8 @@ function SashFixed({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2:
   )
 }
 
-export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn, heightIn, uid, grid, glassType, screen, frameColor }: {
+export function DoubleHungDrawing({ sub, topSashOperable, bottomSashOperable, widthIn, heightIn, uid, grid, glassType, screen, frameColor }: {
+  sub?: string
   topSashOperable?: boolean
   bottomSashOperable?: boolean
   widthIn?: number
@@ -290,8 +291,9 @@ export function DoubleHungDrawing({ topSashOperable, bottomSashOperable, widthIn
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
   const FR = frameColor ?? FRAME
-  const topOp    = topSashOperable    !== false
-  const bottomOp = bottomSashOperable !== false
+  const isTiltIn  = (sub ?? '').toLowerCase().replace(/[\s-]+/g, '') === 'tiltin'
+  const topOp    = !isTiltIn && topSashOperable    !== false
+  const bottomOp = !isTiltIn && bottomSashOperable !== false
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
