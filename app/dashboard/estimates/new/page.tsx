@@ -265,6 +265,8 @@ function NewEstimateV2() {
   const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
   const [trimShowErrors, setTrimShowErrors] = useState(false)
   const [scopeNotes, setScopeNotes] = useState('')
+  const [initialDiscountType, setInitialDiscountType] = useState<'fixed' | 'percent'>('fixed')
+  const [initialDiscountValue, setInitialDiscountValue] = useState('')
 
   // Restore draft from sessionStorage on mount (client-side only, new estimates only)
   useEffect(() => {
@@ -365,7 +367,7 @@ function NewEstimateV2() {
     if (!editId) return
     async function loadEstimate() {
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, discount_type, discount_value, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
       ])
       if (!est) return
@@ -396,6 +398,12 @@ function NewEstimateV2() {
         blueSkin:                  Boolean(e.trim_blue_skin),
       })
       setScopeNotes(String(e.scope_notes || ''))
+      if (e.discount_type === 'percent' || e.discount_type === 'fixed') {
+        setInitialDiscountType(e.discount_type)
+      }
+      if (e.discount_value != null) {
+        setInitialDiscountValue(String(e.discount_value))
+      }
       if (ops && ops.length > 0) {
         setOpenings((ops as Record<string, unknown>[]).map(reverseMapOpeningRow))
       }
@@ -777,6 +785,8 @@ function NewEstimateV2() {
           trimCost={trimCost}
           trimState={trimState}
           scopeNotes={scopeNotes}
+          initialDiscountType={initialDiscountType}
+          initialDiscountValue={initialDiscountValue}
           onEditOpenings={() => setMode('list')}
           onSave={saveEstimate}
           saving={saving}

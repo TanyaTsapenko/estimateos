@@ -172,14 +172,16 @@ type Props = {
   trimCost?: number
   trimState?: TrimState
   scopeNotes?: string
+  initialDiscountType?: 'fixed' | 'percent'
+  initialDiscountValue?: string
   onEditOpenings: () => void
   onSave: (p: SaveParams) => void
   saving?: boolean
 }
 
-export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimState, scopeNotes, onEditOpenings, onSave, saving = false }: Props) {
-  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>('fixed')
-  const [discountValue, setDiscountValue] = useState('')
+export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimState, scopeNotes, initialDiscountType = 'fixed', initialDiscountValue = '', onEditOpenings, onSave, saving = false }: Props) {
+  const [discountType, setDiscountType] = useState<'fixed' | 'percent'>(initialDiscountType)
+  const [discountValue, setDiscountValue] = useState(initialDiscountValue)
 
   const [taxRate, taxLabel] = TAX_RATES[(clientInfo.province ?? '').toUpperCase()] ?? [0.05, 'GST (5%)']
 
