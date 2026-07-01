@@ -3,9 +3,11 @@
 export type TrimRow = {
   trim_casing?: string | null
   trim_casing_size?: string | null
+  trim_casing_custom_name?: string | null
   trim_jamb?: string | null
   trim_jamb_extension_depth?: string | null
   trim_jamb_extension_depth_custom?: string | null
+  trim_jamb_custom_name?: string | null
   trim_brickmold?: boolean | null
   trim_brickmold_colour_name?: string | null
   trim_rosettes?: string | null
@@ -26,12 +28,18 @@ export function trimSummaryLines(row: TrimRow): { label: string; value: string }
   const lines: { label: string; value: string }[] = []
 
   if (row.trim_casing && row.trim_casing !== 'none') {
-    const mat = CASING_LABELS[row.trim_casing] || cap(row.trim_casing)
+    const baseMat = CASING_LABELS[row.trim_casing] || cap(row.trim_casing)
+    const mat = row.trim_casing === 'custom' && row.trim_casing_custom_name
+      ? row.trim_casing_custom_name
+      : baseMat
     const sz = row.trim_casing_size ? (SIZE_LABELS[row.trim_casing_size] || '') : ''
     lines.push({ label: 'Casing', value: sz ? `${mat} · ${sz}` : mat })
   }
   if (row.trim_jamb && row.trim_jamb !== 'none') {
-    const mat = JAMB_LABELS[row.trim_jamb] || cap(row.trim_jamb)
+    const baseJamb = JAMB_LABELS[row.trim_jamb] || cap(row.trim_jamb)
+    const mat = row.trim_jamb === 'custom' && row.trim_jamb_custom_name
+      ? row.trim_jamb_custom_name
+      : baseJamb
     const depth = row.trim_jamb_extension_depth
     const depthStr = depth === 'Custom'
       ? (row.trim_jamb_extension_depth_custom || 'Custom size')

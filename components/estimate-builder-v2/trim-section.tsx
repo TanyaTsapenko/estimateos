@@ -7,9 +7,11 @@ import { FieldLabel, Toggle, Swatches } from './primitives'
 export type TrimState = {
   casing: string
   casingSize: string
+  casingCustomName: string
   jamb: string
   jambExtensionDepth: string
   jambExtensionDepthCustom: string
+  jambCustomName: string
   brickmold: boolean
   brickmoldColourName: string | null
   rosettes: string
@@ -20,8 +22,8 @@ export type TrimState = {
 }
 
 export const TRIM_DEFAULTS: TrimState = {
-  casing: 'none', casingSize: '2_3_8', jamb: 'none',
-  jambExtensionDepth: '4-9/16"', jambExtensionDepthCustom: '',
+  casing: 'none', casingSize: '2_3_8', casingCustomName: '',
+  jamb: 'none', jambExtensionDepth: '4-9/16"', jambExtensionDepthCustom: '', jambCustomName: '',
   brickmold: false, brickmoldColourName: null,
   rosettes: 'none', caping: false, nailFin: false, dripCap: false, blueSkin: false,
 }
@@ -117,6 +119,18 @@ export function TrimSection({ value, onChange, palette, openings, surcharges, sh
             {casingCustomWarn && (
               <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#B45309' }}>Custom price not set in price list</div>
             )}
+            {value.casing === 'custom' && (
+              <div style={{ marginTop: 8 }}>
+                <FieldLabel optional>Material name</FieldLabel>
+                <input
+                  style={inputEl}
+                  value={value.casingCustomName}
+                  placeholder="e.g. PVC trim, Exotic wood"
+                  maxLength={40}
+                  onChange={e => set('casingCustomName', e.target.value)}
+                />
+              </div>
+            )}
             {value.casing !== 'none' && (
               <div style={{ marginTop: 10 }}>
                 <FieldLabel>Casing size</FieldLabel>
@@ -141,6 +155,18 @@ export function TrimSection({ value, onChange, palette, openings, surcharges, sh
             </Sel>
             {jambCustomWarn && (
               <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#B45309' }}>Custom price not set in price list</div>
+            )}
+            {value.jamb === 'custom' && (
+              <div style={{ marginTop: 8 }}>
+                <FieldLabel optional>Material name</FieldLabel>
+                <input
+                  style={inputEl}
+                  value={value.jambCustomName}
+                  placeholder="e.g. PVC profile, Client material"
+                  maxLength={40}
+                  onChange={e => set('jambCustomName', e.target.value)}
+                />
+              </div>
             )}
             {value.jamb !== 'none' && (
               <div style={{ marginTop: 10 }}>

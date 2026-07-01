@@ -367,7 +367,7 @@ function NewEstimateV2() {
     if (!editId) return
     async function loadEstimate() {
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, discount_type, discount_value, trim_casing, trim_casing_size, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, discount_type, discount_value, trim_casing, trim_casing_size, trim_casing_custom_name, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_jamb_custom_name, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
       ])
       if (!est) return
@@ -386,9 +386,11 @@ function NewEstimateV2() {
       setTrimState({
         casing:                    String(e.trim_casing                    || 'none'),
         casingSize:                String(e.trim_casing_size               || '2_3_8'),
+        casingCustomName:          String(e.trim_casing_custom_name        || ''),
         jamb:                      String(e.trim_jamb                      || 'none'),
         jambExtensionDepth:        String(e.trim_jamb_extension_depth      || '4-9/16"'),
         jambExtensionDepthCustom:  String(e.trim_jamb_extension_depth_custom || ''),
+        jambCustomName:            String(e.trim_jamb_custom_name          || ''),
         brickmold:                 Boolean(e.trim_brickmold),
         brickmoldColourName:       (e.trim_brickmold_colour_name as string | null) || null,
         rosettes:                  String(e.trim_rosettes                  || 'none'),
@@ -562,10 +564,12 @@ function NewEstimateV2() {
         scope_notes:                      scopeNotes || null,
         trim_casing:                      trimState.casing,
         trim_casing_size:                 trimState.casing !== 'none' ? trimState.casingSize : null,
+        trim_casing_custom_name:          trimState.casing === 'custom' ? trimState.casingCustomName || null : null,
         trim_jamb:                        trimState.jamb,
         trim_jamb_extension_depth:        trimState.jamb !== 'none' ? trimState.jambExtensionDepth : null,
         trim_jamb_extension_depth_custom: trimState.jamb !== 'none' && trimState.jambExtensionDepth === 'Custom'
           ? trimState.jambExtensionDepthCustom || null : null,
+        trim_jamb_custom_name:            trimState.jamb === 'custom' ? trimState.jambCustomName || null : null,
         trim_brickmold:                   trimState.brickmold,
         trim_brickmold_colour_name:       trimState.brickmold ? trimState.brickmoldColourName : null,
         trim_rosettes:                    trimState.rosettes,
