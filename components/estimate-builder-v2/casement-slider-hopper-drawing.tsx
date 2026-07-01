@@ -97,7 +97,7 @@ export function CasementDrawing({ shape, sub, activePanel, widthIn, heightIn, ui
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
       <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
       {fillEl}
@@ -183,7 +183,7 @@ export function SliderDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
@@ -233,7 +233,7 @@ export function HopperDrawing({ openingAngle, widthIn, heightIn, glassType, uid,
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}
       <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>

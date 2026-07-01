@@ -13,21 +13,21 @@ type Pair = [ReactElement, ReactElement]
 
 function rectPair(fill = GLASS, fr = FRAME): Pair {
   return [
-    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} fill="black"/>,
+    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1}/>,
     <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
 function pathPair(d: string, fill = GLASS, fr = FRAME): Pair {
   return [
-    <path d={d} fill="black"/>,
+    <path d={d}/>,
     <path d={d} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
 function polyPair(pts: string, fill = GLASS, fr = FRAME): Pair {
   return [
-    <polygon points={pts} fill="black"/>,
+    <polygon points={pts}/>,
     <polygon points={pts} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
@@ -63,7 +63,7 @@ export function shapeElements(shape: string, fillColor?: string, frameColor?: st
 
     case 'circle':
       return [
-        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="black"/>,
+        <ellipse cx={CX} cy={CY} rx={RX} ry={RY}/>,
         <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={fill} stroke={fr} strokeWidth="2.5"/>,
       ]
 
@@ -145,7 +145,7 @@ export function ShapeOutlineDrawing({
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block',
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto',
         ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 
       <defs>

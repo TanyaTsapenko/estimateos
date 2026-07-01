@@ -76,7 +76,7 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
       <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>

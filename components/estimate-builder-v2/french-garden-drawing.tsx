@@ -138,7 +138,7 @@ export function FrenchDoorDrawing({ sub, doorSwing, activePanel, astragal, glass
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {isSingle ? (
         <FrenchDoorPanel
@@ -208,7 +208,7 @@ export function GardenDoorDrawing({ doorSwing, glassSize, sidelights, transomAbo
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', height: 'auto', aspectRatio: '215/255', display: 'block' }}>
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Transom (spans full X1–X2 width) */}
       {hasTransom && transomAbove === 'Arched' ? (
