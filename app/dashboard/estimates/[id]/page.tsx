@@ -470,7 +470,7 @@ export default function EstimateDetailPage() {
               if (op.transom_above)       pills.push(<span key="ta"      style={chipBlue}>Transom above</span>)
               if (op.glass_type)          pills.push(<span key="gt"      style={chipBlue}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
               if (op.core_type)           pills.push(<span key="ct"      style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
-              if (op.notes)               pills.push(<span key="notes"   style={chipOrange}>📝 {op.notes}</span>)
+              if (op.notes)               pills.push(<span key="notes"   style={{ ...chipOrange, gap: 4 }}><FileText size={12}/>{op.notes}</span>)
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex' }}>

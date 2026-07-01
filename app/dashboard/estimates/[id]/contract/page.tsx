@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
@@ -458,7 +459,7 @@ export default function ContractPage() {
                           if (op.core_type) pills.push(<span key="ct" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{CORE_LABELS[op.core_type]}</span>)
                           if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{GRID_LABELS[op.grid_pattern]}</span>)
                           if (op.room) pills.push(<span key="room" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{op.room}</span>)
-                          if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#C2410C' }}>📝 {op.notes}</span>)
+                          if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#C2410C', display: 'inline-flex', alignItems: 'center', gap: 4 }}><MessageSquare size={12}/>{op.notes}</span>)
                           if (pills.length === 0) return null
                           return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderTop: '0.5px solid #F1F5F9', paddingTop: 8 }}>{pills}</div>
                         })()}
