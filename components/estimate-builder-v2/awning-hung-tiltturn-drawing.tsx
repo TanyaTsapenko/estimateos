@@ -104,7 +104,138 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
   )
 }
 
-// ── Single Hung ─────────────────────────────────────────────────────
+// ── Single Hung — SVG-string → <img> (bypasses CSS inheritance / viewBox conflicts) ──
+
+function shuShapeStr(s: string, fill: string, fr: string): { clip: string; frame: string } {
+  const n = s.toLowerCase().replace(/[\s-]+/g, '')
+  const poly = (pts: string) => ({
+    clip:  `<polygon points="${pts}"/>`,
+    frame: `<polygon points="${pts}" fill="${fill}" stroke="${fr}" stroke-width="2.5" stroke-linejoin="round"/>`,
+  })
+  const path = (d: string) => ({
+    clip:  `<path d="${d}"/>`,
+    frame: `<path d="${d}" fill="${fill}" stroke="${fr}" stroke-width="2.5"/>`,
+  })
+  switch (n) {
+    case 'arch': case 'arched':
+      return path('M10 220 L10 110 Q10 10 100 10 Q190 10 190 110 L190 220 Z')
+    case 'halfarch':
+      return path('M10 220 L10 155 Q10 10 100 10 Q190 10 190 155 L190 220 Z')
+    case 'halfround': case 'halfcircle':
+      return path('M10 220 A90 210 0 0 1 190 220 Z')
+    case 'circle':
+      return {
+        clip:  '<ellipse cx="100" cy="115" rx="90" ry="105"/>',
+        frame: `<ellipse cx="100" cy="115" rx="90" ry="105" fill="${fill}" stroke="${fr}" stroke-width="2.5"/>`,
+      }
+    case 'octagon':
+      return poly('65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65')
+    case 'triangle':
+      return poly('100,10 190,220 10,220')
+    case 'trapezoid':
+      return poly('45,10 155,10 190,220 10,220')
+    case 'pentagon':
+      return poly('100,10 190,91 156,220 44,220 10,91')
+    case 'gothic':
+      return path('M10 220 L10 160 C10 50 90 10 100 10 C110 10 190 50 190 160 L190 220 Z')
+    case 'eyebrow':
+      return path('M10 220 L10 50 Q100 10 190 50 L190 220 Z')
+    default:
+      return {
+        clip:  '<rect x="10" y="10" width="180" height="210"/>',
+        frame: `<rect x="10" y="10" width="180" height="210" rx="3" fill="${fill}" stroke="${fr}" stroke-width="2.5"/>`,
+      }
+  }
+}
+
+function shuGridStr(grid: string | undefined, grilleType: string | undefined, fr: string): string {
+  const pat = grid ?? 'None'
+  if (pat === 'None') return ''
+  const sw = (grilleType ?? 'None') === 'SDL' ? 3 : 1.5
+  const [x1, y1, x2, y2] = [10, 10, 190, 220]
+  const w = x2 - x1, h = y2 - y1
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2
+  const ln = (ax1: number, ay1: number, ax2: number, ay2: number) =>
+    `<line x1="${ax1}" y1="${ay1}" x2="${ax2}" y2="${ay2}" stroke="${fr}" stroke-width="${sw}" stroke-linecap="round"/>`
+  if (pat === 'Colonial')
+    return ln(mx, y1, mx, y2) + ln(x1, y1+h/3, x2, y1+h/3) + ln(x1, y1+2*h/3, x2, y1+2*h/3)
+  if (pat === 'Georgian')
+    return ln(x1+w/3, y1, x1+w/3, y2) + ln(x1+2*w/3, y1, x1+2*w/3, y2) +
+           ln(x1, y1+h/3, x2, y1+h/3) + ln(x1, y1+2*h/3, x2, y1+2*h/3)
+  if (pat === 'Prairie') {
+    const fi = Math.min(w*0.25, h*0.22)
+    return `<rect x="${x1+fi}" y="${y1+fi}" width="${w-2*fi}" height="${h-2*fi}" stroke="${fr}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>` +
+      ln(x1+fi, y1, x1+fi, y1+fi) + ln(x1, y1+fi, x1+fi, y1+fi) +
+      ln(x2-fi, y1, x2-fi, y1+fi) + ln(x2, y1+fi, x2-fi, y1+fi) +
+      ln(x1+fi, y2, x1+fi, y2-fi) + ln(x1, y2-fi, x1+fi, y2-fi) +
+      ln(x2-fi, y2, x2-fi, y2-fi) + ln(x2, y2-fi, x2-fi, y2-fi)
+  }
+  if (pat === 'Diamond') {
+    const step = Math.round(Math.min(w, h) / 3.5)
+    const ext = Math.max(w, h) + 10
+    const count = Math.ceil((w + h) / step) + 3
+    let lines = ''
+    for (let k = -1; k <= count; k++) {
+      const d = k * step
+      lines += `<line x1="${x1+d-ext}" y1="${y2+ext}" x2="${x1+d+ext}" y2="${y1-ext}" stroke="${fr}" stroke-width="${sw}"/>`
+      lines += `<line x1="${x1+d-ext}" y1="${y1-ext}" x2="${x1+d+ext}" y2="${y2+ext}" stroke="${fr}" stroke-width="${sw}"/>`
+    }
+    return `<defs><clipPath id="shu-grid-clip"><rect x="${x1}" y="${y1}" width="${w}" height="${h}"/></clipPath></defs>` +
+           `<g clip-path="url(#shu-grid-clip)">${lines}</g>`
+  }
+  return ''
+}
+
+function singleHungSvgStr(
+  s: string, fill: string, fr: string, se: string, mv: string, dim: string,
+  wL: string, hL: string,
+  glassType: string | undefined, screen: string | undefined,
+  grid: string | undefined, grilleType: string | undefined,
+): string {
+  const { clip, frame } = shuShapeStr(s, fill, fr)
+
+  const hasFrost  = glassType === 'Frosted'
+  const hasScreen = !!screen && screen !== 'None'
+  const pats = hasFrost
+    ? `<pattern id="shu-frost" x="0" y="0" width="6" height="3" patternUnits="userSpaceOnUse"><line x1="0" y1="1.5" x2="6" y2="1.5" stroke="white" stroke-width="0.8" opacity="0.6"/></pattern>`
+    : hasScreen
+    ? `<pattern id="shu-mesh" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="4" y2="4" stroke="${se}" stroke-width="0.5"/><line x1="4" y1="0" x2="0" y2="4" stroke="${se}" stroke-width="0.5"/></pattern>`
+    : ''
+  const glassEffect = hasFrost
+    ? `<rect x="10" y="10" width="180" height="210" fill="url(#shu-frost)"/>`
+    : hasScreen
+    ? `<rect x="10" y="10" width="180" height="210" fill="url(#shu-mesh)" fill-opacity="0.4"/>`
+    : ''
+
+  const gridStr = shuGridStr(grid, grilleType, fr)
+  const dimLines =
+    `<line x1="10" y1="226" x2="190" y2="226" stroke="${se}" stroke-width="1"/>` +
+    `<line x1="10" y1="221" x2="10" y2="231" stroke="${se}" stroke-width="1.5"/>` +
+    `<line x1="190" y1="221" x2="190" y2="231" stroke="${se}" stroke-width="1.5"/>` +
+    `<text x="100" y="243" text-anchor="middle" font-family="system-ui" font-size="10" font-weight="700" fill="${dim}">${wL}</text>` +
+    `<line x1="197" y1="10" x2="197" y2="220" stroke="${se}" stroke-width="1"/>` +
+    `<line x1="193" y1="10" x2="201" y2="10" stroke="${se}" stroke-width="1.5"/>` +
+    `<line x1="193" y1="220" x2="201" y2="220" stroke="${se}" stroke-width="1.5"/>` +
+    `<text x="204" y="119" text-anchor="start" font-family="system-ui" font-size="10" font-weight="700" fill="${dim}">${hL}</text>`
+
+  return (
+    `<svg viewBox="0 0 215 255" xmlns="http://www.w3.org/2000/svg">` +
+    (pats ? `<defs>${pats}</defs>` : '') +
+    `<defs><clipPath id="shu-clip">${clip}</clipPath></defs>` +
+    frame +
+    `<g clip-path="url(#shu-clip)">` +
+    glassEffect +
+    `<line x1="13" y1="115" x2="187" y2="115" stroke="${fr}" stroke-width="1.5"/>` +
+    `<line x1="14" y1="14" x2="186" y2="113" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>` +
+    `<line x1="186" y1="14" x2="14" y2="113" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>` +
+    `<path d="M100 216 L95 209 L100 212 L105 209 Z" fill="${mv}"/>` +
+    `<line x1="100" y1="212" x2="100" y2="119" stroke="${mv}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+    gridStr +
+    `</g>` +
+    dimLines +
+    `</svg>`
+  )
+}
 
 export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
   shape?: string
@@ -117,37 +248,14 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   screen?: string
   frameColor?: string
 }) {
-  const wL = widthIn  ? `${widthIn}"` : 'W'
-  const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
-  const s = (shape ?? '').trim()
-  const clipId = `shu-${uid}`
-  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
-
-  return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
-
-      <defs><clipPath id={clipId}>{clipEl}</clipPath></defs>
-      <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>
-      {fillEl}
-
-      <g clipPath={`url(#${clipId})`}>
-        <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>
-        {/* Horizontal rail divider */}
-        <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FR} strokeWidth="1.5"/>
-        {/* Upper sash — fixed (dashed X) */}
-        <line x1={X1 + 4} y1={Y1 + 4} x2={X2 - 4} y2={MY - 2} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-        <line x1={X2 - 4} y1={Y1 + 4} x2={X1 + 4} y2={MY - 2} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-        {/* Lower sash — slides up (MOV arrow + shaft) */}
-        <path d={`M${CX} ${Y2 - 4} L${CX - 5} ${Y2 - 11} L${CX} ${Y2 - 8} L${CX + 5} ${Y2 - 11}Z`} fill={MOV}/>
-        <line x1={CX} y1={Y2 - 8} x2={CX} y2={MY + 4} stroke={MOV} strokeWidth="1.2" strokeDasharray="3 2"/>
-        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
-      </g>
-
-      <DimLines wL={wL} hL={hL}/>
-    </svg>
-  )
+  const wL  = widthIn  ? `${widthIn}"` : 'W'
+  const hL  = heightIn ? `${heightIn}"` : 'H'
+  const s   = (shape ?? '').trim()
+  const fill = glassColor(glassType)
+  const fr   = frameColor ?? FRAME
+  const svgStr = singleHungSvgStr(s, fill, fr, SEC, MOV, DIM, wL, hL, glassType, screen, grid, grilleType)
+  const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgStr)}`
+  return <img src={src} style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }} alt=""/>
 }
 
 // ── Double Hung ─────────────────────────────────────────────────────
