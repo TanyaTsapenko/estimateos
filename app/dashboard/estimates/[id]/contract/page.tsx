@@ -339,29 +339,25 @@ export default function ContractPage() {
         {/* BODY */}
         <div style={{ padding: '16px 16px 160px', flex: 1 }}>
 
-          {/* PARTIES */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-            <div style={{ background: GRAY_BG, borderRadius: 10, padding: 12 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 6 }}>Contractor</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{profile?.company_name || '—'}</div>
-              {profile?.phone        && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
-              {profile?.email        && <div style={{ fontSize: 11, color: MUTED }}>{profile.email}</div>}
-              {profile?.address      && <div style={{ fontSize: 11, color: MUTED }}>{[profile.address, profile.city, profile.province].filter(Boolean).join(', ')}</div>}
-              {profile?.licence      && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
-            </div>
-            <div style={{ background: GRAY_BG, borderRadius: 10, padding: 12 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 6 }}>Client</div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{estimate.client_name || '—'}</div>
-              {estimate.client_phone   && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_phone}</div>}
-              {estimate.client_email   && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_email}</div>}
-              {estimate.client_address && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_address}</div>}
-              {(estimate.client_city || estimate.client_province) && (
-                <div style={{ fontSize: 11, color: MUTED }}>{[estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}</div>
-              )}
-              {estimate.job_site_same_as_client === false && estimate.job_site_address && (
-                <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}</div>
-              )}
-            </div>
+          {/* CLIENT */}
+          <div style={{ background: '#F8F9FC', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 5 }}>Client</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+            {(estimate.client_phone || estimate.client_email) && (
+              <div style={{ fontSize: 11, color: MUTED, marginBottom: 2 }}>
+                {[estimate.client_phone, estimate.client_email].filter(Boolean).join(' · ')}
+              </div>
+            )}
+            {(estimate.client_address || estimate.client_city) && (
+              <div style={{ fontSize: 11, color: MUTED }}>
+                {[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}
+              </div>
+            )}
+            {estimate.job_site_same_as_client === false && estimate.job_site_address && (
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 3 }}>
+                Site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}
+              </div>
+            )}
           </div>
 
           {/* SCOPE OF WORK */}
