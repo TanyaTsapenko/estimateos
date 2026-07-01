@@ -1,12 +1,23 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
-import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
+import { getColourLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
+import { hasTrim, trimSummaryLines } from '@/lib/v2/trimUtils'
+import { substituteProvince } from '@/lib/provinces'
 import WindowDiagram from '@/components/WindowDiagram'
 import AppTopBar from '@/components/AppTopBar'
+
+const NAVY    = '#0A1628'
+const BLUE    = '#2563EB'
+const BLUE_D  = '#1D4ED8'
+const BLUE_BG = '#EEF3FF'
+const GRAY_BG = '#F8FAFC'
+const BORDER  = '#E2E8F0'
+const MUTED   = '#64748B'
+const FAINT   = '#94A3B8'
+const F       = '"Inter", system-ui, sans-serif'
 
 interface Opening {
   id: string; type: string; qty: number; total_cost: number
@@ -22,77 +33,82 @@ interface Opening {
   colour_palette_id?: string | null; colour_name?: string | null
   glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null
   interior_colour_palette_id?: string | null; interior_colour_name?: string | null; interior_colour?: string | null
+  pane?: string | null; argon?: boolean | null; laminated_glass?: boolean | null
+  grid?: boolean | null; grille_type?: string | null; window_subtype?: string | null
 }
 interface Profile {
   id: string
   company_name: string | null; phone: string | null; email: string | null
-  address: string | null; city: string | null; postal: string | null; website: string | null
-  licence: string | null
+  address: string | null; city: string | null; province: string | null; postal: string | null
+  website: string | null; licence: string | null; insurance: string | null
   contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
-  warranty_period: string | null
-  completion_timeframe: string | null; payment_methods: string[] | null
-  project_manager: string | null; contract_clauses: string | null
+  warranty_period: string | null; completion_timeframe: string | null
+  payment_methods: string[] | null; project_manager: string | null
+  contract_clauses: string | null
+  gst_hst_number: string | null; wsib_number: string | null
+  signing_rep_name: string | null; signing_rep_title: string | null
 }
 interface Estimate {
   id: string; estimate_number: string; created_at: string
   client_name: string | null; client_email: string | null; client_phone: string | null
-  client_address: string | null; client_city: string | null; client_province: string | null
-  subtotal: number; tax_amount: number; total: number
+  client_address: string | null; client_city: string | null; client_province: string | null; client_postal_code: string | null
+  subtotal: number; tax_amount: number; tax_rate: number | null; total: number
   discount_amount: number; discount_type: string | null; discount_value: number | null
+  job_site_same_as_client: boolean | null; job_site_address: string | null; job_site_city: string | null; job_site_province: string | null
   user_id: string
+  trim_casing?: string | null; trim_casing_size?: string | null; trim_casing_custom_name?: string | null
+  trim_jamb?: string | null; trim_jamb_extension_depth?: string | null; trim_jamb_extension_depth_custom?: string | null; trim_jamb_custom_name?: string | null
+  trim_brickmold?: boolean | null; trim_brickmold_colour_name?: string | null
+  trim_rosettes?: string | null; trim_caping?: boolean | null; trim_nail_fin?: boolean | null
+  trim_drip_cap?: boolean | null; trim_blue_skin?: boolean | null
 }
 
-const F = '"Inter", system-ui, sans-serif'
+function humanize(s?: string | null): string {
+  if (!s) return ''
+  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
 
-function CardHeader({ icon, title }: { icon: React.ReactNode; title: string }) {
+function SecLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F0F0', display: 'flex', gap: 8, alignItems: 'center' }}>
-      <div style={{ width: 28, height: 28, background: '#EEF2FF', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        {icon}
-      </div>
-      <span style={{ fontSize: 12, fontWeight: 700, color: '#0A0E1A' }}>{title}</span>
+    <div style={{ fontSize: 10, fontWeight: 700, color: BLUE, textTransform: 'uppercase' as const, letterSpacing: '0.12em', marginBottom: 8, marginTop: 2 }}>
+      {children}
     </div>
   )
 }
 
-function CheckRow({ text }: { text: string }) {
+function GrpHdr({ children }: { children: string }) {
   return (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 10 }}>
-      <div style={{ width: 20, height: 20, background: '#EEF2FF', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="#2045B8" strokeWidth="2.2" strokeLinecap="round">
-          <polyline points="2 6 5 9 10 3" />
-        </svg>
-      </div>
-      <span style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.55 }}>{text}</span>
+    <div style={{ fontSize: 9, fontWeight: 700, color: FAINT, textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginTop: 8, marginBottom: 3, borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 2 }}>
+      {children}
     </div>
   )
 }
 
-function DocumentIcon() {
+function SpecRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
-    </svg>
+    <div style={{ display: 'flex', marginBottom: 3 }}>
+      <span style={{ fontSize: 11, color: FAINT, width: 86, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 11, color: NAVY }}>{value}</span>
+    </div>
   )
 }
 
-function PenIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2045B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-    </svg>
-  )
-}
+const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
+const FLOOR_LABELS:   Record<string, string> = { second: '2nd floor', third: '3rd floor' }
+const DIRECTION_LABELS: Record<string, string> = { left: 'Opens left', right: 'Opens right', both: 'Opens both sides' }
+const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
+const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
 
 export default function ContractPage() {
-  const router       = useRouter()
-  const { id }       = useParams<{ id: string }>()
-  const searchParams = useSearchParams()
-  const trigger      = searchParams.get('trigger') || 'send'
-  const urlPayment   = searchParams.get('payment_method')
-  const urlDeposit   = searchParams.get('deposit_percent')
-  const supabase     = createClient()
+  const router         = useRouter()
+  const { id }         = useParams<{ id: string }>()
+  const searchParams   = useSearchParams()
+  const trigger        = searchParams.get('trigger') || 'send'
+  const urlPayment     = searchParams.get('payment_method')
+  const urlDeposit     = searchParams.get('deposit_percent')
+  const supabase       = createClient()
 
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
@@ -100,14 +116,13 @@ export default function ContractPage() {
   const [loading,  setLoading]  = useState(true)
   const [sending,  setSending]  = useState(false)
 
-  // Inline signing state
-  const svgRef                                        = useRef<SVGSVGElement>(null)
-  const [paths,              setPaths]              = useState<string[]>([])
-  const [currentPath,        setCurrentPath]        = useState<string>('')
-  const [isDrawing,          setIsDrawing]          = useState(false)
-  const [agreedToTerms,      setAgreedToTerms]      = useState(false)
-  const [showSuccess,        setShowSuccess]        = useState(false)
-  const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
+  const svgRef                                  = useRef<SVGSVGElement>(null)
+  const [paths,           setPaths]           = useState<string[]>([])
+  const [currentPath,     setCurrentPath]     = useState<string>('')
+  const [isDrawing,       setIsDrawing]       = useState(false)
+  const [agreedToTerms,   setAgreedToTerms]   = useState(false)
+  const [showSuccess,     setShowSuccess]     = useState(false)
+  const [clientSigUrl,    setClientSigUrl]    = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -115,18 +130,15 @@ export default function ContractPage() {
         supabase.from('estimates').select('*').eq('id', id).single(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
       ])
-      console.log('[contract page] est:', est)
-      console.log('[contract page] est.user_id:', est?.user_id)
       if (!est) { setLoading(false); return }
       setEstimate(est)
       setOpenings(ops || [])
-      const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
-      const { data: prof, error: profError } = await supabase
+      const ownerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      const { data: prof } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses')
-        .eq('id', estOwnerId)
+        .select('id, company_name, phone, email, address, city, province, postal, website, licence, insurance, signature_url, logo_url, contract_terms, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, wsib_number, signing_rep_name, signing_rep_title')
+        .eq('id', ownerId)
         .single()
-      console.log('[contract page] prof:', prof, 'error:', profError)
       if (prof) setProfile(prof as Profile)
       setLoading(false)
     }
@@ -134,24 +146,17 @@ export default function ContractPage() {
   }, [id])
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, color: '#94A3B8' }}>
-      Loading…
-    </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, color: FAINT }}>Loading…</div>
   )
   if (!estimate) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, color: '#94A3B8' }}>
-      Contract not found.
-    </div>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: F, color: FAINT }}>Contract not found.</div>
   )
 
   function getPoint(e: React.PointerEvent) {
     const svg = svgRef.current
     if (!svg) return { x: 0, y: 0 }
     const rect = svg.getBoundingClientRect()
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * 600,
-      y: ((e.clientY - rect.top) / rect.height) * 200,
-    }
+    return { x: ((e.clientX - rect.left) / rect.width) * 600, y: ((e.clientY - rect.top) / rect.height) * 200 }
   }
 
   async function handleAction() {
@@ -159,24 +164,20 @@ export default function ContractPage() {
       if (paths.length === 0) { alert('Please sign before submitting'); return }
       if (!agreedToTerms) { alert('Please agree to the terms before signing'); return }
     }
-
     setSending(true)
     try {
-      // Persist payment details to the estimate
       const estimateUpdate: Record<string, unknown> = {}
-      if (urlPayment)  estimateUpdate.payment_method  = urlPayment
-      if (urlDeposit)  estimateUpdate.deposit_percent = parseFloat(urlDeposit!)
+      if (urlPayment) estimateUpdate.payment_method  = urlPayment
+      if (urlDeposit) estimateUpdate.deposit_percent = parseFloat(urlDeposit!)
       if (Object.keys(estimateUpdate).length > 0) {
         await supabase.from('estimates').update(estimateUpdate).eq('id', id)
       }
 
-      const contractStatus = trigger === 'sign' ? 'signing' : 'sent'
       const { data: contract, error } = await supabase
         .from('contracts')
         .insert({
-          estimate_id: id,
-          profile_id: profile?.id,
-          status: contractStatus,
+          estimate_id: id, profile_id: profile?.id,
+          status: trigger === 'sign' ? 'signing' : 'sent',
           contract_terms_snapshot: profile?.contract_terms,
           contractor_signature_url: profile?.signature_url,
           company_name: profile?.company_name || '',
@@ -185,25 +186,17 @@ export default function ContractPage() {
           ...(urlDeposit ? { deposit_percent: parseFloat(urlDeposit) } : {}),
           ...(urlPayment ? { payment_method: urlPayment } : {}),
         })
-        .select()
-        .single()
+        .select().single()
 
-      if (error || !contract) {
-        alert('Error creating contract: ' + error?.message)
-        return
-      }
+      if (error || !contract) { alert('Error creating contract: ' + error?.message); return }
 
       if (trigger === 'sign') {
-        // Render SVG pad to canvas PNG
         const svgElement = svgRef.current
         if (!svgElement) { setSending(false); return }
-
         const svgData = new XMLSerializer().serializeToString(svgElement)
         const offscreen = document.createElement('canvas')
-        offscreen.width = 600
-        offscreen.height = 200
+        offscreen.width = 600; offscreen.height = 200
         const ctx = offscreen.getContext('2d')
-
         let signatureBase64: string
         try {
           await new Promise<void>((resolve, reject) => {
@@ -218,60 +211,37 @@ export default function ContractPage() {
           alert('Could not render signature. Please try again.')
           return
         }
-
         const res = await fetch('/api/sign-contract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contractId: contract.id,
-            signatureBase64,
-            clientName: estimate?.client_name,
-          }),
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name }),
         })
         const result = await res.json()
-        if (!res.ok) {
-          setSending(false)
-          alert('Signing failed: ' + (result.error || 'Unknown error'))
-          return
-        }
-
-        setClientSignatureUrl(result.signatureUrl)
-
+        if (!res.ok) { setSending(false); alert('Signing failed: ' + (result.error || 'Unknown error')); return }
+        setClientSigUrl(result.signatureUrl)
         await Promise.allSettled([
           fetch('/api/notify-contractor-signed', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contractorEmail: profile?.email || '',
-              contractorName: profile?.company_name || '',
-              clientName: estimate?.client_name || '',
-              companyName: profile?.company_name || 'Your Company',
-              total: estimate?.total || 0,
-              depositPercent: depositPct,
-              contractId: contract.id,
+              contractorEmail: profile?.email || '', contractorName: profile?.company_name || '',
+              clientName: estimate?.client_name || '', companyName: profile?.company_name || 'Your Company',
+              total: estimate?.total || 0, depositPercent: depositPct, contractId: contract.id,
             }),
           }),
           fetch('/api/deposit-invoice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estimateId: id }),
           }),
         ])
-
         setShowSuccess(true)
         return
       }
 
-      // trigger === 'send'
       if (!estimate?.client_email) { alert('No client email on this estimate'); return }
       await fetch('/api/send-contract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contractId: contract.id,
-          estimateId: id,
-          clientEmail: estimate.client_email,
-          clientName: estimate.client_name,
+          contractId: contract.id, estimateId: id,
+          clientEmail: estimate.client_email, clientName: estimate.client_name,
           companyName: profile?.company_name || 'Your Contractor',
         }),
       })
@@ -284,95 +254,90 @@ export default function ContractPage() {
     }
   }
 
-  const COLOUR_LABELS: Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
-  const FRAME_LABELS: Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
-  const FLOOR_LABELS: Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
-  const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
-  const SHAPE_LABELS: Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
-  const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
-  const DIRECTION_LABELS: Record<string, string> = { left: 'Opens left', right: 'Opens right', both: 'Opens both sides' }
-  const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
-  const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
-  const GRID_LABELS: Record<string, string> = { none: 'No grid', colonial: 'Colonial grid', prairie: 'Prairie grid', diamond: 'Diamond grid', custom: 'Custom grid' }
   const contractId  = 'CON-' + estimate.id.slice(0, 6).toUpperCase()
   const createdDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(estimate.created_at))
   const depositPct  = urlDeposit ? parseFloat(urlDeposit) : (profile?.deposit_percent ?? 30)
   const depositAmt  = estimate.total * (depositPct / 100)
+  const balanceAmt  = estimate.total - depositAmt
   const isEmpty     = paths.length === 0
-
-  const cardStyle: React.CSSProperties = {
-    background: '#fff', borderRadius: 14, border: '1px solid #E8E8E8', marginBottom: 12, overflow: 'hidden',
-  }
+  const payMethods: string[] = Array.isArray(profile?.payment_methods) ? profile!.payment_methods! : []
+  const clauses = (() => {
+    try {
+      const raw = profile?.contract_clauses
+      if (!raw) return []
+      const parsed = Array.isArray(raw) ? raw : JSON.parse(raw as string)
+      return (parsed as any[]).filter(c => c.enabled !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    } catch { return [] }
+  })()
+  const hasDetails = !!(profile?.warranty_period || profile?.completion_timeframe || profile?.project_manager || payMethods.length > 0)
 
   return (
     <>
-      {/* ── SUCCESS OVERLAY (after inline sign) ── */}
+      {/* ── SUCCESS OVERLAY ── */}
       {showSuccess && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: '#fff', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
-
-          {/* Green check */}
           <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
           </div>
-
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginBottom: 10, textAlign: 'center' }}>You're all signed!</div>
-          <div style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, textAlign: 'center', maxWidth: 300, marginBottom: 28 }}>
-            Thank you, <strong style={{ color: '#0A1628' }}>{estimate.client_name}</strong>. Payment instructions have been sent to your email.
+          <div style={{ fontSize: 22, fontWeight: 800, color: NAVY, marginBottom: 10, textAlign: 'center' }}>You're all signed!</div>
+          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.6, textAlign: 'center', maxWidth: 300, marginBottom: 28 }}>
+            Thank you, <strong style={{ color: NAVY }}>{estimate.client_name}</strong>. Payment instructions have been sent to your email.
           </div>
-
-          {/* Deposit card */}
-          <div style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 20 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
-            <div style={{ fontSize: 36, fontWeight: 800, color: '#2563EB', marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
-            <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
-
-            <div style={{ height: 1, background: '#F1F5F9', marginBottom: 16 }} />
-
+          <div style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: 16, border: `1px solid ${BORDER}`, padding: 20, marginBottom: 20 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: FAINT, marginBottom: 6 }}>Deposit Due</div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: BLUE, marginBottom: 4 }}>{fmtCAD(depositAmt)}</div>
+            <div style={{ fontSize: 13, color: FAINT, marginBottom: 16 }}>{depositPct}% of {fmtCAD(estimate.total)}</div>
+            <div style={{ height: 1, background: GRAY_BG, marginBottom: 16 }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: estimate.client_email ? 10 : 0 }}>
-              <span style={{ fontSize: 13, color: '#94A3B8' }}>Status</span>
+              <span style={{ fontSize: 13, color: FAINT }}>Status</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: '#16A34A' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />
-                SIGNED
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#16A34A', display: 'inline-block' }} />SIGNED
               </span>
             </div>
-
             {estimate.client_email && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, color: '#94A3B8' }}>Sent to</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_email}</span>
+                <span style={{ fontSize: 13, color: FAINT }}>Sent to</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: NAVY }}>{estimate.client_email}</span>
               </div>
             )}
           </div>
-
-          {/* Resend link */}
-          <button style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#2563EB', cursor: 'pointer', fontFamily: F, padding: '4px 0', marginBottom: 20 }}>
+          <button style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: BLUE, cursor: 'pointer', fontFamily: F, padding: '4px 0', marginBottom: 20 }}>
             Resend confirmation email →
           </button>
-
-          {/* Done */}
-          <button
-            onClick={() => router.push(`/dashboard/estimates/${id}`)}
-            style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#94A3B8', cursor: 'pointer', fontFamily: F, padding: '10px 24px' }}>
+          <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
+            style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: FAINT, cursor: 'pointer', fontFamily: F, padding: '10px 24px' }}>
             Done
           </button>
         </div>
       )}
 
-      {/* ── MAIN CONTRACT PAGE ── */}
-      <div style={{ minHeight: '100vh', background: '#F4F4F2', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
+      {/* ── MAIN PAGE ── */}
+      <div style={{ minHeight: '100vh', background: GRAY_BG, fontFamily: F, display: 'flex', flexDirection: 'column' }}>
 
-        {/* HEADER */}
         <AppTopBar onBack={() => router.back()} backLabel="Back" title="Contract" />
 
-        {/* CONTRACT BAR */}
-        <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{contractId}</div>
+        {/* HEADER — white, blue bottom border, matching ContractPDF hdrRow */}
+        <div style={{ background: '#fff', borderBottom: `2px solid ${BLUE}`, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} alt="Logo" style={{ height: 30, maxWidth: 130, objectFit: 'contain', display: 'block', marginBottom: 5 }} />
+            )}
+            <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{profile?.company_name || 'Your Company'}</div>
+            {profile?.phone          && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
+            {profile?.email          && <div style={{ fontSize: 11, color: MUTED }}>{profile.email}</div>}
+            {profile?.website        && <div style={{ fontSize: 11, color: MUTED }}>{profile.website}</div>}
+            {(profile?.address || profile?.city) && <div style={{ fontSize: 11, color: MUTED }}>{[profile?.address, profile?.city, profile?.province, profile?.postal].filter(Boolean).join(', ')}</div>}
+            {profile?.licence        && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
+            {profile?.gst_hst_number && <div style={{ fontSize: 11, color: MUTED }}>GST/HST# {profile.gst_hst_number}</div>}
+            {profile?.wsib_number    && <div style={{ fontSize: 11, color: MUTED }}>WSIB/WCB# {profile.wsib_number}</div>}
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>DATE</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ background: BLUE, borderRadius: 3, padding: '3px 8px', marginBottom: 6, display: 'inline-block' }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', letterSpacing: '0.1em' }}>INSTALLATION CONTRACT</span>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 2 }}>{contractId}</div>
+            <div style={{ fontSize: 11, color: MUTED, marginBottom: 1 }}>Signed: {createdDate}</div>
+            <div style={{ fontSize: 11, color: MUTED }}>Est: {estimate.estimate_number}</div>
           </div>
         </div>
 
@@ -380,259 +345,295 @@ export default function ContractPage() {
         <div style={{ padding: '16px 16px 160px', flex: 1 }}>
 
           {/* PARTIES */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            {/* Contractor */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{profile?.company_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {profile?.phone && <div>{profile.phone}</div>}
-                {profile?.email && <div style={{ fontSize: 13, color: '#475569' }}>{profile.email}</div>}
-                {profile?.address && <div style={{ fontSize: 13, color: '#475569' }}>{profile.address}</div>}
-                {profile?.city && <div>{profile.city}</div>}
-              </div>
-              {profile?.licence && (
-                <div style={{ marginTop: 8 }}>
-                  <span style={{ background: '#EEF2FF', color: '#2045B8', fontSize: 9, borderRadius: 6, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    LIC #{profile.licence}
-                  </span>
-                </div>
-              )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+            <div style={{ background: GRAY_BG, borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 6 }}>Contractor</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{profile?.company_name || '—'}</div>
+              {profile?.phone        && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
+              {profile?.email        && <div style={{ fontSize: 11, color: MUTED }}>{profile.email}</div>}
+              {profile?.address      && <div style={{ fontSize: 11, color: MUTED }}>{[profile.address, profile.city, profile.province].filter(Boolean).join(', ')}</div>}
+              {profile?.licence      && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
+              {profile?.insurance    && <div style={{ fontSize: 11, color: MUTED }}>Ins# {profile.insurance}</div>}
+              {profile?.wsib_number  && <div style={{ fontSize: 11, color: MUTED }}>WSIB# {profile.wsib_number}</div>}
+              {profile?.gst_hst_number && <div style={{ fontSize: 11, color: MUTED }}>GST/HST# {profile.gst_hst_number}</div>}
             </div>
-            {/* Client */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {estimate.client_phone && <div>{estimate.client_phone}</div>}
-                {estimate.client_email && <div>{estimate.client_email}</div>}
-                {estimate.client_address && <div>{estimate.client_address}</div>}
-              </div>
+            <div style={{ background: GRAY_BG, borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{estimate.client_name || '—'}</div>
+              {estimate.client_phone   && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_phone}</div>}
+              {estimate.client_email   && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_email}</div>}
+              {estimate.client_address && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_address}</div>}
+              {(estimate.client_city || estimate.client_province) && (
+                <div style={{ fontSize: 11, color: MUTED }}>{[estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}</div>
+              )}
+              {estimate.job_site_same_as_client === false && estimate.job_site_address && (
+                <div style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}</div>
+              )}
             </div>
           </div>
 
           {/* SCOPE OF WORK */}
-          <div style={cardStyle}>
-            <CardHeader icon={<DocumentIcon />} title="Scope of Work" />
-            <div style={{ padding: '14px 16px' }}>
-              {openings.map((op, i) => {
-                const def = OPENING_TYPES[op.type]
-                const name = `${def?.name || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
-                return (
-                  <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
-                    {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{name} × {op.qty}</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
-                    </div>
-                    {/* Body: diagram + specs */}
-                    <div style={{ display: 'flex' }}>
-                      {/* Diagram */}
-                      <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
-                      </div>
-                      {/* Specs */}
-                      <div style={{ flex: 1, padding: '10px 12px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px', marginBottom: 8 }}>
-                          {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 70 }}>Ext. Colour</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getColourLabel(op)}</span></div>}
-                          {getInteriorColourLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 70 }}>Int. Colour</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getInteriorColourLabel(op)}</span></div>}
-                          {getGlassLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 70 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getGlassLabel(op)}</span></div>}
-                          {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
-                          {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
-                          {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                          {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{getShapeLabel(op)}</span></div>}
-                          {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
-                          {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{op.brand}</span></div>}
-                          {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: '#94A3B8', minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 500, color: '#0A0E1A' }}>{op.width_in}" × {op.height_in}"</span></div>}
-                        </div>
-                        {(() => {
-                          const pills: React.ReactNode[] = []
-                          if (op.has_screen) pills.push(<span key="screen" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>Screen ✓</span>)
-                          if (op.tilt_clean) pills.push(<span key="tilt" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>Tilt-in ✓</span>)
-                          if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
-                          if (op.panels_count) pills.push(<span key="panels" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{op.panels_count} panels</span>)
-                          if (op.bay_angle) pills.push(<span key="angle" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{op.bay_angle}°</span>)
-                          if (op.sidelight_left) pills.push(<span key="sll" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>← SL {op.sidelight_left}"</span>)
-                          if (op.sidelight_right) pills.push(<span key="slr" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>→ SL {op.sidelight_right}"</span>)
-                          if (op.transom_above) pills.push(<span key="ta" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>Transom above</span>)
-                          if (op.glass_type) pills.push(<span key="gt" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
-                          if (op.core_type) pills.push(<span key="ct" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{CORE_LABELS[op.core_type]}</span>)
-                          if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{GRID_LABELS[op.grid_pattern]}</span>)
-                          if (op.room) pills.push(<span key="room" style={{ background: '#F1F5F9', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#475569' }}>{op.room}</span>)
-                          if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 4, padding: '1px 7px', fontSize: 10, color: '#C2410C', display: 'inline-flex', alignItems: 'center', gap: 4 }}><MessageSquare size={12}/>{op.notes}</span>)
-                          if (pills.length === 0) return null
-                          return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderTop: '0.5px solid #F1F5F9', paddingTop: 8 }}>{pills}</div>
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
+          <SecLabel>Scope of Work</SecLabel>
+          {openings.map((op, i) => {
+            const typeName  = OPENING_TYPES[op.type]?.name || humanize(op.type)
+            const subLabel  = getSubtypeLabel(op as any)
+            const title     = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null].filter(Boolean).join(' ')
+            const extColour = getColourLabel(op as any)
+            const intColour = getInteriorColourLabel(op as any)
+            const floorVal  = op.floor && op.floor !== 'first' ? (FLOOR_LABELS[op.floor] || humanize(op.floor)) : null
+            const gridVal   = (op as any).grid
+              ? ((op as any).grille_type ? humanize((op as any).grille_type) : 'Yes')
+              : (op.grid_pattern && op.grid_pattern !== 'none' ? humanize(op.grid_pattern) : null)
+            const paneLabel = (op as any).pane === 'triple' ? 'Triple Pane' : (op as any).pane === 'single' ? 'Single Pane' : null
 
-              <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
+            const glassChips: string[] = []
+            if (paneLabel)                                    glassChips.push(paneLabel)
+            if (op.glass_kind && op.glass_kind !== 'clear')  glassChips.push(humanize(op.glass_kind))
+            if (op.low_e)                                     glassChips.push('Low-E')
+            if ((op as any).argon)                            glassChips.push('Argon')
+            if (op.tempered)                                  glassChips.push('Tempered')
+            if ((op as any).laminated_glass)                  glassChips.push('Laminated')
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
-                <span>Subtotal</span><span>{fmtCAD(estimate.subtotal)}</span>
-              </div>
-              {estimate.discount_amount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', marginBottom: 4 }}>
-                  <span>Discount</span><span>−{fmtCAD(estimate.discount_amount)}</span>
+            const extraPills: string[] = []
+            if (op.has_screen)        extraPills.push('Screen')
+            if (op.tilt_clean)        extraPills.push('Tilt-in')
+            if (op.opening_direction) extraPills.push(DIRECTION_LABELS[op.opening_direction] || humanize(op.opening_direction))
+            if (op.panels_count)      extraPills.push(`${op.panels_count} panels`)
+            if (op.bay_angle)         extraPills.push(`${op.bay_angle}°`)
+            if (op.sidelight_left)    extraPills.push(`← SL ${op.sidelight_left}"`)
+            if (op.sidelight_right)   extraPills.push(`→ SL ${op.sidelight_right}"`)
+            if (op.transom_above)     extraPills.push('Transom above')
+            if (op.glass_type)        extraPills.push(GLASS_TYPE_LABELS[op.glass_type] || humanize(op.glass_type))
+            if (op.core_type)         extraPills.push(CORE_LABELS[op.core_type] || humanize(op.core_type))
+            if (op.brand)             extraPills.push(op.brand)
+
+            return (
+              <div key={op.id} style={{ border: `0.5px solid ${BORDER}`, borderRadius: 8, marginBottom: 10, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', background: GRAY_BG, padding: '8px 12px', borderBottom: `0.5px solid ${BORDER}` }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: FAINT, width: 20, marginRight: 8, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: NAVY, flex: 1 }}>{title}{op.room ? ` — ${op.room}` : ''}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</span>
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#8892b0', marginBottom: 4 }}>
-                <span>Tax</span><span>{fmtCAD(estimate.tax_amount)}</span>
-              </div>
-
-              <div style={{ height: 1, background: '#F0F0F0', margin: '12px 0' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: '#0A0E1A' }}>Total</span>
-                <span style={{ fontSize: 20, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(estimate.total)}</span>
-              </div>
-
-              {depositAmt > 0 && (
-                <>
-                  <div style={{ background: '#EEF2FF', borderRadius: 10, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
-                    <span style={{ fontSize: 12, color: '#2045B8', fontWeight: 600 }}>
-                      Deposit due upon signing ({depositPct}%)
-                    </span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#2045B8' }}>{fmtCAD(depositAmt)}</span>
+                <div style={{ display: 'flex', padding: 10 }}>
+                  <div style={{ width: 110, marginRight: 10, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                    {op.width_in && op.height_in && (
+                      <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, marginTop: 3, textAlign: 'center' }}>{op.width_in}" × {op.height_in}"</div>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8F9FC', borderRadius: 10, marginTop: 8 }}>
-                    <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
-                      Balance on completion ({100 - depositPct}%)
-                    </span>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: '#0A1628' }}>
-                      {fmtCAD(estimate.total - depositAmt)}
-                    </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {(op.room || floorVal) && (
+                      <>
+                        <GrpHdr>Location</GrpHdr>
+                        <SpecRow label="Room"  value={op.room} />
+                        <SpecRow label="Floor" value={floorVal} />
+                      </>
+                    )}
+                    <GrpHdr>Product</GrpHdr>
+                    <SpecRow label="Material"     value={humanize(op.material)} />
+                    <SpecRow label="Ext. colour"  value={extColour || undefined} />
+                    <SpecRow label="Int. colour"  value={intColour || undefined} />
+                    <SpecRow label="Grid"         value={gridVal || undefined} />
+                    <SpecRow label="Installation" value={op.install ? (INSTALL_LABELS[op.install] || humanize(op.install)) : undefined} />
+                    <SpecRow label="Frame"        value={op.frame && op.frame !== 'none' ? humanize(op.frame) : undefined} />
+                    {glassChips.length > 0 && (
+                      <>
+                        <GrpHdr>Glass</GrpHdr>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
+                          {glassChips.map(c => (
+                            <div key={c} style={{ border: `0.5px solid ${BLUE}`, borderRadius: 3, padding: '2px 6px', marginRight: 4, marginBottom: 4 }}>
+                              <span style={{ fontSize: 9, color: BLUE, fontWeight: 700 }}>{c}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {extraPills.length > 0 && (
+                      <>
+                        <GrpHdr>Options</GrpHdr>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
+                          {extraPills.map(p => (
+                            <div key={p} style={{ background: GRAY_BG, borderRadius: 3, padding: '2px 6px', marginRight: 4, marginBottom: 4 }}>
+                              <span style={{ fontSize: 9, color: MUTED }}>{p}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                    {op.notes && (
+                      <>
+                        <GrpHdr>Notes</GrpHdr>
+                        <div style={{ fontSize: 11, color: MUTED, fontStyle: 'italic', lineHeight: 1.5 }}>{op.notes}</div>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            )
+          })}
 
-          {/* TERMS & CONDITIONS */}
-          <div style={cardStyle}>
-            <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
-            <div style={{ padding: '14px 16px' }}>
-              {(() => {
-                const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
-                const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-                if (enabledClauses.length === 0) return null
-                return enabledClauses.map((clause: any) => (
-                  <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
-                ))
-              })()}
+          {/* TRIM & FINISHING */}
+          {hasTrim(estimate) && (
+            <div style={{ marginBottom: 14 }}>
+              <SecLabel>Trim &amp; Finishing</SecLabel>
+              {trimSummaryLines(estimate).map(line => (
+                <div key={line.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `0.5px solid ${GRAY_BG}` }}>
+                  <span style={{ fontSize: 13, color: MUTED }}>{line.label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>{line.value}</span>
+                </div>
+              ))}
             </div>
+          )}
+
+          {/* PRICE SUMMARY */}
+          <div style={{ marginBottom: 14 }}>
+            <SecLabel>Price Summary</SecLabel>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ width: '100%', maxWidth: 260 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `0.5px solid ${BORDER}` }}>
+                  <span style={{ fontSize: 13, color: MUTED }}>Subtotal</span>
+                  <span style={{ fontSize: 13, color: NAVY }}>{fmtCAD(estimate.subtotal)}</span>
+                </div>
+                {estimate.discount_amount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `0.5px solid ${BORDER}` }}>
+                    <span style={{ fontSize: 13, color: MUTED }}>Discount</span>
+                    <span style={{ fontSize: 13, color: NAVY }}>−{fmtCAD(estimate.discount_amount)}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: `0.5px solid ${BORDER}` }}>
+                  <span style={{ fontSize: 13, color: MUTED }}>Tax{estimate.tax_rate ? ` (${(estimate.tax_rate * 100).toFixed(0)}%)` : ''}</span>
+                  <span style={{ fontSize: 13, color: NAVY }}>{fmtCAD(estimate.tax_amount)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: NAVY }}>Total</span>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: BLUE }}>{fmtCAD(estimate.total)}</span>
+                </div>
+              </div>
+            </div>
+            {depositPct > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+                <div style={{ background: BLUE_BG, borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 11, color: BLUE_D, marginBottom: 4 }}>Deposit on signing ({depositPct}%)</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: BLUE_D }}>{fmtCAD(depositAmt)}</div>
+                </div>
+                <div style={{ background: BLUE_BG, borderRadius: 8, padding: 12 }}>
+                  <div style={{ fontSize: 11, color: BLUE_D, marginBottom: 4 }}>Balance on completion</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: BLUE_D }}>{fmtCAD(balanceAmt)}</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* CONTRACT DETAILS */}
-          {(profile?.warranty_period || profile?.completion_timeframe || urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-            <div style={cardStyle}>
-              <CardHeader icon={<DocumentIcon />} title="Contract Details" />
-              <div style={{ padding: '12px 16px' }}>
+          {hasDetails && (
+            <div style={{ marginBottom: 14 }}>
+              <SecLabel>Contract Details</SecLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {profile?.warranty_period && (
-                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
-                    <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+                  <div style={{ background: GRAY_BG, borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: FAINT, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 5 }}>Warranty</div>
+                    <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{profile.warranty_period}</div>
                   </div>
                 )}
                 {profile?.completion_timeframe && (
-                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
-                    <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                  <div style={{ background: GRAY_BG, borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: FAINT, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 5 }}>Completion Timeframe</div>
+                    <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{profile.completion_timeframe}</div>
                   </div>
                 )}
-                {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 6 }}>Accepted Payment Methods</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {urlPayment
-                        ? <span style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{urlPayment}</span>
-                        : profile!.payment_methods!.map((m: string) => (
-                            <span key={m} style={{ background: '#EEF2FF', color: '#2045B8', borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 600 }}>{m}</span>
-                          ))
-                      }
-                    </div>
+                {payMethods.length > 0 && (
+                  <div style={{ background: GRAY_BG, borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: FAINT, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 5 }}>Payment Methods</div>
+                    <div style={{ fontSize: 12, color: MUTED }}>{payMethods.join(', ')}</div>
+                  </div>
+                )}
+                {profile?.project_manager && (
+                  <div style={{ background: GRAY_BG, borderRadius: 8, padding: 12 }}>
+                    <div style={{ fontSize: 9, fontWeight: 700, color: FAINT, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 5 }}>Project Manager</div>
+                    <div style={{ fontSize: 12, color: MUTED }}>{profile.project_manager}</div>
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          {/* SIGNATURES */}
-          <div style={cardStyle}>
-            <CardHeader icon={<PenIcon />} title="Signatures" />
-            <div style={{ padding: '14px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {/* Contractor */}
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-                {profile?.signature_url ? (
-                  <img src={profile.signature_url} alt="Contractor signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
-                ) : (
-                  <div style={{ height: 60, marginBottom: 4 }} />
-                )}
-                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-                <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.company_name || '—'}</div>
-                <div style={{ fontSize: 11, color: '#8892b0' }}>{createdDate}</div>
+          {/* TERMS & CONDITIONS */}
+          {clauses.length > 0 && (
+            <div style={{ marginBottom: 14 }}>
+              <SecLabel>Terms &amp; Conditions</SecLabel>
+              <div style={{ background: '#fff', borderRadius: 10, border: `0.5px solid ${BORDER}`, padding: '12px 14px' }}>
+                {clauses.map((clause: any) => (
+                  <div key={clause.id} style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{clause.title}</div>
+                    <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{substituteProvince(clause.content, profile?.province)}</div>
+                  </div>
+                ))}
               </div>
-              {/* Client */}
+            </div>
+          )}
+
+          {/* SIGNATURES */}
+          <div style={{ marginBottom: 14 }}>
+            <SecLabel>Signatures</SecLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 10 }}>Contractor</div>
+                {profile?.signature_url ? (
+                  <img src={profile.signature_url} alt="Contractor signature" style={{ height: 50, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                ) : (
+                  <div style={{ height: 50, marginBottom: 4 }} />
+                )}
+                <div style={{ borderBottom: `1px solid ${NAVY}`, marginBottom: 5 }} />
+                <div style={{ fontSize: 11, color: NAVY }}>{profile?.company_name || '—'}</div>
+                {profile?.signing_rep_name  && <div style={{ fontSize: 10, color: MUTED }}>{profile.signing_rep_name}</div>}
+                {profile?.signing_rep_title && <div style={{ fontSize: 10, color: MUTED }}>{profile.signing_rep_title}</div>}
+                <div style={{ fontSize: 10, color: MUTED }}>{createdDate}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 10 }}>Client</div>
                 {trigger === 'sign' ? (
-                  clientSignatureUrl ? (
-                    <img src={clientSignatureUrl} alt="Client signature" style={{ height: 60, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
+                  clientSigUrl ? (
+                    <img src={clientSigUrl} alt="Client signature" style={{ height: 50, maxWidth: '100%', objectFit: 'contain', display: 'block', marginBottom: 4 }} />
                   ) : (
                     <div style={{ position: 'relative', touchAction: 'none', userSelect: 'none', marginBottom: 4 }}>
                       <svg
                         ref={svgRef}
                         viewBox="0 0 600 200"
-                        style={{ width: '100%', height: 80, border: '2px dashed #E0E0E0', borderRadius: 10, background: '#fff', display: 'block', cursor: 'crosshair' }}
+                        style={{ width: '100%', height: 80, border: `2px dashed ${BORDER}`, borderRadius: 10, background: '#fff', display: 'block', cursor: 'crosshair' }}
                         onPointerDown={(e) => {
                           e.currentTarget.setPointerCapture(e.pointerId)
-                          const p = getPoint(e)
-                          setCurrentPath(`M ${p.x} ${p.y}`)
-                          setIsDrawing(true)
+                          const p = getPoint(e); setCurrentPath(`M ${p.x} ${p.y}`); setIsDrawing(true)
                         }}
                         onPointerMove={(e) => {
                           if (!isDrawing) return
-                          const p = getPoint(e)
-                          setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
+                          const p = getPoint(e); setCurrentPath(prev => prev + ` L ${p.x} ${p.y}`)
                         }}
                         onPointerUp={() => {
                           if (currentPath) setPaths(prev => [...prev, currentPath])
-                          setCurrentPath('')
-                          setIsDrawing(false)
+                          setCurrentPath(''); setIsDrawing(false)
                         }}
                       >
-                        {paths.map((d, i) => (
-                          <path key={i} d={d} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        ))}
-                        {currentPath && (
-                          <path d={currentPath} stroke="#0A0E1A" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        )}
-                        {isEmpty && !isDrawing && (
-                          <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here</text>
-                        )}
+                        {paths.map((d, idx) => <path key={idx} d={d} stroke={NAVY} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />)}
+                        {currentPath && <path d={currentPath} stroke={NAVY} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
+                        {isEmpty && !isDrawing && <text x="300" y="105" textAnchor="middle" fill="#C0C8D0" fontSize="14" fontFamily="sans-serif">Sign here</text>}
                       </svg>
                       {!isEmpty && (
-                        <button
-                          onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
-                          style={{ background: 'none', border: 'none', fontSize: 11, color: '#8892b0', cursor: 'pointer', padding: '2px 0', fontFamily: F }}>
+                        <button onClick={() => { setPaths([]); setCurrentPath(''); setIsDrawing(false) }}
+                          style={{ background: 'none', border: 'none', fontSize: 11, color: FAINT, cursor: 'pointer', padding: '2px 0', fontFamily: F }}>
                           Clear
                         </button>
                       )}
                     </div>
                   )
                 ) : (
-                  <div style={{ height: 60, border: '1.5px dashed #E0E0E0', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
-                    <span style={{ fontSize: 11, color: '#C0C8D0' }}>Awaiting signature</span>
+                  <div style={{ height: 50, border: `1.5px dashed ${BORDER}`, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: FAINT }}>Awaiting signature</span>
                   </div>
                 )}
-                <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-                <div style={{ fontSize: 11, color: '#8892b0' }}>{estimate.client_name || '—'}</div>
-                <div style={{ fontSize: 11, color: '#8892b0' }}>
-                  {clientSignatureUrl
+                <div style={{ borderBottom: `1px solid ${NAVY}`, marginBottom: 5 }} />
+                <div style={{ fontSize: 11, color: NAVY }}>{estimate.client_name || '—'}</div>
+                <div style={{ fontSize: 10, color: MUTED }}>
+                  {clientSigUrl
                     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
                     : 'Date: ___________'}
                 </div>
@@ -642,40 +643,35 @@ export default function ContractPage() {
 
           {/* BOTTOM CTA */}
           {trigger === 'sign' ? (
-            <div style={{ padding: '8px 0 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 40 }}>
               <div
                 onClick={() => setAgreedToTerms(!agreedToTerms)}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: '#fff', borderRadius: 12, border: agreedToTerms ? '1.5px solid #2045B8' : '1.5px solid #E8E8E8', cursor: 'pointer' }}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', background: '#fff', borderRadius: 12, border: agreedToTerms ? `1.5px solid ${BLUE}` : `1.5px solid ${BORDER}`, cursor: 'pointer' }}
               >
-                <div style={{ width: 20, height: 20, borderRadius: 6, background: agreedToTerms ? '#2045B8' : '#fff', border: agreedToTerms ? 'none' : '1.5px solid #D0D5DD', flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {agreedToTerms && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
-                      <polyline points="1.5 5 4 7.5 8.5 2.5" />
-                    </svg>
-                  )}
+                <div style={{ width: 20, height: 20, borderRadius: 6, background: agreedToTerms ? BLUE : '#fff', border: agreedToTerms ? 'none' : `1.5px solid ${BORDER}`, flexShrink: 0, marginTop: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {agreedToTerms && <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"><polyline points="1.5 5 4 7.5 8.5 2.5" /></svg>}
                 </div>
-                <p style={{ fontSize: 13, color: '#353A3E', lineHeight: 1.5, margin: 0 }}>
-                  I have read and agree to the <span style={{ color: '#2045B8', fontWeight: 600 }}>Terms & Conditions</span> and authorize the work described in this contract.
+                <p style={{ fontSize: 13, color: MUTED, lineHeight: 1.5, margin: 0 }}>
+                  I have read and agree to the <span style={{ color: BLUE, fontWeight: 600 }}>Terms &amp; Conditions</span> and authorize the work described in this contract.
                 </p>
               </div>
               <button
                 onClick={handleAction}
                 disabled={isEmpty || !agreedToTerms || sending}
-                style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: (isEmpty || !agreedToTerms || sending) ? 'not-allowed' : 'pointer', opacity: (isEmpty || !agreedToTerms || sending) ? 0.5 : 1, fontFamily: F }}>
+                style={{ width: '100%', background: BLUE, border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: (isEmpty || !agreedToTerms || sending) ? 'not-allowed' : 'pointer', opacity: (isEmpty || !agreedToTerms || sending) ? 0.5 : 1, fontFamily: F }}>
                 {sending ? 'Signing…' : 'I Agree — Sign Contract'}
               </button>
             </div>
           ) : (
-            <div style={{ padding: '16px 0 40px' }}>
+            <div style={{ paddingBottom: 40 }}>
               <button onClick={handleAction} disabled={sending}
-                style={{ width: '100%', background: '#2045B8', border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1, fontFamily: F }}>
+                style={{ width: '100%', background: BLUE, border: 'none', borderRadius: 13, padding: 15, fontSize: 15, fontWeight: 700, color: '#fff', cursor: 'pointer', opacity: sending ? 0.7 : 1, fontFamily: F }}>
                 {sending ? 'Sending…' : 'Send to client →'}
               </button>
             </div>
           )}
 
         </div>
-
       </div>
     </>
   )
