@@ -266,6 +266,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
             <>
               <SingleHungDrawing
                 shape={op.vals.shape as string | undefined}
+                sub={op.sub}
                 widthIn={op.vals.width !== undefined ? parseFloat(String(op.vals.width)) || undefined : undefined}
                 heightIn={op.vals.height !== undefined ? parseFloat(String(op.vals.height)) || undefined : undefined}
                 uid={op.tempId}

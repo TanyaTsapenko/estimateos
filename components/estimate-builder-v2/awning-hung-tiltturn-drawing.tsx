@@ -191,8 +191,10 @@ function singleHungSvgStr(
   wL: string, hL: string,
   glassType: string | undefined, screen: string | undefined,
   grid: string | undefined, grilleType: string | undefined,
+  sub: string | undefined,
 ): string {
   const { clip, frame } = shuShapeStr(s, fill, fr)
+  const isTiltIn = (sub ?? '').toLowerCase().replace(/[\s-]+/g, '') === 'tiltin'
 
   const hasFrost  = glassType === 'Frosted'
   const hasScreen = !!screen && screen !== 'None'
@@ -206,6 +208,13 @@ function singleHungSvgStr(
     : hasScreen
     ? `<rect x="10" y="10" width="180" height="210" fill="url(#shu-mesh)" fill-opacity="0.4"/>`
     : ''
+
+  // Lower sash indicator: Standard = arrow (slides up), Tilt-In = X cross (tilts inward)
+  const lowerIndicator = isTiltIn
+    ? `<line x1="14" y1="117" x2="186" y2="215" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>` +
+      `<line x1="186" y1="117" x2="14" y2="215" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>`
+    : `<path d="M100 119 L95 126 L100 123 L105 126 Z" fill="${mv}"/>` +
+      `<line x1="100" y1="123" x2="100" y2="213" stroke="${mv}" stroke-width="1.2" stroke-dasharray="3 2"/>`
 
   const gridStr = shuGridStr(grid, grilleType, fr)
   const dimLines =
@@ -226,10 +235,7 @@ function singleHungSvgStr(
     `<g clip-path="url(#shu-clip)">` +
     glassEffect +
     `<line x1="13" y1="115" x2="187" y2="115" stroke="${fr}" stroke-width="1.5"/>` +
-    `<line x1="14" y1="14" x2="186" y2="113" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>` +
-    `<line x1="186" y1="14" x2="14" y2="113" stroke="${se}" stroke-width="1" stroke-dasharray="5 3"/>` +
-    `<path d="M100 216 L95 209 L100 212 L105 209 Z" fill="${mv}"/>` +
-    `<line x1="100" y1="212" x2="100" y2="119" stroke="${mv}" stroke-width="1.2" stroke-dasharray="3 2"/>` +
+    lowerIndicator +
     gridStr +
     `</g>` +
     dimLines +
@@ -237,8 +243,9 @@ function singleHungSvgStr(
   )
 }
 
-export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
+export function SingleHungDrawing({ shape, sub, widthIn, heightIn, uid, grid, grilleType, glassType, screen, frameColor }: {
   shape?: string
+  sub?: string
   widthIn?: number
   heightIn?: number
   uid: string
@@ -253,7 +260,7 @@ export function SingleHungDrawing({ shape, widthIn, heightIn, uid, grid, grilleT
   const s   = (shape ?? '').trim()
   const fill = glassColor(glassType)
   const fr   = frameColor ?? FRAME
-  const svgStr = singleHungSvgStr(s, fill, fr, SEC, MOV, DIM, wL, hL, glassType, screen, grid, grilleType)
+  const svgStr = singleHungSvgStr(s, fill, fr, SEC, MOV, DIM, wL, hL, glassType, screen, grid, grilleType, sub)
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgStr)}`
   return <img src={src} style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }} alt=""/>
 }
