@@ -263,6 +263,7 @@ function NewEstimateV2() {
   const [saving, setSaving] = useState(false)
   const [userId, setUserId] = useState('')
   const [trimState, setTrimState] = useState<TrimState>(TRIM_DEFAULTS)
+  const [trimShowErrors, setTrimShowErrors] = useState(false)
   const [scopeNotes, setScopeNotes] = useState('')
 
   // Restore draft from sessionStorage on mount (client-side only, new estimates only)
@@ -518,6 +519,10 @@ function NewEstimateV2() {
 
   // ── Save estimate ─────────────────────────────────────────────────
   async function saveEstimate(params: SaveParams) {
+    if (trimState.jamb !== 'none' && trimState.jambExtensionDepth === 'Custom' && !trimState.jambExtensionDepthCustom.trim()) {
+      setTrimShowErrors(true)
+      return
+    }
     setSaving(true)
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -707,7 +712,7 @@ function NewEstimateV2() {
               </button>
 
               <div style={{ marginTop: 16 }}>
-                <TrimSection value={trimState} onChange={setTrimState} palette={palettes.frame} openings={openings} />
+                <TrimSection value={trimState} onChange={v => { setTrimShowErrors(false); setTrimState(v) }} palette={palettes.frame} openings={openings} surcharges={customPricing?.surcharges} showErrors={trimShowErrors} />
               </div>
               <div style={{ marginTop: 16 }}>
                 <EstimateNotesBlock value={scopeNotes} onChange={setScopeNotes} />

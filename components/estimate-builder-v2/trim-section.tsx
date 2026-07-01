@@ -31,6 +31,8 @@ type Props = {
   onChange: (v: TrimState) => void
   palette: PaletteEntry[]
   openings?: Opening[]
+  surcharges?: Record<string, number>
+  showErrors?: boolean
 }
 
 const selWrap: React.CSSProperties = { position: 'relative' }
@@ -61,9 +63,15 @@ const inputEl: React.CSSProperties = {
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 }
 
-export function TrimSection({ value, onChange, palette, openings }: Props) {
+export function TrimSection({ value, onChange, palette, openings, surcharges, showErrors }: Props) {
   const [open, setOpen] = useState(false)
+  const [depthTouched, setDepthTouched] = useState(false)
   const set = <K extends keyof TrimState>(k: K, v: TrimState[K]) => onChange({ ...value, [k]: v })
+
+  const casingCustomWarn = value.casing === 'custom' && (surcharges?.casing_custom ?? 0) === 0
+  const jambCustomWarn   = value.jamb   === 'custom' && (surcharges?.jamb_custom   ?? 0) === 0
+  const depthError = (depthTouched || showErrors) &&
+    value.jambExtensionDepth === 'Custom' && !value.jambExtensionDepthCustom.trim()
 
   // Nail Fin only applies to full-frame / stud-to-stud installations
   const showNailFin = !openings || openings.length === 0 ||
@@ -106,6 +114,9 @@ export function TrimSection({ value, onChange, palette, openings }: Props) {
               <option value="mdf">MDF</option>
               <option value="custom">Custom</option>
             </Sel>
+            {casingCustomWarn && (
+              <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#B45309' }}>Custom price not set in price list</div>
+            )}
             {value.casing !== 'none' && (
               <div style={{ marginTop: 10 }}>
                 <FieldLabel>Casing size</FieldLabel>
@@ -128,6 +139,9 @@ export function TrimSection({ value, onChange, palette, openings }: Props) {
               <option value="plywood">Plywood</option>
               <option value="custom">Custom</option>
             </Sel>
+            {jambCustomWarn && (
+              <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#B45309' }}>Custom price not set in price list</div>
+            )}
             {value.jamb !== 'none' && (
               <div style={{ marginTop: 10 }}>
                 <FieldLabel>Depth</FieldLabel>
@@ -140,11 +154,16 @@ export function TrimSection({ value, onChange, palette, openings }: Props) {
                   <div style={{ marginTop: 8 }}>
                     <FieldLabel>Specify depth</FieldLabel>
                     <input
-                      style={inputEl}
+                      style={{ ...inputEl, borderColor: depthError ? '#DC2626' : undefined }}
                       value={value.jambExtensionDepthCustom}
                       placeholder='e.g. 5-1/4"'
+                      maxLength={20}
                       onChange={e => set('jambExtensionDepthCustom', e.target.value)}
+                      onBlur={() => setDepthTouched(true)}
                     />
+                    {depthError && (
+                      <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#DC2626' }}>Please enter a custom depth</div>
+                    )}
                   </div>
                 )}
               </div>

@@ -33,8 +33,8 @@ export function trimSummaryLines(row: TrimRow): { label: string; value: string }
   if (row.trim_jamb && row.trim_jamb !== 'none') {
     const mat = JAMB_LABELS[row.trim_jamb] || cap(row.trim_jamb)
     const depth = row.trim_jamb_extension_depth
-    const depthStr = depth === 'Custom' && row.trim_jamb_extension_depth_custom
-      ? row.trim_jamb_extension_depth_custom
+    const depthStr = depth === 'Custom'
+      ? (row.trim_jamb_extension_depth_custom || 'Custom size')
       : (depth || '4-9/16"')
     lines.push({ label: 'Jamb extension', value: `${mat} · ${depthStr}` })
   }
