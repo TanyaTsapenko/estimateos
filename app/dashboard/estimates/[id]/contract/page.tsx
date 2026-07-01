@@ -348,9 +348,6 @@ export default function ContractPage() {
               {profile?.email        && <div style={{ fontSize: 11, color: MUTED }}>{profile.email}</div>}
               {profile?.address      && <div style={{ fontSize: 11, color: MUTED }}>{[profile.address, profile.city, profile.province].filter(Boolean).join(', ')}</div>}
               {profile?.licence      && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
-              {profile?.insurance    && <div style={{ fontSize: 11, color: MUTED }}>Ins# {profile.insurance}</div>}
-              {profile?.wsib_number  && <div style={{ fontSize: 11, color: MUTED }}>WSIB# {profile.wsib_number}</div>}
-              {profile?.gst_hst_number && <div style={{ fontSize: 11, color: MUTED }}>GST/HST# {profile.gst_hst_number}</div>}
             </div>
             <div style={{ background: GRAY_BG, borderRadius: 10, padding: 12 }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 6 }}>Client</div>
