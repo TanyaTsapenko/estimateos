@@ -3,6 +3,24 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { substituteProvince } from '@/lib/provinces'
+import { openingSvgString } from '@/lib/openingSvgString'
+import { getSubtypeLabel, getColourLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { hasTrim, trimSummaryLines } from '@/lib/v2/trimUtils'
+
+function esc(s: string | null | undefined): string {
+  if (!s) return ''
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function humanize(s?: string | null): string {
+  if (!s) return ''
+  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function fmtDate(s?: string | null): string {
+  if (!s) return '—'
+  return new Date(s).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+}
 
 export async function GET(request: NextRequest) {
   const contractId = request.nextUrl.searchParams.get('contractId')
@@ -13,205 +31,301 @@ export async function GET(request: NextRequest) {
     const { data: con } = await admin.from('contracts').select('*').eq('id', contractId).single()
     if (!con) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
 
-    const [{ data: est }, { data: ops }, { data: prof }] = await Promise.all([
+    const [{ data: est }, { data: ops }, { data: prof }, { data: priceRows }, { data: subtypeRows }] = await Promise.all([
       admin.from('estimates').select('*').eq('id', con.estimate_id).single(),
-      admin.from('estimate_openings').select('id, type, qty, total_cost').eq('estimate_id', con.estimate_id).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing, wsib_number, gst_hst_number, signing_rep_name, signing_rep_title').eq('id', con.profile_id).single(),
+      admin.from('estimate_openings').select('*').eq('estimate_id', con.estimate_id).order('sort_order'),
+      admin.from('profiles').select('company_name, first_name, last_name, email, address, city, province, phone, website, licence, insurance, logo_url, signature_url, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, deposit_timing, wsib_number, gst_hst_number, signing_rep_name, signing_rep_title').eq('id', con.profile_id).single(),
+      admin.from('price_lists').select('opening_type, custom_label').eq('user_id', con.profile_id).neq('opening_type', '_sizes'),
+      admin.from('window_subtypes').select('type_key, subtype_key, subtype_label').order('sort_order'),
     ])
 
     if (!est) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
+    const customLabels: Record<string, string> = {}
+    priceRows?.forEach((r: any) => { if (r.custom_label) customLabels[r.opening_type] = r.custom_label })
+    const subtypesByType: Record<string, { key: string; label: string }[]> = {}
+    subtypeRows?.forEach((r: any) => {
+      if (!subtypesByType[r.type_key]) subtypesByType[r.type_key] = []
+      subtypesByType[r.type_key].push({ key: r.subtype_key, label: r.subtype_label })
+    })
+
     const p = prof as any
-    const companyName = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Contractor'
-    const location = [p?.city, p?.province].filter(Boolean).join(', ')
-    const conDisplayId = 'CON-' + con.id.slice(0, 6).toUpperCase()
+    const companyName  = p?.company_name || `${p?.first_name || ''} ${p?.last_name || ''}`.trim() || 'Contractor'
+    const conNum       = 'CON-' + con.id.slice(0, 6).toUpperCase()
+    const signedFmt    = fmtDate(con.signed_at || con.created_at)
+    const payMethods: string[] = Array.isArray(p?.payment_methods) ? p.payment_methods : []
 
-    const createdFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.created_at))
-    const signedFmt = con.signed_at
-      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(con.signed_at))
-      : '—'
+    const depositPct = (est as any).deposit_percent || 0
+    const depositAmt = ((est as any).total || 0) * (depositPct / 100)
+    const balanceAmt = ((est as any).total || 0) - depositAmt
 
-    const openingRows = (ops || []).map((op: any, i: number) =>
-      `<tr style="border-bottom:${i < (ops || []).length - 1 ? '1px solid #F0F0F0' : 'none'}">
-        <td style="padding:7px 0;font-size:13px;color:#0A0E1A;font-weight:600">${OPENING_TYPES[op.type]?.name || op.type} × ${op.qty}</td>
-        <td style="padding:7px 0;font-size:13px;color:#0A0E1A;font-weight:600;text-align:right">${fmtCAD(op.total_cost)}</td>
-      </tr>`
-    ).join('')
+    // ── Opening cards ──────────────────────────────────────────────────────
+    const opCards = (ops || []).map((op: any, i: number) => {
+      const typeName  = customLabels[op.type] || OPENING_TYPES[op.type]?.name || humanize(op.type)
+      const subLabel  = getSubtypeLabel(op, subtypesByType)
+      const title     = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null, op.room ? `— ${esc(op.room)}` : null].filter(Boolean).join(' ')
+      const extColour = getColourLabel(op)
+      const intColour = getInteriorColourLabel(op)
+      const gridVal   = op.grid ? (op.grille_type ? humanize(op.grille_type) : 'Yes') : null
+      const floorVal  = op.floor && op.floor !== 'first' ? humanize(op.floor) : null
+      const paneLabel = op.pane === 'triple' ? 'Triple Pane' : op.pane === 'single' ? 'Single Pane' : null
+      const glassChips: string[] = []
+      if (paneLabel)                                   glassChips.push(paneLabel)
+      if (op.glass_kind && op.glass_kind !== 'clear') glassChips.push(humanize(op.glass_kind))
+      if (op.low_e)           glassChips.push('Low-E')
+      if (op.argon)           glassChips.push('Argon')
+      if (op.tempered)        glassChips.push('Tempered')
+      if (op.laminated_glass) glassChips.push('Laminated')
 
-    function clauseBlock(title: string, body: string | null): string {
-      if (!body) return ''
-      return `<div class="clause"><div class="clause-title">${title}</div><p>${body.replace(/\n/g, '<br>')}</p></div>`
-    }
+      const drawUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(openingSvgString(op))}`
+
+      const SR = (label: string, val: string | null | undefined) =>
+        val ? `<div class="sr"><span class="sl">${label}</span><span class="sv">${esc(val)}</span></div>` : ''
+
+      return `
+<div class="card">
+  <div class="card-hdr">
+    <span class="cn">${i + 1}</span>
+    <span class="ct">${title}</span>
+    <span class="cp">${fmtCAD(op.total_cost || 0)}</span>
+  </div>
+  <div class="card-body">
+    <div class="draw-col">
+      <img src="${drawUri}" class="draw-img" alt="${esc(typeName)}" />
+      ${op.width_in ? `<div class="dim-w">${op.width_in}"</div>` : ''}
+    </div>
+    <div class="specs-col">
+      ${(op.room || floorVal) ? `
+        <div class="grp">Location</div>
+        ${SR('Room', op.room)}
+        ${SR('Floor', floorVal)}
+      ` : ''}
+      <div class="grp">Product</div>
+      ${op.width_in && op.height_in ? SR('Size', `${op.width_in}" × ${op.height_in}"`) : ''}
+      ${SR('Material', humanize(op.material))}
+      ${SR('Ext. colour', extColour || null)}
+      ${SR('Int. colour', intColour || null)}
+      ${SR('Grid', gridVal)}
+      ${SR('Installation', humanize(op.install))}
+      ${glassChips.length ? `
+        <div class="grp">Glass</div>
+        <div class="chips">${glassChips.map(c => `<span class="chip">${esc(c)}</span>`).join('')}</div>
+      ` : ''}
+      ${op.notes ? `<div class="grp">Notes</div><div class="notes">${esc(op.notes)}</div>` : ''}
+    </div>
+  </div>
+</div>`
+    }).join('')
+
+    // ── Trim section ───────────────────────────────────────────────────────
+    const trimHtml = hasTrim(est as any) ? `
+<div class="sec-lbl">Trim &amp; Finishing</div>
+${trimSummaryLines(est as any).map(l =>
+  `<div class="trim-row"><span class="tl">${esc(l.label)}</span><span class="tv">${esc(l.value)}</span></div>`
+).join('')}` : ''
+
+    // ── Price summary ──────────────────────────────────────────────────────
+    const discountHtml = (est as any).discount_amount > 0 ? `
+<div class="tot-row"><span class="tol">Discount</span><span class="tov">−${fmtCAD((est as any).discount_amount)}</span></div>` : ''
+
+    const depositHtml = depositPct > 0 ? `
+<div class="dep-grid">
+  <div class="dep-box">
+    <div class="dep-lbl">Deposit on signing (${depositPct}%)</div>
+    <div class="dep-amt">${fmtCAD(depositAmt)}</div>
+  </div>
+  <div class="dep-box">
+    <div class="dep-lbl">Balance on completion</div>
+    <div class="dep-amt">${fmtCAD(balanceAmt)}</div>
+  </div>
+</div>` : ''
+
+    // ── Contract details ───────────────────────────────────────────────────
+    const detailBoxes = [
+      p?.warranty_period       ? `<div class="det-box"><div class="det-lbl">Warranty</div><div class="det-val">${esc(p.warranty_period)}</div></div>` : '',
+      p?.completion_timeframe  ? `<div class="det-box"><div class="det-lbl">Completion Timeframe</div><div class="det-val">${esc(p.completion_timeframe)}</div></div>` : '',
+      payMethods.length        ? `<div class="det-box"><div class="det-lbl">Payment Methods</div><div class="det-val">${payMethods.map(esc).join(', ')}</div></div>` : '',
+      p?.project_manager       ? `<div class="det-box"><div class="det-lbl">Project Manager</div><div class="det-val">${esc(p.project_manager)}</div></div>` : '',
+    ].filter(Boolean).join('')
+    const detailHtml = detailBoxes ? `<div class="det-grid">${detailBoxes}</div>` : ''
+
+    // ── Clauses ────────────────────────────────────────────────────────────
+    const clauses = (() => {
+      try {
+        const raw = p?.contract_clauses
+        if (Array.isArray(raw)) return raw
+        if (typeof raw === 'string') return JSON.parse(raw)
+        return []
+      } catch { return [] }
+    })().filter((c: any) => c.enabled !== false).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+
+    const clauseHtml = clauses.length ? `
+<div class="sec-lbl" style="margin-top:28px">Terms &amp; Conditions</div>
+${clauses.map((c: any) => `
+<div class="cl-item">
+  <div class="cl-title">${esc(c.title || c.name || '')}</div>
+  <div class="cl-text">${esc(substituteProvince(c.content || c.text || '', p?.province)).replace(/\n/g, '<br>')}</div>
+</div>`).join('')}` : ''
+
+    // ── Signatures ─────────────────────────────────────────────────────────
+    const contractorSig = con.contractor_signature_url || p?.signature_url
+    const clientSig     = con.client_signature_url
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Signed Contract — ${conDisplayId}</title>
+<title>Signed Contract — ${conNum}</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Arial,Helvetica,sans-serif;color:#1A1A1A;background:#fff;padding:48px 56px;max-width:780px;margin:0 auto}
-  .print-bar{background:#EEF2FF;border:1px solid #c7d2fe;border-radius:8px;padding:10px 16px;margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#2045B8;font-weight:600}
-  .print-bar button{background:#3B6CFF;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:24px;border-bottom:2px solid #E0E0E0;margin-bottom:28px}
-  .logo-img{max-height:64px;max-width:160px;object-fit:contain}
-  .logo-text{font-size:20px;font-weight:800;color:#1A1A1A}
-  .logo-text span{color:#3B6CFF}
-  .company-meta{font-size:11px;color:#6b7280;line-height:1.7;margin-top:4px}
-  .doc-info{text-align:right}
-  .doc-title{font-size:22px;font-weight:800;color:#1A1A1A;letter-spacing:-.02em}
-  .doc-sub{font-size:11px;color:#6b7280;margin-top:4px;line-height:1.6}
-  .signed-badge{display:inline-block;background:#DCFCE7;color:#16A34A;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;margin-top:6px}
-  .section-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:10px}
-  .card{background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px;margin-bottom:16px}
-  .summary-row{font-size:13px;color:#6b7280;margin-bottom:4px}
-  .total-amount{font-size:22px;font-weight:700;color:#2045B8;margin-top:8px}
-  .totals-row{display:flex;justify-content:space-between;font-size:13px;color:#6b7280;margin-bottom:4px}
-  .totals-total{display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#0A0E1A;margin-top:8px;padding-top:8px;border-top:1px solid #E0E0E0}
-  .divider{height:1px;background:#E0E0E0;margin:20px 0}
-  .clause{margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #F0F0F0}
-  .clause:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-  .clause-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#94A3B8;margin-bottom:6px}
-  .clause p{font-size:12px;color:#353A3E;line-height:1.65;margin:0}
-  .payment-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-  .payment-pill{background:#EEF2FF;color:#2045B8;border-radius:4px;padding:3px 8px;font-size:11px;font-weight:600}
-  .check-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:12px;color:#353A3E;line-height:1.55}
-  .check-icon{width:16px;height:16px;background:#EEF2FF;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px}
-  .sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px;padding-top:20px;border-top:2px solid #E0E0E0}
-  .sig-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94A3B8;margin-bottom:8px}
-  .sig-img{height:60px;max-width:180px;object-fit:contain;display:block;margin-bottom:4px}
-  .sig-line{border-bottom:1.5px solid #0A0E1A;margin-bottom:6px;height:64px}
-  .sig-name{font-size:11px;color:#6b7280}
-  .footer{margin-top:32px;padding-top:16px;border-top:1px solid #E0E0E0;font-size:10px;color:#BFBFBF;display:flex;justify-content:space-between}
-  .pdf-header{position:fixed;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid #E2E8F0;background:#fff;z-index:1000}
-  .pdf-header-left{display:flex;align-items:center;gap:10px}
-  .pdf-header-logo{font-size:12px;font-weight:700;color:#0A1628;background:#F1F5F9;border-radius:4px;padding:4px 8px}
-  .pdf-header-company{font-size:12px;font-weight:700;color:#0A1628}
-  .pdf-header-contacts{font-size:10px;color:#64748B;margin-top:1px}
-  .pdf-header-right{text-align:right}
-  .pdf-header-con{font-size:11px;font-weight:600;color:#0A1628}
-  .pdf-header-date{font-size:10px;color:#64748B}
-  @media print{.print-bar{display:none}body{padding:64px 40px 32px}}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;color:#0A1628;background:#fff;padding:40px 48px;max-width:820px;margin:0 auto}
+.print-bar{background:#EEF3FF;border:1px solid #bfdbfe;border-radius:8px;padding:10px 16px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#1D4ED8;font-weight:600}
+.print-bar button{background:#2563EB;color:#fff;border:none;border-radius:6px;padding:6px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2.5px solid #2563EB;margin-bottom:20px}
+.logo-img{max-height:40px;max-width:160px;object-fit:contain;margin-bottom:6px;display:block}
+.co-name{font-size:16px;font-weight:800;color:#0A1628;margin-bottom:4px}
+.co-info{font-size:11px;color:#64748B;line-height:1.75}
+.doc-r{text-align:right}
+.badge{display:inline-block;background:#2563EB;color:#fff;border-radius:4px;padding:4px 12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.doc-num{font-size:14px;font-weight:800;color:#0A1628;margin-bottom:4px}
+.doc-meta{font-size:11px;color:#64748B;line-height:1.75}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.party-box{background:#F8FAFC;border-radius:6px;padding:12px}
+.party-lbl{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.party-name{font-size:13px;font-weight:700;color:#0A1628;margin-bottom:3px}
+.party-info{font-size:11px;color:#64748B;line-height:1.75}
+.sec-lbl{font-size:10px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 10px}
+.card{border:1px solid #E2E8F0;border-radius:6px;margin-bottom:10px;page-break-inside:avoid}
+.card-hdr{display:flex;align-items:center;background:#F8FAFC;padding:8px 12px;border-radius:6px 6px 0 0;gap:8px}
+.cn{font-size:10px;font-weight:700;color:#94A3B8;width:20px;flex-shrink:0}
+.ct{font-size:12px;font-weight:700;color:#0A1628;flex:1}
+.cp{font-size:13px;font-weight:700;color:#2563EB}
+.card-body{display:flex;gap:14px;padding:12px}
+.draw-col{flex-shrink:0;display:flex;flex-direction:column;align-items:center}
+.draw-img{width:110px;height:130px;object-fit:contain;display:block}
+.dim-w{font-size:10px;font-weight:700;color:#475569;text-align:center;margin-top:3px}
+.specs-col{flex:1;min-width:0}
+.grp{font-size:9px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.7px;margin-top:8px;margin-bottom:4px;padding-bottom:2px;border-bottom:1px solid #F1F5F9}
+.grp:first-child{margin-top:0}
+.sr{display:flex;margin-bottom:3px}
+.sl{font-size:11px;color:#94A3B8;width:100px;flex-shrink:0}
+.sv{font-size:11px;color:#0A1628}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{background:#EEF3FF;color:#2563EB;border-radius:3px;padding:2px 7px;font-size:10px;font-weight:700}
+.notes{font-size:11px;color:#64748B;font-style:italic;line-height:1.5;margin-top:4px}
+.trim-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #F8FAFC}
+.tl{font-size:12px;color:#64748B}.tv{font-size:12px;font-weight:700;color:#0A1628}
+.totals-wrap{display:flex;justify-content:flex-end;margin-top:4px}
+.totals-box{width:280px}
+.tot-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #E2E8F0}
+.tol{font-size:12px;color:#64748B}.tov{font-size:12px;color:#0A1628}
+.tot-final{display:flex;justify-content:space-between;padding:8px 0 4px}
+.tolf{font-size:15px;font-weight:700;color:#0A1628}.tovf{font-size:15px;font-weight:700;color:#2563EB}
+.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.dep-box{background:#EEF3FF;border-radius:6px;padding:10px}
+.dep-lbl{font-size:10px;color:#1D4ED8;margin-bottom:3px}
+.dep-amt{font-size:14px;font-weight:700;color:#1D4ED8}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:8px}
+.det-box{background:#F8FAFC;border-radius:6px;padding:10px}
+.det-lbl{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.det-val{font-size:12px;color:#64748B;line-height:1.55}
+.cl-item{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #F1F5F9}
+.cl-item:last-child{border-bottom:none}
+.cl-title{font-size:12px;font-weight:700;color:#0A1628;margin-bottom:5px}
+.cl-text{font-size:12px;color:#4B5563;line-height:1.65}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:32px;padding-top:20px;border-top:1px solid #E2E8F0}
+.sig-lbl{font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px}
+.sig-img{max-height:64px;max-width:180px;object-fit:contain;display:block;margin-bottom:8px}
+.sig-line{border-bottom:1.5px solid #0A1628;margin-bottom:6px;height:0}
+.sig-name{font-size:12px;font-weight:600;color:#0A1628;margin-top:6px;margin-bottom:2px}
+.sig-date{font-size:11px;color:#64748B}
+.doc-footer{margin-top:32px;padding-top:12px;border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;font-size:10px;color:#94A3B8}
+.sp{margin-top:20px}
+@media print{.print-bar{display:none}body{padding:24px 32px}.card{border-color:#ddd}}
 </style>
 </head>
 <body>
-<div class="pdf-header">
-  <div class="pdf-header-left">
-    ${p?.logo_url ? `<img src="${p.logo_url}" style="height:28px;width:auto;object-fit:contain;" />` : `<div class="pdf-header-logo">${companyName}</div>`}
-    <div>
-      <div class="pdf-header-company">${companyName}</div>
-      <div class="pdf-header-contacts">${p?.email || ''}${p?.phone ? ` · ${p.phone}` : ''}${p?.address ? ` · ${p.address}` : ''}${p?.project_manager ? ` · Contact: ${p.project_manager}` : ''}</div>
-    </div>
-  </div>
-  <div class="pdf-header-right">
-    <div class="pdf-header-con">${conDisplayId}</div>
-    <div class="pdf-header-date">${createdFmt}</div>
-  </div>
-</div>
+
 <div class="print-bar">
-  Signed Contract — ${conDisplayId} · ${signedFmt}
-  <button onclick="window.print()">🖨️ Print / Save PDF</button>
+  Signed Contract — ${conNum} · ${signedFmt}
+  <button onclick="window.print()">Print / Save PDF</button>
 </div>
 
-<div class="header">
+<div class="hdr">
   <div>
-    ${p?.logo_url ? `<img src="${p.logo_url}" alt="${companyName}" class="logo-img" />` : `<div class="logo-text">Apex<span>Scale</span></div>`}
-    <div class="company-meta">${companyName}${location ? `<br>${location}` : ''}${p?.phone ? `<br>${p.phone}` : ''}${p?.website ? `<br>${p.website}` : ''}${p?.licence ? `<br>Lic. ${p.licence}` : ''}${p?.insurance ? `<br>Ins. ${p.insurance}` : ''}${p?.wsib_number ? `<br>WSIB/WCB #: ${p.wsib_number}` : ''}${p?.gst_hst_number ? `<br>GST/HST #: ${p.gst_hst_number}` : ''}</div>
+    ${p?.logo_url ? `<img src="${p.logo_url}" class="logo-img" alt="${esc(companyName)}" />` : ''}
+    <div class="co-name">${esc(companyName)}</div>
+    <div class="co-info">${[p?.phone, p?.email, p?.website, [p?.address, p?.city, p?.province].filter(Boolean).join(', '), p?.licence ? `Lic. ${p.licence}` : null, p?.wsib_number ? `WSIB/WCB #: ${p.wsib_number}` : null, p?.gst_hst_number ? `GST/HST #: ${p.gst_hst_number}` : null].filter(Boolean).map(esc).join('<br>')}</div>
   </div>
-  <div class="doc-info">
-    <div class="doc-title">Signed Contract</div>
-    <div class="doc-sub">${conDisplayId}<br>${est.estimate_number}</div>
-    <div class="signed-badge">✓ Signed ${signedFmt}</div>
-  </div>
-</div>
-
-<!-- Summary -->
-<div class="card">
-  <div class="summary-row">From: <strong style="color:#0A0E1A">${con.company_name || companyName}</strong></div>
-  <div class="summary-row">To: <strong style="color:#0A0E1A">${est.client_name || '—'}</strong></div>
-  ${est.client_email ? `<div class="summary-row" style="margin-top:2px;font-size:12px">${est.client_email}${est.client_phone ? ` · ${est.client_phone}` : ''}</div>` : ''}
-  <div class="total-amount">${fmtCAD(est.total)}</div>
-</div>
-
-<!-- Scope of Work -->
-<div class="section-title">Scope of Work</div>
-<div class="card">
-  <table width="100%" cellpadding="0" cellspacing="0">
-    ${openingRows}
-  </table>
-  <div class="divider"></div>
-  <div class="totals-row"><span>Subtotal</span><span>${fmtCAD(est.subtotal)}</span></div>
-  ${est.discount_amount > 0 ? `<div class="totals-row" style="color:#16a34a"><span>Discount</span><span>−${fmtCAD(est.discount_amount)}</span></div>` : ''}
-  <div class="totals-row"><span>Tax</span><span>${fmtCAD(est.tax_amount)}</span></div>
-  <div class="totals-total"><span>Total</span><span style="color:#2045B8">${fmtCAD(est.total)}</span></div>
-  <div class="totals-row" style="color:#D97706"><span>Deposit due</span><span>${p?.deposit_timing === 'delivery' ? 'Upon delivery' : 'Upon signing'}</span></div>
-</div>
-
-<!-- Terms & Conditions -->
-${(() => {
-  const clauses: any[] = p?.contract_clauses ? (() => { try { return JSON.parse(p.contract_clauses) } catch { return [] } })() : []
-  const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
-  if (enabledClauses.length === 0) return ''
-  return `<div style="margin-bottom: 24px;">
-  <h2 style="font-size: 13px; font-weight: 600; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px;">Terms &amp; Conditions</h2>
-  ${enabledClauses.map((c: any) => `<div style="display: flex; gap: 8px; margin-bottom: 8px;">
-      <div style="width: 16px; height: 16px; border-radius: 50%; background: #EEF2FF; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
-        <svg width="9" height="8" viewBox="0 0 10 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 4L3.5 6.5L9 1" stroke="#2045B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div>
-        <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px;">${c.title}</div>
-        <div style="font-size: 12px; color: #353A3E; line-height: 1.6;">${substituteProvince(c.content, p?.province).replace(/\n/g, '<br>')}</div>
-      </div>
-    </div>`).join('')}
-</div>`
-})()}
-
-${(() => {
-  if (!p?.warranty_period && !p?.completion_timeframe && !(p?.payment_methods && p.payment_methods.length > 0) && !p?.project_manager) return ''
-  return `<div class="section-title">Contract Details</div>
-<div class="card">
-  ${p?.warranty_period ? clauseBlock('Warranty Period', p.warranty_period) : ''}
-  ${p?.completion_timeframe ? clauseBlock('Completion Timeframe', p.completion_timeframe) : ''}
-  ${p?.payment_methods && p.payment_methods.length > 0 ? `<div class="clause"><div class="clause-title">Accepted Payment Methods</div><div class="payment-pills">${p.payment_methods.map((m: string) => `<span class="payment-pill">${m}</span>`).join('')}</div></div>` : ''}
-  ${p?.project_manager ? `<div class="clause"><div class="clause-title">Project Manager</div><p style="font-weight:600;color:#0A1628">${p.project_manager}</p></div>` : ''}
-</div>`
-})()}
-
-<!-- Signatures -->
-<div class="section-title">Signatures</div>
-<div class="card">
-  <div class="sig-grid">
-    <div>
-      <div class="sig-label">Contractor</div>
-      ${con.contractor_signature_url ? `<img src="${con.contractor_signature_url}" class="sig-img" crossorigin="anonymous" />` : `<div class="sig-line"></div>`}
-      <div style="border-bottom:1.5px solid #0A0E1A;margin-bottom:6px"></div>
-      <div class="sig-name">${con.company_name || companyName}</div>
-      <div class="sig-name">${createdFmt}</div>
-      ${p?.signing_rep_name ? `<div class="sig-name" style="margin-top:4px">${p.signing_rep_name}</div>` : ''}
-      ${p?.signing_rep_title ? `<div class="sig-label">${p.signing_rep_title}</div>` : ''}
-    </div>
-    <div>
-      <div class="sig-label">Client</div>
-      ${con.client_signature_url ? `<img src="${con.client_signature_url}" class="sig-img" crossorigin="anonymous" />` : `<div class="sig-line"></div>`}
-      <div style="border-bottom:1.5px solid #0A0E1A;margin-bottom:6px"></div>
-      <div class="sig-name">${est.client_name || '—'}</div>
-      <div class="sig-name">${signedFmt}</div>
-    </div>
+  <div class="doc-r">
+    <div class="badge">INSTALLATION CONTRACT</div>
+    <div class="doc-num">${esc(conNum)}</div>
+    <div class="doc-meta">Signed: ${signedFmt}<br>Related: ${esc((est as any).estimate_number || '')}</div>
   </div>
 </div>
 
-<div class="footer">
-  <span>${companyName}${p?.licence ? ` · Lic. ${p.licence}` : ''}${p?.gst_hst_number ? ` · GST/HST #: ${p.gst_hst_number}` : ''}</span>
-  <span>Powered by ApexScale &middot; useapexscale.com</span>
+<div class="two-col">
+  <div class="party-box">
+    <div class="party-lbl">Contractor</div>
+    <div class="party-name">${esc(companyName)}</div>
+    <div class="party-info">${[p?.phone, p?.email, [p?.address, p?.city, p?.province].filter(Boolean).join(', '), p?.licence ? `Lic# ${p.licence}` : null, p?.insurance ? `Ins# ${p.insurance}` : null, p?.wsib_number ? `WSIB/WCB# ${p.wsib_number}` : null, p?.gst_hst_number ? `GST/HST# ${p.gst_hst_number}` : null].filter(Boolean).map(esc).join('<br>')}</div>
+  </div>
+  <div class="party-box">
+    <div class="party-lbl">Client</div>
+    <div class="party-name">${esc((est as any).client_name || '—')}</div>
+    <div class="party-info">${[(est as any).client_phone, (est as any).client_email, [(est as any).client_address, (est as any).client_city, (est as any).client_province, (est as any).client_postal_code].filter(Boolean).join(', ')].filter(Boolean).map(esc).join('<br>')}${(est as any).job_site_same_as_client === false && (est as any).job_site_address ? `<br>Job site: ${esc([(est as any).job_site_address, (est as any).job_site_city, (est as any).job_site_province].filter(Boolean).join(', '))}` : ''}</div>
+  </div>
 </div>
-<script>window.onload = function(){ window.print(); }</script>
+
+<div class="sec-lbl">Scope of Work</div>
+${opCards}
+${trimHtml}
+
+<div class="sp">
+<div class="sec-lbl">Price Summary</div>
+<div class="totals-wrap">
+  <div class="totals-box">
+    <div class="tot-row"><span class="tol">Subtotal</span><span class="tov">${fmtCAD((est as any).subtotal || 0)}</span></div>
+    ${discountHtml}
+    <div class="tot-row"><span class="tol">Tax (${(((est as any).tax_rate || 0) * 100).toFixed(0)}%)</span><span class="tov">${fmtCAD((est as any).tax_amount || 0)}</span></div>
+    <div class="tot-final"><span class="tolf">Total</span><span class="tovf">${fmtCAD((est as any).total || 0)}</span></div>
+  </div>
+</div>
+${depositHtml}
+</div>
+
+${detailHtml ? `<div class="sp">${detailHtml}</div>` : ''}
+
+${clauseHtml}
+
+<div class="sig-grid">
+  <div>
+    <div class="sig-lbl">Contractor</div>
+    ${contractorSig ? `<img src="${contractorSig}" class="sig-img" alt="Contractor signature" />` : ''}
+    <div class="sig-line"></div>
+    <div class="sig-name">${esc(companyName)}</div>
+    <div class="sig-date">${signedFmt}</div>
+    ${p?.signing_rep_name  ? `<div class="sig-name">${esc(p.signing_rep_name)}</div>` : ''}
+    ${p?.signing_rep_title ? `<div class="sig-date">${esc(p.signing_rep_title)}</div>` : ''}
+  </div>
+  <div>
+    <div class="sig-lbl">Client</div>
+    ${clientSig ? `<img src="${clientSig}" class="sig-img" alt="Client signature" />` : ''}
+    <div class="sig-line"></div>
+    <div class="sig-name">${esc((est as any).client_name || '—')}</div>
+    <div class="sig-date">${signedFmt}</div>
+  </div>
+</div>
+
+<div class="doc-footer">
+  <span>${esc(companyName)}${p?.licence ? ` · Lic. ${esc(p.licence)}` : ''}${p?.gst_hst_number ? ` · GST/HST #: ${esc(p.gst_hst_number)}` : ''}</span>
+  <span>Powered by ApexScale</span>
+</div>
 </body>
 </html>`
 
     return new NextResponse(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-      },
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     })
   }
 
@@ -232,10 +346,6 @@ ${(() => {
   const companyName = prof.company_name || `${prof.first_name || ''} ${prof.last_name || ''}`.trim() || 'Your Company'
   const location = [prof.city, prof.province].filter(Boolean).join(', ')
   const today = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
-
-  const paragraphs = contractText
-    ? contractText.split(/\n\n+/).map((p: string) => p.trim()).filter(Boolean)
-    : []
 
   const p = prof as any
   const completionTimeframe: string | null = p?.completion_timeframe || null
@@ -283,17 +393,14 @@ ${(() => {
   .sig-label{font-size:10px;color:#6b7280;line-height:1.5}
   .sig-name{font-size:12px;font-weight:700;color:#1A1A1A}
   .footer{margin-top:40px;padding-top:16px;border-top:1px solid #E0E0E0;font-size:10px;color:#BFBFBF;display:flex;justify-content:space-between}
-  @media print{
-    .print-bar{display:none}
-    body{padding:32px 40px}
-  }
+  @media print{.print-bar{display:none}body{padding:32px 40px}}
 </style>
 </head>
 <body>
 
 <div class="print-bar">
-  📄 To save as PDF: click Print below, then choose "Save as PDF"
-  <button onclick="window.print()">🖨️ Print / Save PDF</button>
+  Contract Terms Preview
+  <button onclick="window.print()">Print / Save PDF</button>
 </div>
 
 <div class="header">
