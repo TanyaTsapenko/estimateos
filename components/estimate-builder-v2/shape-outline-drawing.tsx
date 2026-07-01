@@ -1,7 +1,6 @@
 'use client'
 import type { ReactElement } from 'react'
 import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
-import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 // Drawing bounds (consistent with winDims in WindowDiagram)
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
@@ -129,11 +128,11 @@ export function ShapeOutlineDrawing({
   const hL = heightIn ? `${heightIn}"` : 'H'
 
   const isSide = (position ?? '').toLowerCase() === 'side'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const s    = (shape ?? '').trim()
   const sN   = s.toLowerCase().replace(/[\s-]+/g, '')
   const isCustom = sN === '' || sN.startsWith('custom')
-  const [clipEl, fillEl] = shapeElements(s, glassColor(glassType), FR)
+  const [clipEl, fillEl] = shapeElements(s, GLASS, FRAME)
   const clipId = `so-${uid}`
 
   // Transom pane dividers — only for rectangle shape
@@ -151,14 +150,12 @@ export function ShapeOutlineDrawing({
       <defs>
         <clipPath id={clipId}>{clipEl}</clipPath>
       </defs>
-      <GlassPatternDefs uid={uid} glassType={glassType}/>
 
       {/* Shape fill + outline */}
       {fillEl}
 
       {/* Interior indicators — clipped to shape outline */}
       <g clipPath={`url(#${clipId})`}>
-        <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} uid={uid}/>
         {dividers
           ? Array.from({ length: paneN }, (_, i) => {
               const px1 = X1 + panelW * i
@@ -178,7 +175,6 @@ export function ShapeOutlineDrawing({
               <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
             </>
         }
-        <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
       </g>
 
       {/* "Custom" label centred inside shape */}

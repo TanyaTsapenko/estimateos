@@ -167,7 +167,7 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, width
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const { segs, transom } = parseConfig(sub)
 
   const swing = (doorSwing ?? '').toLowerCase()
@@ -184,15 +184,15 @@ export function EntryDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, width
     const px1 = cx, px2 = cx + w
     cx += w
 
-    if (seg === 'sidelite') return <Sidelite key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} fr={FR}/>
-    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={singleHingeLeft} glassInsert={glassInsert} doorStyle={doorStyle} frameColor={frameColor}/>
+    if (seg === 'sidelite') return <Sidelite key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2}/>
+    return <DoorPanel key={i} x1={px1} y1={doorY1} x2={px2} y2={doorY2} hingeLeft={singleHingeLeft} glassInsert={glassInsert} doorStyle={doorStyle}/>
   })
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
       {transom && (
-        <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>
+        <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H}/>
       )}
       {panels}
       <DimLines wL={wL} hL={hL}/>
@@ -214,7 +214,7 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const swing = (doubleDoorSwing ?? '').toLowerCase()
   const leftActive   = !swing.includes('right active')
   const hasAstragal  = astragalType && astragalType !== 'None'
@@ -231,23 +231,23 @@ export function DoubleEntryDrawing({ sub, doubleDoorSwing, astragalType, glassIn
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Transom */}
-      {hasTransom && <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H} fr={FR}/>}
+      {hasTransom && <Sidelite x1={X1} y1={Y1} x2={X2} y2={Y1 + TRANSOM_H}/>}
 
       {/* Sidelites */}
       {hasSidelites && <>
-        <Sidelite x1={X1}          y1={doorY1} x2={X1 + SIDELITE_W} y2={Y2} fr={FR}/>
-        <Sidelite x1={X2-SIDELITE_W} y1={doorY1} x2={X2}            y2={Y2} fr={FR}/>
+        <Sidelite x1={X1}          y1={doorY1} x2={X1 + SIDELITE_W} y2={Y2}/>
+        <Sidelite x1={X2-SIDELITE_W} y1={doorY1} x2={X2}            y2={Y2}/>
       </>}
 
       {/* Left door panel */}
       {leftActive
-        ? <DoorPanel         x1={doorX1} y1={doorY1} x2={cx} y2={Y2} hingeLeft={true}   glassInsert={glassInsert} doorStyle={doorStyle} frameColor={frameColor}/>
-        : <DoorPanelInactive x1={doorX1} y1={doorY1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert} doorStyle={doorStyle} frameColor={frameColor}/>}
+        ? <DoorPanel         x1={doorX1} y1={doorY1} x2={cx} y2={Y2} hingeLeft={true}   glassInsert={glassInsert} doorStyle={doorStyle}/>
+        : <DoorPanelInactive x1={doorX1} y1={doorY1} x2={cx} y2={Y2} handleLeft={false} glassInsert={glassInsert} doorStyle={doorStyle}/>}
 
       {/* Right door panel */}
       {!leftActive
-        ? <DoorPanel         x1={cx} y1={doorY1} x2={doorX2} y2={Y2} hingeLeft={false}  glassInsert={glassInsert} doorStyle={doorStyle} frameColor={frameColor}/>
-        : <DoorPanelInactive x1={cx} y1={doorY1} x2={doorX2} y2={Y2} handleLeft={true}  glassInsert={glassInsert} doorStyle={doorStyle} frameColor={frameColor}/>}
+        ? <DoorPanel         x1={cx} y1={doorY1} x2={doorX2} y2={Y2} hingeLeft={false}  glassInsert={glassInsert} doorStyle={doorStyle}/>
+        : <DoorPanelInactive x1={cx} y1={doorY1} x2={doorX2} y2={Y2} handleLeft={true}  glassInsert={glassInsert} doorStyle={doorStyle}/>}
 
       {/* Astragal center line */}
       {hasAstragal && (

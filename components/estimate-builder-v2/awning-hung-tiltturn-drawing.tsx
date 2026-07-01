@@ -1,7 +1,6 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { shapeElements } from './shape-outline-drawing'
-import { GridOverlay, glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115  // (Y1 + Y2) / 2
@@ -66,7 +65,7 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const sN = (sub ?? '').toLowerCase().replace(/[^a-z]/g, '')
   const isDouble      = sN === 'doubleawning'
   const isAwningFixed = sN === 'awningfixed'
@@ -77,9 +76,7 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FR} strokeWidth="2.5"/>
 
       {isMulti ? (
         <>
@@ -98,7 +95,6 @@ export function AwningDrawing({ sub, widthIn, heightIn, uid, grid, grilleType, g
         <AwningPane x1={X1} y1={Y1} x2={X2} y2={Y2}/>
       )}
 
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>}
       <DimLines wL={wL} hL={hL}/>
     </svg>
   )
@@ -148,66 +144,14 @@ function shuShapeStr(s: string, fill: string, fr: string): { clip: string; frame
   }
 }
 
-function shuGridStr(grid: string | undefined, grilleType: string | undefined, fr: string): string {
-  const pat = grid ?? 'None'
-  if (pat === 'None') return ''
-  const sw = (grilleType ?? 'None') === 'SDL' ? 3 : 1.5
-  const [x1, y1, x2, y2] = [10, 10, 190, 220]
-  const w = x2 - x1, h = y2 - y1
-  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2
-  const ln = (ax1: number, ay1: number, ax2: number, ay2: number) =>
-    `<line x1="${ax1}" y1="${ay1}" x2="${ax2}" y2="${ay2}" stroke="${fr}" stroke-width="${sw}" stroke-linecap="round"/>`
-  if (pat === 'Colonial')
-    return ln(mx, y1, mx, y2) + ln(x1, y1+h/3, x2, y1+h/3) + ln(x1, y1+2*h/3, x2, y1+2*h/3)
-  if (pat === 'Georgian')
-    return ln(x1+w/3, y1, x1+w/3, y2) + ln(x1+2*w/3, y1, x1+2*w/3, y2) +
-           ln(x1, y1+h/3, x2, y1+h/3) + ln(x1, y1+2*h/3, x2, y1+2*h/3)
-  if (pat === 'Prairie') {
-    const fi = Math.min(w*0.25, h*0.22)
-    return `<rect x="${x1+fi}" y="${y1+fi}" width="${w-2*fi}" height="${h-2*fi}" stroke="${fr}" stroke-width="${sw}" fill="none" stroke-linecap="round"/>` +
-      ln(x1+fi, y1, x1+fi, y1+fi) + ln(x1, y1+fi, x1+fi, y1+fi) +
-      ln(x2-fi, y1, x2-fi, y1+fi) + ln(x2, y1+fi, x2-fi, y1+fi) +
-      ln(x1+fi, y2, x1+fi, y2-fi) + ln(x1, y2-fi, x1+fi, y2-fi) +
-      ln(x2-fi, y2, x2-fi, y2-fi) + ln(x2, y2-fi, x2-fi, y2-fi)
-  }
-  if (pat === 'Diamond') {
-    const step = Math.round(Math.min(w, h) / 3.5)
-    const ext = Math.max(w, h) + 10
-    const count = Math.ceil((w + h) / step) + 3
-    let lines = ''
-    for (let k = -1; k <= count; k++) {
-      const d = k * step
-      lines += `<line x1="${x1+d-ext}" y1="${y2+ext}" x2="${x1+d+ext}" y2="${y1-ext}" stroke="${fr}" stroke-width="${sw}"/>`
-      lines += `<line x1="${x1+d-ext}" y1="${y1-ext}" x2="${x1+d+ext}" y2="${y2+ext}" stroke="${fr}" stroke-width="${sw}"/>`
-    }
-    return `<defs><clipPath id="shu-grid-clip"><rect x="${x1}" y="${y1}" width="${w}" height="${h}"/></clipPath></defs>` +
-           `<g clip-path="url(#shu-grid-clip)">${lines}</g>`
-  }
-  return ''
-}
 
 function singleHungSvgStr(
   s: string, fill: string, fr: string, se: string, mv: string, dim: string,
   wL: string, hL: string,
-  glassType: string | undefined, screen: string | undefined,
-  grid: string | undefined, grilleType: string | undefined,
   sub: string | undefined,
 ): string {
   const { clip, frame } = shuShapeStr(s, fill, fr)
   const isTiltIn = (sub ?? '').toLowerCase().replace(/[\s-]+/g, '') === 'tiltin'
-
-  const hasFrost  = glassType === 'Frosted'
-  const hasScreen = !!screen && screen !== 'None'
-  const pats = hasFrost
-    ? `<pattern id="shu-frost" x="0" y="0" width="6" height="3" patternUnits="userSpaceOnUse"><line x1="0" y1="1.5" x2="6" y2="1.5" stroke="white" stroke-width="0.8" opacity="0.6"/></pattern>`
-    : hasScreen
-    ? `<pattern id="shu-mesh" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="4" y2="4" stroke="${se}" stroke-width="0.5"/><line x1="4" y1="0" x2="0" y2="4" stroke="${se}" stroke-width="0.5"/></pattern>`
-    : ''
-  const glassEffect = hasFrost
-    ? `<rect x="10" y="10" width="180" height="210" fill="url(#shu-frost)"/>`
-    : hasScreen
-    ? `<rect x="10" y="10" width="180" height="210" fill="url(#shu-mesh)" fill-opacity="0.4"/>`
-    : ''
 
   // Lower sash indicator: Standard = arrow (slides up), Tilt-In = X cross (tilts inward)
   const lowerIndicator = isTiltIn
@@ -216,7 +160,6 @@ function singleHungSvgStr(
     : `<path d="M100 119 L95 126 L100 123 L105 126 Z" fill="${mv}"/>` +
       `<line x1="100" y1="123" x2="100" y2="213" stroke="${mv}" stroke-width="1.2" stroke-dasharray="3 2"/>`
 
-  const gridStr = shuGridStr(grid, grilleType, fr)
   const dimLines =
     `<line x1="10" y1="226" x2="190" y2="226" stroke="${se}" stroke-width="1"/>` +
     `<line x1="10" y1="221" x2="10" y2="231" stroke="${se}" stroke-width="1.5"/>` +
@@ -229,14 +172,11 @@ function singleHungSvgStr(
 
   return (
     `<svg viewBox="0 0 215 255" xmlns="http://www.w3.org/2000/svg">` +
-    (pats ? `<defs>${pats}</defs>` : '') +
     `<defs><clipPath id="shu-clip">${clip}</clipPath></defs>` +
     frame +
     `<g clip-path="url(#shu-clip)">` +
-    glassEffect +
     `<line x1="13" y1="115" x2="187" y2="115" stroke="${fr}" stroke-width="1.5"/>` +
     lowerIndicator +
-    gridStr +
     `</g>` +
     dimLines +
     `</svg>`
@@ -258,9 +198,7 @@ export function SingleHungDrawing({ shape, sub, widthIn, heightIn, uid, grid, gr
   const wL  = widthIn  ? `${widthIn}"` : 'W'
   const hL  = heightIn ? `${heightIn}"` : 'H'
   const s   = (shape ?? '').trim()
-  const fill = glassColor(glassType)
-  const fr   = frameColor ?? FRAME
-  const svgStr = singleHungSvgStr(s, fill, fr, SEC, MOV, DIM, wL, hL, glassType, screen, grid, grilleType, sub)
+  const svgStr = singleHungSvgStr(s, GLASS, FRAME, SEC, MOV, DIM, wL, hL, sub)
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgStr)}`
   return <img src={src} style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }} alt=""/>
 }
@@ -290,7 +228,7 @@ export function DoubleHungDrawing({ sub, topSashOperable, bottomSashOperable, wi
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const isTiltIn  = (sub ?? '').toLowerCase().replace(/[\s-]+/g, '') === 'tiltin'
   const topOp    = !isTiltIn && topSashOperable    !== false
   const bottomOp = !isTiltIn && bottomSashOperable !== false
@@ -299,9 +237,7 @@ export function DoubleHungDrawing({ sub, topSashOperable, bottomSashOperable, wi
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FR} strokeWidth="2.5"/>
 
       {/* Horizontal rail divider */}
       <line x1={X1 + 3} y1={MY} x2={X2 - 3} y2={MY} stroke={FR} strokeWidth="1.5"/>
@@ -323,7 +259,6 @@ export function DoubleHungDrawing({ sub, topSashOperable, bottomSashOperable, wi
       ) : (
         <SashFixed x1={X1} y1={MY} x2={X2} y2={Y2}/>
       )}
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid} frameColor={frameColor}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>
@@ -398,7 +333,7 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const isDouble  = sub.toLowerCase().includes('double')
   const hingeLeft = (openDir ?? 'Right').toLowerCase() === 'left'
 
@@ -406,9 +341,7 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      {uid && <GlassPatternDefs uid={uid} glassType={glassType}/>}
-      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} uid={uid}/>}
+      <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={GLASS} stroke={FR} strokeWidth="2.5"/>
 
       {isDouble ? (
         <>
@@ -419,7 +352,6 @@ export function TiltTurnDrawing({ sub, openDir, openMode, widthIn, heightIn, uid
       ) : (
         <TiltTurnPanel x1={X1} y1={Y1} x2={X2} y2={Y2} hingeLeft={hingeLeft} openMode={openMode}/>
       )}
-      {uid && <GridOverlay x1={X1} y1={Y1} x2={X2} y2={Y2} grid={grid} uid={uid} frameColor={frameColor}/>}
 
       <DimLines wL={wL} hL={hL}/>
     </svg>

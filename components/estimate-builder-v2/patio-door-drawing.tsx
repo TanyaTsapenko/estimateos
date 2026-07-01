@@ -1,6 +1,5 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 
@@ -69,7 +68,7 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const panels = PATIO_CONFIGS[sub] ?? PATIO_CONFIGS['XO']
   const N = panels.length
   const pw = (X2 - X1) / N
@@ -78,9 +77,7 @@ export function PatioDoorDrawing({ sub, widthIn, heightIn, glassType, screen, ui
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      {uid && <GlassPatternDefs uid={uid} glassType={glassType} screen={screen}/>}
-      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-      {uid && <GlassEffects x1={X1} y1={Y1} x2={X2} y2={Y2} glassType={glassType} screen={screen} uid={uid}/>}
+      <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={GLASS} stroke={FR} strokeWidth="2.5"/>
 
       {panels.map((panel, i) => {
         const px1 = X1 + pw * i

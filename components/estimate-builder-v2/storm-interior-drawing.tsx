@@ -1,7 +1,7 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
 import { doorHinges, doorKnob } from './entry-door-drawing'
-import { DoorPanelLines, glassColor } from '@/lib/v2/svgHelpers'
+import { DoorPanelLines } from '@/lib/v2/svgHelpers'
 
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
 const CX = 100, MY = 115
@@ -64,38 +64,26 @@ export function StormDoorDrawing({ sub, hingeSide, widthIn, heightIn, uid, glass
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const sN = sub.toLowerCase().replace(/[\s]+/g, '')
   const hs = (hingeSide ?? '').toLowerCase()
   const reversible = hs.includes('reversible')
   const hingeLeft  = reversible ? true : !hs.includes('right')
-  const patId = `scrn-${uid}`
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto' }}>
 
-      <defs>
-        <pattern id={patId} x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
-          <line x1="0" y1="5" x2="5" y2="0" stroke={SEC} strokeWidth="0.8"/>
-        </pattern>
-      </defs>
-
       {/* Panel fill by subtype */}
       {sN === 'halfglass' ? (
         <>
-          <rect x={X1} y={Y1}  width={X2-X1} height={MY-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-          <rect x={X1} y={MY}  width={X2-X1} height={Y2-MY} fill={DOOR_FILL}             stroke={FR} strokeWidth="2.5"/>
+          <rect x={X1} y={Y1}  width={X2-X1} height={MY-Y1} fill={GLASS}     stroke={FR} strokeWidth="2.5"/>
+          <rect x={X1} y={MY}  width={X2-X1} height={Y2-MY} fill={DOOR_FILL} stroke={FR} strokeWidth="2.5"/>
           <line x1={X1} y1={MY} x2={X2} y2={MY} stroke={FR} strokeWidth="1.5"/>
         </>
-      ) : sN === 'screen' ? (
-        <>
-          <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
-          <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={`url(#${patId})`}      stroke="none"/>
-        </>
       ) : (
-        /* Full glass */
-        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={glassColor(glassType)} stroke={FR} strokeWidth="2.5"/>
+        /* Full glass (including screen subtype — rendered as plain glass) */
+        <rect x={X1} y={Y1} width={X2-X1} height={Y2-Y1} fill={GLASS} stroke={FR} strokeWidth="2.5"/>
       )}
 
       {/* Swing arc(s) */}
@@ -126,7 +114,7 @@ export function InteriorDoorDrawing({ sub, doorSwing, glassInsert, doorStyle, wi
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const swing = (doorSwing ?? '').toLowerCase()
   const hingeLeft = !swing.includes('right')
 

@@ -1,6 +1,5 @@
 'use client'
 import { GLASS, FRAME, SEC, MOV, DIM } from '@/components/WindowDiagram'
-import { GridOverlay, glassColor } from '@/lib/v2/svgHelpers'
 
 type PanelStyle = 'fixed' | 'casement-l' | 'casement-r' | 'awning' | 'singleHung' | 'doubleHung'
 
@@ -94,7 +93,7 @@ export function BayDrawing({
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const lean = LEAN_MAP[bayAngle ?? '45°'] ?? 12
 
   // Parse lite count from sub e.g. "3 lite" → 3; clamp 3–5
@@ -125,7 +124,7 @@ export function BayDrawing({
       style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {/* Left side panel */}
-      <polygon points={leftPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+      <polygon points={leftPts} fill={GLASS} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
       <PanelIndicator style={leftStyle} b={{ x1: lx1+4, y1: yT+lean+4, x2: lx2-4, y2: yB-4 }} fr={FR}/>
 
       {/* Center panels */}
@@ -138,11 +137,8 @@ export function BayDrawing({
           : 'fixed'
         return (
           <g key={i}>
-            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={glassColor(glassType)} stroke={FR} strokeWidth="2"/>
+            <rect x={cx1} y={yT} width={centerPanelW} height={yB-yT} fill={GLASS} stroke={FR} strokeWidth="2"/>
             <PanelIndicator style={centerStyle} b={{ x1: cx1+4, y1: yT+4, x2: cx2-4, y2: yB-4 }} fr={FR}/>
-            {uid && i === 0 && (
-              <GridOverlay x1={lx2} y1={yT} x2={rx1} y2={yB} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
-            )}
             {/* Mullion between center panels */}
             {i > 0 && <line x1={cx1} y1={yT} x2={cx1} y2={yB} stroke={FR} strokeWidth="1.5"/>}
           </g>
@@ -150,7 +146,7 @@ export function BayDrawing({
       })}
 
       {/* Right side panel */}
-      <polygon points={rightPts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+      <polygon points={rightPts} fill={GLASS} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
       <PanelIndicator style={rightStyle} b={{ x1: rx1+4, y1: yT+4, x2: rx2-4, y2: yB-4 }} fr={FR}/>
 
       {/* Width dim */}
@@ -185,7 +181,7 @@ export function BowDrawing({
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
 
   const N = Math.max(2, parseInt(sub) || 5)
 
@@ -211,7 +207,7 @@ export function BowDrawing({
       const pts = `${x1},${yT+endLean} ${x2},${yT} ${x2},${yB} ${x1},${yB+endLean}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+          <polygon points={pts} fill={GLASS} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
           <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+endLean+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
         </g>
       )
@@ -220,31 +216,24 @@ export function BowDrawing({
       const pts = `${x1},${yT} ${x2},${yT+endLean} ${x2},${yB+endLean} ${x1},${yB}`
       return (
         <g key={i}>
-          <polygon points={pts} fill={glassColor(glassType)} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
+          <polygon points={pts} fill={GLASS} stroke={FR} strokeWidth="2" strokeLinejoin="round"/>
           <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
         </g>
       )
     }
     return (
       <g key={i}>
-        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={glassColor(glassType)} stroke={FR} strokeWidth="2"/>
+        <rect x={x1} y={yT} width={pw} height={yB-yT} fill={GLASS} stroke={FR} strokeWidth="2"/>
         <PanelIndicator style={style} b={{ x1: x1+3, y1: yT+3, x2: x2-3, y2: yB-3 }} fr={FR}/>
       </g>
     )
   })
-
-  // Center glass bounds for grid overlay (skip angled end panels)
-  const gridX1 = 10 + pw
-  const gridX2 = 10 + (N - 1) * pw
 
   return (
     <svg viewBox="0 0 232 255" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 260, height: 'auto', display: 'block', margin: '0 auto' }}>
 
       {panels}
-      {uid && N > 2 && (
-        <GridOverlay x1={gridX1} y1={yT} x2={gridX2} y2={yB} grid={grid} grilleType={grilleType} uid={uid} frameColor={frameColor}/>
-      )}
 
       {/* Width dim */}
       <line x1="10" y1="232" x2="200" y2="232" stroke={SEC} strokeWidth="1"/>

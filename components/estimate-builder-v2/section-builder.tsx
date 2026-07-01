@@ -12,7 +12,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { C } from '@/lib/v2/openingTypes'
 import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 import type { CombinationSection, CombinationSectionType } from '@/lib/v2/openingTypes'
-import { glassColor, GlassPatternDefs, GlassEffects } from '@/lib/v2/svgHelpers'
 
 const SECTION_TYPES: CombinationSectionType[] = [
   'Picture', 'Fixed', 'Casement', 'Awning', 'Slider', 'Single Hung',
@@ -123,16 +122,14 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor }
   const rawId = useId()
   const uid = rawId.replace(/:/g, 'c')
   if (!sections.length) return null
-  const FC = frameColor ?? FRAME
+  const FC = FRAME
   const segs = buildSegs(sections)
   const hLabel = heightIn ? `${heightIn}"` : 'H'
   const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
-      <GlassPatternDefs uid={uid} glassType={glassType}/>
-      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={glassColor(glassType)} stroke={FC} strokeWidth="2.5"/>
-      <GlassEffects x1={FX} y1={FY} x2={FR} y2={FB} glassType={glassType} uid={uid}/>
+      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={GLASS} stroke={FC} strokeWidth="2.5"/>
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth="1.5"/>
       ))}

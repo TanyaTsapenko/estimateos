@@ -112,7 +112,7 @@ export function FrenchDoorDrawing({ sub, doorSwing, activePanel, astragal, glass
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const swing = (doorSwing ?? '').toLowerCase()
   const singleHingeLeft = !swing.includes('right')
 
@@ -193,7 +193,7 @@ export function GardenDoorDrawing({ doorSwing, glassSize, sidelights, transomAbo
 }) {
   const wL = widthIn  ? `${widthIn}"` : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
-  const FR = frameColor ?? FRAME
+  const FR = FRAME
   const swing = (doorSwing ?? '').toLowerCase()
   const hingeLeft = !swing.includes('right')
 
