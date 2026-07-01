@@ -16,16 +16,16 @@ const FAINT   = '#94A3B8'
 const S = StyleSheet.create({
   page:      { fontFamily: 'Helvetica', fontSize: 9, color: NAVY, padding: 36, backgroundColor: '#fff' },
 
-  hdrRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: 14, borderBottomWidth: 2, borderBottomColor: BLUE, marginBottom: 14 },
-  hdrLeft:   { flex: 1, marginRight: 20 },
-  hdrRight:  { alignItems: 'flex-end', width: 175 },
+  hdrRow:    { flexDirection: 'row', alignItems: 'stretch', marginBottom: 14 },
+  hdrLeft:   { flex: 1, paddingRight: 14, paddingBottom: 14, borderBottomWidth: 1.5, borderBottomColor: BLUE },
+  hdrRight:  { backgroundColor: BLUE, borderRadius: 5, width: 165, padding: 12, alignItems: 'flex-end', justifyContent: 'center' },
   logo:      { height: 34, objectFit: 'contain', objectPositionX: 0, marginBottom: 5 },
   coName:    { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
   coInfo:    { fontSize: 8, color: MUTED, marginBottom: 1.5 },
-  badge:     { backgroundColor: BLUE, borderRadius: 3, paddingHorizontal: 9, paddingVertical: 3, marginBottom: 7, alignSelf: 'flex-end' },
-  badgeTxt:  { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#fff', letterSpacing: 1 },
-  docNum:    { fontSize: 11, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
-  docMeta:   { fontSize: 8, color: MUTED, marginBottom: 1.5 },
+  badge:     { marginBottom: 7, alignSelf: 'flex-end' },
+  badgeTxt:  { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: '#fff', letterSpacing: 1, opacity: 0.65 },
+  docNum:    { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#fff', marginBottom: 3 },
+  docMeta:   { fontSize: 8, color: '#fff', opacity: 0.8, marginBottom: 1.5 },
 
   metaRow:   { flexDirection: 'row', marginBottom: 14 },
   metaBox:   { flex: 1, backgroundColor: GRAY_BG, borderRadius: 5, padding: 10 },
@@ -158,20 +158,16 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
               ? <Image style={S.logo} src={company.logo_url} />
               : <Text style={S.coName}>{company.company_name || 'Your Company'}</Text>}
             {company.logo_url && <Text style={S.coName}>{company.company_name}</Text>}
-            {company.phone          && <Text style={S.coInfo}>{company.phone}</Text>}
-            {company.email          && <Text style={S.coInfo}>{company.email}</Text>}
-            {company.website        && <Text style={S.coInfo}>{company.website}</Text>}
-            {(company.address || company.city) &&
-              <Text style={S.coInfo}>{[company.address, company.city, company.province, company.postal].filter(Boolean).join(', ')}</Text>}
-            {company.licence        && <Text style={S.coInfo}>Lic# {company.licence}</Text>}
-            {company.gst_hst_number && <Text style={S.coInfo}>GST/HST# {company.gst_hst_number}</Text>}
-            {company.wsib_number    && <Text style={S.coInfo}>WSIB/WCB# {company.wsib_number}</Text>}
+            {company.phone                && <Text style={S.coInfo}>{company.phone}</Text>}
+            {company.company_contact_email && <Text style={S.coInfo}>{company.company_contact_email}</Text>}
+            {(company.city || company.province) &&
+              <Text style={S.coInfo}>{[company.city, company.province].filter(Boolean).join(', ')}</Text>}
+            {company.licence              && <Text style={S.coInfo}>Lic# {company.licence}</Text>}
           </View>
           <View style={S.hdrRight}>
             <View style={S.badge}><Text style={S.badgeTxt}>INSTALLATION CONTRACT</Text></View>
             <Text style={S.docNum}>{conNum}</Text>
-            <Text style={S.docMeta}>Signed: {fmtDate(contract.signed_at || contract.created_at)}</Text>
-            <Text style={S.docMeta}>Related: {estimate.estimate_number}</Text>
+            <Text style={S.docMeta}>{fmtDate(contract.signed_at || contract.created_at)}</Text>
           </View>
         </View>
 
@@ -363,8 +359,12 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
 
         {/* ── FOOTER ── */}
         <View style={S.footer} fixed>
-          <Text style={S.footerTxt}>{[company.company_name, conNum].filter(Boolean).join(' · ')}</Text>
-          <Text style={S.footerTxt} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+          <Text style={S.footerTxt}>{[
+            company.address ? [company.address, company.city, company.province].filter(Boolean).join(', ') : null,
+            company.gst_hst_number ? `GST/HST# ${company.gst_hst_number}` : null,
+            company.website ? company.website.replace(/^https?:\/\//i, '') : null,
+          ].filter(Boolean).join(' · ')}</Text>
+          <Text style={S.footerTxt} render={({ pageNumber, totalPages }) => `${conNum} · Page ${pageNumber} of ${totalPages}`} />
         </View>
 
       </Page>
@@ -417,8 +417,12 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           </View>
 
           <View style={S.footer} fixed>
-            <Text style={S.footerTxt}>{company.company_name} · Signed Contract</Text>
-            <Text style={S.footerTxt} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+            <Text style={S.footerTxt}>{[
+              company.address ? [company.address, company.city, company.province].filter(Boolean).join(', ') : null,
+              company.gst_hst_number ? `GST/HST# ${company.gst_hst_number}` : null,
+              company.website ? company.website.replace(/^https?:\/\//i, '') : null,
+            ].filter(Boolean).join(' · ')}</Text>
+            <Text style={S.footerTxt} render={({ pageNumber, totalPages }) => `${conNum} · Page ${pageNumber} of ${totalPages}`} />
           </View>
 
         </Page>

@@ -43,6 +43,9 @@ interface Profile {
   contract_clauses: string | null
   deposit_timing: string | null
   deposit_required: boolean | null
+  company_contact_email: string | null
+  gst_hst_number: string | null
+  licence: string | null
 }
 
 function SecLabel({ children }: { children: React.ReactNode }) {
@@ -229,27 +232,37 @@ export default function SignContractPage() {
 
   function ContractHeader({ conId, dateLabel }: { conId: string; dateLabel: string }) {
     return (
-      <div style={{ background: '#fff', borderBottom: `2px solid ${BLUE}`, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', overflow: 'hidden' }}>
+        <div style={{ flex: 1, padding: '14px 16px', background: '#fff', minWidth: 0 }}>
           {profile?.logo_url && (
             <img src={profile.logo_url} crossOrigin="anonymous" alt="Logo"
-              style={{ height: 30, maxWidth: 130, objectFit: 'contain', display: 'block', marginBottom: 5 }}
+              style={{ height: 28, maxWidth: 120, objectFit: 'contain', display: 'block', marginBottom: 6 }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
           )}
-          <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{contract?.company_name || '—'}</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{contract?.company_name || '—'}</div>
           {(contract?.company_phone || profile?.phone) && <div style={{ fontSize: 11, color: MUTED }}>{contract?.company_phone || profile?.phone}</div>}
-          {contractorEmail && <div style={{ fontSize: 11, color: MUTED }}>{contractorEmail}</div>}
-          {profile?.address && <div style={{ fontSize: 11, color: MUTED }}>{profile.address}</div>}
+          {profile?.company_contact_email && <div style={{ fontSize: 11, color: MUTED }}>{profile.company_contact_email}</div>}
           {(profile?.city || profile?.province) && <div style={{ fontSize: 11, color: MUTED }}>{[profile?.city, profile?.province].filter(Boolean).join(', ')}</div>}
-          {profile?.website && profile.website !== 'https://' && <div style={{ fontSize: 11, color: BLUE }}>{profile.website.replace('https://','').replace('http://','')}</div>}
+          {profile?.licence && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ background: BLUE, borderRadius: 3, padding: '3px 8px', marginBottom: 6, display: 'inline-block' }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', letterSpacing: '0.1em' }}>INSTALLATION CONTRACT</span>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 2 }}>{conId}</div>
-          <div style={{ fontSize: 11, color: MUTED }}>{dateLabel}</div>
+        <div style={{ background: BLUE, padding: '14px 16px', textAlign: 'right', flexShrink: 0, minWidth: 148, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 6 }}>Installation Contract</div>
+          <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{conId}</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>{dateLabel}</div>
         </div>
+      </div>
+    )
+  }
+
+  function ContractFooter({ conId }: { conId: string }) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderTop: `1px solid ${BORDER}`, marginTop: 24, fontSize: 11, color: FAINT, gap: 12 }}>
+        <div>{[
+          profile?.address ? [profile.address, profile.city, profile.province].filter(Boolean).join(', ') : null,
+          profile?.gst_hst_number ? `GST/HST# ${profile.gst_hst_number}` : null,
+          profile?.website && profile.website !== 'https://' ? profile.website.replace(/^https?:\/\//i, '') : null,
+        ].filter(Boolean).join(' · ')}</div>
+        <div style={{ flexShrink: 0 }}>{conId}</div>
       </div>
     )
   }
@@ -476,6 +489,8 @@ export default function SignContractPage() {
               <Download size={16} /> Download Contract
             </a>
           )}
+
+          <ContractFooter conId={_conId} />
         </div>
       </div>
     )
@@ -693,6 +708,8 @@ export default function SignContractPage() {
               </button>
             </div>
           )}
+
+          <ContractFooter conId={conDisplayId} />
 
         </div>
       </div>

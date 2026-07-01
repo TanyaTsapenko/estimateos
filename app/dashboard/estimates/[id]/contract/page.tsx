@@ -47,6 +47,7 @@ interface Profile {
   payment_methods: string[] | null; project_manager: string | null
   contract_clauses: string | null
   gst_hst_number: string | null; wsib_number: string | null
+  company_contact_email: string | null
   signing_rep_name: string | null; signing_rep_title: string | null
 }
 interface Estimate {
@@ -136,7 +137,7 @@ export default function ContractPage() {
       const ownerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, province, postal, website, licence, insurance, signature_url, logo_url, contract_terms, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, wsib_number, signing_rep_name, signing_rep_title')
+        .select('id, company_name, phone, email, address, city, province, postal, website, licence, insurance, signature_url, logo_url, contract_terms, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, wsib_number, company_contact_email, signing_rep_name, signing_rep_title')
         .eq('id', ownerId)
         .single()
       if (prof) setProfile(prof as Profile)
@@ -316,28 +317,22 @@ export default function ContractPage() {
 
         <AppTopBar onBack={() => router.back()} backLabel="Back" title="Contract" />
 
-        {/* HEADER — white, blue bottom border, matching ContractPDF hdrRow */}
-        <div style={{ background: '#fff', borderBottom: `2px solid ${BLUE}`, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        {/* HEADER — Variant 2: left white + right blue */}
+        <div style={{ display: 'flex', overflow: 'hidden' }}>
+          <div style={{ flex: 1, padding: '14px 16px', background: '#fff', minWidth: 0 }}>
             {profile?.logo_url && (
-              <img src={profile.logo_url} alt="Logo" style={{ height: 30, maxWidth: 130, objectFit: 'contain', display: 'block', marginBottom: 5 }} />
+              <img src={profile.logo_url} alt="Logo" style={{ height: 28, maxWidth: 120, objectFit: 'contain', display: 'block', marginBottom: 6 }} />
             )}
-            <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{profile?.company_name || 'Your Company'}</div>
-            {profile?.phone          && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
-            {profile?.email          && <div style={{ fontSize: 11, color: MUTED }}>{profile.email}</div>}
-            {profile?.website        && <div style={{ fontSize: 11, color: MUTED }}>{profile.website}</div>}
-            {(profile?.address || profile?.city) && <div style={{ fontSize: 11, color: MUTED }}>{[profile?.address, profile?.city, profile?.province, profile?.postal].filter(Boolean).join(', ')}</div>}
-            {profile?.licence        && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
-            {profile?.gst_hst_number && <div style={{ fontSize: 11, color: MUTED }}>GST/HST# {profile.gst_hst_number}</div>}
-            {profile?.wsib_number    && <div style={{ fontSize: 11, color: MUTED }}>WSIB/WCB# {profile.wsib_number}</div>}
+            <div style={{ fontSize: 13, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{profile?.company_name || 'Your Company'}</div>
+            {profile?.phone                && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
+            {profile?.company_contact_email && <div style={{ fontSize: 11, color: MUTED }}>{profile.company_contact_email}</div>}
+            {(profile?.city || profile?.province) && <div style={{ fontSize: 11, color: MUTED }}>{[profile?.city, profile?.province].filter(Boolean).join(', ')}</div>}
+            {profile?.licence              && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ background: BLUE, borderRadius: 3, padding: '3px 8px', marginBottom: 6, display: 'inline-block' }}>
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', letterSpacing: '0.1em' }}>INSTALLATION CONTRACT</span>
-            </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 2 }}>{contractId}</div>
-            <div style={{ fontSize: 11, color: MUTED, marginBottom: 1 }}>Signed: {createdDate}</div>
-            <div style={{ fontSize: 11, color: MUTED }}>Est: {estimate.estimate_number}</div>
+          <div style={{ background: BLUE, padding: '14px 16px', textAlign: 'right', flexShrink: 0, minWidth: 148, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 6 }}>Installation Contract</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{contractId}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
           </div>
         </div>
 
@@ -670,6 +665,16 @@ export default function ContractPage() {
               </button>
             </div>
           )}
+
+          {/* FOOTER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderTop: `1px solid ${BORDER}`, marginTop: 24, fontSize: 11, color: FAINT, gap: 12 }}>
+            <div>{[
+              profile?.address ? [profile.address, profile.city, profile.province].filter(Boolean).join(', ') : null,
+              profile?.gst_hst_number ? `GST/HST# ${profile.gst_hst_number}` : null,
+              profile?.website ? profile.website.replace(/^https?:\/\//i, '') : null,
+            ].filter(Boolean).join(' · ')}</div>
+            <div style={{ flexShrink: 0 }}>{contractId}</div>
+          </div>
 
         </div>
       </div>
