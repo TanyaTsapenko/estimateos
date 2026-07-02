@@ -115,12 +115,14 @@ export default function ContractPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: est }, { data: ops }] = await Promise.all([
+      const [{ data: est }, { data: ops, error: opsErr }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
-        supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('created_at', { ascending: true }),
       ])
       console.log('[contract page] est:', est)
       console.log('[contract page] est.user_id:', est?.user_id)
+      if (opsErr) console.error('[contract page] openings error:', opsErr)
+      console.log('[contract page] ops:', ops?.length, ops)
       if (!est) { setLoading(false); return }
       setEstimate(est)
       setOpenings(ops || [])
