@@ -7,6 +7,7 @@ import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
+import { ShapeOutlineDrawing } from '@/components/estimate-builder-v2/shape-outline-drawing'
 import AppTopBar from '@/components/AppTopBar'
 
 interface Opening {
@@ -434,7 +435,10 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                        {op.type === 'special' && (op as any).shape
+                          ? <ShapeOutlineDrawing shape={(op as any).shape} uid={op.id} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} />
+                          : <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                        }
                       </div>
                       {/* Specs */}
                       <div style={{ flex: 1, padding: '10px 12px' }}>
