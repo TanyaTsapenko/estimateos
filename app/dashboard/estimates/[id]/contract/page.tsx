@@ -435,9 +435,9 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        {op.type === 'special' && (op as any).shape
-                          ? <ShapeOutlineDrawing shape={(op as any).shape} uid={op.id} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} />
-                          : <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                        {(op.type === 'special' && op.sub)
+                          ? <ShapeOutlineDrawing shape={op.sub} uid={op.id} />
+                          : <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] ?? op.type} sub={(op as any).window_subtype || op.sub} size={100} />
                         }
                       </div>
                       {/* Specs */}
