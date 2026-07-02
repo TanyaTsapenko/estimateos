@@ -6,20 +6,21 @@ import { OPENING_TYPES } from '@/lib/pricing'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  headerLeft: { flexDirection: 'column' },
-  logo: { width: 120, height: 40, objectFit: 'contain', marginBottom: 6 },
-  companyName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#0A1628' },
-  companyContact: { fontSize: 9, color: '#6b7280', marginTop: 2 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottomWidth: 2, borderBottomColor: '#2563EB' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center' },
+  logo: { maxWidth: 130, maxHeight: 40, objectFit: 'contain', marginRight: 10 },
+  logoPlaceholder: { width: 36, height: 36, backgroundColor: '#0B1640', borderRadius: 8, marginRight: 10 },
+  companyName: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#0B1220', marginBottom: 2 },
+  companyContact: { fontSize: 8, color: '#94A0B4' },
   headerRight: { alignItems: 'flex-end' },
-  docTitle: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#0A1628' },
-  docNumber: { fontSize: 9, color: '#6b7280', marginTop: 4 },
-  docDate: { fontSize: 9, color: '#6b7280', marginTop: 2 },
-  twoCol: { flexDirection: 'row', gap: 16, marginBottom: 20 },
-  col: { flex: 1, padding: 12, backgroundColor: '#f9fafb', borderRadius: 6 },
-  colTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#6b7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
-  colValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0A1628', marginBottom: 2 },
-  colDetail: { fontSize: 9, color: '#6b7280', marginBottom: 1 },
+  docTitle: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: '#2563EB', textTransform: 'uppercase', letterSpacing: 1.4, marginBottom: 4 },
+  docNumber: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: '#0B1220', marginBottom: 3 },
+  docDate: { fontSize: 9, color: '#94A0B4' },
+  twoCol: { flexDirection: 'row', gap: 12, marginBottom: 14 },
+  col: { flex: 1, padding: 10, backgroundColor: '#F8F9FC', borderRadius: 5 },
+  colTitle: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: '#94A0B4', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 },
+  colValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: '#0B1220', marginBottom: 5 },
+  colDetail: { fontSize: 8.5, color: '#475467', marginBottom: 2 },
   sectionTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#0A1628', marginBottom: 10, marginTop: 16, paddingBottom: 4, borderBottomWidth: 0.5, borderBottomColor: '#e5e7eb' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#f3f4f6', padding: 8, borderRadius: 4, marginBottom: 2 },
   tableRow: { flexDirection: 'row', padding: 8, borderBottomWidth: 0.5, borderBottomColor: '#f3f4f6' },
@@ -83,43 +84,49 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {company.logo_url ? (
-              <Image style={styles.logo} src={company.logo_url} />
-            ) : null}
-            <Text style={styles.companyName}>{company.company_name || 'Your Company'}</Text>
-            {company.phone && <Text style={styles.companyContact}>{company.phone}</Text>}
-            {company.email && <Text style={styles.companyContact}>{company.email}</Text>}
-            {company.address && <Text style={styles.companyContact}>{company.address}{company.city ? `, ${company.city}` : ''}{company.province ? `, ${company.province}` : ''}</Text>}
-            {company.gst_hst_number && <Text style={styles.companyContact}>GST/HST #: {company.gst_hst_number}</Text>}
+            {company.logo_url
+              ? <Image style={styles.logo} src={company.logo_url} />
+              : <View style={styles.logoPlaceholder} />}
+            <View>
+              <Text style={styles.companyName}>{company.company_name || 'Your Company'}</Text>
+              {(() => {
+                const tagline = [
+                  [company.city, company.province].filter(Boolean).join(', ') || null,
+                  company.licence ? `Lic# ${company.licence}` : null,
+                ].filter(Boolean).join(' · ')
+                return tagline ? <Text style={styles.companyContact}>{tagline}</Text> : null
+              })()}
+            </View>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.docTitle}>SIGNED CONTRACT</Text>
+            <Text style={styles.docTitle}>INSTALLATION CONTRACT</Text>
             <Text style={styles.docNumber}>CON-{contract.contract_number || contract.id.slice(-6).toUpperCase()}</Text>
-            <Text style={styles.docDate}>Signed: {formatDate(contract.signed_at || contract.created_at)}</Text>
-            <Text style={styles.docDate}>Related: {estimate.estimate_number}</Text>
+            <Text style={styles.docDate}>{formatDate(contract.signed_at || contract.created_at)}</Text>
           </View>
         </View>
 
         {/* Parties */}
         <View style={styles.twoCol}>
           <View style={styles.col}>
-            <Text style={styles.colTitle}>Contractor</Text>
+            <Text style={styles.colTitle}>Company</Text>
             <Text style={styles.colValue}>{company.company_name}</Text>
             {company.phone && <Text style={styles.colDetail}>{company.phone}</Text>}
             {company.email && <Text style={styles.colDetail}>{company.email}</Text>}
-            {company.address && <Text style={styles.colDetail}>{company.address}, {company.city}, {company.province}</Text>}
-            {company.licence && <Text style={styles.colDetail}>Lic# {company.licence}</Text>}
-            {company.insurance && <Text style={styles.colDetail}>Ins# {company.insurance}</Text>}
-            {company.wsib_number && <Text style={styles.colDetail}>WSIB/WCB #: {company.wsib_number}</Text>}
-            {company.gst_hst_number && <Text style={styles.colDetail}>GST/HST #: {company.gst_hst_number}</Text>}
+            {company.address && <Text style={styles.colDetail}>{[company.address, company.city, company.province].filter(Boolean).join(', ')}</Text>}
+            {company.licence && (
+              <View style={{ marginTop: 6 }}>
+                <View style={{ backgroundColor: '#EEF3FF', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, alignSelf: 'flex-start' }}>
+                  <Text style={{ fontSize: 8.5, color: '#2563EB', fontFamily: 'Helvetica-Bold' }}>Lic# {company.licence}</Text>
+                </View>
+              </View>
+            )}
           </View>
           <View style={styles.col}>
             <Text style={styles.colTitle}>Client</Text>
             <Text style={styles.colValue}>{estimate.client_name}</Text>
             {estimate.client_phone && <Text style={styles.colDetail}>{estimate.client_phone}</Text>}
             {estimate.client_email && <Text style={styles.colDetail}>{estimate.client_email}</Text>}
-            {estimate.client_address && <Text style={styles.colDetail}>{estimate.client_address}, {estimate.client_city}, {estimate.client_province} {estimate.client_postal_code}</Text>}
-            {estimate.job_site_same_as_client === false && estimate.job_site_address && <Text style={styles.colDetail}>Job Site: {estimate.job_site_address}, {estimate.job_site_city}, {estimate.job_site_province} {estimate.job_site_postal_code}</Text>}
+            {estimate.client_address && <Text style={styles.colDetail}>{[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}</Text>}
           </View>
         </View>
 

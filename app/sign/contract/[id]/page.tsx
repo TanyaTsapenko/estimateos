@@ -34,6 +34,7 @@ interface Profile {
   contract_clauses: string | null
   deposit_timing: string | null
   deposit_required: boolean | null
+  licence: string | null
 }
 
 const F = '"Inter", system-ui, sans-serif'
@@ -281,46 +282,56 @@ export default function SignContractPage() {
           }
         `}</style>
 
-        {/* Contract bar */}
-        <div style={{ background: '#0A1628', padding: isPdf ? '12px 16px' : '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* CONTRACT HEADER */}
+        <div style={{ background: '#fff', borderBottom: '2px solid #2563EB', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {profile?.logo_url && (
-              <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            )}
+            {profile?.logo_url
+              ? <img src={profile.logo_url} crossOrigin="anonymous" alt="Logo" style={{ maxWidth: 130, maxHeight: 40, objectFit: 'contain', display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              : <div style={{ width: 36, height: 36, background: '#0B1640', borderRadius: 8, flexShrink: 0 }} />
+            }
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>{contract.company_name || '—'}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Signed Contract · {_conId}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2 }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 8, color: '#94A0B4', marginTop: 2 }}>
+                {[
+                  [profile?.city, profile?.province].filter(Boolean).join(', ') || null,
+                  profile?.licence ? `Lic# ${profile.licence}` : null,
+                ].filter(Boolean).join(' · ')}
+              </div>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{_signed}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>{profile?.province ? profile.province + ', Canada' : 'Canada'}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, color: '#2563EB', letterSpacing: '0.14em', marginBottom: 4 }}>Installation Contract</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1220', lineHeight: 1 }}>{_conId}</div>
+            <div style={{ fontSize: 9, color: '#94A0B4', marginTop: 4 }}>{_created}</div>
           </div>
         </div>
 
         <div style={{ padding: 16, marginTop: isPdf ? 0 : undefined }}>
 
-          {/* Parties */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract.company_name || '—'}</div>
-              <div style={{ lineHeight: 1.6 }}>
-                {(contract.company_phone || profile?.phone) && <div style={{ fontSize: 13, color: '#6B7280' }}>{contract.company_phone || profile?.phone}</div>}
-                {contractorEmail && <div style={{ fontSize: 13, color: '#6B7280' }}>{contractorEmail}</div>}
-                {profile?.address && <div style={{ fontSize: 13, color: '#6B7280' }}>{profile.address}</div>}
-                {(profile?.city || profile?.province) && <div style={{ fontSize: 13, color: '#6B7280' }}>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
-                {profile?.website && profile.website !== 'https://' && <a href={profile.website} style={{ fontSize: 13, color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a>}
+          {/* PARTIES */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {(contract.company_phone || profile?.phone) && <div>{contract.company_phone || profile?.phone}</div>}
+                {contractorEmail && <div>{contractorEmail}</div>}
+                {profile?.address && <div>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
               </div>
+              {profile?.licence && (
+                <div style={{ marginTop: 8 }}>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
+                </div>
+              )}
             </div>
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ lineHeight: 1.6 }}>
-                {estimate.client_phone && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_phone}</div>}
-                {estimate.client_email && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_email}</div>}
-                {estimate.client_address && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_address}</div>}
-                {(estimate as any).client_city && <div style={{ fontSize: 13, color: '#6B7280' }}>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {estimate.client_phone   && <div>{estimate.client_phone}</div>}
+                {estimate.client_email   && <div>{estimate.client_email}</div>}
+                {estimate.client_address && <div>{estimate.client_address}</div>}
               </div>
             </div>
           </div>
@@ -639,48 +650,57 @@ export default function SignContractPage() {
       {/* ── MAIN CONTRACT (always in DOM — prints cleanly) ── */}
       <div id="contract-content" style={{ minHeight: isPdf ? 'auto' : '100vh', background: '#F5F6F8', fontFamily: F }}>
 
-        {/* CONTRACT BAR */}
-        <div className="contract-bar" style={{ background: '#0A1628', padding: isPdf ? '12px 16px' : '20px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* CONTRACT HEADER */}
+        <div className="contract-bar" style={{ background: '#fff', borderBottom: '2px solid #2563EB', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {profile?.logo_url && (
-              <img src={profile.logo_url} crossOrigin="anonymous" style={{ maxHeight: 80, maxWidth: 200, display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            )}
+            {profile?.logo_url
+              ? <img src={profile.logo_url} crossOrigin="anonymous" alt="Logo" style={{ maxWidth: 130, maxHeight: 40, objectFit: 'contain', display: 'block' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              : <div style={{ width: 36, height: 36, background: '#0B1640', borderRadius: 8, flexShrink: 0 }} />
+            }
             <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.3px' }}>{contract.company_name || '—'}</div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Signed Contract · {conDisplayId}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2 }}>{contract?.company_name || '—'}</div>
+              <div style={{ fontSize: 8, color: '#94A0B4', marginTop: 2 }}>
+                {[
+                  [profile?.city, profile?.province].filter(Boolean).join(', ') || null,
+                  profile?.licence ? `Lic# ${profile.licence}` : null,
+                ].filter(Boolean).join(' · ')}
+              </div>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>{createdDate}</div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>{profile?.province ? profile.province + ', Canada' : 'Canada'}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, color: '#2563EB', letterSpacing: '0.14em', marginBottom: 4 }}>Installation Contract</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1220', lineHeight: 1 }}>{conDisplayId}</div>
+            <div style={{ fontSize: 9, color: '#94A0B4', marginTop: 4 }}>{createdDate}</div>
           </div>
         </div>
 
         {/* BODY */}
         <div style={{ padding: 16, marginTop: isPdf ? 0 : undefined }}>
 
-
           {/* PARTIES */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{contract?.company_name || '—'}</div>
-              <div style={{ lineHeight: 1.6 }}>
-                {(contract?.company_phone || profile?.phone) && <div style={{ fontSize: 13, color: '#6B7280' }}>{contract?.company_phone || profile?.phone}</div>}
-                {contractorEmail && <div style={{ fontSize: 13, color: '#6B7280' }}>{contractorEmail}</div>}
-                {profile?.address && <div style={{ fontSize: 13, color: '#6B7280' }}>{profile.address}</div>}
-                {(profile?.city || profile?.province) && <div style={{ fontSize: 13, color: '#6B7280' }}>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
-                {profile?.website && profile.website !== 'https://' && <a href={profile.website} style={{ fontSize: 13, color: '#2563EB' }}>{profile.website.replace('https://','').replace('http://','')}</a>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract?.company_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {(contract?.company_phone || profile?.phone) && <div>{contract?.company_phone || profile?.phone}</div>}
+                {contractorEmail && <div>{contractorEmail}</div>}
+                {profile?.address && <div>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div>{[profile.city, profile.province].filter(Boolean).join(', ')}</div>}
               </div>
+              {profile?.licence && (
+                <div style={{ marginTop: 8 }}>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
+                </div>
+              )}
             </div>
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ lineHeight: 1.6 }}>
-                {estimate.client_phone && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_phone}</div>}
-                {estimate.client_email && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_email}</div>}
-                {estimate.client_address && <div style={{ fontSize: 13, color: '#6B7280' }}>{estimate.client_address}</div>}
-                {(estimate as any).client_city && <div style={{ fontSize: 13, color: '#6B7280' }}>{[(estimate as any).client_city, (estimate as any).client_province, (estimate as any).client_postal].filter(Boolean).join(', ')}</div>}
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {estimate.client_phone   && <div>{estimate.client_phone}</div>}
+                {estimate.client_email   && <div>{estimate.client_email}</div>}
+                {estimate.client_address && <div>{estimate.client_address}</div>}
               </div>
             </div>
           </div>

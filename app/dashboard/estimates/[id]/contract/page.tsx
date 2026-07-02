@@ -26,7 +26,7 @@ interface Opening {
 interface Profile {
   id: string
   company_name: string | null; phone: string | null; email: string | null
-  address: string | null; city: string | null; postal: string | null; website: string | null
+  address: string | null; city: string | null; province: string | null; postal: string | null; website: string | null
   licence: string | null
   contract_terms: string | null; deposit_percent: number | null
   signature_url: string | null; logo_url: string | null
@@ -364,15 +364,27 @@ export default function ContractPage() {
         {/* HEADER */}
         <AppTopBar onBack={() => router.back()} backLabel="Back" title="Contract" />
 
-        {/* CONTRACT BAR */}
-        <div style={{ background: 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 100%)', padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>CONTRACT</div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>{contractId}</div>
+        {/* CONTRACT HEADER */}
+        <div style={{ background: '#fff', borderBottom: '2px solid #2563EB', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {profile?.logo_url
+              ? <img src={profile.logo_url} alt="Logo" style={{ maxWidth: 130, maxHeight: 40, objectFit: 'contain', display: 'block' }} />
+              : <div style={{ width: 36, height: 36, background: '#0B1640', borderRadius: 8, flexShrink: 0 }} />
+            }
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2 }}>{profile?.company_name || 'Your Company'}</div>
+              <div style={{ fontSize: 8, color: '#94A0B4', marginTop: 2 }}>
+                {[
+                  [profile?.city, profile?.province].filter(Boolean).join(', ') || null,
+                  profile?.licence ? `Lic# ${profile.licence}` : null,
+                ].filter(Boolean).join(' · ')}
+              </div>
+            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>DATE</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
+            <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, color: '#2563EB', letterSpacing: '0.14em', marginBottom: 4 }}>Installation Contract</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#0B1220', lineHeight: 1 }}>{contractId}</div>
+            <div style={{ fontSize: 9, color: '#94A0B4', marginTop: 4 }}>{createdDate}</div>
           </div>
         </div>
 
@@ -380,32 +392,28 @@ export default function ContractPage() {
         <div style={{ padding: '16px 16px 160px', flex: 1 }}>
 
           {/* PARTIES */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
-            {/* Contractor */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Contractor</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{profile?.company_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {profile?.phone && <div>{profile.phone}</div>}
-                {profile?.email && <div style={{ fontSize: 13, color: '#475569' }}>{profile.email}</div>}
-                {profile?.address && <div style={{ fontSize: 13, color: '#475569' }}>{profile.address}</div>}
-                {profile?.city && <div>{profile.city}</div>}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{profile?.company_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {profile?.phone   && <div>{profile.phone}</div>}
+                {profile?.email   && <div>{profile.email}</div>}
+                {profile?.address && <div>{profile.address}</div>}
+                {(profile?.city || profile?.province) && <div>{[profile?.city, profile?.province].filter(Boolean).join(', ')}</div>}
               </div>
               {profile?.licence && (
                 <div style={{ marginTop: 8 }}>
-                  <span style={{ background: '#EEF2FF', color: '#2045B8', fontSize: 9, borderRadius: 6, padding: '2px 6px', fontWeight: 700, letterSpacing: '0.05em' }}>
-                    LIC #{profile.licence}
-                  </span>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
                 </div>
               )}
             </div>
-            {/* Client */}
-            <div style={{ background: '#fff', borderRadius: 14, padding: 14, border: '1px solid #E8E8E8' }}>
-              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 8 }}>Client</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: '#0A0E1A', marginBottom: 4 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 11, color: '#8892b0', lineHeight: 1.6 }}>
-                {estimate.client_phone && <div>{estimate.client_phone}</div>}
-                {estimate.client_email && <div>{estimate.client_email}</div>}
+            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+                {estimate.client_phone   && <div>{estimate.client_phone}</div>}
+                {estimate.client_email   && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
               </div>
             </div>
