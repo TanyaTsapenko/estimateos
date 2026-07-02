@@ -424,6 +424,8 @@ export default function ContractPage() {
               {openings.map((op, i) => {
                 const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
                 const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
+                const SHAPE_VALUES = ['Octagon', 'Trapezoid', 'Arch', 'Circle', 'Gothic', 'Pentagon', 'Eyebrow', 'Half Round', 'Triangle', 'Custom']
+                const shapeFromSub = op.sub && SHAPE_VALUES.includes(op.sub) ? op.sub : null
                 return (
                   <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                     {/* Header */}
@@ -435,8 +437,8 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        {(op.type === 'special' && op.sub)
-                          ? <ShapeOutlineDrawing shape={op.sub} uid={op.id} />
+                        {shapeFromSub
+                          ? <ShapeOutlineDrawing shape={shapeFromSub} uid={op.id} />
                           : <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] ?? op.type} sub={(op as any).window_subtype || op.sub} size={100} />
                         }
                       </div>
