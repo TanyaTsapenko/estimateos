@@ -429,7 +429,7 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={110} />
+                        <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
                       </div>
                       {/* Specs */}
                       <div style={{ flex: 1, padding: '10px 12px' }}>
