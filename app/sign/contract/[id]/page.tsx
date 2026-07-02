@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 // reads/decline go through /api/public/contract/[id] (service role, limited projection)
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
+import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
@@ -301,10 +302,10 @@ export default function SignContractPage() {
 
           {/* PARTIES */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract.company_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract.company_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {(contract.company_phone || profile?.phone) && <div>{contract.company_phone || profile?.phone}</div>}
                 {contractorEmail && <div>{contractorEmail}</div>}
                 {profile?.address && <div>{profile.address}</div>}
@@ -312,14 +313,14 @@ export default function SignContractPage() {
               </div>
               {profile?.licence && (
                 <div style={{ marginTop: 8 }}>
-                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 13, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
                 </div>
               )}
             </div>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {estimate.client_phone   && <div>{estimate.client_phone}</div>}
                 {estimate.client_email   && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
@@ -333,7 +334,7 @@ export default function SignContractPage() {
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
                 <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}
@@ -661,10 +662,10 @@ export default function SignContractPage() {
 
           {/* PARTIES */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract?.company_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{contract?.company_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {(contract?.company_phone || profile?.phone) && <div>{contract?.company_phone || profile?.phone}</div>}
                 {contractorEmail && <div>{contractorEmail}</div>}
                 {profile?.address && <div>{profile.address}</div>}
@@ -672,14 +673,14 @@ export default function SignContractPage() {
               </div>
               {profile?.licence && (
                 <div style={{ marginTop: 8 }}>
-                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 13, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
                 </div>
               )}
             </div>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {estimate.client_phone   && <div>{estimate.client_phone}</div>}
                 {estimate.client_email   && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
@@ -693,7 +694,7 @@ export default function SignContractPage() {
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
                 <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
                   <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
                 </div>
               ))}

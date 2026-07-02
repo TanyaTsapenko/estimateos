@@ -4,6 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
+import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 import AppTopBar from '@/components/AppTopBar'
@@ -384,10 +385,10 @@ export default function ContractPage() {
 
           {/* PARTIES */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{profile?.company_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Company</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{profile?.company_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {profile?.phone   && <div>{profile.phone}</div>}
                 {profile?.email   && <div>{profile.email}</div>}
                 {profile?.address && <div>{profile.address}</div>}
@@ -395,14 +396,14 @@ export default function ContractPage() {
               </div>
               {profile?.licence && (
                 <div style={{ marginTop: 8 }}>
-                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 8.5, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
+                  <span style={{ background: '#EEF3FF', color: '#2563EB', fontSize: 13, borderRadius: 20, padding: '2px 8px', fontWeight: 700 }}>Lic# {profile.licence}</span>
                 </div>
               )}
             </div>
-            <div style={{ background: '#F8F9FC', borderRadius: 10, padding: '12px 14px' }}>
-              <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
-              <div style={{ fontSize: 8.5, color: '#475467', lineHeight: 1.8 }}>
+            <div style={{ background: '#FFFFFF', borderRadius: 10, padding: '12px 14px' }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: '#94A0B4', marginBottom: 6 }}>Client</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 5 }}>{estimate.client_name || '—'}</div>
+              <div style={{ fontSize: 13, color: '#475467', lineHeight: 1.8 }}>
                 {estimate.client_phone   && <div>{estimate.client_phone}</div>}
                 {estimate.client_email   && <div>{estimate.client_email}</div>}
                 {estimate.client_address && <div>{estimate.client_address}</div>}
@@ -416,7 +417,7 @@ export default function ContractPage() {
             <div style={{ padding: '14px 16px' }}>
               {openings.map((op, i) => {
                 const def = OPENING_TYPES[op.type]
-                const name = `${def?.name || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
+                const name = `${def?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
                 return (
                   <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                     {/* Header */}
