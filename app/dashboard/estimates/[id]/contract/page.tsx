@@ -421,8 +421,8 @@ export default function ContractPage() {
             <CardHeader icon={<DocumentIcon />} title="Scope of Work" />
             <div style={{ padding: '14px 16px' }}>
               {openings.map((op, i) => {
-                const def = OPENING_TYPES[op.type]
-                const name = `${def?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
+                const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
+                const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
                 return (
                   <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
                     {/* Header */}
@@ -434,8 +434,7 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        {console.log('[contract] op.type:', op.type, 'mapped:', V2_TO_OLD_TYPE_KEY[op.type]) as any}
-                        <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] ?? op.type} sub={op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                        <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
                       </div>
                       {/* Specs */}
                       <div style={{ flex: 1, padding: '10px 12px' }}>
