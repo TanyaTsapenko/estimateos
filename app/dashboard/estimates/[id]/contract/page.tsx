@@ -434,6 +434,7 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
+                        {console.log('[contract] op.type:', op.type, 'mapped:', V2_TO_OLD_TYPE_KEY[op.type]) as any}
                         <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] ?? op.type} sub={op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
                       </div>
                       {/* Specs */}
