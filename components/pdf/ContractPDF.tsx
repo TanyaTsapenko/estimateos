@@ -17,9 +17,9 @@ const S = StyleSheet.create({
   page:      { fontFamily: 'Helvetica', fontSize: 9, color: NAVY, padding: 36, backgroundColor: '#fff' },
 
   hdrRow:    { flexDirection: 'row', alignItems: 'stretch', marginBottom: 14 },
-  hdrLeft:   { flex: 1, paddingRight: 14, paddingBottom: 14, borderBottomWidth: 1.5, borderBottomColor: BLUE },
-  hdrRight:  { backgroundColor: BLUE, borderRadius: 5, width: 165, padding: 12, alignItems: 'flex-end', justifyContent: 'center' },
-  logo:      { height: 34, objectFit: 'contain', objectPositionX: 0, marginBottom: 5 },
+  hdrLeft:   { flex: 1, paddingRight: 14, paddingBottom: 14, borderBottomWidth: 1.5, borderBottomColor: BLUE_D },
+  hdrRight:  { backgroundColor: BLUE_D, borderRadius: 5, width: 165, padding: 12, alignItems: 'flex-end', justifyContent: 'center' },
+  logo:      { maxWidth: 140, maxHeight: 44, objectFit: 'contain', objectPositionX: 0, marginBottom: 6 },
   coName:    { fontSize: 13, fontFamily: 'Helvetica-Bold', color: NAVY, marginBottom: 3 },
   coInfo:    { fontSize: 8, color: MUTED, marginBottom: 1.5 },
   badge:     { marginBottom: 7, alignSelf: 'flex-end' },
@@ -157,12 +157,15 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
             {company.logo_url
               ? <Image style={S.logo} src={company.logo_url} />
               : <Text style={S.coName}>{company.company_name || 'Your Company'}</Text>}
-            {company.logo_url && <Text style={S.coName}>{company.company_name}</Text>}
-            {company.phone                && <Text style={S.coInfo}>{company.phone}</Text>}
-            {company.company_contact_email && <Text style={S.coInfo}>{company.company_contact_email}</Text>}
-            {(company.city || company.province) &&
-              <Text style={S.coInfo}>{[company.city, company.province].filter(Boolean).join(', ')}</Text>}
-            {company.licence              && <Text style={S.coInfo}>Lic# {company.licence}</Text>}
+            {(() => {
+              const line = [
+                company.phone,
+                company.company_contact_email,
+                [company.city, company.province].filter(Boolean).join(', ') || null,
+                company.licence ? `Lic# ${company.licence}` : null,
+              ].filter(Boolean).join(' · ')
+              return line ? <Text style={S.coInfo}>{line}</Text> : null
+            })()}
           </View>
           <View style={S.hdrRight}>
             <View style={S.badge}><Text style={S.badgeTxt}>INSTALLATION CONTRACT</Text></View>
@@ -171,27 +174,22 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           </View>
         </View>
 
-        {/* ── CONTRACTOR / CLIENT ── */}
-        <View style={S.metaRow}>
-          <View style={S.metaBox}>
-            <Text style={S.metaLbl}>Contractor</Text>
-            <Text style={S.metaName}>{company.company_name}</Text>
-            {company.phone     && <Text style={S.metaVal}>{company.phone}</Text>}
-            {company.email     && <Text style={S.metaVal}>{company.email}</Text>}
-            {company.address   && <Text style={S.metaVal}>{[company.address, company.city, company.province].filter(Boolean).join(', ')}</Text>}
-            {company.licence   && <Text style={S.metaVal}>Lic# {company.licence}</Text>}
-            {company.insurance && <Text style={S.metaVal}>Ins# {company.insurance}</Text>}
-            {company.wsib_number    && <Text style={S.metaVal}>WSIB/WCB# {company.wsib_number}</Text>}
-            {company.gst_hst_number && <Text style={S.metaVal}>GST/HST# {company.gst_hst_number}</Text>}
+        {/* ── CLIENT ── */}
+        <View style={{ backgroundColor: '#F4F6FB', borderRadius: 5, padding: 10, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 }}>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text style={S.metaLbl}>Prepared for</Text>
+            <Text style={[S.metaName, { fontSize: 11, marginBottom: 3 }]}>{estimate.client_name}</Text>
+            {(() => {
+              const contact = [estimate.client_phone, estimate.client_email].filter(Boolean).join(' · ')
+              return contact ? <Text style={S.metaVal}>{contact}</Text> : null
+            })()}
+            {estimate.client_address && (
+              <Text style={S.metaVal}>{[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}</Text>
+            )}
           </View>
-          <View style={S.metaBoxR}>
-            <Text style={S.metaLbl}>Client</Text>
-            <Text style={S.metaName}>{estimate.client_name}</Text>
-            {estimate.client_phone && <Text style={S.metaVal}>{estimate.client_phone}</Text>}
-            {estimate.client_email && <Text style={S.metaVal}>{estimate.client_email}</Text>}
-            {estimate.client_address && <Text style={S.metaVal}>{[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}</Text>}
-            {estimate.job_site_same_as_client === false && estimate.job_site_address &&
-              <Text style={[S.metaVal, { marginTop: 4 }]}>Job site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}</Text>}
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={S.metaLbl}>Estimate</Text>
+            <Text style={[S.metaName, { fontSize: 10 }]}>{estimate.estimate_number}</Text>
           </View>
         </View>
 

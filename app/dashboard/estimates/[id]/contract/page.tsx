@@ -317,20 +317,24 @@ export default function ContractPage() {
 
         <AppTopBar onBack={() => router.back()} backLabel="Back" title="Contract" />
 
-        {/* HEADER — Variant 2: left white + right blue */}
-        <div style={{ display: 'flex', overflow: 'hidden' }}>
+        {/* HEADER — Variant A */}
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
           <div style={{ flex: 1, padding: '14px 16px', background: '#fff', minWidth: 0 }}>
-            {profile?.logo_url && (
-              <img src={profile.logo_url} alt="Logo" style={{ height: 28, maxWidth: 120, objectFit: 'contain', display: 'block', marginBottom: 6 }} />
-            )}
-            <div style={{ fontSize: 13, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{profile?.company_name || 'Your Company'}</div>
-            {profile?.phone                && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
-            {profile?.company_contact_email && <div style={{ fontSize: 11, color: MUTED }}>{profile.company_contact_email}</div>}
-            {(profile?.city || profile?.province) && <div style={{ fontSize: 11, color: MUTED }}>{[profile?.city, profile?.province].filter(Boolean).join(', ')}</div>}
-            {profile?.licence              && <div style={{ fontSize: 11, color: MUTED }}>Lic# {profile.licence}</div>}
+            {profile?.logo_url
+              ? <img src={profile.logo_url} alt="Logo" style={{ maxWidth: 140, maxHeight: 44, objectFit: 'contain', display: 'block', marginBottom: 7 }} />
+              : <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 7 }}>{profile?.company_name || 'Your Company'}</div>
+            }
+            <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.5 }}>
+              {[
+                profile?.phone,
+                profile?.company_contact_email,
+                [profile?.city, profile?.province].filter(Boolean).join(', ') || null,
+                profile?.licence ? `Lic# ${profile.licence}` : null,
+              ].filter(Boolean).join(' · ')}
+            </div>
           </div>
-          <div style={{ background: BLUE, padding: '14px 16px', textAlign: 'right', flexShrink: 0, minWidth: 148, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 6 }}>Installation Contract</div>
+          <div style={{ background: BLUE_D, padding: '14px 16px', textAlign: 'right', flexShrink: 0, minWidth: 148, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: 6 }}>Installation Contract</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#fff', marginBottom: 4 }}>{contractId}</div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>{createdDate}</div>
           </div>
@@ -340,24 +344,30 @@ export default function ContractPage() {
         <div style={{ padding: '16px 16px 160px', flex: 1 }}>
 
           {/* CLIENT */}
-          <div style={{ background: '#F8F9FC', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 5 }}>Client</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 5 }}>{estimate.client_name || '—'}</div>
-            {(estimate.client_phone || estimate.client_email) && (
-              <div style={{ fontSize: 11, color: MUTED, marginBottom: 2 }}>
-                {[estimate.client_phone, estimate.client_email].filter(Boolean).join(' · ')}
-              </div>
-            )}
-            {(estimate.client_address || estimate.client_city) && (
-              <div style={{ fontSize: 11, color: MUTED }}>
-                {[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}
-              </div>
-            )}
-            {estimate.job_site_same_as_client === false && estimate.job_site_address && (
-              <div style={{ fontSize: 11, color: MUTED, marginTop: 3 }}>
-                Site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}
-              </div>
-            )}
+          <div style={{ background: '#F4F6FB', borderRadius: 10, padding: '12px 14px', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 4 }}>Prepared for</div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 4 }}>{estimate.client_name || '—'}</div>
+              {(estimate.client_phone || estimate.client_email) && (
+                <div style={{ fontSize: 11, color: MUTED, marginBottom: 2 }}>
+                  {[estimate.client_phone, estimate.client_email].filter(Boolean).join(' · ')}
+                </div>
+              )}
+              {(estimate.client_address || estimate.client_city) && (
+                <div style={{ fontSize: 11, color: MUTED }}>
+                  {[estimate.client_address, estimate.client_city, estimate.client_province, estimate.client_postal_code].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {estimate.job_site_same_as_client === false && estimate.job_site_address && (
+                <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>
+                  Site: {[estimate.job_site_address, estimate.job_site_city, estimate.job_site_province].filter(Boolean).join(', ')}
+                </div>
+              )}
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.1em', color: FAINT, marginBottom: 4 }}>Estimate</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>{estimate.estimate_number}</div>
+            </div>
           </div>
 
           {/* SCOPE OF WORK */}
