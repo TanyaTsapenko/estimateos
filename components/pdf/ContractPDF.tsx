@@ -86,17 +86,8 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           <View style={styles.headerLeft}>
             {company.logo_url
               ? <Image style={styles.logo} src={company.logo_url} />
-              : <View style={styles.logoPlaceholder} />}
-            <View>
-              <Text style={styles.companyName}>{company.company_name || 'Your Company'}</Text>
-              {(() => {
-                const tagline = [
-                  [company.city, company.province].filter(Boolean).join(', ') || null,
-                  company.licence ? `Lic# ${company.licence}` : null,
-                ].filter(Boolean).join(' · ')
-                return tagline ? <Text style={styles.companyContact}>{tagline}</Text> : null
-              })()}
-            </View>
+              : <Text style={[styles.companyName, { fontSize: 14 }]}>{company.company_name || 'Your Company'}</Text>
+            }
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.docTitle}>INSTALLATION CONTRACT</Text>

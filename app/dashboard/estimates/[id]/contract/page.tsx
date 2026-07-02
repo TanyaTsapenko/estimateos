@@ -369,17 +369,8 @@ export default function ContractPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {profile?.logo_url
               ? <img src={profile.logo_url} alt="Logo" style={{ maxWidth: 130, maxHeight: 40, objectFit: 'contain', display: 'block' }} />
-              : <div style={{ width: 36, height: 36, background: '#0B1640', borderRadius: 8, flexShrink: 0 }} />
+              : <div style={{ fontSize: 14, fontWeight: 800, color: '#0B1220' }}>{profile?.company_name || 'Your Company'}</div>
             }
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2 }}>{profile?.company_name || 'Your Company'}</div>
-              <div style={{ fontSize: 8, color: '#94A0B4', marginTop: 2 }}>
-                {[
-                  [profile?.city, profile?.province].filter(Boolean).join(', ') || null,
-                  profile?.licence ? `Lic# ${profile.licence}` : null,
-                ].filter(Boolean).join(' · ')}
-              </div>
-            </div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 7.5, fontWeight: 800, textTransform: 'uppercase' as const, color: '#2563EB', letterSpacing: '0.14em', marginBottom: 4 }}>Installation Contract</div>
