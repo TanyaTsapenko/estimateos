@@ -35,6 +35,8 @@ interface Profile {
   warranty_period: string | null
   completion_timeframe: string | null; payment_methods: string[] | null
   project_manager: string | null; contract_clauses: string | null
+  gst_hst_number: string | null; signing_rep_name: string | null; signing_rep_title: string | null
+  warranty_summary: string | null
 }
 interface Estimate {
   id: string; estimate_number: string; created_at: string
@@ -125,7 +127,7 @@ export default function ContractPage() {
       const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof, error: profError } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, completion_timeframe, payment_methods, project_manager, contract_clauses')
+        .select('id, company_name, phone, email, address, city, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title')
         .eq('id', estOwnerId)
         .single()
       console.log('[contract page] prof:', prof, 'error:', profError)
@@ -528,7 +530,7 @@ export default function ContractPage() {
           </div>
 
           {/* CONTRACT DETAILS */}
-          {(profile?.warranty_period || profile?.completion_timeframe || urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
+          {(profile?.warranty_period || profile?.completion_timeframe || profile?.project_manager || urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
             <div style={cardStyle}>
               <CardHeader icon={<DocumentIcon />} title="Contract Details" />
               <div style={{ padding: '12px 16px' }}>
@@ -536,12 +538,19 @@ export default function ContractPage() {
                   <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>Warranty Period</div>
                     <div style={{ fontSize: 14, color: '#0A1628' }}>{profile.warranty_period}</div>
+                    {profile?.warranty_summary && <div style={{ fontSize: 11, color: '#64748B', marginTop: 3 }}>{profile.warranty_summary}</div>}
                   </div>
                 )}
                 {profile?.completion_timeframe && (
                   <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Completion Timeframe</div>
                     <p style={{ fontSize: 12, color: '#353A3E', lineHeight: 1.6, margin: 0 }}>{profile.completion_timeframe}</p>
+                  </div>
+                )}
+                {profile?.project_manager && (
+                  <div style={{ marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #F4F4F2' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#8892b0', marginBottom: 4 }}>Project Manager</div>
+                    <div style={{ fontSize: 13, color: '#0A1628' }}>{profile.project_manager}</div>
                   </div>
                 )}
                 {(urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0)) && (
@@ -574,7 +583,8 @@ export default function ContractPage() {
                   <div style={{ height: 60, marginBottom: 4 }} />
                 )}
                 <div style={{ borderBottom: '1.5px solid #0A0E1A', marginBottom: 6 }} />
-                <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.company_name || '—'}</div>
+                <div style={{ fontSize: 11, color: '#8892b0' }}>{profile?.signing_rep_name || profile?.company_name || '—'}</div>
+                {profile?.signing_rep_title && <div style={{ fontSize: 10, color: '#8892b0' }}>{profile.signing_rep_title}</div>}
                 <div style={{ fontSize: 11, color: '#8892b0' }}>{createdDate}</div>
               </div>
               {/* Client */}
@@ -676,6 +686,13 @@ export default function ContractPage() {
           )}
 
         </div>
+
+        {/* FOOTER */}
+        {profile?.gst_hst_number && (
+          <div style={{ padding: '10px 16px', borderTop: '1px solid #F0F0F0', textAlign: 'center' }}>
+            <span style={{ fontSize: 10, color: '#94A3B8' }}>GST/HST# {profile.gst_hst_number}</span>
+          </div>
+        )}
 
       </div>
     </>
