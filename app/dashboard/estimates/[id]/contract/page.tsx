@@ -4,7 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { MessageSquare } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
-import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
+import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import WindowDiagram from '@/components/WindowDiagram'
 import AppTopBar from '@/components/AppTopBar'
@@ -18,6 +18,7 @@ interface Opening {
   has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
+  sub?: string | null
   glass_type: string | null; core_type: string | null
   custom_colour_label: string | null; custom_shape_label: string | null
   colour_palette_id?: string | null; colour_name?: string | null
@@ -429,7 +430,7 @@ export default function ContractPage() {
                     <div style={{ display: 'flex' }}>
                       {/* Diagram */}
                       <div style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                        <WindowDiagram type={op.type} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
+                        <WindowDiagram type={V2_TO_OLD_TYPE_KEY[op.type] ?? op.type} sub={op.sub} widthIn={op.width_in || undefined} heightIn={op.height_in || undefined} size={100} />
                       </div>
                       {/* Specs */}
                       <div style={{ flex: 1, padding: '10px 12px' }}>

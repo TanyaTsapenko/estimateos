@@ -2,6 +2,7 @@
 
 interface WindowDiagramProps {
   type: string
+  sub?: string | null
   widthIn?: number
   heightIn?: number
   size?: number
