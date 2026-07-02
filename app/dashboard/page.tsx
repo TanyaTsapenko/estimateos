@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
 import BellButton, { type AppNotification } from '@/components/BellButton'
@@ -122,6 +122,33 @@ const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color:
   estimate_auto_expired:{ icon: ClockIcon,   bg: '#FEF3C7', color: '#D97706', label: 'estimate expired (no response)' },
 }
 
+const EVENT_TONE: Record<string, { bg: string; color: string }> = {
+  estimate_sent:        { bg: '#EEF3FF', color: '#2563EB' },
+  contract_signed:      { bg: '#EFEAFC', color: '#6D45D9' },
+  deposit_invoice_sent: { bg: '#EEF3FF', color: '#2563EB' },
+  deposit_paid:         { bg: '#E7F6EE', color: '#0F8A4D' },
+  final_invoice_sent:   { bg: '#EEF3FF', color: '#2563EB' },
+  final_paid:           { bg: '#E7F6EE', color: '#0F8A4D' },
+  reminder_sent:        { bg: '#EEF3FF', color: '#2563EB' },
+  estimate_auto_expired:{ bg: '#FBF1DC', color: '#B7791F' },
+}
+const EVENT_ICONS: Record<string, React.ElementType> = {
+  estimate_sent:        SendIcon,
+  contract_signed:      PenLine,
+  deposit_invoice_sent: Receipt,
+  deposit_paid:         CheckCircle,
+  final_invoice_sent:   Receipt,
+  final_paid:           CheckCircle,
+  reminder_sent:        Bell,
+  estimate_auto_expired:ClockIcon,
+}
+function getDealAccent(eventType: string): string {
+  if (eventType === 'deposit_paid' || eventType === 'final_paid') return '#0F8A4D'
+  if (eventType === 'contract_signed') return '#6D45D9'
+  if (eventType === 'estimate_auto_expired') return '#B7791F'
+  return '#2563EB'
+}
+
 function fmtAmt(n: number) {
   return `CA$${n.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
@@ -191,6 +218,7 @@ export default function DashboardPage() {
   const [showAllAttention, setShowAllAttention] = useState(false)
   const [showAllActivity, setShowAllActivity] = useState(false)
   const [activityFilter, setActivityFilter] = useState<'all' | 'estimates' | 'payments'>('all')
+  const [openDealIdx, setOpenDealIdx] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 const [dashToast, setDashToast] = useState('')
   const [reminderSending, setReminderSending] = useState(false)
@@ -1147,99 +1175,107 @@ const [dashToast, setDashToast] = useState('')
 
             {/* Live Feed */}
             <section style={{ marginBottom: 24 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Live Feed</div>
-              <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>Recent activity</div>
-              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
-                {/* Filter tabs */}
-                <div style={{ display: 'flex', gap: 4, padding: '12px 16px 0' }}>
-                  {(['all', 'estimates', 'payments'] as const).map(tab => (
-                    <button key={tab} onClick={() => setActivityFilter(tab)} style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', background: activityFilter === tab ? '#2045B8' : '#F1F5F9', color: activityFilter === tab ? '#fff' : '#64748B' }}>
-                      {tab === 'all' ? 'All' : tab === 'estimates' ? 'Estimates' : 'Payments'}
-                    </button>
-                  ))}
-                </div>
-                {(() => {
-                  const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
-                  if (filtered.length === 0) return (
-                    <div style={{ padding: '28px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13, marginTop: 8 }}>
-                      No activity yet. Send your first estimate to get started.
-                    </div>
-                  )
-                  const groups = groupActivity(filtered)
-                  const visibleGroups = showAllActivity ? groups : groups.slice(0, 5)
-                  return (<>
-                    <div style={{ marginTop: 8 }}>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', color: '#2563EB', textTransform: 'uppercase', marginBottom: 4 }}>Live Feed</div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#0B1220', marginBottom: 14 }}>Recent activity</div>
+              {/* Filter chips */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                {(['all', 'payments', 'estimates'] as const).map(tab => (
+                  <button key={tab} onClick={() => { setActivityFilter(tab); setOpenDealIdx(0) }} style={{ height: 32, padding: '0 14px', borderRadius: 99, border: activityFilter === tab ? 'none' : '1px solid rgba(15,23,42,0.07)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', background: activityFilter === tab ? '#2563EB' : '#fff', color: activityFilter === tab ? '#fff' : '#475467' }}>
+                    {tab === 'all' ? 'All' : tab === 'payments' ? 'Payments' : 'Estimates'}
+                  </button>
+                ))}
+              </div>
+              {(() => {
+                const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
+                if (filtered.length === 0) return (
+                  <div style={{ padding: '28px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
+                    No activity yet. Send your first estimate to get started.
+                  </div>
+                )
+                const groups = groupActivity(filtered)
+                const visibleGroups = showAllActivity ? groups : groups.slice(0, 5)
+                return (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {visibleGroups.map((g, gi) => {
-                        if (g.kind === 'single') {
-                          const item = g.item
-                          const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                          const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
-                          const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
-                          return (
-                            <div key={gi} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: gi < visibleGroups.length - 1 ? '1px solid #F1F5F9' : undefined, cursor: 'pointer' }}
-                              onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}>
-                              <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                        const items = g.kind === 'single' ? [g.item] : g.items
+                        const topEvent = items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, items[0])
+                        const accent = getDealAccent(topEvent.event_type)
+                        const topAmt = items.find(it => it.amount != null)?.amount ?? null
+                        const clientName = g.kind === 'single' ? g.item.client_name : g.client_name
+                        const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
+                        const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
+                        const initials = (clientName || '?').slice(0, 1).toUpperCase()
+                        const statusBadge = STATUS_BADGE[topEvent.event_type]
+                        const isOpen = openDealIdx === gi
+                        return (
+                          <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
+                            {/* Card header */}
+                            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+                              onClick={() => setOpenDealIdx(isOpen ? -1 : gi)}>
+                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${accent}99, ${accent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{initials}</span>
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
-                                {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
+                                <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0B1220', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName || '—'}</div>
+                                <div style={{ fontSize: 11.5, color: '#94A0B4', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {[entityNumber, items.length > 1 ? `${items.length} updates` : (ACTIVITY_CFG[topEvent.event_type]?.label || 'updated'), items[0].time].filter(Boolean).join(' · ')}
+                                </div>
                               </div>
-                              <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                              <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: accent + '18', color: accent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
+                                {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
+                              </div>
                             </div>
-                          )
-                        }
-                        const topEvent = g.items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, g.items[0])
-                        const badge = STATUS_BADGE[topEvent.event_type]
-                        const topAmt = topEvent.amount ?? g.items.find(it => it.amount != null)?.amount ?? null
-                        return (
-                          <div key={gi} style={{ marginTop: 4, marginLeft: 12, marginRight: 12, marginBottom: gi < visibleGroups.length - 1 ? 4 : 8, borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden', cursor: 'pointer' }}
-                            onClick={() => router.push(`/dashboard/estimates/${g.entity_id}`)}>
-                            <div style={{ padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628' }}>{g.entity_number}</span>
-                              <span style={{ fontSize: 12, color: '#CBD5E1' }}>·</span>
-                              <span style={{ fontSize: 12, color: '#475467', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.client_name}</span>
-                              {topAmt != null && <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtAmt(topAmt)}</span>}
-                              {badge && <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge.label}</span>}
-                            </div>
-                            <div style={{ padding: '8px 12px' }}>
-                              {g.items.map((it, idx) => {
-                                const cfg = ACTIVITY_CFG[it.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                                const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
-                                return (
-                                  <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 16 }}>
-                                      <div style={{ width: 16, height: 16, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <cfg.icon size={8} color={cfg.color} strokeWidth={2.5} />
+                            {/* Expanded timeline */}
+                            {isOpen && (
+                              <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
+                                <div style={{ paddingTop: 12 }}>
+                                  {items.map((it, idx) => {
+                                    const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
+                                    const Icon = EVENT_ICONS[it.event_type] || ClockIcon
+                                    const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
+                                    const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
+                                    return (
+                                      <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                                          <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Icon size={12} color={tone.color} strokeWidth={2} />
+                                          </div>
+                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
+                                            {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
+                                          </div>
+                                          <div style={{ fontSize: 11, color: '#AEB6C4', marginTop: 2 }}>{it.time}</div>
+                                        </div>
                                       </div>
-                                      {idx < g.items.length - 1 && <div style={{ width: 1, height: 14, background: '#E2E8F0', marginTop: 2 }} />}
-                                    </div>
-                                    <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < g.items.length - 1 ? 4 : 0 }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{actorLabel} {cfg.label}</span>
-                                        {it.amount != null && <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>{fmtAmt(it.amount)}</span>}
-                                      </div>
-                                      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{it.time}</div>
-                                    </div>
-                                  </div>
-                                )
-                              })}
-                            </div>
+                                    )
+                                  })}
+                                </div>
+                                {entityId && (
+                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
+                                    View estimate →
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
                     </div>
                     {groups.length > 5 && (
-                      <div style={{ padding: '8px 12px 12px' }}>
-                        <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                          {showAllActivity ? 'Show less' : `Show all (${groups.length})`}
+                      <div style={{ marginTop: 8 }}>
+                        <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', height: 46, borderRadius: 13, border: '1px solid rgba(15,23,42,0.07)', background: '#fff', color: '#2563EB', fontSize: 13.5, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          {showAllActivity ? 'Show less' : 'Show all deals'}
                         </button>
                       </div>
                     )}
-                  </>)
-                })()}
-              </div>
+                  </>
+                )
+              })()}
             </section>
 
           </>
@@ -1305,103 +1341,107 @@ const [dashToast, setDashToast] = useState('')
             </div>}
 
             {/* Live Feed / Recent activity */}
-            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
-              <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
-                <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Live Feed</div>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>Recent activity</div>
-              </div>
-              {/* Filter tabs */}
-              <div style={{ display: 'flex', gap: 4, padding: '10px 16px 0' }}>
-                {(['all', 'estimates', 'payments'] as const).map(tab => (
-                  <button key={tab} onClick={() => setActivityFilter(tab)} style={{ padding: '4px 10px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', background: activityFilter === tab ? '#2045B8' : '#F1F5F9', color: activityFilter === tab ? '#fff' : '#64748B' }}>
-                    {tab === 'all' ? 'All' : tab === 'estimates' ? 'Estimates' : 'Payments'}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', color: '#2563EB', textTransform: 'uppercase', marginBottom: 4 }}>Live Feed</div>
+              <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#0B1220', marginBottom: 14 }}>Recent activity</div>
+              {/* Filter chips */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+                {(['all', 'payments', 'estimates'] as const).map(tab => (
+                  <button key={tab} onClick={() => { setActivityFilter(tab); setOpenDealIdx(0) }} style={{ height: 32, padding: '0 14px', borderRadius: 99, border: activityFilter === tab ? 'none' : '1px solid rgba(15,23,42,0.07)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', background: activityFilter === tab ? '#2563EB' : '#fff', color: activityFilter === tab ? '#fff' : '#475467' }}>
+                    {tab === 'all' ? 'All' : tab === 'payments' ? 'Payments' : 'Estimates'}
                   </button>
                 ))}
               </div>
               {(() => {
                 const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
                 if (filtered.length === 0) return (
-                  <div style={{ padding: '32px 16px', textAlign: 'center', color: '#94A3B8', fontSize: 13, marginTop: 8 }}>
+                  <div style={{ padding: '32px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
                     No activity yet. Send your first estimate to get started.
                   </div>
                 )
                 const groups = groupActivity(filtered)
                 const visibleGroups = showAllActivity ? groups : groups.slice(0, 5)
-                return (<>
-                  <div style={{ marginTop: 8 }}>
-                    {visibleGroups.map((g, gi) => {
-                      if (g.kind === 'single') {
-                        const item = g.item
-                        const cfg = ACTIVITY_CFG[item.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                        const actorLabel = item.actor_type === 'contractor' ? 'You' : item.actor_name
-                        const sub = [item.entity_number, item.amount != null ? fmtAmt(item.amount) : null, item.actor_type === 'contractor' && item.client_name ? item.client_name : null].filter(Boolean).join(' · ')
+                return (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {visibleGroups.map((g, gi) => {
+                        const items = g.kind === 'single' ? [g.item] : g.items
+                        const topEvent = items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, items[0])
+                        const accent = getDealAccent(topEvent.event_type)
+                        const topAmt = items.find(it => it.amount != null)?.amount ?? null
+                        const clientName = g.kind === 'single' ? g.item.client_name : g.client_name
+                        const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
+                        const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
+                        const initials = (clientName || '?').slice(0, 1).toUpperCase()
+                        const statusBadge = STATUS_BADGE[topEvent.event_type]
+                        const isOpen = openDealIdx === gi
                         return (
-                          <div key={gi} style={{ padding: '10px 16px', display: 'flex', gap: 10, alignItems: 'center', borderBottom: gi < visibleGroups.length - 1 ? '1px solid #EEF0F4' : undefined, cursor: 'pointer' }}
-                            onClick={() => item.entity_id && router.push(`/dashboard/estimates/${item.entity_id}`)}
-                            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
-                            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-                            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <cfg.icon size={16} color={cfg.color} strokeWidth={1.8} />
+                          <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
+                            {/* Card header */}
+                            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
+                              onClick={() => setOpenDealIdx(isOpen ? -1 : gi)}>
+                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${accent}99, ${accent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <span style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{initials}</span>
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: 14.5, fontWeight: 800, color: '#0B1220', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{clientName || '—'}</div>
+                                <div style={{ fontSize: 11.5, color: '#94A0B4', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {[entityNumber, items.length > 1 ? `${items.length} updates` : (ACTIVITY_CFG[topEvent.event_type]?.label || 'updated'), items[0].time].filter(Boolean).join(' · ')}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: accent + '18', color: accent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
+                                {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
+                              </div>
                             </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{actorLabel} {cfg.label}</div>
-                              {sub && <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>{sub}</div>}
-                            </div>
-                            <div style={{ fontSize: 11, color: '#94A3B8', whiteSpace: 'nowrap' }}>{item.time}</div>
-                            <ChevronRight size={13} color="#CBD5E1" strokeWidth={2} />
+                            {/* Expanded timeline */}
+                            {isOpen && (
+                              <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
+                                <div style={{ paddingTop: 12 }}>
+                                  {items.map((it, idx) => {
+                                    const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
+                                    const Icon = EVENT_ICONS[it.event_type] || ClockIcon
+                                    const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
+                                    const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
+                                    return (
+                                      <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                                          <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Icon size={12} color={tone.color} strokeWidth={2} />
+                                          </div>
+                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
+                                            {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
+                                          </div>
+                                          <div style={{ fontSize: 11, color: '#AEB6C4', marginTop: 2 }}>{it.time}</div>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                                {entityId && (
+                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
+                                    View estimate →
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )
-                      }
-                      const topEvent = g.items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, g.items[0])
-                      const badge = STATUS_BADGE[topEvent.event_type]
-                      const topAmt = topEvent.amount ?? g.items.find(it => it.amount != null)?.amount ?? null
-                      return (
-                        <div key={gi} style={{ marginTop: 4, marginLeft: 12, marginRight: 12, marginBottom: gi < visibleGroups.length - 1 ? 4 : 8, borderRadius: 12, border: '1px solid #E2E8F0', overflow: 'hidden', cursor: 'pointer' }}
-                          onClick={() => router.push(`/dashboard/estimates/${g.entity_id}`)}
-                          onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = '#F8FAFC'}
-                          onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-                          <div style={{ padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628' }}>{g.entity_number}</span>
-                            <span style={{ fontSize: 12, color: '#CBD5E1' }}>·</span>
-                            <span style={{ fontSize: 12, color: '#475467', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.client_name}</span>
-                            {topAmt != null && <span style={{ fontSize: 12, fontWeight: 700, color: '#0A1628', whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtAmt(topAmt)}</span>}
-                            {badge && <span style={{ fontSize: 10, fontWeight: 700, color: badge.color, background: badge.bg, borderRadius: 6, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>{badge.label}</span>}
-                          </div>
-                          <div style={{ padding: '8px 12px' }}>
-                            {g.items.map((it, idx) => {
-                              const cfg = ACTIVITY_CFG[it.event_type] || { icon: ClockIcon, bg: '#F1F5F9', color: '#94A3B8', label: 'updated' }
-                              const actorLabel = it.actor_type === 'contractor' ? 'You' : it.actor_name
-                              return (
-                                <div key={idx} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 16 }}>
-                                    <div style={{ width: 16, height: 16, borderRadius: 8, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                      <cfg.icon size={8} color={cfg.color} strokeWidth={2.5} />
-                                    </div>
-                                    {idx < g.items.length - 1 && <div style={{ width: 1, height: 14, background: '#E2E8F0', marginTop: 2 }} />}
-                                  </div>
-                                  <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < g.items.length - 1 ? 4 : 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                      <span style={{ fontSize: 12, fontWeight: 600, color: '#0A1628' }}>{actorLabel} {cfg.label}</span>
-                                      {it.amount != null && <span style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>{fmtAmt(it.amount)}</span>}
-                                    </div>
-                                    <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 1 }}>{it.time}</div>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {groups.length > 5 && (
-                    <div style={{ padding: '8px 12px 12px' }}>
-                      <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', background: '#F8F9FC', border: '1px solid #E2E8F0', borderRadius: 10, padding: '10px 12px', fontSize: 12, color: '#2563EB', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-                        {showAllActivity ? 'Show less' : `Show all (${groups.length})`}
-                      </button>
+                      })}
                     </div>
-                  )}
-                </>)
+                    {groups.length > 5 && (
+                      <div style={{ marginTop: 8 }}>
+                        <button onClick={() => setShowAllActivity(v => !v)} style={{ width: '100%', height: 46, borderRadius: 13, border: '1px solid rgba(15,23,42,0.07)', background: '#fff', color: '#2563EB', fontSize: 13.5, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+                          {showAllActivity ? 'Show less' : 'Show all deals'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )
               })()}
             </div>
 
