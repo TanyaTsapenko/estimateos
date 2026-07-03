@@ -6,7 +6,7 @@ import { fmtCAD } from '@/lib/pricing'
 import { ArrowLeft, Info, Send } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 
-interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; status: string; user_id: string }
+interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; tax_rate: number; status: string; user_id: string }
 interface DepositInvoice { id: string; amount: number; status: string }
 
 export default function CreateInvoicePage() {
@@ -16,6 +16,7 @@ export default function CreateInvoicePage() {
 
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [depositInvoice, setDepositInvoice] = useState<DepositInvoice | null>(null)
+  const [existingFinalInvoice, setExistingFinalInvoice] = useState<{ id: string; invoice_number: string } | null>(null)
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -38,13 +39,15 @@ export default function CreateInvoicePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       const sanitizedId = user ? user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '') : null
-      const [{ data: est }, { data: dep }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, status, user_id').eq('id', id).single(),
-        supabase.from('invoices').select('id, amount, status').eq('estimate_id', id).eq('invoice_type', 'deposit').maybeSingle(),
+      const [{ data: est }, { data: existingInvoices }, { data: prof }] = await Promise.all([
+        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, tax_rate, status, user_id').eq('id', id).single(),
+        supabase.from('invoices').select('id, amount, status, invoice_type, invoice_number').eq('estimate_id', id).in('invoice_type', ['deposit', 'final']),
         sanitizedId ? supabase.from('profiles').select('interac_email').eq('id', sanitizedId).single() : Promise.resolve({ data: null }),
       ])
       setEstimate(est)
-      setDepositInvoice(dep)
+      const invList = (existingInvoices as any[]) ?? []
+      setDepositInvoice(invList.find(i => i.invoice_type === 'deposit') ?? null)
+      setExistingFinalInvoice(invList.find(i => i.invoice_type === 'final') ?? null)
       setInteracEmail((prof as any)?.interac_email || '')
 
       const d = new Date()
@@ -60,7 +63,9 @@ export default function CreateInvoicePage() {
   const balanceAmount = isFinal
     ? Math.round((estimate ? estimate.total - depositPaid : 0) * 100) / 100
     : (estimate?.total ?? 0)
-  const invoiceAmount = (isFinal ? balanceAmount : (estimate?.total ?? 0)) + additionalTotal
+  const taxRate = estimate?.tax_rate ?? 0
+  const taxOnAdditional = Math.round(additionalTotal * taxRate * 100) / 100
+  const invoiceAmount = Math.round(((isFinal ? balanceAmount : (estimate?.total ?? 0)) + additionalTotal + taxOnAdditional) * 100) / 100
 
   function setNet(days: number) {
     const d = new Date()
@@ -73,11 +78,6 @@ export default function CreateInvoicePage() {
     if (saving) return
     if (!dueDate) return setError('Due date is required')
     if (invoiceAmount <= 0) return setError('Invoice amount must be greater than zero')
-    if (!depositInvoice && isFinal) {
-      console.error('[invoice/create] isFinal=true but no deposit invoice found for estimate', estimate.id)
-      setError('Cannot create final invoice: deposit invoice not found')
-      return
-    }
     setSaving(true); setError('')
     try {
       if (isFinal) {
@@ -102,7 +102,14 @@ export default function CreateInvoicePage() {
         amount:         Math.round(invoiceAmount * 100) / 100,
         due_date:       dueDate,
         notes,
-        additional_charges: additionalCharges.filter(c => c.label.trim()).map(c => ({ label: c.label.trim(), amount: c.amount })),
+        additional_charges: additionalCharges.filter(c => c.label.trim()).length > 0
+          ? {
+              items: additionalCharges.filter(c => c.label.trim()).map(c => ({ label: c.label.trim(), amount: c.amount })),
+              charges_subtotal: additionalTotal,
+              tax_rate: taxRate,
+              tax_amount: taxOnAdditional,
+            }
+          : null,
       }).select('id').single()
 
       if (invErr) { setError(invErr.message); return }
@@ -160,6 +167,23 @@ export default function CreateInvoicePage() {
     display: 'block',
   }
 
+  if (estimate && existingFinalInvoice) return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
+      <AppTopBar onBack={() => router.back()} backLabel="Back" title="Final Invoice" />
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 340, textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628', marginBottom: 8 }}>Final invoice already exists</div>
+          <div style={{ fontSize: 13, color: '#64748B', marginBottom: 20, lineHeight: 1.6 }}>
+            {existingFinalInvoice.invoice_number} has already been sent for this estimate.
+          </div>
+          <button onClick={() => router.push('/dashboard/invoices')} style={{ background: '#2563EB', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            View invoices
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   if (isFinal) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#F5F6F8' }}>
 
@@ -195,6 +219,20 @@ export default function CreateInvoicePage() {
                 <div style={{ fontSize: 12, color: '#94A3B8' }}>Deposit paid</div>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtCAD(depositPaid)}</div>
               </div>
+              {additionalTotal > 0 && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 12, color: '#94A3B8' }}>Additional charges</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(additionalTotal)}</div>
+                  </div>
+                  {taxOnAdditional > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: 12, color: '#94A3B8' }}>Tax on charges ({taxRate * 100 % 1 === 0 ? (taxRate * 100).toFixed(0) : (taxRate * 100).toFixed(3)}%)</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(taxOnAdditional)}</div>
+                    </div>
+                  )}
+                </>
+              )}
               <div style={{ height: 1, background: '#F1F3F7', margin: '2px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' as const, color: '#94A3B8' }}>Balance due</div>

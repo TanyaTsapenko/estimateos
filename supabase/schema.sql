@@ -179,6 +179,7 @@ create table if not exists public.invoices (
   due_date       date,
   paid_at        timestamptz,
   notes          text,
+  additional_charges jsonb,            -- {items:[{label:text,amount:numeric}], charges_subtotal:numeric, tax_rate:numeric, tax_amount:numeric}
   created_at     timestamptz default now(),
   updated_at     timestamptz default now()
 );

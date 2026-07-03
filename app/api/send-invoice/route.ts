@@ -96,6 +96,17 @@ export async function POST(request: NextRequest) {
         <span>Deposit received ✓</span><span style="font-weight:600">− ${fmtCAD(depositInv.amount)}</span>
       </div>` : ''}
 
+      ${isFinal && inv.additional_charges?.items?.length > 0 ? `
+      <div style="margin-bottom:8px">
+        ${inv.additional_charges.items.map((c: {label: string; amount: number}) => `
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:3px">
+          <span>${c.label}</span><span style="color:#1A1A1A;font-weight:600">${fmtCAD(c.amount)}</span>
+        </div>`).join('')}
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px">
+          <span>${taxLabel} on charges</span><span style="color:#1A1A1A;font-weight:600">${fmtCAD(inv.additional_charges.tax_amount)}</span>
+        </div>
+      </div>` : ''}
+
       <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #1A2744;padding-top:14px">
         <div>
           <div style="font-size:13px;font-weight:700;color:#1A1A1A">${isFinal ? 'Balance due' : 'Amount due'}</div>

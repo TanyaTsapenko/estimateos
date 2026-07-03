@@ -321,6 +321,19 @@ export async function GET(request: NextRequest) {
         <span>Deposit paid</span>
         <span>&minus; ${fmtCAD(depositInv.amount)}</span>
       </div>` : ''}
+      ${inv.additional_charges?.items?.length > 0 ? `
+      <div class="tot-row" style="font-weight:700;color:#0A1628;margin-top:4px">
+        <span>Additional charges</span><span></span>
+      </div>
+      ${inv.additional_charges.items.map((c: {label: string; amount: number}) => `
+      <div class="tot-row" style="padding-left:12px">
+        <span>${c.label}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtCAD(c.amount)}</span>
+      </div>`).join('')}
+      <div class="tot-row">
+        <span>${taxLabel} on charges</span>
+        <span style="color:#0A1628;font-weight:600">${fmtCAD(inv.additional_charges.tax_amount)}</span>
+      </div>` : ''}
       ${inv.invoice_type === 'deposit' && est ? `
       <div class="tot-row" style="color:#2563EB;font-weight:600">
         <span>Deposit rate</span>
