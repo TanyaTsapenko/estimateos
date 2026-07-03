@@ -143,57 +143,59 @@ export function ShapeOutlineDrawing({
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
 
   return (
-    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: 240, height: 'auto', aspectRatio: isSide ? '255 / 215' : '215 / 255', display: 'block', margin: '0 auto',
-        ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
+    <div style={{ position: 'relative', width: '100%', maxWidth: 240, margin: '0 auto', paddingBottom: '118.6%' }}>
+      <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+          ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 
-      <defs>
-        <clipPath id={clipId}>{clipEl}</clipPath>
-      </defs>
+        <defs>
+          <clipPath id={clipId}>{clipEl}</clipPath>
+        </defs>
 
-      {/* Shape fill + outline */}
-      {fillEl}
+        {/* Shape fill + outline */}
+        {fillEl}
 
-      {/* Interior indicators — clipped to shape outline */}
-      <g clipPath={`url(#${clipId})`}>
-        {dividers
-          ? Array.from({ length: paneN }, (_, i) => {
-              const px1 = X1 + panelW * i
-              const px2 = px1 + panelW
-              return (
-                <g key={i}>
-                  {i > 0 && (
-                    <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>
-                  )}
-                  <line x1={px1+3} y1={Y1+3} x2={px2-3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-                  <line x1={px2-3} y1={Y1+3} x2={px1+3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-                </g>
-              )
-            })
-          : <>
-              <line x1={X1+5} y1={Y1+5} x2={X2-5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
-              <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
-            </>
-        }
-      </g>
+        {/* Interior indicators — clipped to shape outline */}
+        <g clipPath={`url(#${clipId})`}>
+          {dividers
+            ? Array.from({ length: paneN }, (_, i) => {
+                const px1 = X1 + panelW * i
+                const px2 = px1 + panelW
+                return (
+                  <g key={i}>
+                    {i > 0 && (
+                      <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>
+                    )}
+                    <line x1={px1+3} y1={Y1+3} x2={px2-3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+                    <line x1={px2-3} y1={Y1+3} x2={px1+3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+                  </g>
+                )
+              })
+            : <>
+                <line x1={X1+5} y1={Y1+5} x2={X2-5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+                <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+              </>
+          }
+        </g>
 
-      {/* "Custom" label centred inside shape */}
-      {isCustom && (
-        <text x={CX} y={CY} textAnchor="middle" dominantBaseline="middle"
-          fontFamily="system-ui" fontSize="16" fontWeight="700" fill={SEC}>
-          Custom
-        </text>
-      )}
+        {/* "Custom" label centred inside shape */}
+        {isCustom && (
+          <text x={CX} y={CY} textAnchor="middle" dominantBaseline="middle"
+            fontFamily="system-ui" fontSize="16" fontWeight="700" fill={SEC}>
+            Custom
+          </text>
+        )}
 
-      {/* Standard window dimension lines */}
-      <line x1="10" y1="226" x2="190" y2="226" stroke={SEC} strokeWidth="1"/>
-      <line x1="10" y1="221" x2="10" y2="231" stroke={SEC} strokeWidth="1.5"/>
-      <line x1="190" y1="221" x2="190" y2="231" stroke={SEC} strokeWidth="1.5"/>
-      <text x="100" y="243" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{wL}</text>
-      <line x1="197" y1="10" x2="197" y2="220" stroke={SEC} strokeWidth="1"/>
-      <line x1="193" y1="10" x2="201" y2="10" stroke={SEC} strokeWidth="1.5"/>
-      <line x1="193" y1="220" x2="201" y2="220" stroke={SEC} strokeWidth="1.5"/>
-      <text x="204" y="119" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
-    </svg>
+        {/* Standard window dimension lines */}
+        <line x1="10" y1="226" x2="190" y2="226" stroke={SEC} strokeWidth="1"/>
+        <line x1="10" y1="221" x2="10" y2="231" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="190" y1="221" x2="190" y2="231" stroke={SEC} strokeWidth="1.5"/>
+        <text x="100" y="243" textAnchor="middle" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{wL}</text>
+        <line x1="197" y1="10" x2="197" y2="220" stroke={SEC} strokeWidth="1"/>
+        <line x1="193" y1="10" x2="201" y2="10" stroke={SEC} strokeWidth="1.5"/>
+        <line x1="193" y1="220" x2="201" y2="220" stroke={SEC} strokeWidth="1.5"/>
+        <text x="204" y="119" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
+      </svg>
+    </div>
   )
 }
