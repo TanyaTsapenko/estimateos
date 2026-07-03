@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 
+const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
@@ -75,8 +77,8 @@ export async function GET(request: NextRequest) {
   const statusCardBg    = isPaid ? '#ECFDF5' : isOverdue ? '#FEF2F2' : '#EFF6FF'
   const statusCardTitle = isPaid ? 'Payment received' : isOverdue ? 'Payment overdue' : 'Payment pending'
   const statusCardSub   = isPaid
-    ? `${fmtCAD(inv.amount)} received`
-    : `${fmtCAD(inv.amount)} due${dueDate ? ` · ${dueDate}` : ''}`
+    ? `${fmtInv(inv.amount)} received`
+    : `${fmtInv(inv.amount)} due${dueDate ? ` · ${dueDate}` : ''}`
   const statusCardColor = isPaid ? '#059669' : isOverdue ? '#DC2626' : '#2563EB'
   const statusCardBorder = isPaid ? '#BBF7D0' : isOverdue ? '#FECACA' : '#BFDBFE'
 
@@ -221,7 +223,7 @@ export async function GET(request: NextRequest) {
     <div class="hdr-client">${est?.client_name || 'Client'}</div>
     <div style="text-align:right;flex-shrink:0">
       <div class="hdr-amount-lbl">Amount due</div>
-      <div class="hdr-amount">${fmtCAD(inv.amount)}</div>
+      <div class="hdr-amount">${fmtInv(inv.amount)}</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
@@ -319,7 +321,7 @@ export async function GET(request: NextRequest) {
       ${depositInv ? `
       <div class="tot-row" style="color:#059669;font-weight:600">
         <span>Deposit paid</span>
-        <span>&minus; ${fmtCAD(depositInv.amount)}</span>
+        <span>&minus; ${fmtInv(depositInv.amount)}</span>
       </div>` : ''}
       ${inv.additional_charges?.items?.length > 0 ? `
       <div class="tot-row" style="font-weight:700;color:#0A1628;margin-top:4px">
@@ -328,11 +330,11 @@ export async function GET(request: NextRequest) {
       ${inv.additional_charges.items.map((c: {label: string; amount: number}) => `
       <div class="tot-row" style="padding-left:12px">
         <span>${c.label}</span>
-        <span style="color:#0A1628;font-weight:600">${fmtCAD(c.amount)}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtInv(c.amount)}</span>
       </div>`).join('')}
       <div class="tot-row">
         <span>${taxLabel} on charges</span>
-        <span style="color:#0A1628;font-weight:600">${fmtCAD(inv.additional_charges.tax_amount)}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtInv(inv.additional_charges.tax_amount)}</span>
       </div>` : ''}
       ${inv.invoice_type === 'deposit' && est ? `
       <div class="tot-row" style="color:#2563EB;font-weight:600">
@@ -342,7 +344,7 @@ export async function GET(request: NextRequest) {
       <div class="tot-divider"></div>
       <div class="tot-final">
         <span class="tot-lbl">Total due</span>
-        <span class="tot-val">${fmtCAD(inv.amount)}</span>
+        <span class="tot-val">${fmtInv(inv.amount)}</span>
       </div>
     </div>
   </div>` : ''}

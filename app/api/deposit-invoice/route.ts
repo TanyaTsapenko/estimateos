@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { logActivity } from '@/lib/activity'
 import { createClient } from '@/lib/supabase/server'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+
+const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { getCompanyName } from '@/lib/getCompanyName'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -130,7 +132,7 @@ export async function POST(request: NextRequest) {
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
           <tr><td style="padding:16px">
             <div style="${slbl}">Amount Due</div>
-            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(depositAmount)}</div>
+            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtInv(depositAmount)}</div>
             <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Due ${dueDateFmt} &middot; Net 14</div>
           </td></tr>
         </table>
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
             <table style="width:100%;font-size:13px;font-family:Arial,sans-serif">
               <tr><td style="color:#64748B;padding:3px 0">Send to</td><td style="text-align:right;font-weight:600;color:#0F172A">${interacEmail}</td></tr>
               <tr><td style="color:#64748B;padding:3px 0">Message</td><td style="text-align:right;font-weight:600;color:#0F172A">${est.estimate_number} deposit</td></tr>
-              <tr><td style="color:#64748B;padding:3px 0">Amount</td><td style="text-align:right;font-weight:700;color:#1D4ED8">${fmtCAD(depositAmount)}</td></tr>
+              <tr><td style="color:#64748B;padding:3px 0">Amount</td><td style="text-align:right;font-weight:700;color:#1D4ED8">${fmtInv(depositAmount)}</td></tr>
             </table>
           </td></tr>
         </table>` : ''}
@@ -176,8 +178,8 @@ export async function POST(request: NextRequest) {
         <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
           <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
             ${depositPct === 100
-              ? `A full payment of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
-              : `Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtCAD(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
+              ? `A full payment of <strong style="color:#0A1628">${fmtInv(depositAmount)}</strong> is due by ${dueDateFmt} to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
+              : `Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtInv(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
             }
           </td></tr>
         </table>
@@ -209,7 +211,7 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: `${companyName} <noreply@useapexscale.com>`,
         to: [est.client_email],
-        subject: `${depositPct === 100 ? 'Payment' : 'Deposit'} Invoice ${invoiceNum} — ${fmtCAD(depositAmount)} due · ${companyName}`,
+        subject: `${depositPct === 100 ? 'Payment' : 'Deposit'} Invoice ${invoiceNum} — ${fmtInv(depositAmount)} due · ${companyName}`,
         html,
         ...(depositReplyTo ? { reply_to: depositReplyTo } : {}),
       })

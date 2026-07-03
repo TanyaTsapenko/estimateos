@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
+
+const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { ArrowLeft, Info, Send } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 
@@ -217,18 +219,18 @@ export default function CreateInvoicePage() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 12, color: '#94A3B8' }}>Deposit paid</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtCAD(depositPaid)}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#059669' }}>−{fmtInv(depositPaid)}</div>
               </div>
               {additionalTotal > 0 && (
                 <>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: 12, color: '#94A3B8' }}>Additional charges</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(additionalTotal)}</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtInv(additionalTotal)}</div>
                   </div>
                   {taxOnAdditional > 0 && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontSize: 12, color: '#94A3B8' }}>Tax on charges ({taxRate * 100 % 1 === 0 ? (taxRate * 100).toFixed(0) : (taxRate * 100).toFixed(3)}%)</div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(taxOnAdditional)}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtInv(taxOnAdditional)}</div>
                     </div>
                   )}
                 </>
@@ -236,7 +238,7 @@ export default function CreateInvoicePage() {
               <div style={{ height: 1, background: '#F1F3F7', margin: '2px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' as const, color: '#94A3B8' }}>Balance due</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#2563EB' }}>{fmtInv(invoiceAmount)}</div>
               </div>
             </div>
           </div>
@@ -308,7 +310,7 @@ export default function CreateInvoicePage() {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
                   <span style={{ fontSize: 12, color: '#64748B' }}>Amount</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB' }}>{fmtCAD(invoiceAmount)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#2563EB' }}>{fmtInv(invoiceAmount)}</span>
                 </div>
               </div>
             </div>
@@ -350,7 +352,7 @@ export default function CreateInvoicePage() {
               Send Final Invoice?
             </div>
             <div style={{ fontSize: 13, color: '#64748B', textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>
-              This will send a final invoice of <strong style={{ color: '#0A1628' }}>{fmtCAD(invoiceAmount)}</strong> to {estimate.client_email}. This cannot be undone.
+              This will send a final invoice of <strong style={{ color: '#0A1628' }}>{fmtInv(invoiceAmount)}</strong> to {estimate.client_email}. This cannot be undone.
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
@@ -396,7 +398,7 @@ export default function CreateInvoicePage() {
 
         <div style={{ background: '#fff', borderRadius: 12, padding: 20, marginBottom: 16 }}>
           <div style={labelStyle}>Invoice Amount</div>
-          <div style={{ fontSize: 32, fontWeight: 700, color: '#2563EB', lineHeight: 1.1 }}>{fmtCAD(invoiceAmount)}</div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: '#2563EB', lineHeight: 1.1 }}>{fmtInv(invoiceAmount)}</div>
           <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 4 }}>from signed estimate {estimate.estimate_number}</div>
         </div>
 

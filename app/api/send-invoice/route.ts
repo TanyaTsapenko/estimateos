@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+
+const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { logActivity } from '@/lib/activity'
 import { getCompanyName } from '@/lib/getCompanyName'
 
@@ -60,8 +62,8 @@ export async function POST(request: NextRequest) {
 
   const isFinal = inv.invoice_type === 'final'
   const subject = isFinal
-    ? `Final Invoice ${inv.invoice_number} — ${fmtCAD(inv.amount)} due · ${companyName}`
-    : `Invoice ${inv.invoice_number} — ${fmtCAD(inv.amount)} due · ${companyName}`
+    ? `Final Invoice ${inv.invoice_number} — ${fmtInv(inv.amount)} due · ${companyName}`
+    : `Invoice ${inv.invoice_number} — ${fmtInv(inv.amount)} due · ${companyName}`
 
   const html = `<!DOCTYPE html>
 <html>
@@ -93,17 +95,17 @@ export async function POST(request: NextRequest) {
 
       ${isFinal && depositInv ? `
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#16a34a;margin-bottom:14px">
-        <span>Deposit received ✓</span><span style="font-weight:600">− ${fmtCAD(depositInv.amount)}</span>
+        <span>Deposit received ✓</span><span style="font-weight:600">− ${fmtInv(depositInv.amount)}</span>
       </div>` : ''}
 
       ${isFinal && inv.additional_charges?.items?.length > 0 ? `
       <div style="margin-bottom:8px">
         ${inv.additional_charges.items.map((c: {label: string; amount: number}) => `
         <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:3px">
-          <span>${c.label}</span><span style="color:#1A1A1A;font-weight:600">${fmtCAD(c.amount)}</span>
+          <span>${c.label}</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(c.amount)}</span>
         </div>`).join('')}
         <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px">
-          <span>${taxLabel} on charges</span><span style="color:#1A1A1A;font-weight:600">${fmtCAD(inv.additional_charges.tax_amount)}</span>
+          <span>${taxLabel} on charges</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(inv.additional_charges.tax_amount)}</span>
         </div>
       </div>` : ''}
 
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
           <div style="font-size:13px;font-weight:700;color:#1A1A1A">${isFinal ? 'Balance due' : 'Amount due'}</div>
           ${dueDate ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px">Due by ${dueDate}</div>` : ''}
         </div>
-        <span style="font-size:26px;font-weight:800;color:#2045B8">${fmtCAD(inv.amount)}</span>
+        <span style="font-size:26px;font-weight:800;color:#2045B8">${fmtInv(inv.amount)}</span>
       </div>
     </div>
 

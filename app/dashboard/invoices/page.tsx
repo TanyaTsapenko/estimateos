@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fmtCAD } from '@/lib/pricing'
+const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { useRole } from '@/lib/useRole'
 import { ChevronRight } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
@@ -109,7 +109,7 @@ export default function InvoicesPage() {
                 user_id: user.id,
                 type: notifType,
                 title: invoiceType === 'deposit' ? 'Deposit paid' : 'Final payment received',
-                body: `${invData?.estimates?.client_name || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${invData?.estimates?.estimate_number || ''} · ${fmtCAD(invData?.amount || 0)}`,
+                body: `${invData?.estimates?.client_name || 'Client'} paid ${invoiceType === 'deposit' ? 'the deposit' : 'in full'} for ${invData?.estimates?.estimate_number || ''} · ${fmtInv(invData?.amount || 0)}`,
                 link: estimateId ? `/dashboard/estimates/${estimateId}` : null,
                 read: false,
               })
@@ -160,7 +160,7 @@ export default function InvoicesPage() {
       <AppTopBar
         eyebrow="BILLING"
         title="Invoices"
-        right={<span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtCAD(totalPending)} pending · {fmtCAD(totalPaid)} paid</span>}
+        right={<span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtInv(totalPending)} pending · {fmtInv(totalPaid)} paid</span>}
       />
 
       {/* ── BODY ── */}
@@ -168,8 +168,8 @@ export default function InvoicesPage() {
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-          <StatBox label="Pending" value={fmtCAD(totalPending)} />
-          <StatBox label="Paid"    value={fmtCAD(totalPaid)}    />
+          <StatBox label="Pending" value={fmtInv(totalPending)} />
+          <StatBox label="Paid"    value={fmtInv(totalPaid)}    />
           <StatBox label="Total"   value={invoices.length}      />
         </div>
 
@@ -259,7 +259,7 @@ export default function InvoicesPage() {
                         : '—'}
                     </span>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#0A1628', textAlign: 'right', display: 'block' }}>
-                      {fmtCAD(inv.amount)}
+                      {fmtInv(inv.amount)}
                     </span>
                     <span>
                       <span style={{
@@ -351,7 +351,7 @@ export default function InvoicesPage() {
                           PDF
                         </button>
                       </div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: '#0A1628' }}>{fmtCAD(inv.amount)}</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: '#0A1628' }}>{fmtInv(inv.amount)}</div>
                     </div>
                   </div>
                 )
