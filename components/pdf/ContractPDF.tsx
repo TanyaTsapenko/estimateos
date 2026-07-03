@@ -1,5 +1,4 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
-import { WindowDiagramPdf } from '@/lib/windowSvgPdf'
 import { substituteProvince } from '@/lib/provinces'
 import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
@@ -71,9 +70,10 @@ interface ContractPDFProps {
   company: any
   customLabels?: Record<string, string>
   subtypesByType?: SubtypeMap
+  openingPngs?: Record<string, string>
 }
 
-export function ContractPDF({ contract, estimate, openings, company, customLabels, subtypesByType }: ContractPDFProps) {
+export function ContractPDF({ contract, estimate, openings, company, customLabels, subtypesByType, openingPngs }: ContractPDFProps) {
   const depositAmount = (estimate.total || 0) * ((estimate.deposit_percent || 0) / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
@@ -131,7 +131,12 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
         {openings.map((op: any, i: number) => (
           <View key={i} style={styles.tableRow}>
             <View style={{ width: '60%', flexDirection: 'row', gap: 8 }}>
-              <WindowDiagramPdf type={op.type} size={100} />
+              {openingPngs?.[op.id]
+                ? <Image src={openingPngs[op.id]} style={{ width: 100, height: 100, objectFit: 'contain' }} />
+                : <View style={{ width: 100, height: 100, border: '1pt solid #e5e7eb', borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 7, color: '#9ca3af', textAlign: 'center' }}>{op.type}</Text>
+                  </View>
+              }
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : ''}</Text>
                 <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour && op.colour !== 'white' ? ` · ${getColourLabel(op)}` : ''}{getInteriorColourLabel(op) ? ` · Int: ${getInteriorColourLabel(op)}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>

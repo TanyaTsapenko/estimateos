@@ -8,6 +8,7 @@ import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ContractPDF } from '@/components/pdf/ContractPDF'
 import React from 'react'
+import { renderDrawingPng } from '@/lib/renderDrawingPng'
 
 export async function GET(req: NextRequest) {
   console.log('[contract-pdf] route called')
@@ -75,6 +76,19 @@ export async function GET(req: NextRequest) {
     console.log('[contract-pdf] contract_clauses value:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] company contract_clauses:', JSON.stringify(company?.contract_clauses)?.slice(0, 300))
     console.log('[contract-pdf] contract_terms_snapshot:', contractWithClauses.contract_terms_snapshot?.slice(0, 100))
+    // Pre-render each opening to PNG using the same shape-aware pipeline as the estimate PDF
+    const openingPngs: Record<string, string> = {}
+    await Promise.allSettled(
+      (openings || []).map(async (op: any) => {
+        try {
+          const { png } = await renderDrawingPng(op, 200, 240)
+          openingPngs[op.id] = png
+        } catch (e) {
+          console.error('[contract-pdf] drawing render failed for opening', op.id, e)
+        }
+      })
+    )
+
     console.log('[contract-pdf] calling renderToBuffer...')
 
     const pdfBuffer = await renderToBuffer(
@@ -85,6 +99,7 @@ export async function GET(req: NextRequest) {
         company: company || {},
         customLabels,
         subtypesByType,
+        openingPngs,
       }) as React.ReactElement<DocumentProps>
     )
 
