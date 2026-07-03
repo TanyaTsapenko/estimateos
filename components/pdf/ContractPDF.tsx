@@ -2,6 +2,7 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 import { substituteProvince } from '@/lib/provinces'
 import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
+import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
@@ -138,8 +139,17 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                   </View>
               }
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : ''}</Text>
-                <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.width_in}" × {op.height_in}"{op.colour && op.colour !== 'white' ? ` · ${getColourLabel(op)}` : ''}{getInteriorColourLabel(op) ? ` · Int: ${getInteriorColourLabel(op)}` : ''}{op.material ? ` · ${op.material}` : ''}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0A1628' }}>{customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || OPENING_TYPES[V2_TO_OLD_TYPE_KEY[op.type] ?? op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : ''}</Text>
+                {(() => {
+                  const parts: string[] = []
+                  if (op.width_in && op.height_in) parts.push(`${op.width_in}" × ${op.height_in}"`)
+                  if (op.colour && op.colour !== 'white') parts.push(getColourLabel(op))
+                  const intCol = getInteriorColourLabel(op)
+                  if (intCol) parts.push(`Int: ${intCol}`)
+                  if (op.material) parts.push(op.material)
+                  if (parts.length === 0) return null
+                  return <Text style={{ fontSize: 8, color: '#6b7280' }}>{parts.join(' · ')}</Text>
+                })()}
                 {op.room && <Text style={{ fontSize: 8, color: '#6b7280' }}>{op.room}</Text>}
               </View>
             </View>

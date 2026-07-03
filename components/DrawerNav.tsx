@@ -124,6 +124,7 @@ export default function DrawerNav() {
   }
 
   const settingsActive = pathname.startsWith('/dashboard/settings')
+  const isContractPage = /^\/dashboard\/estimates\/[^/]+\/contract/.test(pathname)
 
   if (!mounted) return null
   return createPortal(
@@ -149,7 +150,7 @@ export default function DrawerNav() {
         right: 18,
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 26px)',
         zIndex: 47,
-        display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
+        display: isContractPage ? 'none' : 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
         pointerEvents: 'none',
       }}>
         <div style={{

@@ -5,7 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
-import { getSubtypeLabel } from '@/lib/openingLabels'
+import { getSubtypeLabel, getColourLabel, getGlassLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 import { Download } from 'lucide-react'
@@ -23,7 +23,14 @@ interface Estimate {
   client_address: string | null; subtotal: number; tax_amount: number; total: number
   discount_amount: number
 }
-interface Opening { id: string; type: string; qty: number; total_cost: number }
+interface Opening {
+  id: string; type: string; qty: number; total_cost: number
+  window_subtype?: string | null
+  width_in?: number | null; height_in?: number | null
+  colour?: string | null; colour_name?: string | null; custom_colour_label?: string | null
+  glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null
+  shape?: string | null; has_screen?: boolean | null
+}
 interface Profile {
   warranty_period: string | null; cancellation_policy: string | null
   deposit_percent: number | null; signature_url: string | null; contract_terms: string | null
@@ -333,9 +340,21 @@ export default function SignContractPage() {
             <CardHeader title="Scope of Work" />
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
-                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
+                <div key={op.id} style={{ padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op)})` : ''} × {op.qty}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
+                  </div>
+                  {(() => {
+                    const parts: string[] = []
+                    if (op.width_in && op.height_in) parts.push(`${op.width_in}" × ${op.height_in}"`)
+                    if (op.colour && op.colour !== 'white') parts.push(getColourLabel(op))
+                    const gl = getGlassLabel(op)
+                    if (gl) parts.push(gl)
+                    if (op.has_screen) parts.push('Screen ✓')
+                    if (parts.length === 0) return null
+                    return <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{parts.join(' · ')}</div>
+                  })()}
                 </div>
               ))}
               {hasTrim(estimate as any) && (
@@ -693,9 +712,21 @@ export default function SignContractPage() {
             <CardHeader title="Scope of Work" />
             <div style={{ padding: '12px 16px' }}>
               {openings.map((op, i) => (
-                <div key={op.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
+                <div key={op.id} style={{ padding: '7px 0', borderBottom: i < openings.length - 1 ? '1px solid #F4F4F2' : 'none' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{OPENING_TYPES[op.type]?.name || V2_TYPE_LABELS[op.type] || op.type}{op.window_subtype ? ` (${getSubtypeLabel(op)})` : ''} × {op.qty}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: '#0A0E1A' }}>{fmtCAD(op.total_cost)}</span>
+                  </div>
+                  {(() => {
+                    const parts: string[] = []
+                    if (op.width_in && op.height_in) parts.push(`${op.width_in}" × ${op.height_in}"`)
+                    if (op.colour && op.colour !== 'white') parts.push(getColourLabel(op))
+                    const gl = getGlassLabel(op)
+                    if (gl) parts.push(gl)
+                    if (op.has_screen) parts.push('Screen ✓')
+                    if (parts.length === 0) return null
+                    return <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>{parts.join(' · ')}</div>
+                  })()}
                 </div>
               ))}
               {hasTrim(estimate as any) && (

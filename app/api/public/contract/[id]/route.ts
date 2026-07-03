@@ -21,7 +21,7 @@ const ESTIMATE_COLS = [
   'trim_rosettes', 'trim_caping', 'trim_nail_fin', 'trim_drip_cap', 'trim_blue_skin',
 ].join(', ')
 
-const OPENING_COLS = 'id, type, qty, total_cost, window_subtype'
+const OPENING_COLS = 'id, type, qty, total_cost, window_subtype, width_in, height_in, colour, colour_name, custom_colour_label, glass, glass_kind, low_e, tempered, shape, has_screen'
 
 const PROFILE_COLS = [
   'deposit_percent', 'deposit_required', 'signature_url', 'warranty_period',
@@ -29,6 +29,7 @@ const PROFILE_COLS = [
   'customer_responsibilities', 'buyer_right_to_cancel', 'damage_disclaimer',
   'permits_responsibility', 'project_manager', 'logo_url', 'phone', 'website',
   'city', 'province', 'address', 'postal', 'contract_clauses', 'deposit_timing',
+  'company_contact_email', 'gst_hst_number', 'licence',
 ].join(', ')
 
 type Row = Record<string, unknown>
