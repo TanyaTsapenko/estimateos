@@ -143,10 +143,9 @@ export function ShapeOutlineDrawing({
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 240, margin: '0 auto', paddingBottom: '118.6%' }}>
-      <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
-          ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
+    <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ width: '100%', maxWidth: 240, height: 'auto', display: 'block', margin: '0 auto',
+        ...(isSide ? { transform: 'rotate(90deg)', transformOrigin: 'center center' } : {}) }}>
 
         <defs>
           <clipPath id={clipId}>{clipEl}</clipPath>
@@ -195,7 +194,6 @@ export function ShapeOutlineDrawing({
         <line x1="193" y1="10" x2="201" y2="10" stroke={SEC} strokeWidth="1.5"/>
         <line x1="193" y1="220" x2="201" y2="220" stroke={SEC} strokeWidth="1.5"/>
         <text x="204" y="119" textAnchor="start" fontFamily="system-ui" fontSize="10" fontWeight="700" fill={DIM}>{hL}</text>
-      </svg>
-    </div>
+    </svg>
   )
 }
