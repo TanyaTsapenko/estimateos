@@ -160,7 +160,12 @@ export default function InvoicesPage() {
       <AppTopBar
         eyebrow="BILLING"
         title="Invoices"
-        right={<span style={{ fontSize: 13, color: '#94A3B8' }}>{fmtInv(totalPending)} pending · {fmtInv(totalPaid)} paid</span>}
+        right={
+          <div style={{ textAlign: 'right', lineHeight: 1.5 }}>
+            <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtInv(totalPending)} pending</div>
+            <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtInv(totalPaid)} paid</div>
+          </div>
+        }
       />
 
       {/* ── BODY ── */}

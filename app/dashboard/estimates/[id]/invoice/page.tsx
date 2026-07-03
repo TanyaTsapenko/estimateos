@@ -2,8 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { fmtCAD } from '@/lib/pricing'
-
 const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { ArrowLeft, Info, Send } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
@@ -215,7 +213,7 @@ export default function CreateInvoicePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 12, color: '#94A3B8' }}>Project total</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtCAD(estimate.total)}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#475467' }}>{fmtInv(estimate.total)}</div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: 12, color: '#94A3B8' }}>Deposit paid</div>
@@ -384,7 +382,7 @@ export default function CreateInvoicePage() {
         title="Send Final Invoice"
         right={<div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{estimate.client_name}</div>
-          <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtCAD(estimate.total)} project total</div>
+          <div style={{ fontSize: 12, color: '#94A3B8' }}>{fmtInv(estimate.total)} project total</div>
         </div>}
       />
 

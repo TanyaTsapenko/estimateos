@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logActivity } from '@/lib/activity'
 import { createClient } from '@/lib/supabase/server'
-import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { TAX_RATES } from '@/lib/pricing'
 
 const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { getCompanyName } from '@/lib/getCompanyName'
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
               </tr>
               <tr>
                 <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">${depositPct === 100 ? 'Payment' : 'Deposit rate'}</td>
-                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct === 100 ? 'Full payment' : `${depositPct}% of ${fmtCAD(est.total)}`}</td>
+                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct === 100 ? 'Full payment' : `${depositPct}% of ${fmtInv(est.total)}`}</td>
               </tr>
               ${(prof as any)?.gst_hst_number ? `<tr>
                 <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">GST/HST #</td>

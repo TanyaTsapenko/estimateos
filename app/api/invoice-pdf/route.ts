@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { OPENING_TYPES, TAX_RATES } from '@/lib/pricing'
 
 const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
@@ -306,17 +306,17 @@ export async function GET(request: NextRequest) {
         <div class="op-name">${(OPENING_TYPES as Record<string, { name: string }>)[op.type as string]?.name || op.type} × ${op.qty}</div>
         ${op.room ? `<div class="op-sub">${op.room as string}</div>` : ''}
       </div>
-      <div class="op-price">${fmtCAD(op.total_cost as number)}</div>
+      <div class="op-price">${fmtInv(op.total_cost as number)}</div>
     </div>`).join('')}
     <div style="margin-top:12px;padding-top:4px">
       ${est ? `
       <div class="tot-row">
         <span>Subtotal</span>
-        <span style="color:#0A1628;font-weight:600">${fmtCAD(est.subtotal)}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtInv(est.subtotal)}</span>
       </div>
       <div class="tot-row">
         <span>${taxLabel}</span>
-        <span style="color:#0A1628;font-weight:600">${fmtCAD(est.tax_amount)}</span>
+        <span style="color:#0A1628;font-weight:600">${fmtInv(est.tax_amount)}</span>
       </div>` : ''}
       ${depositInv ? `
       <div class="tot-row" style="color:#059669;font-weight:600">

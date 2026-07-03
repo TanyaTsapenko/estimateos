@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { TAX_RATES, fmtCAD } from '@/lib/pricing'
+import { TAX_RATES } from '@/lib/pricing'
 
 const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 import { logActivity } from '@/lib/activity'
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
 
       ${est ? `
       <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px">
-        <span>Project total</span><span style="color:#1A1A1A;font-weight:600">${fmtCAD(est.total)} inc. ${taxLabel}</span>
+        <span>Project total</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(est.total)} inc. ${taxLabel}</span>
       </div>` : ''}
 
       ${isFinal && depositInv ? `
