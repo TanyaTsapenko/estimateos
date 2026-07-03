@@ -36,3 +36,19 @@ export const DEFAULT_CLAUSES: ContractClause[] = [
   { id: 'governing_law', title: 'Governing Law', enabled: true, fixed: false, order: 27, content: 'This Agreement shall be governed by and construed in accordance with the laws of the Province of {{PROVINCE}}, without regard to its conflict of law provisions. Any dispute arising under or in connection with this Agreement shall be subject to the exclusive jurisdiction of the courts of {{PROVINCE}}.' },
   { id: 'entire_agreement', title: 'Entire Agreement', enabled: true, fixed: false, order: 28, content: 'This Agreement constitutes the entire agreement between the parties with respect to its subject matter and supersedes all prior and contemporaneous agreements, representations, and understandings, whether written or oral. If any provision of this Agreement is held to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect.' },
 ]
+
+/**
+ * Returns the contractor's saved clauses, or DEFAULT_CLAUSES when the profile
+ * value is null / empty / unparseable (i.e. user has never opened Settings → Contract).
+ * Does NOT write anything to the database.
+ */
+export function getEffectiveClauses(raw: string | unknown[] | null | undefined): ContractClause[] {
+  if (Array.isArray(raw) && raw.length > 0) return raw as ContractClause[]
+  if (raw && typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as ContractClause[]
+    } catch {}
+  }
+  return DEFAULT_CLAUSES
+}

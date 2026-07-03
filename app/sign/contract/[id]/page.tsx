@@ -7,6 +7,7 @@ import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { getSubtypeLabel, getColourLabel, getGlassLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
+import { getEffectiveClauses } from '@/lib/contractClauses'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 import { Download } from 'lucide-react'
 
@@ -403,8 +404,7 @@ export default function SignContractPage() {
 
           {/* Terms & Conditions */}
           {(() => {
-            const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
-            const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+            const enabledClauses = getEffectiveClauses(profile?.contract_clauses).filter((c) => c.enabled !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
             if (enabledClauses.length === 0) return null
             return (
               <div style={cardStyle}>
@@ -775,8 +775,7 @@ export default function SignContractPage() {
 
           {/* TERMS */}
           {(() => {
-            const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
-            const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+            const enabledClauses = getEffectiveClauses(profile?.contract_clauses).filter((c) => c.enabled !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
             if (enabledClauses.length === 0) return null
             return (
               <div style={cardStyle}>

@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
 import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
+import { substituteProvince } from '@/lib/provinces'
+import { getEffectiveClauses } from '@/lib/contractClauses'
 import WindowDiagram from '@/components/WindowDiagram'
 import { ShapeOutlineDrawing } from '@/components/estimate-builder-v2/shape-outline-drawing'
 import AppTopBar from '@/components/AppTopBar'
@@ -130,7 +132,7 @@ export default function ContractPage() {
       const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof, error: profError } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title')
+        .select('id, company_name, phone, email, address, city, province, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title')
         .eq('id', estOwnerId)
         .single()
       console.log('[contract page] prof:', prof, 'error:', profError)
@@ -529,11 +531,10 @@ export default function ContractPage() {
             <CardHeader icon={<DocumentIcon />} title="Terms & Conditions" />
             <div style={{ padding: '14px 16px' }}>
               {(() => {
-                const clauses: any[] = profile?.contract_clauses ? (() => { try { return JSON.parse(profile.contract_clauses) } catch { return [] } })() : []
-                const enabledClauses = clauses.filter((c: any) => c.enabled).sort((a: any, b: any) => a.order - b.order)
+                const enabledClauses = getEffectiveClauses(profile?.contract_clauses).filter((c) => c.enabled !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
                 if (enabledClauses.length === 0) return null
-                return enabledClauses.map((clause: any) => (
-                  <CheckRow key={clause.id} text={`${clause.title}: ${clause.content}`} />
+                return enabledClauses.map((clause) => (
+                  <CheckRow key={clause.id} text={`${clause.title}: ${substituteProvince(clause.content, profile?.province)}`} />
                 ))
               })()}
             </div>

@@ -7,6 +7,7 @@ import { renderToBuffer } from '@react-pdf/renderer'
 import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { ContractPDF } from '@/components/pdf/ContractPDF'
+import { getEffectiveClauses } from '@/lib/contractClauses'
 import React from 'react'
 import { renderDrawingPng } from '@/lib/renderDrawingPng'
 
@@ -50,20 +51,11 @@ export async function GET(req: NextRequest) {
 
     if (!estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
 
-    const parsedClauses = (() => {
-      try {
-        const raw = company?.contract_clauses
-        if (Array.isArray(raw)) return raw
-        if (typeof raw === 'string') return JSON.parse(raw)
-        return []
-      } catch { return [] }
-    })()
-
     const contractWithClauses = {
       ...contract,
-      contract_clauses: parsedClauses
-        .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
-        .filter((c: any) => c.enabled !== false),
+      contract_clauses: getEffectiveClauses(company?.contract_clauses)
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .filter((c) => c.enabled !== false),
       contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 
