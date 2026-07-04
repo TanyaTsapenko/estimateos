@@ -79,7 +79,7 @@ function SecTitle({ children, mt }: { children: React.ReactNode; mt?: number }) 
 
 function DetCard({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: '#F7F9FC', border: `1px solid ${HAIR}`, borderRadius: 10, padding: '11px 12px' }}>
+    <div style={{ background: '#F7F9FC', border: `1px solid ${HAIR}`, borderRadius: 10, padding: '11px 12px', height: '100%', boxSizing: 'border-box' }}>
       <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: INK_S, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 12, fontWeight: 700 }}>{value}</div>
     </div>
@@ -483,7 +483,7 @@ export default function ContractPage() {
 
             {/* Contract detail cards */}
             {detCards.length > 0 && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 16, alignItems: 'stretch' }}>
                 {detCards.map(d => <DetCard key={d.label} label={d.label} value={d.value} />)}
               </div>
             )}
@@ -574,7 +574,7 @@ export default function ContractPage() {
                             <path d={currentPath} stroke={INK} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                           )}
                           {isEmpty && !isDrawing && (
-                            <text x="300" y="108" textAnchor="middle" fill="rgba(37,99,235,0.55)" fontSize="13" fontFamily="sans-serif" fontWeight="600">Tap here to sign</text>
+                            <text x="300" y="100" textAnchor="middle" dominantBaseline="middle" fill="#2563EB" fontSize="34" fontFamily="sans-serif" fontWeight="600">Tap here to sign</text>
                           )}
                         </svg>
                         {!isEmpty && (
