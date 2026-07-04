@@ -402,8 +402,8 @@ export default function ContractPage() {
               const extCol      = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
               const intCol      = getInteriorColourLabel(op)
               const glass       = getGlassLabel(op)
-              const installLbl  = op.install  ? INSTALL_LABELS[op.install]   || op.install   : null
-              const materialLbl = op.material ? MATERIAL_LABELS[op.material] || op.material : null
+              const installLbl  = (op.install  && op.install  !== 'retrofit') ? (INSTALL_LABELS[op.install]   || op.install)  : null
+              const materialLbl = (op.material && op.material !== 'vinyl')    ? (MATERIAL_LABELS[op.material] || op.material) : null
 
               return (
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>

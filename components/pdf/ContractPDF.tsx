@@ -146,7 +146,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                   if (op.colour && op.colour !== 'white') parts.push(getColourLabel(op))
                   const intCol = getInteriorColourLabel(op)
                   if (intCol) parts.push(`Int: ${intCol}`)
-                  if (op.material) parts.push(op.material)
+                  if (op.material && op.material !== 'vinyl') parts.push(op.material)
                   if (parts.length === 0) return null
                   return <Text style={{ fontSize: 8, color: '#6b7280' }}>{parts.join(' · ')}</Text>
                 })()}
