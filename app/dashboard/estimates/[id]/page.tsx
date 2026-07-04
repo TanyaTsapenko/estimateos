@@ -3,22 +3,14 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { V2_TYPE_LABELS, type CombinationSection } from '@/lib/v2/openingTypes'
+import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 import ConfirmModal from '@/components/ConfirmModal'
-import { CasementDrawing, SliderDrawing, HopperDrawing } from '@/components/estimate-builder-v2/casement-slider-hopper-drawing'
-import { AwningDrawing, SingleHungDrawing, DoubleHungDrawing, TiltTurnDrawing } from '@/components/estimate-builder-v2/awning-hung-tiltturn-drawing'
-import { EntryDoorDrawing, DoubleEntryDrawing } from '@/components/estimate-builder-v2/entry-door-drawing'
-import { FrenchDoorDrawing, GardenDoorDrawing } from '@/components/estimate-builder-v2/french-garden-drawing'
-import { PatioDoorDrawing } from '@/components/estimate-builder-v2/patio-door-drawing'
-import { StormDoorDrawing, InteriorDoorDrawing } from '@/components/estimate-builder-v2/storm-interior-drawing'
-import { ShapeOutlineDrawing } from '@/components/estimate-builder-v2/shape-outline-drawing'
-import { BayDrawing, BowDrawing } from '@/components/estimate-builder-v2/bay-bow-drawing'
-import { CombinationDrawing } from '@/components/estimate-builder-v2/section-builder'
+import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 interface Opening {
   id: string; type: string; qty: number; width: string | null
   width_in: number | null; height_in: number | null; room: string | null
@@ -67,78 +59,6 @@ const STATUS_BG: Record<string, string> = {
   signed: 'rgba(22,163,74,.1)', declined: 'rgba(220,38,38,.1)', invoiced: 'rgba(147,51,234,.1)', paid: 'rgba(5,150,105,.1)',
 }
 
-// ── v2 drawing dispatcher ─────────────────────────────────────────
-const OLD_TO_V2_TYPE: Record<string, string> = {
-  window_dh: 'doubleHung', window_sh: 'singleHung', window_cas: 'casement',
-  window_sl: 'slider', window_fix: 'picture', window_awn: 'awning',
-  window_hopper: 'hopper', window_tilt: 'tiltTurn', window_trans: 'transom',
-  window_arch: 'special', window_bay: 'bay', window_bow: 'bow',
-  window_combo: 'combination', window_egr: 'picture',
-  door_entry: 'entry', door_double: 'doubleEntry', door_french: 'french',
-  door_garden: 'garden', door_patio: 'patio', door_storm: 'storm', door_int: 'interior',
-}
-const OLD_SHAPE_TO_V2: Record<string, string> = {
-  rect: 'Rectangle', rectangle: 'Rectangle', arch: 'Arch',
-  halfarch: 'Half arch', halfround: 'Half round', circle: 'Circle',
-  octagon: 'Octagon', triangle: 'Triangle', pentagon: 'Pentagon',
-  gothic: 'Gothic', eyebrow: 'Eyebrow',
-}
-
-function OpeningDrawing({ op }: { op: Opening }) {
-  const typeId = OLD_TO_V2_TYPE[op.type] ?? op.type
-  const wIn    = op.width_in  ?? undefined
-  const hIn    = op.height_in ?? undefined
-  const shape  = (op.shape ? OLD_SHAPE_TO_V2[op.shape] : undefined) ?? op.shape ?? undefined
-const sl     = op.sidelight_left && op.sidelight_right ? 'Both'
-               : op.sidelight_left  ? 'Left'
-               : op.sidelight_right ? 'Right'
-               : undefined
-
-  switch (typeId) {
-    case 'casement':
-      return <CasementDrawing sub={op.window_subtype ?? ''} shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'slider':
-      return <SliderDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'endVent':
-      return <SliderDrawing sub={(op.window_subtype ?? '').toLowerCase().includes('double') ? 'doubleendvent' : 'endvent'} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'hopper':
-      return <HopperDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'awning':
-      return <AwningDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'singleHung':
-      return <SingleHungDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'doubleHung':
-      return <DoubleHungDrawing widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'tiltTurn':
-      return <TiltTurnDrawing sub={op.window_subtype ?? ''} openDir={op.opening_direction ?? undefined} openMode={(op as any).open_mode ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'bay':
-      return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} bayAngle={op.bay_angle ?? undefined} centerWindowType={(op as any).center_window_type ?? undefined} sideUnit={(op as any).side_unit ?? undefined} />
-    case 'bow':
-      return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} panelType={(op as any).panel_type ?? undefined} sideUnit={(op as any).side_unit ?? undefined} />
-    case 'combination':
-      return <CombinationDrawing sections={(op.sections ?? []) as CombinationSection[]} heightIn={hIn} />
-    case 'transom':
-      return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'special':
-      return <ShapeOutlineDrawing shape={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'entry':
-      return <EntryDoorDrawing sub={op.window_subtype ?? ''} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
-    case 'doubleEntry':
-      return <DoubleEntryDrawing sub={op.window_subtype ?? ''} doubleDoorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
-    case 'french':
-      return <FrenchDoorDrawing sub={op.window_subtype ?? 'Double french'} doorSwing={op.opening_direction ?? undefined} glassSize={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
-    case 'garden':
-      return <GardenDoorDrawing doorSwing={op.opening_direction ?? undefined} sidelights={sl} transomAbove={op.transom_above ? 'Rect' : undefined} widthIn={wIn} heightIn={hIn} />
-    case 'patio':
-      return <PatioDoorDrawing sub={op.window_subtype ?? '2 Panel'} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'storm':
-      return <StormDoorDrawing sub={op.window_subtype ?? 'Full glass'} hingeSide={op.opening_direction ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} />
-    case 'interior':
-      return <InteriorDoorDrawing sub={op.window_subtype ?? 'Single'} doorSwing={op.opening_direction ?? undefined} glassInsert={op.glass_type ?? undefined} widthIn={wIn} heightIn={hIn} />
-    default:
-      return <ShapeOutlineDrawing shape={shape} widthIn={wIn} heightIn={hIn} uid={op.id} />
-  }
-}
 
 export default function EstimateDetailPage() {
   const router   = useRouter()
@@ -475,7 +395,7 @@ export default function EstimateDetailPage() {
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex' }}>
                     <div onClick={() => setEnlargedOpening(op)} style={{ width: 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
-                      <div style={{ width: 116, height: 130, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
+                      <div style={{ width: 116, minHeight: 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
                         <OpeningDrawing op={op} />
                       </div>
                     </div>

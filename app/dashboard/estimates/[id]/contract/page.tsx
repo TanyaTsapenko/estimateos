@@ -7,8 +7,7 @@ import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getColourLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { getEffectiveClauses } from '@/lib/contractClauses'
-import WindowDiagram from '@/components/WindowDiagram'
-import { ShapeOutlineDrawing } from '@/components/estimate-builder-v2/shape-outline-drawing'
+import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 import AppTopBar from '@/components/AppTopBar'
 
 interface Opening {
@@ -20,7 +19,8 @@ interface Opening {
   has_screen: boolean | null; tilt_clean: boolean | null; opening_direction: string | null
   panels_count: string | null; bay_angle: string | null; transom_panes: string | null
   sidelight_left: number | null; sidelight_right: number | null; transom_above: boolean | null
-  sub?: string | null
+  window_subtype?: string | null
+  sections?: { type: string; width: number }[] | null
   glass_type: string | null; core_type: string | null
   custom_colour_label: string | null; custom_shape_label: string | null
   colour_palette_id?: string | null; colour_name?: string | null
@@ -60,7 +60,6 @@ const INK_S = '#94A0B4'
 
 const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
 const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
-const SHAPE_VALUES = ['Octagon', 'Trapezoid', 'Arch', 'Circle', 'Gothic', 'Pentagon', 'Eyebrow', 'Half Round', 'Triangle', 'Custom']
 
 const sheetStyle: React.CSSProperties = {
   background: '#fff',
@@ -399,12 +398,7 @@ export default function ContractPage() {
 
             {openings.map((op, i) => {
               const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
-              const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
-              const shapeFromV2  = op.shape ? SHAPE_VALUES.find(s => s.toLowerCase().replace(/\s/g, '') === op.shape!.toLowerCase().replace(/[_\s-]/g, '')) ?? null : null
-              const shapeFromSub = op.sub
-                ? SHAPE_VALUES.find(s => s.toLowerCase() === op.sub!.toLowerCase().trim()) ?? null
-                : null
-              const effectiveShape = shapeFromV2 || shapeFromSub
+              const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${op.window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
               const extCol      = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
               const intCol      = getInteriorColourLabel(op)
               const glass       = getGlassLabel(op)
@@ -415,12 +409,7 @@ export default function ContractPage() {
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
                   {/* Diagram column */}
                   <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
-                    <div style={{ border: '1.5px solid #33415C', borderRadius: 3, background: '#EEF3FB', overflow: 'hidden' }}>
-                      {effectiveShape
-                        ? <ShapeOutlineDrawing shape={effectiveShape} uid={op.id} fillColor="#EEF3FB" frameColor="#33415C" />
-                        : <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} size={70} />
-                      }
-                    </div>
+                    <OpeningDrawing op={op} />
                   </div>
                   {/* Body */}
                   <div style={{ flex: 1, minWidth: 0 }}>
