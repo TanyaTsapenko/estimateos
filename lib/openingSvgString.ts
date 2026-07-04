@@ -696,7 +696,7 @@ export function openingSvgString(op: OpeningForSvg | string): string {
       }
       if (shapeHint.includes('octagon')) {
         return wrap(
-          `<polygon points="65,10 135,10 190,65 190,155 135,220 65,220 10,155 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
+          `<polygon points="65,10 135,10 190,65 190,165 135,220 65,220 10,165 10,65" fill="${G}" stroke="${FR}" stroke-width="2.5" stroke-linejoin="round"/>` +
           DL
         )
       }

@@ -21,7 +21,16 @@ const ESTIMATE_COLS = [
   'trim_rosettes', 'trim_caping', 'trim_nail_fin', 'trim_drip_cap', 'trim_blue_skin',
 ].join(', ')
 
-const OPENING_COLS = 'id, type, qty, total_cost, window_subtype, width_in, height_in, colour, colour_name, custom_colour_label, glass, glass_kind, low_e, tempered, shape, has_screen'
+const OPENING_COLS = [
+  'id', 'type', 'qty', 'total_cost', 'window_subtype', 'width_in', 'height_in',
+  'colour', 'colour_name', 'custom_colour_label', 'glass', 'glass_kind', 'low_e', 'tempered',
+  'shape', 'has_screen',
+  'grid_pattern', 'glass_type', 'opening_direction', 'transom_panes',
+  'sidelight_left', 'sidelight_right', 'transom_above', 'bay_angle',
+  'sections', 'open_mode', 'center_window_type', 'side_unit', 'panel_type',
+  'install', 'material', 'interior_colour', 'interior_colour_name',
+  'interior_colour_palette_id', 'colour_palette_id', 'room',
+].join(', ')
 
 const PROFILE_COLS = [
   'deposit_percent', 'deposit_required', 'signature_url', 'warranty_period',
