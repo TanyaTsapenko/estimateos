@@ -77,9 +77,9 @@ function SecTitle({ children, mt }: { children: React.ReactNode; mt?: number }) 
   )
 }
 
-function DetCard({ label, value }: { label: string; value: string }) {
+function DetCard({ label, value, fullWidth }: { label: string; value: string; fullWidth?: boolean }) {
   return (
-    <div style={{ background: '#F7F9FC', border: `1px solid ${HAIR}`, borderRadius: 10, padding: '11px 12px', height: '100%', boxSizing: 'border-box' }}>
+    <div style={{ background: '#F7F9FC', border: `1px solid ${HAIR}`, borderRadius: 10, padding: '11px 12px', height: '100%', boxSizing: 'border-box', ...(fullWidth ? { gridColumn: '1 / -1' } : {}) }}>
       <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: INK_S, marginBottom: 4 }}>{label}</div>
       <div style={{ fontSize: 12, fontWeight: 700 }}>{value}</div>
     </div>
@@ -484,7 +484,7 @@ export default function ContractPage() {
             {/* Contract detail cards */}
             {detCards.length > 0 && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, paddingTop: 16, alignItems: 'stretch' }}>
-                {detCards.map(d => <DetCard key={d.label} label={d.label} value={d.value} />)}
+                {detCards.map((d, i) => <DetCard key={d.label} label={d.label} value={d.value} fullWidth={detCards.length % 2 === 1 && i === detCards.length - 1} />)}
               </div>
             )}
 
