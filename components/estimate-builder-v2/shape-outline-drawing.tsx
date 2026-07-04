@@ -111,6 +111,7 @@ export function ShapeOutlineDrawing({
   grid,
   grilleType,
   glassType,
+  fillColor,
   frameColor,
 }: {
   shape?: string
@@ -122,17 +123,18 @@ export function ShapeOutlineDrawing({
   grid?: string
   grilleType?: string
   glassType?: string
+  fillColor?: string
   frameColor?: string
 }) {
   const wL = widthIn  ? `${widthIn}"`  : 'W'
   const hL = heightIn ? `${heightIn}"` : 'H'
 
   const isSide = (position ?? '').toLowerCase() === 'side'
-  const FR = FRAME
+  const FR = frameColor ?? FRAME
   const s    = (shape ?? '').trim()
   const sN   = s.toLowerCase().replace(/[\s-]+/g, '')
   const isCustom = sN === '' || sN.startsWith('custom')
-  const [clipEl, fillEl] = shapeElements(s, GLASS, FRAME)
+  const [clipEl, fillEl] = shapeElements(s, fillColor ?? GLASS, frameColor ?? FRAME)
   const clipId = `so-${uid}`
 
   // Transom pane dividers — only for rectangle shape

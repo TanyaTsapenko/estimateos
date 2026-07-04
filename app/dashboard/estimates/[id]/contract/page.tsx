@@ -401,7 +401,9 @@ export default function ContractPage() {
               const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
               const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
               const shapeFromV2  = op.shape ? SHAPE_VALUES.find(s => s.toLowerCase().replace(/\s/g, '') === op.shape!.toLowerCase().replace(/[_\s-]/g, '')) ?? null : null
-              const shapeFromSub = op.sub && SHAPE_VALUES.includes(op.sub) ? op.sub : null
+              const shapeFromSub = op.sub
+                ? SHAPE_VALUES.find(s => s.toLowerCase() === op.sub!.toLowerCase().trim()) ?? null
+                : null
               const effectiveShape = shapeFromV2 || shapeFromSub
               const extCol      = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
               const intCol      = getInteriorColourLabel(op)
@@ -412,11 +414,13 @@ export default function ContractPage() {
               return (
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
                   {/* Diagram column */}
-                  <div style={{ width: 74, flexShrink: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 2 }}>
-                    {effectiveShape
-                      ? <ShapeOutlineDrawing shape={effectiveShape} uid={op.id} />
-                      : <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} size={70} />
-                    }
+                  <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
+                    <div style={{ border: '1.5px solid #33415C', borderRadius: 3, background: '#EEF3FB', overflow: 'hidden' }}>
+                      {effectiveShape
+                        ? <ShapeOutlineDrawing shape={effectiveShape} uid={op.id} fillColor="#EEF3FB" frameColor="#33415C" />
+                        : <WindowDiagram type={resolvedType} sub={(op as any).window_subtype || op.sub} size={70} />
+                      }
+                    </div>
                   </div>
                   {/* Body */}
                   <div style={{ flex: 1, minWidth: 0 }}>
