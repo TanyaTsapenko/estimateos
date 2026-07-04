@@ -639,23 +639,93 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'combination':
     case 'windowcombo': {
-      const lx1=10, lx2=58, rx1=158, rx2=205
-      const yT=22, yB=218, lean=12
-      const vbH = yB + lean + 40
-      return wrap(
-        `<polygon points="${lx1},${yT+lean} ${lx2},${yT} ${lx2},${yB} ${lx1},${yB+lean}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-        `<line x1="${lx1+3}" y1="${yT+lean+3}" x2="${lx1+3}" y2="${yB-3}" stroke="${SE}" stroke-width="1.2"/>` +
-        `<path d="M${lx1+3} ${yB-3} Q${lx2-3} ${yB-3} ${lx2-3} ${yT+lean+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
-        `<line x1="${lx1+3}" y1="${yB-3}" x2="${lx2-3}" y2="${yT+lean+3}" stroke="${MV}" stroke-width="1.2"/>` +
-        `<rect x="${lx2}" y="${yT}" width="${rx1-lx2}" height="${yB-yT}" fill="${G}" stroke="${FR}" stroke-width="2"/>` +
-        dashedX(lx2+4, yT+4, rx1-4, yB-4) +
-        `<polygon points="${rx1},${yT} ${rx2},${yT+lean} ${rx2},${yB+lean} ${rx1},${yB}" fill="${G}" stroke="${FR}" stroke-width="2" stroke-linejoin="round"/>` +
-        `<line x1="${rx2-3}" y1="${yT+3}" x2="${rx2-3}" y2="${yB-3}" stroke="${SE}" stroke-width="1.2"/>` +
-        `<path d="M${rx2-3} ${yB-3} Q${rx1+3} ${yB-3} ${rx1+3} ${yT+3}" stroke="${MV}" stroke-width="1.2" stroke-dasharray="4 2" fill="none"/>` +
-        `<line x1="${rx2-3}" y1="${yB-3}" x2="${rx1+3}" y2="${yT+3}" stroke="${MV}" stroke-width="1.2"/>` +
-        bayDimLines(lx1, rx2, yT, yB, lean),
-        `0 0 232 ${vbH}`
-      )
+      // Use actual sections array; fall back to generic 3-panel only when data is absent
+      const rawSecs: Array<{ type: string; width: number }> =
+        (op.sections && op.sections.length > 0)
+          ? op.sections
+          : [{ type: 'Casement', width: 1 }, { type: 'Picture', width: 2 }, { type: 'Casement', width: 1 }]
+
+      // Layout — portrait frame fits standard wrap() viewBox 0 0 215 255
+      const FX = 10, FY = 10, FW = 190, FH = 135
+      const cFR = FX + FW       // 200
+      const cFB = FY + FH       // 145
+      const cMID = FY + FH / 2  // 77.5
+      const SI = 6
+      const sT = FY + SI        // 16
+      const sB = cFB - SI       // 139
+      const DIM_Y = cFB + 12    // 157
+
+      const total = rawSecs.reduce((s, sec) => s + (sec.width || 1), 0) || 1
+
+      type SegD = { segX: number; segW: number; sL: number; sR: number; sCX: number; t: string }
+      const segs: SegD[] = []
+      let cum = 0
+      for (const sec of rawSecs) {
+        const segW = ((sec.width || 1) / total) * FW
+        const segX = FX + cum
+        cum += segW
+        segs.push({ segX, segW, sL: segX + SI, sR: segX + segW - SI, sCX: segX + segW / 2, t: (sec.type || 'picture').toLowerCase().trim() })
+      }
+
+      let body = ''
+
+      // Outer frame
+      body += `<rect x="${FX}" y="${FY}" width="${FW}" height="${FH}" rx="3" fill="${G}" stroke="${FR}" stroke-width="2.5"/>`
+
+      // Vertical dividers
+      for (let i = 0; i < segs.length - 1; i++) {
+        const dx = Math.round(segs[i].segX + segs[i].segW)
+        body += `<line x1="${dx}" y1="${FY}" x2="${dx}" y2="${cFB}" stroke="${FR}" stroke-width="1.5"/>`
+      }
+
+      // Per-section glyphs — mirrors SegContent in section-builder.tsx
+      for (const { sL, sR, sCX, segX, segW, t } of segs) {
+        const L = Math.round(sL), R = Math.round(sR), CX = Math.round(sCX)
+        const mid = Math.round(cMID)
+
+        if (t === 'picture' || t === 'fixed') {
+          body += `<line x1="${L}" y1="${sT}" x2="${R}" y2="${sB}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>`
+          body += `<line x1="${R}" y1="${sT}" x2="${L}" y2="${sB}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>`
+        } else if (t === 'casement') {
+          body += `<line x1="${L}" y1="${sT}" x2="${L}" y2="${sB}" stroke="${SE}" stroke-width="1.5"/>`
+          body += `<path d="M${L},${sB} Q${R},${sB} ${R},${sT}" stroke="${MV}" stroke-width="1.5" stroke-dasharray="5 3" fill="none"/>`
+          body += `<line x1="${L}" y1="${sT}" x2="${R}" y2="${sT}" stroke="${MV}" stroke-width="1.5" stroke-dasharray="4 2"/>`
+          body += `<line x1="${L}" y1="${sB}" x2="${R}" y2="${sT}" stroke="${MV}" stroke-width="1.5"/>`
+          body += `<rect x="${R - 5}" y="${mid - 4}" width="4" height="8" rx="1.5" fill="${SE}"/>`
+        } else if (t === 'awning') {
+          body += `<line x1="${L}" y1="${sT}" x2="${R}" y2="${sT}" stroke="${SE}" stroke-width="1.5"/>`
+          body += `<path d="M${L},${sT} Q${L},${sB} ${CX},${sB} Q${R},${sB} ${R},${sT}" stroke="${MV}" stroke-width="1.5" stroke-dasharray="5 3" fill="none"/>`
+          body += `<line x1="${L}" y1="${sT}" x2="${CX}" y2="${sB}" stroke="${MV}" stroke-width="1.5"/>`
+          body += `<line x1="${R}" y1="${sT}" x2="${CX}" y2="${sB}" stroke="${MV}" stroke-width="1.5"/>`
+          body += `<rect x="${CX - 5}" y="${sB - 4}" width="10" height="4" rx="1.5" fill="${SE}"/>`
+        } else if (t === 'slider') {
+          const aT = Math.round(segX + segW * 0.62), aL = Math.round(segX + segW * 0.26)
+          body += `<rect x="${L}" y="${sT}" width="${Math.max(1, R - L)}" height="${Math.max(1, sB - sT)}" fill="none" stroke="${MV}" stroke-width="1.5"/>`
+          body += `<path d="M${aT},${mid} L${aT-7},${mid-5} L${aT-5},${mid} L${aT-7},${mid+5}Z" fill="${MV}"/>`
+          body += `<line x1="${aL}" y1="${mid}" x2="${aT - 5}" y2="${mid}" stroke="${MV}" stroke-width="1.5" stroke-dasharray="4 2"/>`
+          body += `<rect x="${R - 5}" y="${mid - 6}" width="4" height="12" rx="2" fill="${SE}"/>`
+        } else if (t === 'single hung') {
+          const mY = Math.round((sT + sB) / 2)
+          const aT2 = Math.round(mY + (sB - mY) * 0.22), aL2 = Math.round(mY + (sB - mY) * 0.72)
+          body += `<line x1="${L}" y1="${sT}" x2="${R}" y2="${mY}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>`
+          body += `<line x1="${R}" y1="${sT}" x2="${L}" y2="${mY}" stroke="${SE}" stroke-width="1" stroke-dasharray="4 3"/>`
+          body += `<line x1="${L}" y1="${mY}" x2="${R}" y2="${mY}" stroke="${FR}" stroke-width="1.5"/>`
+          body += `<rect x="${L}" y="${mY}" width="${Math.max(1, R - L)}" height="${Math.max(1, sB - mY)}" fill="none" stroke="${MV}" stroke-width="1.5"/>`
+          body += `<path d="M${CX},${aT2} L${CX-5},${aT2+8} L${CX},${aT2+6} L${CX+5},${aT2+8}Z" fill="${MV}"/>`
+          body += `<line x1="${CX}" y1="${aT2+6}" x2="${CX}" y2="${aL2}" stroke="${MV}" stroke-width="1.5" stroke-dasharray="4 2"/>`
+        } else {
+          // Unknown type → picture glyph
+          body += `<line x1="${L}" y1="${sT}" x2="${R}" y2="${sB}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>`
+          body += `<line x1="${R}" y1="${sT}" x2="${L}" y2="${sB}" stroke="${SE}" stroke-width="1.2" stroke-dasharray="5 3"/>`
+        }
+      }
+
+      // Bottom dimension line
+      body += `<line x1="${FX}" y1="${DIM_Y}" x2="${cFR}" y2="${DIM_Y}" stroke="${SE}" stroke-width="1"/>`
+      body += `<line x1="${FX}" y1="${DIM_Y-5}" x2="${FX}" y2="${DIM_Y+5}" stroke="${SE}" stroke-width="1.5"/>`
+      body += `<line x1="${cFR}" y1="${DIM_Y-5}" x2="${cFR}" y2="${DIM_Y+5}" stroke="${SE}" stroke-width="1.5"/>`
+
+      return wrap(body)
     }
 
     case 'special':
