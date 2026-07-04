@@ -409,7 +409,7 @@ export default function ContractPage() {
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
                   {/* Diagram column */}
                   <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
-                    <OpeningDrawing op={op} />
+                    <OpeningDrawing op={{ ...op, colour: null }} />
                   </div>
                   {/* Body */}
                   <div style={{ flex: 1, minWidth: 0 }}>
