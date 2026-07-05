@@ -441,9 +441,10 @@ export default function SignContractPage() {
               const installLbl  = (op.install  && op.install  !== 'retrofit') ? (INSTALL_LABELS[op.install]   || op.install)  : null
               const materialLbl = (op.material && op.material !== 'vinyl')    ? (MATERIAL_LABELS[op.material] || op.material) : null
 
+              const isCombo = op.type === 'combination' || op.type === 'window_combo'
               return (
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
-                  <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
+                  <div style={{ width: isCombo ? 140 : 74, flexShrink: 0, paddingTop: 2 }}>
                     <OpeningDrawing op={{ ...op, colour: null }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>

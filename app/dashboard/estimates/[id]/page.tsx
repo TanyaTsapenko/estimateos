@@ -391,11 +391,12 @@ export default function EstimateDetailPage() {
               if (op.glass_type)          pills.push(<span key="gt"      style={chipBlue}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
               if (op.core_type)           pills.push(<span key="ct"      style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
               if (op.notes)               pills.push(<span key="notes"   style={{ ...chipOrange, gap: 4 }}><FileText size={12}/>{op.notes}</span>)
+              const isCombo = op.type === 'combination' || op.type === 'window_combo'
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex' }}>
-                    <div onClick={() => setEnlargedOpening(op)} style={{ width: 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
-                      <div style={{ width: 116, minHeight: 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
+                    <div onClick={() => setEnlargedOpening(op)} style={{ width: isCombo ? 200 : 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
+                      <div style={{ width: isCombo ? 176 : 116, minHeight: isCombo ? 82 : 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
                         <OpeningDrawing op={op} />
                       </div>
                     </div>

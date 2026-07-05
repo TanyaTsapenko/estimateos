@@ -33,8 +33,9 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
   const v = op.vals
   const pf = (k: string) => v[k] !== undefined ? parseFloat(String(v[k])) || undefined : undefined
-  const w = compact ? 32 : 44
-  const maxH = compact ? 36 : 56
+  const isCombo = op.typeId === 'combination'
+  const w    = isCombo ? (compact ? 68 : 88) : (compact ? 32 : 44)
+  const maxH = isCombo ? (compact ? 36 : 44) : (compact ? 36 : 56)
 
   let node: React.ReactNode
   switch (op.typeId) {
