@@ -59,9 +59,12 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
     case 'bow':
       node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'combination': {
-      let secs = op.sections
-      if (typeof secs === 'string') { try { secs = JSON.parse(secs) } catch { secs = [] } }
-      node = <CombinationDrawing sections={Array.isArray(secs) ? secs : []} heightIn={pf('oheight')} />; break
+      let secs: any = op.sections
+      if (typeof secs === 'string') { try { secs = JSON.parse(secs) } catch { secs = null } }
+      const comboSecs = Array.isArray(secs) && secs.length > 0 ? secs : [
+        { type: 'Casement', width: 1 }, { type: 'Picture', width: 2 }, { type: 'Casement', width: 1 },
+      ]
+      node = <CombinationDrawing sections={comboSecs} heightIn={pf('oheight')} />; break
     }
     case 'picture':
     case 'transom':

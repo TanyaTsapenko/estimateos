@@ -84,8 +84,14 @@ export function OpeningDrawing({ op }: { op: DrawableOpening }) {
       return <BayDrawing sub={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} bayAngle={op.bay_angle ?? undefined} centerWindowType={op.center_window_type ?? undefined} sideUnit={op.side_unit ?? undefined} grid={gp} glassType={op.glass_type ?? undefined} frameColor={fr} />
     case 'bow':
       return <BowDrawing sub={op.window_subtype ?? ''} widthIn={wIn} heightIn={hIn} uid={op.id} panelType={op.panel_type ?? undefined} sideUnit={op.side_unit ?? undefined} grid={gp} glassType={op.glass_type ?? undefined} frameColor={fr} />
-    case 'combination':
-      return <CombinationDrawing sections={(op.sections ?? []) as CombinationSection[]} heightIn={hIn} />
+    case 'combination': {
+      let rawSec: any = op.sections
+      if (typeof rawSec === 'string') { try { rawSec = JSON.parse(rawSec) } catch { rawSec = null } }
+      const comboSecs = (Array.isArray(rawSec) && rawSec.length > 0 ? rawSec : [
+        { type: 'Casement', width: 1 }, { type: 'Picture', width: 2 }, { type: 'Casement', width: 1 },
+      ]) as CombinationSection[]
+      return <CombinationDrawing sections={comboSecs} heightIn={hIn} />
+    }
     case 'transom':
       return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'special':
