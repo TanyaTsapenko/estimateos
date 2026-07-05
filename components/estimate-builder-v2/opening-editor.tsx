@@ -139,7 +139,7 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
           {op.typeId === 'combination' ? (
             <>
               <SectionBuilder
-                sections={op.sections || [{ type: 'Picture', width: 36 }]}
+                sections={Array.isArray(op.sections) && op.sections.length > 0 ? op.sections : (() => { if (typeof op.sections === 'string') { try { const p = JSON.parse(op.sections); if (Array.isArray(p) && p.length > 0) return p } catch {} } return [{ type: 'Picture', width: 36 }] })()}
                 onChange={onSections ?? (() => {})}
                 heightIn={op.vals.oheight !== undefined ? parseFloat(String(op.vals.oheight)) || undefined : undefined}
                 glassType={op.vals.glassType as string | undefined}

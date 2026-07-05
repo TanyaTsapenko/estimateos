@@ -639,10 +639,18 @@ export function openingSvgString(op: OpeningForSvg | string): string {
 
     case 'combination':
     case 'windowcombo': {
-      // Use actual sections array; fall back to generic 3-panel only when data is absent
+      // Parse sections safely: handle null, undefined, proper arrays, and JSON strings
+      function parseSecs(raw: any): Array<{ type: string; width: number }> {
+        if (Array.isArray(raw) && raw.length > 0) return raw
+        if (typeof raw === 'string') {
+          try { const p = JSON.parse(raw); if (Array.isArray(p) && p.length > 0) return p } catch {}
+        }
+        return []
+      }
+      const parsed = parseSecs(op.sections)
       const rawSecs: Array<{ type: string; width: number }> =
-        (op.sections && op.sections.length > 0)
-          ? op.sections
+        parsed.length > 0
+          ? parsed
           : [{ type: 'Casement', width: 1 }, { type: 'Picture', width: 2 }, { type: 'Casement', width: 1 }]
 
       // Layout — portrait frame fits standard wrap() viewBox 0 0 215 255

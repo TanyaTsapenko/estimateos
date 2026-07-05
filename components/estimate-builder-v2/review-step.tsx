@@ -58,8 +58,11 @@ function DrawingThumb({ op, compact }: { op: Opening; compact?: boolean }) {
       node = <BayDrawing sub={op.sub} bayAngle={v.bayAngle as string|undefined} centerWindowType={v.centerWindowType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
     case 'bow':
       node = <BowDrawing sub={op.sub} panelType={v.panelType as string|undefined} sideUnit={v.sideUnit as string|undefined} widthIn={pf('owidth')} heightIn={pf('oheight')} uid={op.tempId} />; break
-    case 'combination':
-      node = <CombinationDrawing sections={op.sections || []} heightIn={pf('oheight')} />; break
+    case 'combination': {
+      let secs = op.sections
+      if (typeof secs === 'string') { try { secs = JSON.parse(secs) } catch { secs = [] } }
+      node = <CombinationDrawing sections={Array.isArray(secs) ? secs : []} heightIn={pf('oheight')} />; break
+    }
     case 'picture':
     case 'transom':
     case 'special':

@@ -45,6 +45,7 @@ const DIM_R = FR + 10
 type SegInfo = { segX: number; segW: number; sL: number; sR: number; sCX: number; sec: CombinationSection }
 
 function buildSegs(sections: CombinationSection[]): SegInfo[] {
+  if (!Array.isArray(sections)) return []
   const total = sections.reduce((s, sec) => s + sec.width, 0) || 1
   let cumPx = 0
   return sections.map(sec => {
