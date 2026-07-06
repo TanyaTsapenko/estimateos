@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     '/api/notify-contractor-signed', '/api/send-contract-signed',
     '/api/register', '/api/send-confirmation',
     '/api/public/',
+    '/api/track-estimate-view',
     '/auth/confirmed',
   ]
   const isPublic = publicPaths.some(p => pathname.startsWith(p))
