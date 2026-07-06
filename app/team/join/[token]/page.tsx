@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
+import { Clock, Mail, Users, CheckCircle2, Check } from 'lucide-react'
 
 interface Invite {
   invitee_email: string
@@ -115,7 +116,7 @@ export default function JoinPage() {
         </div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
-        <div style={{ fontSize: 48, marginBottom: 14 }}>⏰</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Clock size={48} color="#94a3b8" /></div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)', marginBottom: 8 }}>This invite has expired or been used</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>Ask the team owner to send you a new invite.</div>
         <button className="gen-btn" style={{ maxWidth: 240, margin: '0 auto' }} onClick={() => router.push('/auth')}>Go to Sign In →</button>
@@ -130,11 +131,11 @@ export default function JoinPage() {
         <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
         <div className="h-title">
           <div className="h-eye">You're in!</div>
-          <div className="h-big">Welcome 🎉</div>
+          <div className="h-big">Welcome</div>
         </div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
-        <div style={{ fontSize: 48, marginBottom: 14 }}>🎉</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><CheckCircle2 size={48} color="#16a34a" /></div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)', marginBottom: 8 }}>You've joined {ownerName}</div>
         <div style={{ fontSize: 13, color: '#6b7280' }}>Taking you to your dashboard…</div>
       </div>
@@ -152,7 +153,7 @@ export default function JoinPage() {
         </div>
       </div>
       <div className="card" style={{ textAlign: 'center', paddingTop: 32 }}>
-        <div style={{ fontSize: 48, marginBottom: 14 }}>📧</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><Mail size={48} color="#2563eb" /></div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)', marginBottom: 8 }}>Verify your email</div>
         <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 8 }}>
           We sent a confirmation link to <strong>{invite?.invitee_email}</strong>.
@@ -181,7 +182,7 @@ export default function JoinPage() {
         {error && <div className="error-msg">{error}</div>}
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 52, marginBottom: 10 }}>👋</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}><Users size={48} color="#2563eb" /></div>
           <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--jet)', marginBottom: 6 }}>
             {invite?.invitee_name ? `Hi ${invite.invitee_name}!` : 'Hey there!'}
           </div>
@@ -207,8 +208,8 @@ export default function JoinPage() {
             <div className="info-box" style={{ marginBottom: 16 }}>
               Signed in as <strong>{user.email}</strong>. Click accept to join {ownerName}.
             </div>
-            <button className="gen-btn" onClick={() => accept()} disabled={accepting}>
-              {accepting ? '⏳ Joining…' : `✅ Accept & Join ${ownerName}`}
+            <button className="gen-btn" onClick={() => accept()} disabled={accepting} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {accepting ? 'Joining…' : <><Check size={15} />{`Accept & Join ${ownerName}`}</>}
             </button>
           </>
         ) : (
@@ -243,7 +244,7 @@ export default function JoinPage() {
               />
             </div></div>
             <button type="submit" className="gen-btn" disabled={registering} style={{ marginBottom: 10 }}>
-              {registering ? '⏳ Creating account…' : `Create Account & Join ${ownerName} →`}
+              {registering ? 'Creating account…' : `Create Account & Join ${ownerName} →`}
             </button>
             <button
               type="button"

@@ -9,6 +9,7 @@ import { getEffectiveClauses } from '@/lib/contractClauses'
 import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 import { Download } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface Contract {
   id: string; estimate_id: string; profile_id: string; status: string
@@ -116,6 +117,8 @@ export default function SignContractPage() {
   const [showDeposit,        setShowDeposit]        = useState(false)
   const [showSuccess,        setShowSuccess]        = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
+  const [isAnon, setIsAnon] = useState<boolean | null>(null)
+  const [showClientConfirm, setShowClientConfirm] = useState(false)
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
@@ -136,6 +139,12 @@ export default function SignContractPage() {
     const client = estimate?.client_name || 'Client'
     document.title = `Contract-${num}-${client}`
   }, [contract, estimate])
+
+  useEffect(() => {
+    createClient().auth.getUser()
+      .then(({ data: { user } }) => setIsAnon(!user))
+      .catch(() => setIsAnon(true))
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -232,7 +241,11 @@ export default function SignContractPage() {
         }),
       ])
 
-      setShowDeposit(true)
+      if (isAnon) {
+        setShowClientConfirm(true)
+      } else {
+        setShowDeposit(true)
+      }
     } finally {
       setSigning(false)
     }
@@ -272,6 +285,7 @@ export default function SignContractPage() {
   const taxRate         = estimate.subtotal > 0 ? Math.round(estimate.tax_amount / estimate.subtotal * 100) : 0
   const taxLabel        = estimate.tax_amount > 0 ? (taxRate > 0 ? `Tax (${taxRate}%)` : 'Tax') : null
   const enabledClauses  = getEffectiveClauses(profile?.contract_clauses).filter(c => c.enabled !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  const hasFinalMeasurementsClause = enabledClauses.some(c => c.id === 'final_measurements')
   const paymentValue    = contract?.payment_method || (profile?.payment_methods && profile.payment_methods.length > 0 ? profile.payment_methods.join(', ') : null)
 
   const detCards: { label: string; value: string }[] = []
@@ -294,8 +308,104 @@ export default function SignContractPage() {
         }
       `}</style>
 
-      {/* ── CLIENT POST-SIGN OVERLAY ── */}
-      {showDeposit && !showSuccess && (
+      {/* ── ANONYMOUS CLIENT POST-SIGN CONFIRMATION ── */}
+      {showClientConfirm && (
+        <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+            <ApexScaleLogo theme="light" size={26} />
+          </div>
+
+          <div style={{ flex: 1, padding: '36px 16px 24px', maxWidth: 480, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+
+            {/* Hero */}
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              {/* Double-ring check */}
+              <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(22,163,74,0.10)', border: '1.5px solid rgba(22,163,74,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </div>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginBottom: 10, letterSpacing: '-0.01em' }}>Your contract is signed</div>
+              <div style={{ fontSize: 14, color: '#475467', lineHeight: 1.65, maxWidth: 320, margin: '0 auto' }}>
+                Thank you, <strong style={{ color: '#0A1628' }}>{estimate.client_name}</strong>! A copy of the signed contract and payment instructions are on their way to your email.
+              </div>
+            </div>
+
+            {/* Contract summary sheet */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 2 }}>Contract</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{conId}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 20, padding: '4px 12px' }}>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#16A34A', flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', letterSpacing: '0.06em' }}>SIGNED</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 13, color: '#64748B' }}>Project total</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(estimate.total)}</span>
+              </div>
+              {depositRequired && <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: 13, color: '#64748B' }}>Deposit due ({depositPct}%)</span>
+                  <span style={{ fontSize: 22, fontWeight: 800, color: BLUE }}>{fmtCAD(depositAmt)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+                  <span style={{ fontSize: 13, color: '#64748B' }}>Balance on completion</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+                </div>
+              </>}
+            </div>
+
+            {/* What happens next */}
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 14 }}>What happens next</div>
+              {([
+                estimate.client_email ? `Check your email (${estimate.client_email})` : 'Check your email for confirmation',
+                depositRequired ? `Pay your deposit of ${fmtCAD(depositAmt)}` : 'Review your signed contract',
+                hasFinalMeasurementsClause
+                  ? 'We\'ll contact you to schedule final measurements within 10 days of receiving the deposit'
+                  : 'We\'ll be in touch to schedule next steps',
+              ] as string[]).map((step, i) => (
+                <div key={i} style={{ display: 'flex', gap: 14, padding: '10px 0', borderBottom: i < 2 ? '1px solid #F1F5F9' : 'none', alignItems: 'flex-start' }}>
+                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#EFF6FF', border: '1px solid #BFDBFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: BLUE }}>{i + 1}</span>
+                  </div>
+                  <span style={{ fontSize: 13, color: '#0A1628', lineHeight: 1.55, flex: 1 }}>{step}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Download PDF */}
+            <a
+              href={`/api/contract-pdf-gen?contractId=${contract.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: BLUE, color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+            >
+              <Download size={16} /> Download signed contract (PDF)
+            </a>
+
+            {/* Contact line */}
+            <div style={{ textAlign: 'center', fontSize: 13, color: '#64748B', marginBottom: 24 }}>
+              Questions about your order?{' '}
+              <strong style={{ color: '#0A1628' }}>{companyName}</strong>
+              {(contract.company_phone || profile?.phone) && (
+                <>{' · '}<a href={`tel:${(contract.company_phone || profile?.phone)!.replace(/\s/g, '')}`} style={{ color: BLUE, fontWeight: 600, textDecoration: 'none' }}>{contract.company_phone || profile?.phone}</a></>
+              )}
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', padding: '16px 20px', fontSize: 11, color: '#CBD5E1' }}>
+            Powered by ApexScale · useapexscale.com
+          </div>
+        </div>
+      )}
+
+      {/* ── AUTHENTICATED REP CLIENT POST-SIGN OVERLAY ── */}
+      {showDeposit && !showSuccess && !isAnon && (
         <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 24px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
@@ -744,7 +854,7 @@ export default function SignContractPage() {
             </div>
             <button
               onClick={handleSign}
-              disabled={isEmpty || !agreedToTerms || signing}
+              disabled={isEmpty || !agreedToTerms || signing || isAnon === null}
               style={{
                 width: '100%', background: BLUE, color: '#fff', border: 'none',
                 borderRadius: 12, padding: 15,

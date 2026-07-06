@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { fmtCAD } from '@/lib/pricing'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
+import { createClient } from '@/lib/supabase/client'
+import { Download } from 'lucide-react'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_email: string | null
   user_id: string; total: number; status: string; valid_until: string | null
 }
-interface Profile { company_name: string | null; contract_terms: string | null }
+interface Profile { company_name: string | null; contract_terms: string | null; phone?: string | null; deposit_percent?: number | null }
 
 export default function PublicSignPage() {
   const { id } = useParams<{ id: string }>()
@@ -20,10 +22,17 @@ export default function PublicSignPage() {
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
   const [declined, setDeclined] = useState(false)
+  const [isAnon, setIsAnon] = useState<boolean | null>(null)
   const [showDeclineConfirm, setShowDeclineConfirm] = useState(false)
   const [error, setError] = useState('')
   const isDrawing = useRef(false)
   const lastPos = useRef({ x: 0, y: 0 })
+
+  useEffect(() => {
+    createClient().auth.getUser()
+      .then(({ data: { user } }) => setIsAnon(!user))
+      .catch(() => setIsAnon(true))
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -125,7 +134,109 @@ export default function PublicSignPage() {
     </div>
   )
 
-  if (done) return (
+  if (done) {
+    const depositPct = profile?.deposit_percent ?? 10
+    const depositAmt = estimate.total * (depositPct / 100)
+    const balanceAmt = estimate.total - depositAmt
+    const companyPhone = profile?.phone ?? null
+
+    // Anonymous client → new client-facing confirmation screen
+    if (isAnon !== false) return (
+      <div style={{ minHeight: '100vh', background: '#F5F6F8', display: 'flex', flexDirection: 'column', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
+        <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>
+          <ApexScaleLogo theme="light" size={26} />
+        </div>
+
+        <div style={{ flex: 1, padding: '36px 16px 24px', maxWidth: 480, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+
+          {/* Hero */}
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(22,163,74,0.10)', border: '1.5px solid rgba(22,163,74,0.20)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              </div>
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#0A1628', marginBottom: 10, letterSpacing: '-0.01em' }}>Your estimate is approved</div>
+            <div style={{ fontSize: 14, color: '#475467', lineHeight: 1.65, maxWidth: 320, margin: '0 auto' }}>
+              Thank you, <strong style={{ color: '#0A1628' }}>{estimate.client_name}</strong>! A copy of your signed estimate and next steps are on their way to your email.
+            </div>
+          </div>
+
+          {/* Summary sheet */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 2 }}>Estimate</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{estimate.estimate_number}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 20, padding: '4px 12px' }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#16A34A', flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', letterSpacing: '0.06em' }}>SIGNED</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+              <span style={{ fontSize: 13, color: '#64748B' }}>Project total</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(estimate.total)}</span>
+            </div>
+            {profile?.deposit_percent != null && <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 13, color: '#64748B' }}>Deposit due ({depositPct}%)</span>
+                <span style={{ fontSize: 22, fontWeight: 800, color: '#2563EB' }}>{fmtCAD(depositAmt)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}>
+                <span style={{ fontSize: 13, color: '#64748B' }}>Balance on completion</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#0A1628' }}>{fmtCAD(balanceAmt)}</span>
+              </div>
+            </>}
+          </div>
+
+          {/* What happens next */}
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 14 }}>What happens next</div>
+            {([
+              estimate.client_email ? `Check your email (${estimate.client_email})` : 'Check your email for confirmation',
+              profile?.deposit_percent != null ? `Pay your deposit of ${fmtCAD(depositAmt)}` : 'Review your signed estimate',
+              'We\'ll be in touch to schedule next steps',
+            ] as string[]).map((step, i) => (
+              <div key={i} style={{ display: 'flex', gap: 14, padding: '10px 0', borderBottom: i < 2 ? '1px solid #F1F5F9' : 'none', alignItems: 'flex-start' }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#EFF6FF', border: '1px solid #BFDBFE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB' }}>{i + 1}</span>
+                </div>
+                <span style={{ fontSize: 13, color: '#0A1628', lineHeight: 1.55, flex: 1 }}>{step}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Download */}
+          <a
+            href={`/api/estimate-pdf?id=${estimate.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '16px 0', background: '#2563EB', color: '#fff', borderRadius: 14, fontSize: 15, fontWeight: 700, textDecoration: 'none', marginBottom: 16, boxSizing: 'border-box' }}
+          >
+            <Download size={16} /> Download signed estimate (PDF)
+          </a>
+
+          {/* Contact line */}
+          {(profile?.company_name || companyPhone) && (
+            <div style={{ textAlign: 'center', fontSize: 13, color: '#64748B', marginBottom: 24 }}>
+              Questions about your order?{' '}
+              {profile?.company_name && <strong style={{ color: '#0A1628' }}>{profile.company_name}</strong>}
+              {companyPhone && (
+                <>{' · '}<a href={`tel:${companyPhone.replace(/\s/g, '')}`} style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>{companyPhone}</a></>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div style={{ textAlign: 'center', padding: '16px 20px', fontSize: 11, color: '#CBD5E1' }}>
+          Powered by ApexScale · useapexscale.com
+        </div>
+      </div>
+    )
+
+    // Authenticated rep → existing dark-gradient screen
+    return (
     <div style={{ minHeight: '100vh', background: '#F4F4F2', display: 'flex', flexDirection: 'column', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
       {/* Dark gradient header */}
       <div style={{ position: 'relative', overflow: 'hidden', padding: '44px 24px 28px' }}>
@@ -156,7 +267,8 @@ export default function PublicSignPage() {
         </div>
       </div>
     </div>
-  )
+    )
+  }
 
   if (declined) return (
     <div style={{ minHeight: '100vh', background: '#F5F6F8', fontFamily: '"Inter", system-ui, -apple-system, sans-serif', display: 'flex', flexDirection: 'column' }}>
