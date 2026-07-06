@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 interface Invite {
-  id: string; invitee_email: string; invitee_name: string | null
-  role: string; owner_id: string; expires_at: string
+  invitee_email: string
+  invitee_name: string | null
+  role: string
 }
 
 const ROLE_LABELS: Record<string, { label: string; desc: string; icon: string }> = {
@@ -38,22 +39,16 @@ export default function JoinPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: { user: u } }, { data: inv }] = await Promise.all([
+      const [{ data: { user: u } }, invRes] = await Promise.all([
         supabase.auth.getUser(),
-        supabase.from('team_invitations').select('*').eq('token', token).eq('status', 'pending').single(),
+        fetch(`/api/public/invite/${encodeURIComponent(token)}`),
       ])
       setUser(u)
-      if (!inv) { setExpired(true); setLoading(false); return }
-      if (new Date(inv.expires_at) < new Date()) { setExpired(true); setLoading(false); return }
-      setInvite(inv)
-      if (inv.invitee_name) setFirstName(inv.invitee_name.split(' ')[0])
-
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('company_name, first_name, last_name')
-        .eq('id', inv.owner_id)
-        .single()
-      setOwnerName(prof?.company_name || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim() || 'the team')
+      if (!invRes.ok) { setExpired(true); setLoading(false); return }
+      const invData = await invRes.json()
+      setInvite({ invitee_email: invData.inviteeEmail, invitee_name: invData.inviteeName ?? null, role: invData.role })
+      setOwnerName(invData.companyName || 'the team')
+      if (invData.inviteeName) setFirstName(invData.inviteeName.split(' ')[0])
       setLoading(false)
     }
     load()

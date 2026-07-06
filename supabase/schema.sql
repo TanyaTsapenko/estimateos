@@ -107,13 +107,10 @@ create policy "Users update own estimates"
 create policy "Users delete own estimates"
   on public.estimates for delete using (auth.uid() = user_id);
 
-create policy "Public read estimate by id"
-  on public.estimates for select using (true);
-
-create policy "Public sign estimate"
-  on public.estimates for update
-  using (status in ('draft', 'sent'))
-  with check (status in ('signed', 'declined'));
+-- "Public read estimate by id" and "Public sign estimate" intentionally omitted.
+-- Public reads are served by /api/public/estimate/[id] (service role).
+-- Signing/declining is handled by /api/sign-estimate (service role).
+-- See migration: close_public_write_and_invitations.sql
 
 create table if not exists public.estimate_openings (
   id           uuid primary key default gen_random_uuid(),
@@ -237,8 +234,9 @@ drop policy if exists "Public read pending invitation"     on public.team_invita
 create policy "Owners manage own invitations"
   on public.team_invitations for all using (auth.uid() = owner_id);
 
-create policy "Public read pending invitation"
-  on public.team_invitations for select using (status = 'pending');
+-- "Public read pending invitation" intentionally omitted.
+-- Invite metadata is served by /api/public/invite/[token] (service role).
+-- See migration: close_public_write_and_invitations.sql
 
 insert into storage.buckets (id, name, public)
   values ('logos', 'logos', true)

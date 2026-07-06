@@ -1,9 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useParams } from 'next/navigation'
 import { fmtCAD } from '@/lib/pricing'
-import { Check } from 'lucide-react'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 interface Estimate {
@@ -14,8 +12,6 @@ interface Profile { company_name: string | null; contract_terms: string | null }
 
 export default function PublicSignPage() {
   const { id } = useParams<{ id: string }>()
-  const router = useRouter()
-  const supabase = createClient()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const [estimate, setEstimate] = useState<Estimate | null>(null)
@@ -77,42 +73,17 @@ export default function PublicSignPage() {
     setSaving(true); setError('')
     try {
       const dataUrl = canvas.toDataURL('image/png')
-      const blob = await (await fetch(dataUrl)).blob()
-      const sigPath = `${id}/sig-${Date.now()}.png`
-
-      let sigUrl = ''
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        const { error: upErr } = await supabase.storage.from('signatures').upload(sigPath, blob, { contentType: 'image/png' })
-        if (!upErr) {
-          sigUrl = supabase.storage.from('signatures').getPublicUrl(sigPath).data.publicUrl
-          break
-        }
-        if (attempt === 3) {
-          setError('Failed to save signature. Please try again.')
-          return
-        }
-        await new Promise(r => setTimeout(r, 1000))
-      }
-
-      const { error: updateErr } = await supabase.from('estimates').update({
-        status: 'signed',
-        signed_at: new Date().toISOString(),
-        client_signature_url: sigUrl,
-      }).eq('id', id)
-
-      if (updateErr) { setError(updateErr.message); return }
-
-      await supabase.from('notifications').insert({
-        user_id: estimate.user_id,
-        type:    'estimate_signed',
-        title:   'Estimate signed',
-        body:    `${estimate.client_name || 'Client'} signed ${estimate.estimate_number}`,
-        read:    false,
-        link:    `/dashboard/estimates/${estimate.id}`,
+      const res = await fetch('/api/sign-estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: id, action: 'sign', signatureBase64: dataUrl, clientName: estimate.client_name }),
       })
-
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setError((json as any).error || 'Failed to save signature. Please try again.')
+        return
+      }
       await fetch('/api/create-deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })
-
       setDone(true)
     } finally {
       setSaving(false)
@@ -121,14 +92,10 @@ export default function PublicSignPage() {
 
   async function handleDecline() {
     if (!estimate) return
-    await supabase.from('estimates').update({ status: 'declined' }).eq('id', id)
-    await supabase.from('notifications').insert({
-      user_id: estimate.user_id,
-      type:    'estimate_declined',
-      title:   'Estimate declined',
-      body:    `${estimate.client_name || 'Client'} declined ${estimate.estimate_number}`,
-      read:    false,
-      link:    `/dashboard/estimates/${estimate.id}`,
+    await fetch('/api/sign-estimate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estimateId: id, action: 'decline', clientName: estimate.client_name }),
     })
     setDeclined(true)
   }
