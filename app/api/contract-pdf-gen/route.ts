@@ -18,7 +18,6 @@ export async function GET(req: NextRequest) {
     const contractId = searchParams.get('contractId')
     if (!contractId) return NextResponse.json({ error: 'Missing contractId' }, { status: 400 })
 
-    console.log('[contract-pdf] contractId:', contractId)
     const admin = createServiceClient()
 
     const { data: contract, error: contractErr } = await admin
@@ -59,15 +58,9 @@ export async function GET(req: NextRequest) {
       contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 
-    console.log('[contract-pdf] estimate id:', estimate?.id)
     console.log('[contract-pdf] openings count:', openings?.length)
     console.log('[contract-pdf] company name:', company?.company_name)
-    console.log('[contract-pdf] raw client_name:', JSON.stringify(estimate?.client_name))
-    console.log('[contract-pdf] client_name:', estimate?.client_name)
     console.log('[contract-pdf] contract_clauses type:', typeof contractWithClauses.contract_clauses)
-    console.log('[contract-pdf] contract_clauses value:', JSON.stringify(contractWithClauses.contract_clauses)?.slice(0, 300))
-    console.log('[contract-pdf] company contract_clauses:', JSON.stringify(company?.contract_clauses)?.slice(0, 300))
-    console.log('[contract-pdf] contract_terms_snapshot:', contractWithClauses.contract_terms_snapshot?.slice(0, 100))
     // Pre-render each opening to PNG using the same shape-aware pipeline as the estimate PDF
     const openingPngs: Record<string, string> = {}
     await Promise.allSettled(

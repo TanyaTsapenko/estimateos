@@ -60,17 +60,11 @@ export async function POST(request: NextRequest) {
     .trim()
     .replace(/[^\x20-\x7E]/g, '')
 
-  console.log('[send-email] est.user_id raw:', JSON.stringify(est.user_id))
-  console.log('[send-email] cleanUserId:', JSON.stringify(cleanUserId))
-
   const { data: profiles, error: profError } = await supabase
     .from('profiles')
     .select('*')
 
   console.log('[send-email] profiles fetched:', profiles?.length ?? 0, 'error:', profError)
-  if (profiles && profiles.length > 0) {
-    console.log('[send-email] profile ids:', profiles.map((p: any) => p.id))
-  }
 
   if (profError) {
     console.error('Error fetching profiles:', profError)
@@ -85,8 +79,6 @@ export async function POST(request: NextRequest) {
       .replace(/[^\x20-\x7E]/g, '')
     return cleanProfileId === cleanUserId
   }) ?? null
-
-  console.log('[send-email] prof found:', !!prof, prof ? { id: prof.id, company_name: prof.company_name, phone: (prof as any).phone, email: (prof as any).email } : null)
 
   if (!prof) {
     console.error('Profile not found. cleanUserId:', JSON.stringify(cleanUserId))
@@ -623,15 +615,12 @@ ${hdrBlock('Payment complete for', est.client_name || 'Client',
       open_tracking: true,
     } : {}),
   }
-  console.log('RESEND PAYLOAD:', JSON.stringify({ from: emailPayload.from, to: emailPayload.to, subject: emailPayload.subject, htmlLength: html.length }))
-
   try {
     const { data, error } = await resend.emails.send(emailPayload)
     if (error) {
       console.error('RESEND ERROR:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    console.log('RESEND SUCCESS:', data?.id, '→ to:', est.client_email)
     try {
       if (type === 'send') {
         await logActivity(supabase, { user_id: est.user_id, event_type: 'estimate_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: est.total })

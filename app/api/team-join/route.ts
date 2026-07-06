@@ -30,7 +30,6 @@ export async function POST(request: NextRequest) {
   }
 
   const appRole = invite.role === 'owner' ? 'owner' : 'estimator'
-  console.log('[team-join] Setting role to', appRole, 'for user:', user.id)
 
   // Upsert so the row is created if it doesn't exist yet (e.g. user just registered via invite link)
   const profileData: Record<string, unknown> = {
@@ -47,7 +46,6 @@ export async function POST(request: NextRequest) {
     console.error('[team-join] profile upsert error:', profileErr)
     return NextResponse.json({ error: profileErr.message }, { status: 500 })
   }
-  console.log('[team-join] profile updated — role:', appRole, 'team_owner_id:', invite.owner_id)
 
   await admin
     .from('team_invitations')

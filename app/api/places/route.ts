@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const KEY = process.env.GOOGLE_PLACES_API_KEY
-  console.log('[places] Google API key exists:', !!KEY, 'key prefix:', KEY?.slice(0, 8))
-
   if (!KEY) {
     console.error('[places] GOOGLE_PLACES_API_KEY is not set')
     return NextResponse.json({ error: 'Missing API key' }, { status: 500 })
@@ -26,8 +24,6 @@ export async function GET(req: NextRequest) {
       body.includedPrimaryTypes = [placeTypes.replace(/[()]/g, '')]
     }
 
-    console.log('[places] autocomplete request body:', JSON.stringify(body))
-
     const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
       method: 'POST',
       headers: {
@@ -38,8 +34,6 @@ export async function GET(req: NextRequest) {
     })
 
     const rawText = await res.text()
-    console.log('[places] autocomplete raw response status:', res.status)
-    console.log('[places] autocomplete raw response body:', rawText)
 
     let data: Record<string, unknown>
     try {
@@ -75,7 +69,6 @@ export async function GET(req: NextRequest) {
   if (type === 'details') {
     const placeId = searchParams.get('place_id') || ''
     const url = `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`
-    console.log('[places] details url:', url)
 
     const res = await fetch(url, {
       headers: {
@@ -85,8 +78,6 @@ export async function GET(req: NextRequest) {
     })
 
     const rawText = await res.text()
-    console.log('[places] details raw response status:', res.status)
-    console.log('[places] details raw response body:', rawText)
 
     let data: Record<string, unknown>
     try {

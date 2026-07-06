@@ -17,7 +17,6 @@ export async function GET(req: NextRequest) {
     const estimateId = searchParams.get('id')
     if (!estimateId) return NextResponse.json({ error: 'Missing id' }, { status: 400 })
 
-    console.log('[estimate-pdf] estimateId:', estimateId)
     const admin = createServiceClient()
 
     const { data: estimate, error: estErr } = await admin
@@ -59,7 +58,6 @@ export async function GET(req: NextRequest) {
     const drawingPngs   = drawingResults.map(r => r.png)
     const drawingLabels = drawingResults.map(r => ({ w: r.wLabel, h: r.hLabel }))
 
-    console.log('[estimate-pdf] drawingPngs:', drawingPngs.map(p => p ? p.substring(0, 50) : 'EMPTY'))
     console.log('[estimate-pdf] calling renderToBuffer...')
     const pdfBuffer = await renderToBuffer(
       React.createElement(EstimatePDF, {

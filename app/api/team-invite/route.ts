@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
   console.log('[team-invite] START')
 
   const RESEND_KEY = process.env.RESEND_API_KEY
-  console.log('[team-invite] RESEND_API_KEY exists:', !!RESEND_KEY, 'prefix:', RESEND_KEY?.slice(0, 8))
   if (!RESEND_KEY) {
     console.error('[team-invite] RESEND_API_KEY is not set — cannot send email')
     return NextResponse.json({ error: 'Email service not configured' }, { status: 500 })
@@ -33,12 +32,8 @@ export async function POST(request: NextRequest) {
     console.log('[team-invite] Unauthorized — no user session')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  console.log('[team-invite] user:', user.id)
-
   const body = await request.json()
   const { inviteeEmail, inviteeName, role, resendId, permissions } = body
-  console.log('[team-invite] payload:', { inviteeEmail, inviteeName, role, resendId, permissions })
-
   if (!inviteeEmail) return NextResponse.json({ error: 'Email required' }, { status: 400 })
   if (!isValidEmail(inviteeEmail)) return NextResponse.json({ error: 'Invalid email address' }, { status: 400 })
 
@@ -56,7 +51,6 @@ export async function POST(request: NextRequest) {
   let invitation: { id: string; token: string; invitee_email: string; invitee_name: string | null; role: string } | null = null
 
   if (resendId) {
-    console.log('[team-invite] resending existing invite:', resendId)
     const { data, error } = await admin.from('team_invitations').select('*').eq('id', resendId).eq('owner_id', user.id).single()
     if (error) {
       console.error('[team-invite] fetch existing invite error:', error)
@@ -72,11 +66,9 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (existing) {
-      console.log('[team-invite] duplicate pending invite for:', inviteeEmail)
       return NextResponse.json({ error: 'A pending invite already exists for this email' }, { status: 409 })
     }
 
-    console.log('[team-invite] permissions to save:', JSON.stringify(permissions))
     console.log('[team-invite] inserting new invitation')
     const { data, error } = await admin.from('team_invitations').insert({
       owner_id:      user.id,
@@ -91,7 +83,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     invitation = data
-    console.log('[team-invite] invitation created, id:', invitation?.id, 'token:', invitation?.token)
   }
 
   if (!invitation) return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
@@ -103,7 +94,6 @@ export async function POST(request: NextRequest) {
   const joinLink = `${request.nextUrl.origin}/team/join/${invitation.token}`
   const roleLabel = ROLE_LABELS[invitation.role] || invitation.role
   const toName = invitation.invitee_name || inviteeEmail.split('@')[0]
-  console.log('[team-invite] join link:', joinLink)
 
   const html = `<!DOCTYPE html>
 <html>
@@ -152,7 +142,6 @@ export async function POST(request: NextRequest) {
 </html>`
 
   const inviteReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
-  console.log('[team-invite] sending email to:', inviteeEmail)
   const { data: emailData, error: emailError } = await resend.emails.send({
     from: `${companyName} <noreply@useapexscale.com>`,
     to:   [inviteeEmail],
@@ -171,6 +160,5 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  console.log('[team-invite] email sent OK, id:', emailData?.id)
   return NextResponse.json({ success: true, invitation })
 }
