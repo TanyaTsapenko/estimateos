@@ -129,12 +129,14 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor, 
   const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
   // When labels are hidden use a tighter viewBox that excludes the dimension/label area below the frame
   const vb = hideLabels ? `0 0 ${SVG_W} ${FB + 10}` : `0 0 ${SVG_W} ${SVG_H}`
+  const fw = hideLabels ? '4' : '2.5'
+  const dw = hideLabels ? '2.5' : '1.5'
 
   return (
     <svg viewBox={vb} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
-      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={GLASS} stroke={FC} strokeWidth="2.5"/>
+      <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={GLASS} stroke={FC} strokeWidth={fw}/>
       {segs.slice(0, -1).map((seg, i) => (
-        <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth="1.5"/>
+        <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth={dw}/>
       ))}
       {segs.map((seg, i) => <SegContent key={i} info={seg} fr={FC}/>)}
       {!hideLabels && <>

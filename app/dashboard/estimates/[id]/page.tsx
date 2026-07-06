@@ -60,6 +60,12 @@ const STATUS_BG: Record<string, string> = {
 }
 
 
+function parseSec(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
+
 export default function EstimateDetailPage() {
   const router   = useRouter()
   const { id }   = useParams<{ id: string }>()
@@ -392,12 +398,13 @@ export default function EstimateDetailPage() {
               if (op.core_type)           pills.push(<span key="ct"      style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
               if (op.notes)               pills.push(<span key="notes"   style={{ ...chipOrange, gap: 4 }}><FileText size={12}/>{op.notes}</span>)
               const isCombo = op.type === 'combination' || op.type === 'window_combo'
+              const comboSecs = isCombo ? parseSec(op.sections) : []
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex' }}>
                     <div onClick={() => setEnlargedOpening(op)} style={{ width: isCombo ? 160 : 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
                       <div style={{ width: isCombo ? 136 : 116, minHeight: isCombo ? 63 : 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
-                        <OpeningDrawing op={op} />
+                        <OpeningDrawing op={op} hideComboLabels={isCombo} />
                       </div>
                     </div>
                     <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
@@ -409,6 +416,11 @@ export default function EstimateDetailPage() {
                           {fmtCAD(op.total_cost)}
                         </div>
                       </div>
+                      {isCombo && comboSecs.length > 0 && (
+                        <div style={{ fontSize: 11, color: '#94A0B4', marginBottom: 2 }}>
+                          {comboSecs.length} sections: {comboSecs.map(s => s.type).join(' · ')}
+                        </div>
+                      )}
                       {subtitle && (
                         <div style={{ fontSize: 12, color: '#475467', marginBottom: pills.length ? 8 : 0 }}>{subtitle}</div>
                       )}

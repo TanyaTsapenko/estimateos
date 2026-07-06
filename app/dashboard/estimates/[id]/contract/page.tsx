@@ -61,6 +61,16 @@ const INK_S = '#94A0B4'
 const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
 const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
 
+const SECTION_TYPE_MAP: Record<string, string> = {
+  'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+}
+function parseSections(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
+
 const sheetStyle: React.CSSProperties = {
   background: '#fff',
   borderRadius: 6,
@@ -404,23 +414,75 @@ export default function ContractPage() {
               const glass       = getGlassLabel(op)
               const installLbl  = (op.install  && op.install  !== 'retrofit') ? (INSTALL_LABELS[op.install]   || op.install)  : null
               const materialLbl = (op.material && op.material !== 'vinyl')    ? (MATERIAL_LABELS[op.material] || op.material) : null
+              const isCombo = op.type === 'combination' || op.type === 'window_combo'
+              const comboSecs = isCombo ? parseSections(op.sections) : []
+              const borderStyle = i < openings.length - 1 ? `1px solid ${HAIR}` : 'none'
+
+              if (isCombo) {
+                return (
+                  <div key={op.id} style={{ padding: '14px 0', borderBottom: borderStyle }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: INK, minWidth: 0 }}>{name}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: INK, whiteSpace: 'nowrap' as const, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: INK_S, marginBottom: 10 }}>
+                      Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
+                    </div>
+                    <div style={{ maxWidth: 280, margin: '0 auto', marginBottom: 12 }}>
+                      <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels />
+                    </div>
+                    {comboSecs.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        {comboSecs.map((sec, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: idx < comboSecs.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
+                            <div style={{ fontSize: 10, color: INK_S, width: 16, textAlign: 'right' as const, flexShrink: 0 }}>{idx + 1}.</div>
+                            <div style={{ width: 34, flexShrink: 0, pointerEvents: 'none' as const }}>
+                              <OpeningDrawing op={{ id: `${op.id}-s${idx}`, type: SECTION_TYPE_MAP[sec.type] ?? 'picture' }} />
+                            </div>
+                            <div>
+                              <span style={{ fontSize: 12, fontWeight: 700, color: INK }}>{sec.type}</span>
+                              <span style={{ fontSize: 11, color: INK_S }}> · {sec.width}"</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {(extCol || intCol || glass || installLbl || materialLbl) && (
+                      <div style={{ fontSize: 11, color: INK_M, lineHeight: 1.6 }}>
+                        {(extCol || intCol) && (
+                          <div>
+                            {extCol && <>Ext. <strong style={{ color: INK, fontWeight: 600 }}>{extCol}</strong></>}
+                            {extCol && intCol && ' · '}
+                            {intCol && <>Int. <strong style={{ color: INK, fontWeight: 600 }}>{intCol}</strong></>}
+                          </div>
+                        )}
+                        {glass && <div>Glass: <strong style={{ color: INK, fontWeight: 600 }}>{glass}</strong></div>}
+                        {(installLbl || materialLbl) && (
+                          <div>
+                            {installLbl && <>Install: <strong style={{ color: INK, fontWeight: 600 }}>{installLbl}</strong></>}
+                            {installLbl && materialLbl && ' · '}
+                            {materialLbl && <>Material: <strong style={{ color: INK, fontWeight: 600 }}>{materialLbl}</strong></>}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              }
 
               return (
-                <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
-                  {/* Diagram column */}
+                <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: borderStyle }}>
                   <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
                     <OpeningDrawing op={{ ...op, colour: null }} />
                   </div>
-                  {/* Body */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>
                       <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>{name}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: INK, whiteSpace: 'nowrap', flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: INK, whiteSpace: 'nowrap' as const, flexShrink: 0 }}>{fmtCAD(op.total_cost)}</div>
                     </div>
                     <div style={{ fontSize: 11, color: INK_S, marginBottom: 5 }}>
                       Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}
                     </div>
-                    {/* Compact spec lines */}
                     <div style={{ fontSize: 11, color: INK_M, lineHeight: 1.6 }}>
                       {(extCol || intCol) && (
                         <div>

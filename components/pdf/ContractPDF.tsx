@@ -14,6 +14,12 @@ const HAIR  = '#E8EDF3'
 const INSTALL_LABELS: Record<string, string> = { fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
 const MATERIAL_LABELS: Record<string, string> = { wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
 
+function parseSectionsPdf(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
+
 const styles = StyleSheet.create({
   page: { fontFamily: 'Helvetica', fontSize: 10, padding: 40, backgroundColor: '#ffffff' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingBottom: 14, borderBottomWidth: 2, borderBottomColor: BLUE },
@@ -157,6 +163,37 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           if (op.install  && op.install  !== 'retrofit') specParts.push(`Install: ${INSTALL_LABELS[op.install]  || op.install}`)
           if (op.material && op.material !== 'vinyl')    specParts.push(`Material: ${MATERIAL_LABELS[op.material] || op.material}`)
           if (op.room) specParts.push(op.room)
+          const isCombo = op.type === 'combination' || op.type === 'window_combo'
+          const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
+
+          if (isCombo) {
+            return (
+              <View key={i} style={{ paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: HAIR }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: INK, flex: 1, marginRight: 8 }}>{name}</Text>
+                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: INK }}>{formatCurrency(op.total_cost)}</Text>
+                </View>
+                <Text style={{ fontSize: 8, color: INK_S, marginBottom: comboSecs.length > 0 ? 4 : 0 }}>
+                  Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
+                </Text>
+                {openingPngs?.[op.id] && (
+                  <Image src={openingPngs[op.id]} style={{ width: '100%', maxHeight: 56, objectFit: 'contain', marginBottom: 5 }} />
+                )}
+                {comboSecs.length > 0 && (
+                  <View style={{ marginBottom: 4 }}>
+                    {comboSecs.map((sec: any, idx: number) => (
+                      <Text key={idx} style={{ fontSize: 8, color: INK_M, marginBottom: 1 }}>
+                        {idx + 1}. {sec.type} — {sec.width}"
+                      </Text>
+                    ))}
+                  </View>
+                )}
+                {specParts.length > 0 && (
+                  <Text style={{ fontSize: 8, color: INK_M }}>{specParts.filter((p: string) => !p.includes('" ×')).join(' · ')}</Text>
+                )}
+              </View>
+            )
+          }
           return (
             <View key={i} style={styles.tableRow}>
               <View style={{ width: '18%' }}>
