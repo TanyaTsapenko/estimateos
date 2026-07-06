@@ -119,7 +119,7 @@ function SegContent({ info, fr }: { info: SegInfo; fr?: string }) {
 }
 
 // ── CombinationDrawing ─────────────────────────────────────────────
-export function CombinationDrawing({ sections, heightIn, glassType, frameColor }: { sections: CombinationSection[]; heightIn?: number; glassType?: string; frameColor?: string }) {
+export function CombinationDrawing({ sections, heightIn, glassType, frameColor, hideLabels }: { sections: CombinationSection[]; heightIn?: number; glassType?: string; frameColor?: string; hideLabels?: boolean }) {
   const rawId = useId()
   const uid = rawId.replace(/:/g, 'c')
   if (!sections.length) return null
@@ -127,34 +127,38 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor }
   const segs = buildSegs(sections)
   const hLabel = heightIn ? `${heightIn}"` : 'H'
   const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
+  // When labels are hidden use a tighter viewBox that excludes the dimension/label area below the frame
+  const vb = hideLabels ? `0 0 ${SVG_W} ${FB + 10}` : `0 0 ${SVG_W} ${SVG_H}`
 
   return (
-    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
+    <svg viewBox={vb} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
       <rect x={FX} y={FY} width={FW} height={FH} rx="3" fill={GLASS} stroke={FC} strokeWidth="2.5"/>
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth="1.5"/>
       ))}
       {segs.map((seg, i) => <SegContent key={i} info={seg} fr={FC}/>)}
-      <line x1={FX} y1={DIM_Y} x2={FR} y2={DIM_Y} stroke={SEC} strokeWidth="1"/>
-      {boundaries.map((bx, i) => (
-        <line key={i} x1={bx} y1={DIM_Y - TICK} x2={bx} y2={DIM_Y + TICK} stroke={SEC} strokeWidth="1.5"/>
-      ))}
-      {segs.map((seg, i) => (
-        <g key={i}>
-          <text x={seg.sCX} y={LBL_Y} textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
-            {seg.sec.width}&quot;
-          </text>
-          <text x={seg.sCX} y={TYPE_Y} textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="9" fill={SEC}>
-            {seg.sec.type}
-          </text>
-        </g>
-      ))}
-      <line x1={DIM_R} y1={FY} x2={DIM_R} y2={FB} stroke={SEC} strokeWidth="1"/>
-      <line x1={DIM_R - 4} y1={FY} x2={DIM_R + 4} y2={FY} stroke={SEC} strokeWidth="1.5"/>
-      <line x1={DIM_R - 4} y1={FB} x2={DIM_R + 4} y2={FB} stroke={SEC} strokeWidth="1.5"/>
-      <text x={DIM_R + 6} y={MID_Y + 4} textAnchor="start" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
-        {hLabel}
-      </text>
+      {!hideLabels && <>
+        <line x1={FX} y1={DIM_Y} x2={FR} y2={DIM_Y} stroke={SEC} strokeWidth="1"/>
+        {boundaries.map((bx, i) => (
+          <line key={i} x1={bx} y1={DIM_Y - TICK} x2={bx} y2={DIM_Y + TICK} stroke={SEC} strokeWidth="1.5"/>
+        ))}
+        {segs.map((seg, i) => (
+          <g key={i}>
+            <text x={seg.sCX} y={LBL_Y} textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
+              {seg.sec.width}&quot;
+            </text>
+            <text x={seg.sCX} y={TYPE_Y} textAnchor="middle" fontFamily="system-ui, sans-serif" fontSize="9" fill={SEC}>
+              {seg.sec.type}
+            </text>
+          </g>
+        ))}
+        <line x1={DIM_R} y1={FY} x2={DIM_R} y2={FB} stroke={SEC} strokeWidth="1"/>
+        <line x1={DIM_R - 4} y1={FY} x2={DIM_R + 4} y2={FY} stroke={SEC} strokeWidth="1.5"/>
+        <line x1={DIM_R - 4} y1={FB} x2={DIM_R + 4} y2={FB} stroke={SEC} strokeWidth="1.5"/>
+        <text x={DIM_R + 6} y={MID_Y + 4} textAnchor="start" fontFamily="system-ui, sans-serif" fontSize="10" fontWeight="700" fill={DIM}>
+          {hLabel}
+        </text>
+      </>}
     </svg>
   )
 }

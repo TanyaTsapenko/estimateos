@@ -444,8 +444,8 @@ export default function SignContractPage() {
               const isCombo = op.type === 'combination' || op.type === 'window_combo'
               return (
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: i < openings.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
-                  <div style={{ width: isCombo ? 140 : 74, flexShrink: 0, paddingTop: 2 }}>
-                    <OpeningDrawing op={{ ...op, colour: null }} />
+                  <div style={{ width: isCombo ? 160 : 74, flexShrink: 0, paddingTop: 2 }}>
+                    <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels={isCombo} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>

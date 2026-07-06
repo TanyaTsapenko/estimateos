@@ -50,7 +50,7 @@ export interface DrawableOpening {
   panel_type?: string | null
 }
 
-export function OpeningDrawing({ op }: { op: DrawableOpening }) {
+export function OpeningDrawing({ op, hideComboLabels }: { op: DrawableOpening; hideComboLabels?: boolean }) {
   const typeId = OLD_TO_V2_TYPE[op.type] ?? op.type
   const wIn    = op.width_in  ?? undefined
   const hIn    = op.height_in ?? undefined
@@ -90,7 +90,7 @@ export function OpeningDrawing({ op }: { op: DrawableOpening }) {
       const comboSecs = (Array.isArray(rawSec) && rawSec.length > 0 ? rawSec : [
         { type: 'Casement', width: 1 }, { type: 'Picture', width: 2 }, { type: 'Casement', width: 1 },
       ]) as CombinationSection[]
-      return <CombinationDrawing sections={comboSecs} heightIn={hIn} />
+      return <CombinationDrawing sections={comboSecs} heightIn={hIn} hideLabels={hideComboLabels} />
     }
     case 'transom':
       return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />

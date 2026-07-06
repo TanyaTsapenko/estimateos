@@ -395,14 +395,14 @@ export default function EstimateDetailPage() {
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
                   <div style={{ display: 'flex' }}>
-                    <div onClick={() => setEnlargedOpening(op)} style={{ width: isCombo ? 200 : 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
-                      <div style={{ width: isCombo ? 176 : 116, minHeight: isCombo ? 82 : 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
+                    <div onClick={() => setEnlargedOpening(op)} style={{ width: isCombo ? 160 : 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
+                      <div style={{ width: isCombo ? 136 : 116, minHeight: isCombo ? 63 : 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
                         <OpeningDrawing op={op} />
                       </div>
                     </div>
                     <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 3 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1220', lineHeight: 1.3 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1220', lineHeight: 1.3, minWidth: 0 }}>
                           {typeName}{op.qty > 1 ? ` × ${op.qty}` : ''}
                         </div>
                         <div style={{ fontSize: 14, fontWeight: 800, color: '#2563EB', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
@@ -705,7 +705,7 @@ export default function EstimateDetailPage() {
       {enlargedOpening && (
         <div onClick={() => setEnlargedOpening(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, maxWidth: 320, width: '100%' }}>
-            <div style={{ width: 240, height: 240, margin: '0 auto', padding: 20, boxSizing: 'border-box' }}>
+            <div style={{ width: '100%', ...(enlargedOpening.type !== 'combination' && enlargedOpening.type !== 'window_combo' ? { height: 240 } : {}), padding: 20, boxSizing: 'border-box' }}>
               <OpeningDrawing op={enlargedOpening} />
             </div>
             <button onClick={() => setEnlargedOpening(null)} style={{ padding: '10px 28px', background: '#F1F5F9', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, color: '#64748B', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
