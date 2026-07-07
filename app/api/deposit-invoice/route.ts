@@ -109,9 +109,11 @@ export async function POST(request: NextRequest) {
 
     const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
 <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
-  <div style="padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:center;">
-    ${depLogoHtml}
-    <span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invoiceBadge}</span>
+  <div style="padding:22px 40px 18px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td align="left" style="vertical-align:middle;">${depLogoHtml}</td>
+      <td align="right" style="vertical-align:middle;white-space:nowrap;"><span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invoiceBadge}</span></td>
+    </tr></table>
   </div>
   <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
   <div style="padding:24px 40px 8px;">
