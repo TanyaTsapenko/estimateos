@@ -92,15 +92,15 @@ export async function POST(request: NextRequest) {
     const invoiceBadge = invoiceNum + (depositPct === 100 ? ' · Payment' : ' · Deposit')
     const depLogoHtml = (prof as any)?.logo_url
       ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-      : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;">${companyName.charAt(0).toUpperCase()}</div></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
     const depETransferBlock = interacEmail
       ? `<div style="border:1px solid rgba(15,23,42,0.10);border-radius:14px;padding:16px 18px;margin:0 0 18px;">
       <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563EB;margin-bottom:10px;">Pay by e-Transfer</div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Send to</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${interacEmail}</span></div>
-      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Reference / message</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${invoiceNum}</span></div>
-      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Amount</span><span style="font-size:13px;font-weight:800;color:#1D4ED8;">${fmtInv(depositAmount)}</span></div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);">Send to</td><td align="right" style="font-size:13px;font-weight:700;color:#0B1220;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);white-space:nowrap;">${interacEmail}</td></tr>
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);">Reference / message</td><td align="right" style="font-size:13px;font-weight:700;color:#0B1220;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);white-space:nowrap;">${invoiceNum}</td></tr>
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;">Amount</td><td align="right" style="font-size:13px;font-weight:800;color:#1D4ED8;padding:6px 0;white-space:nowrap;">${fmtInv(depositAmount)}</td></tr>
+      </table>
     </div>`
       : ''
     const depContactFooter = prof?.phone

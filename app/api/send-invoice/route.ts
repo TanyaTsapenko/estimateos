@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
   const invBadge = inv.invoice_number + (isFinal ? ' · Final' : '')
   const invLogoHtml = (prof as any)?.logo_url
     ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-    : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;">${companyName.charAt(0).toUpperCase()}</div></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
   const invIntroPara = isFinal
     ? (projectAddress
         ? `The work at <b style="color:#0B1220;">${projectAddress}</b> is complete.${depositInv ? ` Your deposit has been applied — here's the remaining balance.` : ''}`
@@ -79,21 +79,21 @@ export async function POST(request: NextRequest) {
         : `Please find your invoice below.`)
   const depositPaidRow = isFinal && depositInv
     ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#0F8A4D;">Deposit paid</span><span style="font-size:14px;font-weight:700;color:#0F8A4D;">&#8722; ${fmtInv(depositInv.amount)}</span></div>`
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;color:#0F8A4D;padding:7px 0;">Deposit paid</td><td align="right" style="font-size:14px;font-weight:700;color:#0F8A4D;padding:7px 0;white-space:nowrap;">&#8722; ${fmtInv(depositInv.amount)}</td></tr></table>`
     : ''
   const additionalChargesRows = isFinal && inv.additional_charges?.items?.length > 0
     ? inv.additional_charges.items.map((c: { label: string; amount: number }) =>
         `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">${c.label}</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(c.amount)}</span></div>`
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;color:#475467;padding:7px 0;">${c.label}</td><td align="right" style="font-size:14px;font-weight:700;color:#0B1220;padding:7px 0;white-space:nowrap;">${fmtInv(c.amount)}</td></tr></table>`
       ).join('')
       + (inv.additional_charges?.tax_amount
         ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">${taxLabel} on charges</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(inv.additional_charges.tax_amount)}</span></div>`
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;color:#475467;padding:7px 0;">${taxLabel} on charges</td><td align="right" style="font-size:14px;font-weight:700;color:#0B1220;padding:7px 0;white-space:nowrap;">${fmtInv(inv.additional_charges.tax_amount)}</td></tr></table>`
         : '')
     : ''
   const projectTotalBlock = est?.total != null
     ? `<div style="border-left:3px solid #2563EB;padding:2px 0 2px 18px;margin:0 0 14px;">
-      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">Project total</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(est.total)}</span></div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;color:#475467;padding:7px 0;">Project total</td><td align="right" style="font-size:14px;font-weight:700;color:#0B1220;padding:7px 0;white-space:nowrap;">${fmtInv(est.total)}</td></tr></table>
       ${depositPaidRow}
       ${additionalChargesRows}
     </div>`
@@ -102,11 +102,11 @@ export async function POST(request: NextRequest) {
   const invETransferBlock = invETransferEmail
     ? `<div style="border:1px solid rgba(15,23,42,0.10);border-radius:14px;padding:16px 18px;margin:0 0 18px;">
       <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563EB;margin-bottom:10px;">Pay by e-Transfer</div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Send to</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${invETransferEmail}</span></div>
-      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Reference / message</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${inv.invoice_number}</span></div>
-      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
-      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Amount</span><span style="font-size:13px;font-weight:800;color:#1D4ED8;">${fmtInv(inv.amount)}</span></div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);">Send to</td><td align="right" style="font-size:13px;font-weight:700;color:#0B1220;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);white-space:nowrap;">${invETransferEmail}</td></tr>
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);">Reference / message</td><td align="right" style="font-size:13px;font-weight:700;color:#0B1220;padding:6px 0;border-bottom:1px solid rgba(15,23,42,0.06);white-space:nowrap;">${inv.invoice_number}</td></tr>
+        <tr><td style="font-size:13px;color:#94A0B4;padding:6px 0;">Amount</td><td align="right" style="font-size:13px;font-weight:800;color:#1D4ED8;padding:6px 0;white-space:nowrap;">${fmtInv(inv.amount)}</td></tr>
+      </table>
     </div>`
     : ''
   const invContactFooter = prof?.phone
@@ -129,9 +129,11 @@ export async function POST(request: NextRequest) {
     <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your ${isFinal ? 'final' : ''} invoice.</h1>
     <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 22px;">${invIntroPara}</p>
     ${projectTotalBlock}
-    <div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:14px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;margin:0 0 16px;">
-      <div><div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#94A0B4;">${isFinal ? 'Balance due' : 'Amount due'}</div>${dueDate ? `<div style="font-size:12px;color:#667085;margin-top:2px;">Due ${dueDate}</div>` : ''}</div>
-      <div style="font-size:28px;font-weight:800;color:#1D4ED8;letter-spacing:-0.02em;">${fmtInv(inv.amount)}</div>
+    <div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:14px;margin:0 0 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="padding:18px 20px;vertical-align:middle;"><div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#94A0B4;">${isFinal ? 'Balance due' : 'Amount due'}</div>${dueDate ? `<div style="font-size:12px;color:#667085;margin-top:2px;">Due ${dueDate}</div>` : ''}</td>
+        <td align="right" style="padding:18px 20px;vertical-align:middle;white-space:nowrap;"><div style="font-size:28px;font-weight:800;color:#1D4ED8;letter-spacing:-0.02em;">${fmtInv(inv.amount)}</div></td>
+      </tr></table>
     </div>
     ${invETransferBlock}
     <a href="${estimateLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View invoice &#8594;</a>

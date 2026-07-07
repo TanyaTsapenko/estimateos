@@ -39,20 +39,18 @@ export async function POST(req: Request) {
 
   const logoHtml = prof?.logo_url
     ? `<img src="${prof.logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-    : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;">${companyName.charAt(0).toUpperCase()}</div></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
 
   const introPara = projectAddress
     ? `Review the details for your project at <b style="color:#0B1220;">${projectAddress}</b> and sign online in a couple of taps. Once signed, you'll receive a copy and deposit instructions by email.`
     : `Review the details and sign online in a couple of taps. Once signed, you'll receive a copy and deposit instructions by email.`
 
-  const depositRow = depositFmt
-    ? `<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(37,99,235,0.12);margin-top:4px;padding-top:9px;"><span style="font-size:14px;font-weight:700;color:#475467;">Deposit due on signing</span><span style="font-size:16px;font-weight:800;color:#1D4ED8;">${depositFmt}</span></div>`
-    : ''
-
   const totalsBlock = totalFmt
     ? `<div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:12px;padding:16px 18px;margin:0 0 26px;">
-      <div style="display:flex;justify-content:space-between;padding:5px 0;"><span style="font-size:13.5px;color:#475467;">Project total</span><span style="font-size:13.5px;font-weight:700;color:#0B1220;">${totalFmt}</span></div>
-      ${depositRow}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="font-size:13.5px;color:#475467;padding:5px 0;">Project total</td><td align="right" style="font-size:13.5px;font-weight:700;color:#0B1220;padding:5px 0;white-space:nowrap;">${totalFmt}</td></tr>
+        ${depositFmt ? `<tr><td style="font-size:14px;font-weight:700;color:#475467;padding:9px 0 5px;border-top:1px solid rgba(37,99,235,0.12);">Deposit due on signing</td><td align="right" style="font-size:16px;font-weight:800;color:#1D4ED8;padding:9px 0 5px;border-top:1px solid rgba(37,99,235,0.12);white-space:nowrap;">${depositFmt}</td></tr>` : ''}
+      </table>
     </div>`
     : ''
 

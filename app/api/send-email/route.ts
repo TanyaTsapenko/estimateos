@@ -382,7 +382,7 @@ ${hdrBlock('Following up', est.client_name || 'Client',
     const estimateUrl = `https://useapexscale.com/estimate/${est.id}`
     const sendLogoHtml = (prof as any)?.logo_url
       ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-      : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;">${companyName.charAt(0).toUpperCase()}</div></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
     const estimateIntro = projectAddress
       ? `We've prepared a custom estimate for your project at <b style="color:#0B1220;">${projectAddress}</b>. Take a look whenever you're ready.`
       : `We've prepared a custom estimate for you. Take a look whenever you're ready.`
@@ -403,9 +403,9 @@ ${hdrBlock('Following up', est.client_name || 'Client',
     <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your estimate is ready.</h1>
     <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 24px;">${estimateIntro}</p>
     <div style="border-left:3px solid #2563EB;padding:2px 0 2px 18px;margin:0 0 26px;">
-      <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="font-size:14px;font-weight:700;color:#94A0B4;">Estimate total</span><span style="font-size:15px;font-weight:800;color:#2563EB;">${fmtCAD(est.total)}</span></div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;font-weight:700;color:#94A0B4;padding:8px 0;">Estimate total</td><td align="right" style="font-size:15px;font-weight:800;color:#2563EB;padding:8px 0;white-space:nowrap;">${fmtCAD(est.total)}</td></tr></table>
       <div style="height:1px;background:rgba(15,23,42,0.07);"></div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;"><span style="font-size:14px;font-weight:700;color:#94A0B4;">Valid until</span><span style="font-size:14px;font-weight:800;color:#0B1220;">${validUntilFmt}</span></div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14px;font-weight:700;color:#94A0B4;padding:8px 0;">Valid until</td><td align="right" style="font-size:14px;font-weight:800;color:#0B1220;padding:8px 0;white-space:nowrap;">${validUntilFmt}</td></tr></table>
     </div>
     <a href="${estimateUrl}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View estimate &#8594;</a>
   </div>
