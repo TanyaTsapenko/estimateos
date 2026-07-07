@@ -78,6 +78,7 @@ export default function JoinPage() {
       email: invite.invitee_email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(`/team/join/${token}`)}`,
         data: { first_name: firstName || invite.invitee_name || '' },
       },
     })

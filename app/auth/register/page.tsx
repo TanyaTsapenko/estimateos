@@ -71,7 +71,7 @@ export default function RegisterPage() {
     const { data: signUpData, error: e } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { data: { first_name: firstName, last_name: lastName } },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback`, data: { first_name: firstName, last_name: lastName } },
     })
     if (e) { setError(e.message || 'Registration failed. Please try again.'); setLoading(false); return }
 
