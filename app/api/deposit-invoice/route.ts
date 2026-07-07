@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email, gst_hst_number')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email, gst_hst_number, logo_url')
     .eq('id', est.user_id).single()
 
   const depositPct = est.deposit_percent ?? (prof as any)?.deposit_percent ?? 30
@@ -89,122 +89,45 @@ export async function POST(request: NextRequest) {
       ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/sign/contract/${con.id}`
       : `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/estimate/${estimateId}`
 
-    const slbl = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#94A3B8;margin-bottom:10px;font-family:Arial,sans-serif'
-    const dkeyStyle = 'font-size:13px;color:#94A3B8;padding:7px 0;border-bottom:1px solid #EEF0F4;font-family:Arial,sans-serif'
-    const dvalStyle = 'font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;border-bottom:1px solid #EEF0F4;text-align:right;font-family:Arial,sans-serif'
-    const cardBase = 'background:#ffffff;border-radius:16px;margin-bottom:10px'
+    const invoiceBadge = invoiceNum + (depositPct === 100 ? ' · Payment' : ' · Deposit')
+    const depLogoHtml = (prof as any)?.logo_url
+      ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
+      : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+    const depETransferBlock = interacEmail
+      ? `<div style="border:1px solid rgba(15,23,42,0.10);border-radius:14px;padding:16px 18px;margin:0 0 18px;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563EB;margin-bottom:10px;">Pay by e-Transfer</div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Send to</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${interacEmail}</span></div>
+      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Reference / message</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${invoiceNum}</span></div>
+      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Amount</span><span style="font-size:13px;font-weight:800;color:#1D4ED8;">${fmtInv(depositAmount)}</span></div>
+    </div>`
+      : ''
+    const depContactFooter = prof?.phone
+      ? `Questions? Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
+      : `Questions? Contact <b style="color:#475467;">${companyName}</b>`
 
-    const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#E2E5EC;font-family:Arial,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#E2E5EC;padding:20px 0">
-  <tr><td align="center">
-    <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border-radius:20px;overflow:hidden">
-
-      <!-- HEADER -->
-      <tr><td style="background-color:#080E1C;padding:28px 24px 52px">
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px">
-          <tr><td><span style="font-size:16px;font-weight:800;color:#ffffff;letter-spacing:-0.01em;font-family:Arial,sans-serif">${companyName}</span></td></tr>
-        </table>
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.4);margin-bottom:6px;font-family:Arial,sans-serif">Invoice for</div>
-        <div style="font-size:26px;font-weight:800;color:#ffffff;margin-bottom:14px;font-family:Arial,sans-serif;line-height:1.2">${est.client_name || 'Client'}</div>
-        <table cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="padding-right:6px"><span style="background:#2563EB;color:#ffffff;border-radius:20px;padding:4px 12px;font-size:10px;font-weight:700;font-family:Arial,sans-serif">Payment Due</span></td>
-            <td style="padding-right:6px"><span style="border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.55);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:600;font-family:Arial,sans-serif">${invoiceNum}</span></td>
-            <td><span style="border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.55);border-radius:20px;padding:4px 12px;font-size:10px;font-weight:600;font-family:Arial,sans-serif">Due ${dueDateFmt}</span></td>
-          </tr>
-        </table>
-      </td></tr>
-
-      <!-- BODY -->
-      <tr><td style="background-color:#F5F6F8;padding:20px">
-
-        <p style="font-size:15px;color:#0F172A;font-family:Arial,sans-serif;margin:0 0 16px">
-          Hi <strong>${est.client_name}</strong>,
-        </p>
-        <p style="font-size:13px;color:#64748B;font-family:Arial,sans-serif;line-height:1.6;margin:0 0 20px">
-          Thank you for signing your contract with <strong style="color:#0F172A">${companyName}</strong>. Please find your deposit invoice below.
-        </p>
-
-        <!-- Amount Due -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BFDBFE">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Amount Due</div>
-            <div style="font-size:32px;font-weight:800;color:#2563EB;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtInv(depositAmount)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Due ${dueDateFmt} &middot; Net 14</div>
-          </td></tr>
-        </table>
-
-        ${interacEmail ? `<!-- Interac -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td style="background:#F8FAFC;border:1px solid #E8ECF2;border-radius:12px;padding:16px">
-            <p style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin:0 0 10px;font-family:Arial,sans-serif">Interac e-Transfer</p>
-            <table style="width:100%;font-size:13px;font-family:Arial,sans-serif">
-              <tr><td style="color:#64748B;padding:3px 0">Send to</td><td style="text-align:right;font-weight:600;color:#0F172A">${interacEmail}</td></tr>
-              <tr><td style="color:#64748B;padding:3px 0">Message</td><td style="text-align:right;font-weight:600;color:#0F172A">${est.estimate_number} deposit</td></tr>
-              <tr><td style="color:#64748B;padding:3px 0">Amount</td><td style="text-align:right;font-weight:700;color:#1D4ED8">${fmtInv(depositAmount)}</td></tr>
-            </table>
-          </td></tr>
-        </table>` : ''}
-
-        <!-- Invoice Details -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Invoice Details</div>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="${dkeyStyle}">Invoice number</td>
-                <td style="${dvalStyle}">${invoiceNum}</td>
-              </tr>
-              <tr>
-                <td style="${dkeyStyle}">Related estimate</td>
-                <td style="${dvalStyle}">${est.estimate_number}</td>
-              </tr>
-              <tr>
-                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">${depositPct === 100 ? 'Payment' : 'Deposit rate'}</td>
-                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${depositPct === 100 ? 'Full payment' : `${depositPct}% of ${fmtInv(est.total)}`}</td>
-              </tr>
-              ${(prof as any)?.gst_hst_number ? `<tr>
-                <td style="font-size:13px;color:#94A3B8;padding:7px 0;font-family:Arial,sans-serif">GST/HST #</td>
-                <td style="font-size:13px;font-weight:600;color:#0A1628;padding:7px 0;text-align:right;font-family:Arial,sans-serif">${(prof as any).gst_hst_number}</td>
-              </tr>` : ''}
-            </table>
-          </td></tr>
-        </table>
-
-        <!-- Message -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            ${depositPct === 100
-              ? `A full payment of <strong style="color:#0A1628">${fmtInv(depositAmount)}</strong> is due by ${dueDateFmt} to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
-              : `Please find your deposit invoice attached. A ${depositPct}% deposit of <strong style="color:#0A1628">${fmtInv(depositAmount)}</strong> is due by ${dueDateFmt} (Net 14) to schedule your project. Thank you for choosing <strong style="color:#0A1628">${companyName}</strong>.`
-            }
-          </td></tr>
-        </table>
-
-        <!-- CTA -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td align="center" style="padding:8px 0">
-            <a href="${contractLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Signed Contract &rarr;</a>
-          </td></tr>
-        </table>
-
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">${prof?.phone ? `Questions? Call ${prof.phone}` : `Sent by ${companyName}`}</p>
-
-      </td></tr>
-
-      <!-- FOOTER -->
-      <tr><td style="background:#ffffff;padding:14px 24px;text-align:center;font-size:11px;color:#9CA3AF;font-family:Arial,sans-serif">
-        Powered by ApexScale
-      </td></tr>
-
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`
+    const html = `<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:center;">
+    ${depLogoHtml}
+    <span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invoiceBadge}</span>
+  </div>
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:24px 40px 8px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">Thanks for signing, ${est.client_name || 'there'}</div>
+    <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your ${depositPct === 100 ? 'payment' : 'deposit'} invoice.</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 22px;">To confirm your order and schedule installation, please send the ${depositPct === 100 ? 'payment' : 'deposit'} by e-Transfer using the details below.</p>
+    <div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:14px;padding:20px;text-align:center;margin:0 0 16px;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:6px;">${depositPct === 100 ? 'Payment' : 'Deposit'} due</div>
+      <div style="font-size:34px;font-weight:800;color:#1D4ED8;letter-spacing:-0.02em;">${fmtInv(depositAmount)}</div>
+      <div style="font-size:12.5px;color:#667085;margin-top:4px;">Due ${dueDateFmt}</div>
+    </div>
+    ${depETransferBlock}
+    <a href="${contractLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View invoice &#8594;</a>
+  </div>
+  <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${depContactFooter}</div>
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>`
 
     const depositReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
     try {

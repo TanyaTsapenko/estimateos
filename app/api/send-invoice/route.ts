@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       ? supabase.from('estimates').select('*').eq('id', inv.estimate_id).single()
       : Promise.resolve({ data: null }),
     supabase.from('profiles')
-      .select('company_name, first_name, last_name, email, phone, company_contact_email, interac_email, gst_hst_number')
+      .select('company_name, first_name, last_name, email, phone, company_contact_email, interac_email, gst_hst_number, logo_url')
       .eq('id', user.id)
       .single(),
   ])
@@ -65,96 +65,67 @@ export async function POST(request: NextRequest) {
     ? `Final Invoice ${inv.invoice_number} — ${fmtInv(inv.amount)} due · ${companyName}`
     : `Invoice ${inv.invoice_number} — ${fmtInv(inv.amount)} due · ${companyName}`
 
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
-<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+  const projectAddress = [est?.client_address, est?.client_city].filter(Boolean).join(', ')
+  const invBadge = inv.invoice_number + (isFinal ? ' · Final' : '')
+  const invLogoHtml = (prof as any)?.logo_url
+    ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
+    : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;">${companyName.charAt(0).toUpperCase()}</div><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></div>`
+  const invIntroPara = isFinal
+    ? (projectAddress
+        ? `The work at <b style="color:#0B1220;">${projectAddress}</b> is complete.${depositInv ? ` Your deposit has been applied — here's the remaining balance.` : ''}`
+        : `Your project is complete.${depositInv ? ` Your deposit has been applied — here's the remaining balance.` : ''}`)
+    : (projectAddress
+        ? `Please find your invoice for the project at <b style="color:#0B1220;">${projectAddress}</b> below.`
+        : `Please find your invoice below.`)
+  const depositPaidRow = isFinal && depositInv
+    ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#0F8A4D;">Deposit paid</span><span style="font-size:14px;font-weight:700;color:#0F8A4D;">&#8722; ${fmtInv(depositInv.amount)}</span></div>`
+    : ''
+  const projectTotalBlock = est?.total != null
+    ? `<div style="border-left:3px solid #2563EB;padding:2px 0 2px 18px;margin:0 0 14px;">
+      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">Project total</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(est.total)}</span></div>
+      ${depositPaidRow}
+    </div>`
+    : ''
+  const invETransferEmail = (prof as any)?.interac_email || prof?.email || null
+  const invETransferBlock = invETransferEmail
+    ? `<div style="border:1px solid rgba(15,23,42,0.10);border-radius:14px;padding:16px 18px;margin:0 0 18px;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#2563EB;margin-bottom:10px;">Pay by e-Transfer</div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Send to</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${invETransferEmail}</span></div>
+      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Reference / message</span><span style="font-size:13px;font-weight:700;color:#0B1220;">${inv.invoice_number}</span></div>
+      <div style="height:1px;background:rgba(15,23,42,0.06);"></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:13px;color:#94A0B4;">Amount</span><span style="font-size:13px;font-weight:800;color:#1D4ED8;">${fmtInv(inv.amount)}</span></div>
+    </div>`
+    : ''
+  const invContactFooter = prof?.phone
+    ? `Questions? Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
+    : `Questions? Contact <b style="color:#475467;">${companyName}</b>`
+  const estimateLink = est?.id
+    ? `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/estimate/${est.id}`
+    : `${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/dashboard`
 
-  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">${companyName}</div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">${isFinal ? 'Final Invoice' : 'Invoice'}</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.5)">${inv.invoice_number} · ${companyName}</div>
+  const html = `<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:center;">
+    ${invLogoHtml}
+    <span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invBadge}</span>
   </div>
-
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
-    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${est?.client_name || 'there'},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
-      ${isFinal
-        ? `The project is complete — thank you! Here is your final invoice from <strong style="color:#1A1A1A">${companyName}</strong>. Your deposit has already been received.`
-        : `<strong style="color:#1A1A1A">${companyName}</strong> has sent you an invoice for your project.`}
-    </p>
-
-    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:12px">${isFinal ? 'Final Invoice' : 'Invoice'} ${inv.invoice_number}</div>
-
-      ${est ? `
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px">
-        <span>Project total</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(est.total)} inc. ${taxLabel}</span>
-      </div>` : ''}
-
-      ${isFinal && depositInv ? `
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#16a34a;margin-bottom:14px">
-        <span>Deposit received ✓</span><span style="font-weight:600">− ${fmtInv(depositInv.amount)}</span>
-      </div>` : ''}
-
-      ${isFinal && inv.additional_charges?.items?.length > 0 ? `
-      <div style="margin-bottom:8px">
-        ${inv.additional_charges.items.map((c: {label: string; amount: number}) => `
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:3px">
-          <span>${c.label}</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(c.amount)}</span>
-        </div>`).join('')}
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:5px">
-          <span>${taxLabel} on charges</span><span style="color:#1A1A1A;font-weight:600">${fmtInv(inv.additional_charges.tax_amount)}</span>
-        </div>
-      </div>` : ''}
-
-      <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #1A2744;padding-top:14px">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#1A1A1A">${isFinal ? 'Balance due' : 'Amount due'}</div>
-          ${dueDate ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px">Due by ${dueDate}</div>` : ''}
-        </div>
-        <span style="font-size:26px;font-weight:800;color:#2045B8">${fmtInv(inv.amount)}</span>
-      </div>
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:24px 40px 8px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">${isFinal ? 'Project complete — thank you!' : 'Invoice for you'}</div>
+    <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your ${isFinal ? 'final' : ''} invoice.</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 22px;">${invIntroPara}</p>
+    ${projectTotalBlock}
+    <div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:14px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;margin:0 0 16px;">
+      <div><div style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#94A0B4;">${isFinal ? 'Balance due' : 'Amount due'}</div>${dueDate ? `<div style="font-size:12px;color:#667085;margin-top:2px;">Due ${dueDate}</div>` : ''}</div>
+      <div style="font-size:28px;font-weight:800;color:#1D4ED8;letter-spacing:-0.02em;">${fmtInv(inv.amount)}</div>
     </div>
-
-    ${prof?.email ? `
-    <div style="background:#EEF2FF;border:1px solid #c7d2fe;border-radius:10px;padding:16px;margin-bottom:24px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:10px">Payment instructions</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span style="color:#6b7280">E-Transfer to</span>
-        <span style="font-weight:700;color:#1A1A1A">${prof.email}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span style="color:#6b7280">Reference / message</span>
-        <span style="font-weight:600;color:#1A1A1A">${inv.invoice_number}</span>
-      </div>
-      ${(prof as any)?.gst_hst_number ? `
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">
-        <span style="color:#6b7280">GST/HST #</span>
-        <span style="font-weight:600;color:#1A1A1A">${(prof as any).gst_hst_number}</span>
-      </div>` : ''}
-      ${prof?.phone ? `
-      <div style="display:flex;justify-content:space-between;font-size:12px">
-        <span style="color:#6b7280">Questions</span>
-        <span style="font-weight:600;color:#1A1A1A">${prof.phone}</span>
-      </div>` : ''}
-    </div>` : ''}
-
-    ${inv.notes ? `
-    <p style="font-size:12px;color:#6b7280;line-height:1.7;margin:0 0 20px;padding:12px;background:#F9FAFB;border-radius:8px;border:1px solid #E0E0E0">
-      ${inv.notes.replace(/\n/g, '<br>')}
-    </p>` : ''}
-
-    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center;margin:0">
-      Thank you for your business.${prof?.phone ? `<br>Questions? Contact us at ${prof.phone}` : ''}
-    </p>
+    ${invETransferBlock}
+    <a href="${estimateLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View invoice &#8594;</a>
   </div>
-
-  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Powered by ApexScale</p>
-</div>
-</body>
-</html>`
+  <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${invContactFooter}</div>
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>`
 
   const invoiceReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
   try {
