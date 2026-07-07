@@ -81,9 +81,11 @@ export async function POST(request: NextRequest) {
     ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#0F8A4D;">Deposit paid</span><span style="font-size:14px;font-weight:700;color:#0F8A4D;">&#8722; ${fmtInv(depositInv.amount)}</span></div>`
     : ''
-  const additionalChargesRows = isFinal && inv.additional_charges?.charges_subtotal
-    ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
-      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">Additional charges</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(inv.additional_charges.charges_subtotal)}</span></div>`
+  const additionalChargesRows = isFinal && inv.additional_charges?.items?.length > 0
+    ? inv.additional_charges.items.map((c: { label: string; amount: number }) =>
+        `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">${c.label}</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(c.amount)}</span></div>`
+      ).join('')
       + (inv.additional_charges?.tax_amount
         ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">${taxLabel} on charges</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(inv.additional_charges.tax_amount)}</span></div>`
