@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     : `Review the details and sign online in a couple of taps. Once signed, you'll receive a copy and deposit instructions by email.`
 
   const depositRow = depositFmt
-    ? `<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(37,99,235,0.12);margin-top:4px;padding-top:9px;"><span style="font-size:14px;font-weight:800;color:#1D4ED8;">Deposit due on signing</span><span style="font-size:16px;font-weight:800;color:#1D4ED8;">${depositFmt}</span></div>`
+    ? `<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(37,99,235,0.12);margin-top:4px;padding-top:9px;"><span style="font-size:14px;font-weight:700;color:#475467;">Deposit due on signing</span><span style="font-size:16px;font-weight:800;color:#1D4ED8;">${depositFmt}</span></div>`
     : ''
 
   const totalsBlock = totalFmt
@@ -66,14 +66,14 @@ export async function POST(req: Request) {
       to: clientEmail,
       subject: `Contract from ${companyName} — Ready to Sign`,
       ...(contractReplyTo ? { reply_to: contractReplyTo } : {}),
-      html: `<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+      html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
   <div style="padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:center;">
     ${logoHtml}
     <span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${contractBadge}</span>
   </div>
   <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
   <div style="padding:24px 40px 8px;">
-    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">Ready for your signature</div>
     <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your contract is ready to sign.</h1>
     <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 24px;">${introPara}</p>
     ${totalsBlock}
@@ -81,7 +81,8 @@ export async function POST(req: Request) {
   </div>
   <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${phoneFooter}</div>
   <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
-</div>`,
+</div>
+</td></tr></table>`,
     })
     return NextResponse.json({ success: true })
   } catch (e: any) {

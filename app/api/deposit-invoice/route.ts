@@ -107,14 +107,14 @@ export async function POST(request: NextRequest) {
       ? `Questions? Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
       : `Questions? Contact <b style="color:#475467;">${companyName}</b>`
 
-    const html = `<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+    const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
   <div style="padding:22px 40px 18px;display:flex;justify-content:space-between;align-items:center;">
     ${depLogoHtml}
     <span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invoiceBadge}</span>
   </div>
   <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
   <div style="padding:24px 40px 8px;">
-    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">Thanks for signing, ${est.client_name || 'there'}</div>
     <h1 style="font-size:29px;font-weight:800;color:#0B1220;letter-spacing:-0.02em;line-height:1.1;margin:0 0 14px;">Your ${depositPct === 100 ? 'payment' : 'deposit'} invoice.</h1>
     <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 0 22px;">To confirm your order and schedule installation, please send the ${depositPct === 100 ? 'payment' : 'deposit'} by e-Transfer using the details below.</p>
     <div style="background:#F4F7FE;border:1px solid rgba(37,99,235,0.14);border-radius:14px;padding:20px;text-align:center;margin:0 0 16px;">
@@ -127,7 +127,8 @@ export async function POST(request: NextRequest) {
   </div>
   <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${depContactFooter}</div>
   <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
-</div>`
+</div>
+</td></tr></table>`
 
     const depositReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
     try {
