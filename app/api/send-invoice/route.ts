@@ -81,10 +81,19 @@ export async function POST(request: NextRequest) {
     ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#0F8A4D;">Deposit paid</span><span style="font-size:14px;font-weight:700;color:#0F8A4D;">&#8722; ${fmtInv(depositInv.amount)}</span></div>`
     : ''
+  const additionalChargesRows = isFinal && inv.additional_charges?.charges_subtotal
+    ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">Additional charges</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(inv.additional_charges.charges_subtotal)}</span></div>`
+      + (inv.additional_charges?.tax_amount
+        ? `<div style="height:1px;background:rgba(15,23,42,0.07);"></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">${taxLabel} on charges</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(inv.additional_charges.tax_amount)}</span></div>`
+        : '')
+    : ''
   const projectTotalBlock = est?.total != null
     ? `<div style="border-left:3px solid #2563EB;padding:2px 0 2px 18px;margin:0 0 14px;">
       <div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="font-size:14px;color:#475467;">Project total</span><span style="font-size:14px;font-weight:700;color:#0B1220;">${fmtInv(est.total)}</span></div>
       ${depositPaidRow}
+      ${additionalChargesRows}
     </div>`
     : ''
   const invETransferEmail = (prof as any)?.interac_email || prof?.email || null
