@@ -343,35 +343,57 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
       .replace(/\{amount\}/g, amtFmt)
       .replace(/\{expiry_date\}/g, expiryFmt)
       .replace(/\{estimate_number\}/g, est.estimate_number || '')
-    const msgLines = (resolvedMessage).split('\n')
+    const msgLines = resolvedMessage.split('\n')
     const msgHtml = msgLines.map((line: string) =>
-      `<p style="font-size:14px;color:#374151;line-height:1.7;margin:0 0 8px;font-family:Arial,sans-serif">${line || '&nbsp;'}</p>`
+      line
+        ? `<p style="font-size:16px;color:#1E2A3B;line-height:1.75;margin:0 0 12px;">${line}</p>`
+        : `<p style="margin:0 0 12px;">&nbsp;</p>`
     ).join('')
-    html = outerWrap(`
-${hdrBlock('Following up', est.client_name || 'Client',
-  pill(est.estimate_number) + pill('Reminder')
-)}
-      <!-- BODY -->
-      <tr><td style="${bodyStyle}">
+    const repName = (prof as any)?.first_name || companyName
+    const remReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email
+    const remLogoCell = (prof as any)?.logo_url
+      ? `<td style="vertical-align:middle;"><img src="${(prof as any).logo_url}" style="height:34px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td>`
+      : `<td width="34" height="34" style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:34px;height:34px;line-height:34px;color:#fff;font-weight:800;font-size:15px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td>`
 
-        <!-- Message -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:20px">
-            ${msgHtml}
-          </td></tr>
-        </table>
-
-        <!-- CTA -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#2563EB;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
-          </td></tr>
-        </table>
-
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${(prof as any)?.phone ? ` at ${(prof as any).phone}` : ''}</p>
-
+    html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:26px 40px 20px;">
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+      ${remLogoCell}
+      <td style="padding-left:10px;vertical-align:middle;">
+        <div style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</div>
+        <div style="font-size:12px;color:#94A0B4;">re: your estimate ${est.estimate_number || ''}</div>
+      </td>
+    </tr></table>
+  </div>
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:30px 40px 10px;">
+    ${msgHtml}
+    <p style="font-size:16px;line-height:1.75;color:#1E2A3B;margin:6px 0 0;">— ${repName}</p>
+  </div>
+  <div style="padding:22px 40px 8px;">
+    <table width="100%" role="presentation" cellpadding="0" cellspacing="0" style="background:#F7F9FC;border-radius:12px;">
+      <tr><td style="padding:14px 18px;">
+        <table width="100%" role="presentation" cellpadding="0" cellspacing="0"><tr>
+          <td align="left">
+            <div style="font-size:13px;font-weight:700;color:#0B1220;">${est.estimate_number || 'Estimate'}</div>
+            ${expiryFmt ? `<div style="font-size:11.5px;color:#94A0B4;margin-top:2px;">Valid until ${expiryFmt}</div>` : ''}
+          </td>
+          ${amtFmt ? `<td align="right" style="font-size:15px;font-weight:800;color:#2563EB;white-space:nowrap;">${amtFmt}</td>` : ''}
+        </tr></table>
       </td></tr>
-`)
+    </table>
+  </div>
+  <div style="padding:18px 40px 8px;">
+    <a href="${clientLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View estimate &#8594;</a>
+  </div>
+  ${remReplyTo
+    ? `<div style="text-align:center;font-size:13px;color:#94A0B4;padding:20px 40px 22px;">Or reply to this email — it goes straight to <b style="color:#475467;">${companyName}</b>.</div>`
+    : `<div style="padding:14px 40px 20px;"></div>`
+  }
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>
+</td></tr></table>`
 
   // ── SEND (estimate to client) ─────────────────────────────────────────────────
   } else if (type === 'send') {
