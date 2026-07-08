@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
       <div style="font-size:12.5px;color:#667085;margin-top:4px;">Due ${dueDateFmt}</div>
     </div>
     ${depETransferBlock}
-    <a href="${contractLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View invoice &#8594;</a>
+    <a href="${contractLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View signed contract &#8594;</a>
   </div>
   <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${depContactFooter}</div>
   <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
