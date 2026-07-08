@@ -68,22 +68,11 @@ export async function POST(request: NextRequest) {
   const memberFirstName = invite.invitee_name?.split(' ')[0] || ''
   const roleLabel = ROLE_LABELS[invite.role] || invite.role
 
-  // 1. Welcome email to the new member
-  if (user.email) {
-    const { html: welcomeHtml, subject: welcomeSubject } = welcomeEmailHtml(memberFirstName)
-    resend.emails.send({
-      from: 'ApexScale <noreply@useapexscale.com>',
-      to: [user.email],
-      subject: welcomeSubject,
-      html: welcomeHtml,
-    }).catch((e: Error) => console.error('[team-join] welcome email error:', e.message))
-  }
-
-  // 2. Owner: in-app notification + email
+  // 2. Owner: in-app notification + email (fetch owner profile first, reuse for welcome email)
   ;(async () => {
     const { data: ownerProf } = await admin
       .from('profiles')
-      .select('email, company_name, first_name, last_name')
+      .select('email, company_name, first_name, last_name, logo_url')
       .eq('id', invite.owner_id)
       .single()
 
@@ -91,8 +80,20 @@ export async function POST(request: NextRequest) {
     const companyName = ownerProf?.company_name
       || `${ownerProf?.first_name || ''} ${ownerProf?.last_name || ''}`.trim()
       || 'Your team'
+    const logoUrl = (ownerProf as any)?.logo_url || undefined
 
-    // In-app notification
+    // 1. Welcome email to the new member
+    if (user.email) {
+      const { html: welcomeHtml, subject: welcomeSubject } = welcomeEmailHtml(memberFirstName, companyName, roleLabel, logoUrl)
+      resend.emails.send({
+        from: 'ApexScale <noreply@useapexscale.com>',
+        to: [user.email],
+        subject: welcomeSubject,
+        html: welcomeHtml,
+      }).catch((e: Error) => console.error('[team-join] welcome email error:', e.message))
+    }
+
+    // In-app notification to owner
     admin.from('notifications').insert({
       user_id: invite.owner_id,
       type: 'team_member_joined',
@@ -104,49 +105,42 @@ export async function POST(request: NextRequest) {
 
     // Owner email
     if (ownerEmail) {
-      const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#F5F6F8" style="background:#F5F6F8;"><tr><td align="center" style="padding:32px 16px;">
-<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #E5E7EB;">
-  <div style="padding:20px 32px;border-bottom:1px solid #F3F4F6;">
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
+      const ownerHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:22px 40px 18px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font-size:15px;font-weight:700;color:#0A1628;">ApexScale</td>
-      <td align="right" style="font-size:12px;color:#9CA3AF;">Team notification</td>
+      <td align="left" style="font-size:14px;font-weight:800;color:#0B1220;">ApexScale</td>
+      <td align="right"><span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">Team update</span></td>
     </tr></table>
   </div>
-  <div style="padding:32px 32px 24px;text-align:center;">
-    <div style="width:52px;height:52px;background:#EFF6FF;border-radius:26px;margin:0 auto 16px;line-height:52px;text-align:center;">
-      <span style="font-size:22px;color:#2563EB;line-height:52px;">+</span>
-    </div>
-    <div style="font-size:22px;font-weight:800;color:#0A1628;letter-spacing:-0.5px;margin-bottom:6px;">New team member!</div>
-    <div style="font-size:14px;color:#6B7280;line-height:1.5;"><span style="color:#2563EB;font-weight:600;">${memberName}</span> has joined ${companyName}.</div>
-  </div>
-  <div style="padding:0 32px 24px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8F9FB;border-radius:12px;overflow:hidden;">
-      <tr><td style="padding:12px 16px;border-bottom:1px solid #E5E7EB;">
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:24px 40px 8px;">
+    <h1 style="font-size:26px;font-weight:700;color:#0B1220;letter-spacing:-0.02em;line-height:1.2;margin:0 0 12px;">${memberName} joined your team.</h1>
+    <p style="font-size:14.5px;line-height:1.6;color:#475467;margin:0 0 22px;">They accepted their invite and can now sign in to <b style="color:#0B1220;">${companyName}</b> on ApexScale.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F7F9FC;border-radius:12px;margin:0 0 24px;">
+      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(15,23,42,0.06);">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:14px;color:#6B7280;">Member</td>
-          <td align="right" style="font-size:14px;color:#0A1628;font-weight:600;">${memberName}</td>
+          <td align="left" style="font-size:13px;color:#94A0B4;">Name</td>
+          <td align="right" style="font-size:13.5px;color:#0B1220;font-weight:700;">${memberName}</td>
         </tr></table>
       </td></tr>
-      <tr><td style="padding:12px 16px;border-bottom:1px solid #E5E7EB;">
+      <tr><td style="padding:14px 18px;border-bottom:1px solid rgba(15,23,42,0.06);">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:14px;color:#6B7280;">Email</td>
-          <td align="right" style="font-size:14px;color:#0A1628;font-weight:600;">${invite.invitee_email}</td>
+          <td align="left" style="font-size:13px;color:#94A0B4;">Email</td>
+          <td align="right" style="font-size:13.5px;color:#0B1220;font-weight:700;">${invite.invitee_email}</td>
         </tr></table>
       </td></tr>
-      <tr><td style="padding:12px 16px;">
+      <tr><td style="padding:14px 18px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:14px;color:#6B7280;">Role</td>
-          <td align="right" style="font-size:14px;color:#2563EB;font-weight:700;">${roleLabel}</td>
+          <td align="left" style="font-size:13px;color:#94A0B4;">Role</td>
+          <td align="right" style="font-size:13.5px;color:#2563EB;font-weight:800;">${roleLabel}</td>
         </tr></table>
       </td></tr>
     </table>
+    <a href="${appUrl}/dashboard/settings" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:15px;font-weight:800;padding:15px;border-radius:12px;">View team members &#8594;</a>
   </div>
-  <div style="padding:0 32px 32px;">
-    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'}/dashboard/settings" style="display:block;background:#2563EB;color:#fff;text-decoration:none;text-align:center;font-size:15px;font-weight:700;padding:14px;border-radius:12px;">View team members</a>
-  </div>
-  <div style="padding:20px 32px;border-top:1px solid #F3F4F6;text-align:center;font-size:12px;color:#9CA3AF;">
-    Sent by ApexScale &middot; useapexscale.com
-  </div>
+  <div style="padding:22px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;margin-top:6px;">Powered by <b style="color:#475467;">ApexScale</b></div>
 </div>
 </td></tr></table>`
 
@@ -154,7 +148,7 @@ export async function POST(request: NextRequest) {
         from: 'ApexScale <noreply@useapexscale.com>',
         to: [ownerEmail],
         subject: `${memberName} joined your team`,
-        html,
+        html: ownerHtml,
       }).catch((e: Error) => console.error('[team-join] owner email error:', e.message))
     }
   })().catch((e: Error) => console.error('[team-join] post-join notifications error:', e.message))

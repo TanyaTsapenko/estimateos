@@ -1,47 +1,38 @@
-export function welcomeEmailHtml(firstName: string): { html: string; subject: string } {
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
+
+export function welcomeEmailHtml(
+  firstName: string,
+  companyName?: string,
+  roleLabel?: string,
+  logoUrl?: string,
+): { html: string; subject: string } {
   const subject = "Welcome to ApexScale — you're all set"
-  const greeting = firstName ? `, ${firstName}` : ''
 
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f0f2f5;font-family:Arial,Helvetica,sans-serif">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f2f5;padding:32px 16px">
-  <tr><td align="center">
-    <table width="580" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:580px;width:100%">
+  const logoHtml = logoUrl
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td><img src="${logoUrl}" style="height:44px;max-width:160px;display:block;object-fit:contain;" alt="${companyName || 'ApexScale'}" /></td></tr></table>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${(companyName || 'A').charAt(0).toUpperCase()}</div></td></tr></table>`
 
-      <!-- HEADER -->
-      <tr><td style="background:linear-gradient(135deg,#1a4fd6 0%,#2563EB 60%,#3b7ff5 100%);padding:40px">
-        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:14px;font-family:Arial,sans-serif">APEXSCALE</div>
-        <div style="font-size:28px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;line-height:1.15;margin-bottom:10px;font-family:Arial,sans-serif">You're in${greeting}.</div>
-        <div style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.5;font-family:Arial,sans-serif">Your account is ready. Let&rsquo;s get to work.</div>
-      </td></tr>
+  const bodyPara = companyName && roleLabel
+    ? `You're now part of <b style="color:#0B1220;">${companyName}</b> on ApexScale as <b style="color:#2563EB;">${roleLabel}</b>. Your account is ready — time to build your first estimate.`
+    : `Your ApexScale account is ready. Time to build your first estimate.`
 
-      <!-- BODY -->
-      <tr><td style="padding:36px 40px">
-        <p style="font-size:14px;color:#374151;line-height:1.75;margin:0 0 16px;font-family:Arial,sans-serif">
-          ApexScale is built for contractors who want to look professional, close faster, and spend less time on paperwork.
-        </p>
-        <p style="font-size:14px;color:#374151;line-height:1.75;margin:0 0 28px;font-family:Arial,sans-serif">
-          Your first estimate takes less than 5 minutes.
-        </p>
-        <table cellpadding="0" cellspacing="0">
-          <tr><td style="background:#2563EB;border-radius:12px;box-shadow:0 6px 20px rgba(37,99,235,0.28)">
-            <a href="https://useapexscale.com/dashboard" style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:700;color:#ffffff;text-decoration:none;font-family:Arial,sans-serif">Go to dashboard &rarr;</a>
-          </td></tr>
-        </table>
-      </td></tr>
+  const contactLine = companyName
+    ? `Questions? Reach out to <b style="color:#475467;">${companyName}</b> or reply to this email.`
+    : `Questions? Reply to this email or contact <b style="color:#475467;">support@useapexscale.com</b>.`
 
-      <!-- FOOTER -->
-      <tr><td style="border-top:1px solid #f0f0f0;padding:20px 40px;text-align:center">
-        <p style="font-size:12px;color:#bbbbbb;margin:0;font-family:Arial,sans-serif">Questions? <a href="mailto:support@useapexscale.com" style="color:#bbbbbb;text-decoration:underline">support@useapexscale.com</a></p>
-      </td></tr>
-
-    </table>
-  </td></tr>
-</table>
-</body>
-</html>`
+  const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:40px 40px 8px;text-align:center;">
+    ${logoHtml}
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">You're all set</div>
+    <h1 style="font-size:30px;font-weight:700;color:#0B1220;letter-spacing:-0.02em;line-height:1.15;margin:0 0 16px;">Welcome${firstName ? `, ${firstName}` : ''}.</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 auto 28px;max-width:400px;">${bodyPara}</p>
+    <a href="${appUrl}/dashboard" style="display:inline-block;background:#3B5BF5;color:#fff;text-decoration:none;font-size:16px;font-weight:800;padding:16px 40px;border-radius:14px;">Go to dashboard &#8594;</a>
+  </div>
+  <div style="text-align:center;font-size:13px;color:#94A0B4;padding:34px 40px 22px;">${contactLine}</div>
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>
+</td></tr></table>`
 
   return { html, subject }
 }
