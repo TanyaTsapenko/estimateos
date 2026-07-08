@@ -219,6 +219,7 @@ export default function SignContractPage() {
             companyEmail: contract?.company_email || '',
             contractId,
             total: estimate?.total || 0,
+            logoUrl: profile?.logo_url || null,
           }),
         }),
         fetch('/api/notify-contractor-signed', {
