@@ -10,7 +10,7 @@ export function welcomeEmailHtml(
 
   const logoHtml = logoUrl
     ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td><img src="${logoUrl}" style="height:44px;max-width:160px;display:block;object-fit:contain;" alt="${companyName || 'ApexScale'}" /></td></tr></table>`
-    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${(companyName || 'A').charAt(0).toUpperCase()}</div></td></tr></table>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td width="44" height="44" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${(companyName || 'A').charAt(0).toUpperCase()}</div></td></tr></table>`
 
   const bodyPara = companyName && roleLabel
     ? `You're now part of <b style="color:#0B1220;">${companyName}</b> on ApexScale as <b style="color:#2563EB;">${roleLabel}</b>. Your account is ready — time to build your first estimate.`

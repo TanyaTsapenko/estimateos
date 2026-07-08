@@ -404,7 +404,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const estimateUrl = `https://useapexscale.com/estimate/${est.id}`
     const sendLogoHtml = (prof as any)?.logo_url
       ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;">${companyName.charAt(0).toUpperCase()}</div></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;vertical-align:middle;">${companyName.charAt(0).toUpperCase()}</td></tr></table></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
     const estimateIntro = projectAddress
       ? `We've prepared a custom estimate for your project at <b style="color:#0B1220;">${projectAddress}</b>. Take a look whenever you're ready.`
       : `We've prepared a custom estimate for you. Take a look whenever you're ready.`
@@ -443,7 +443,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ') || 'your project'
     const logoHtml = (prof as any)?.logo_url
       ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="${(prof as any).logo_url}" style="height:30px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
-      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
 
     subject = `Deposit received — ${invoice.invoice_number}`
     html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
@@ -478,7 +478,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ') || 'your project'
     const logoHtml = (prof as any)?.logo_url
       ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="${(prof as any).logo_url}" style="height:30px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
-      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
     const contactLine = prof?.phone
       ? `Questions? Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
       : `Questions? Contact <b style="color:#475467;">${companyName}</b>`
