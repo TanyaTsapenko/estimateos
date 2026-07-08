@@ -418,139 +418,74 @@ ${hdrBlock('Following up', est.client_name || 'Client',
   // ── DEPOSIT RECEIPT ──────────────────────────────────────────────────────────
   if (type === 'deposit_receipt' && invoice) {
     const amountPaid = invoice.amount
-    const balance = Math.max(0, (est.total || 0) - amountPaid)
-    const paidDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
-      .format(invoice.paid_at ? new Date(invoice.paid_at) : new Date())
+    const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ') || 'your project'
+    const logoHtml = (prof as any)?.logo_url
+      ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="${(prof as any).logo_url}" style="height:30px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
 
-    subject = `Payment received — ${invoice.invoice_number}`
-    html = outerWrap(`
-${hdrBlock('Payment received for', est.client_name || 'Client',
-  greenPill('&#10003; Received') + pill(invoice.invoice_number) + pill(paidDateFmt)
-)}
-      <!-- BODY -->
-      <tr><td style="${bodyStyle}">
-
-        <!-- Amount Received -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BBF7D0">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Amount Received</div>
-            <div style="font-size:32px;font-weight:800;color:#059669;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(amountPaid)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Received ${paidDateFmt}</div>
-          </td></tr>
-        </table>
-
-        <!-- Payment Details -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Payment Details</div>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="${dkeyStyle}">Invoice</td>
-                <td style="${dvalStyle}">${invoice.invoice_number}</td>
-              </tr>
-              <tr>
-                <td style="${dkeyStyle}">Related estimate</td>
-                <td style="${dvalStyle}">${est.estimate_number}</td>
-              </tr>
-              <tr>
-                <td style="${dkeyStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">Balance remaining</td>
-                <td style="${dvalStyle.replace('color:#0A1628', balance > 0 ? 'color:#2563EB' : 'color:#059669').replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">${balance > 0 ? fmtCAD(balance) : 'Paid in full'}</td>
-              </tr>
-            </table>
-          </td></tr>
-        </table>
-
-        <!-- Message -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            Thank you for your payment${est.client_name ? `, <strong style="color:#0A1628">${est.client_name}</strong>` : ''}. ${balance > 0 ? `The remaining balance of <strong style="color:#0A1628">${fmtCAD(balance)}</strong> will be due upon completion.` : 'Your account is fully paid. We appreciate your business!'}
-          </td></tr>
-        </table>
-
-        <!-- CTA -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
-          </td></tr>
-        </table>
-
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
-
-      </td></tr>
-`)
+    subject = `Deposit received — ${invoice.invoice_number}`
+    html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:22px 40px 18px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td align="left">${logoHtml}</td>
+      <td align="right"><span style="background:#E7F6EE;color:#0F8A4D;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${invoice.invoice_number} &middot; Paid</span></td>
+    </tr></table>
+  </div>
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:32px 40px 8px;text-align:center;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr>
+      <td width="52" height="52" style="width:52px;height:52px;border-radius:50%;background:#E7F6EE;text-align:center;vertical-align:middle;line-height:0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M20 6L9 17L4 12" stroke="#0F8A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </td>
+    </tr></table>
+    <h1 style="font-size:26px;font-weight:700;color:#0B1220;letter-spacing:-0.02em;line-height:1.2;margin:0 0 14px;">Deposit received.</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 auto 22px;max-width:420px;">Thanks, ${est.client_name || 'there'}! We've received your deposit for <b style="color:#0B1220;">${projectAddress}</b>. Your project is officially underway.</p>
+    <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94A0B4;margin-bottom:6px;">Amount received</div>
+    <div style="font-size:32px;font-weight:800;color:#0F8A4D;letter-spacing:-0.02em;margin-bottom:28px;">${fmtCAD(amountPaid)}</div>
+    <div style="font-size:14px;color:#94A0B4;margin-bottom:10px;">We'll be in touch to schedule your installation.</div>
+  </div>
+  <div style="padding:22px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;margin-top:6px;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>
+</td></tr></table>`
   }
 
   // ── FINAL RECEIPT ────────────────────────────────────────────────────────────
   if (type === 'final_receipt' && invoice) {
     const amountPaid = invoice.amount
-    const paidDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
-      .format(invoice.paid_at ? new Date(invoice.paid_at) : new Date())
+    const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ') || 'your project'
+    const logoHtml = (prof as any)?.logo_url
+      ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td><img src="${(prof as any).logo_url}" style="height:30px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:30px;height:30px;line-height:30px;color:#fff;font-weight:800;font-size:13px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td><td style="padding-left:9px;font-size:14px;font-weight:800;color:#0B1220;">${companyName}</td></tr></table>`
+    const contactLine = prof?.phone
+      ? `Questions? Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
+      : `Questions? Contact <b style="color:#475467;">${companyName}</b>`
 
-    subject = `Payment complete — ${est.estimate_number}`
-    html = outerWrap(`
-${hdrBlock('Payment complete for', est.client_name || 'Client',
-  greenPill('&#10003; Paid in full') + pill(invoice.invoice_number) + pill(paidDateFmt)
-)}
-      <!-- BODY -->
-      <tr><td style="${bodyStyle}">
-
-        <!-- Amount Received -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase};border:1.5px solid #BBF7D0">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Final Payment Received</div>
-            <div style="font-size:32px;font-weight:800;color:#059669;line-height:1;margin-bottom:6px;font-family:Arial,sans-serif">${fmtCAD(amountPaid)}</div>
-            <div style="font-size:12px;color:#94A3B8;font-family:Arial,sans-serif">Received ${paidDateFmt}</div>
-          </td></tr>
-        </table>
-
-        <!-- Project Complete -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#ECFDF5;border:1.5px solid #BBF7D0;border-radius:16px;margin-bottom:10px">
-          <tr><td style="padding:20px;text-align:center">
-            <table cellpadding="0" cellspacing="0" style="margin:0 auto 12px">
-              <tr><td width="40" height="40" style="width:40px;height:40px;background:#059669;border-radius:20px;text-align:center;vertical-align:middle">
-                <span style="color:#ffffff;font-size:20px;font-weight:700;font-family:Arial,sans-serif;line-height:40px;display:block">&#10003;</span>
-              </td></tr>
-            </table>
-            <div style="font-size:15px;font-weight:700;color:#065F46;margin-bottom:4px;font-family:Arial,sans-serif">Your project is now complete</div>
-            <div style="font-size:13px;color:#34D399;font-family:Arial,sans-serif">Thank you for choosing ${companyName}</div>
-          </td></tr>
-        </table>
-
-        <!-- Payment Details -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px">
-            <div style="${slbl}">Payment Details</div>
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <tr>
-                <td style="${dkeyStyle}">Invoice</td>
-                <td style="${dvalStyle}">${invoice.invoice_number}</td>
-              </tr>
-              <tr>
-                <td style="${dkeyStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">Related estimate</td>
-                <td style="${dvalStyle.replace('border-bottom:1px solid #EEF0F4', 'border-bottom:none')}">${est.estimate_number}</td>
-              </tr>
-            </table>
-          </td></tr>
-        </table>
-
-        <!-- Message -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="${cardBase}">
-          <tr><td style="padding:16px;font-size:13px;color:#64748B;line-height:1.7;font-family:Arial,sans-serif">
-            Thank you${est.client_name ? `, <strong style="color:#0A1628">${est.client_name}</strong>` : ''}! Your final payment of <strong style="color:#0A1628">${fmtCAD(amountPaid)}</strong> has been received. It was a pleasure working with you — we appreciate your business!
-          </td></tr>
-        </table>
-
-        <!-- CTA -->
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px">
-          <tr><td align="center" style="padding:8px 0">
-            <a href="${clientLink}" style="background:#059669;color:#ffffff;text-decoration:none;border-radius:12px;padding:14px 32px;font-size:14px;font-weight:700;font-family:Arial,sans-serif;display:inline-block">View Estimate &rarr;</a>
-          </td></tr>
-        </table>
-
-        <p style="font-size:12px;color:#9CA3AF;text-align:center;margin:8px 0 0;font-family:Arial,sans-serif">Questions? Contact ${companyName}${prof?.phone ? ` at ${prof.phone}` : ''}</p>
-
-      </td></tr>
-`)
+    subject = `Paid in full — ${est.estimate_number}`
+    html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:22px 40px 18px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td align="left">${logoHtml}</td>
+      <td align="right"><span style="background:#E7F6EE;color:#0F8A4D;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${est.estimate_number} &middot; Paid in full</span></td>
+    </tr></table>
+  </div>
+  <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>
+  <div style="padding:32px 40px 8px;text-align:center;">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr>
+      <td width="52" height="52" style="width:52px;height:52px;border-radius:50%;background:#E7F6EE;text-align:center;vertical-align:middle;line-height:0;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;"><path d="M20 6L9 17L4 12" stroke="#0F8A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </td>
+    </tr></table>
+    <h1 style="font-size:26px;font-weight:700;color:#0B1220;letter-spacing:-0.02em;line-height:1.2;margin:0 0 14px;">Paid in full — thank you!</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 auto 22px;max-width:420px;">Your project at <b style="color:#0B1220;">${projectAddress}</b> is complete and fully paid. It's been a pleasure working with you.</p>
+    <div style="font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#94A0B4;margin-bottom:6px;">Total paid</div>
+    <div style="font-size:32px;font-weight:800;color:#0F8A4D;letter-spacing:-0.02em;margin-bottom:28px;">${fmtCAD(amountPaid)}</div>
+  </div>
+  <div style="text-align:center;font-size:13px;color:#94A0B4;padding:0 40px 22px;">${contactLine}</div>
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
+</div>
+</td></tr></table>`
   }
 
   const replyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
