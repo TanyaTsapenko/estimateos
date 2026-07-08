@@ -652,9 +652,24 @@ const [dashToast, setDashToast] = useState('')
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const now = new Date().toISOString()
       const newCount = (reminderModal.reminderCount ?? 0) + 1
       const isAutoExpiring = newCount >= 3
+
+      const emailRes = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: reminderModal.estimateId, type: 'reminder', message: reminderModal.message }),
+      })
+      if (!emailRes.ok) {
+        const body = await emailRes.json().catch(() => ({}))
+        console.error('[handleSendReminder] email failed:', body?.error)
+        setDashToast('Reminder failed to send — please try again in a moment.')
+        setTimeout(() => setDashToast(''), 4000)
+        return
+      }
+
+      // Email confirmed sent — now write the cooldown and expiry
+      const now = new Date().toISOString()
       const estimateUpdate: Record<string, unknown> = {
         last_reminder_sent_at: now,
         reminder_count: newCount,
@@ -663,24 +678,9 @@ const [dashToast, setDashToast] = useState('')
         estimateUpdate.status = 'expired'
         estimateUpdate.expired_reason = 'no_response_after_reminders'
       }
-
-      // DB update first — if this fails we do NOT send the email
       const { error: updateErr } = await supabase.from('estimates').update(estimateUpdate).eq('id', reminderModal.estimateId)
       if (updateErr) {
-        setDashToast('Failed to send reminder: ' + updateErr.message)
-        setTimeout(() => setDashToast(''), 3500)
-        return
-      }
-
-      // Email second — failure is logged but not rolled back (cooldown is already set)
-      const emailRes = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estimateId: reminderModal.estimateId, type: 'reminder', message: reminderModal.message }),
-      })
-      if (!emailRes.ok) {
-        const body = await emailRes.json().catch(() => ({}))
-        console.error('[handleSendReminder] email failed after DB update:', body?.error)
+        console.error('[handleSendReminder] DB update failed after email sent:', updateErr.message)
       }
 
       fetch('/api/log-activity', {
@@ -735,7 +735,7 @@ const [dashToast, setDashToast] = useState('')
 
       setAttention(prev => prev.filter(i => i.id !== reminderModal.estimateId))
       setReminderModal(null)
-      setDashToast(isAutoExpiring ? 'Reminder sent — estimate marked as expired' : 'Reminder sent!')
+      setDashToast(isAutoExpiring ? 'Reminder sent — estimate marked as expired' : 'Reminder sent to ' + reminderModal.clientEmail)
       setTimeout(() => setDashToast(''), 3000)
     } finally {
       setReminderSending(false)
