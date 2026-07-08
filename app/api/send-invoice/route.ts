@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
       </tr></table>
     </div>
     ${invETransferBlock}
+    ${inv.notes ? `<div style="font-size:13px;color:#475467;line-height:1.7;margin:0 0 16px;padding:14px 16px;background:#F8FAFC;border-radius:10px;border:1px solid rgba(15,23,42,0.07);">${inv.notes.replace(/\n/g, '<br>')}</div>` : ''}
     <a href="${estimateLink}" style="display:block;background:#3B5BF5;color:#fff;text-decoration:none;text-align:center;font-size:16px;font-weight:800;padding:17px;border-radius:14px;">View invoice &#8594;</a>
   </div>
   <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${invContactFooter}</div>
