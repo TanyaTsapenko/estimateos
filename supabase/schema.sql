@@ -67,7 +67,6 @@ create table if not exists public.estimates (
   client_province      text,
   scope_notes          text,
   status               text default 'draft',
-  tier                 text default 'better',
   subtotal             numeric(12,2) default 0,
   tax_rate             numeric(6,4)  default 0,
   tax_amount           numeric(12,2) default 0,

@@ -429,7 +429,7 @@ export default function ContractPage() {
                       Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
                     </div>
                     <div style={{ maxWidth: 280, margin: '0 auto', marginBottom: 12 }}>
-                      <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels />
+                      <OpeningDrawing op={{ ...op, type: resolvedType, colour: null }} hideComboLabels />
                     </div>
                     {comboSecs.length > 0 && (
                       <div style={{ marginBottom: 10 }}>
@@ -473,7 +473,7 @@ export default function ContractPage() {
               return (
                 <div key={op.id} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: borderStyle }}>
                   <div style={{ width: 74, flexShrink: 0, paddingTop: 2 }}>
-                    <OpeningDrawing op={{ ...op, colour: null }} />
+                    <OpeningDrawing op={{ ...op, type: resolvedType, colour: null }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>

@@ -243,7 +243,6 @@ ${hdrBlock('Invoice for', est.client_name || 'Client',
     const signedTimeFmt = est.signed_at
       ? new Date(est.signed_at).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })
       : ''
-    const tierLabel = (est.tier || 'better').charAt(0).toUpperCase() + (est.tier || 'better').slice(1)
     const depositPct = (prof as any)?.deposit_percent ?? 30
     const depositOnSigning = Math.round(est.total * depositPct) / 100
     const depositOnDelivery = est.total - depositOnSigning

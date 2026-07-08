@@ -10,7 +10,7 @@ import AppTopBar from '@/components/AppTopBar'
 interface Opening { id: string; type: string; qty: number; total_cost: number; room: string | null }
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
-  client_province: string | null; tier: string | null
+  client_province: string | null
   subtotal: number; tax_amount: number; total: number; valid_until: string | null
 }
 interface Profile { company_name: string | null; contract_terms: string | null }
@@ -70,7 +70,7 @@ export default function SignPage() {
         {/* Estimate summary */}
         <div className="sum-box" style={{ marginBottom: 14 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--jet)', marginBottom: 10 }}>
-            {estimate.client_name} · {estimate.tier ? estimate.tier.charAt(0).toUpperCase() + estimate.tier.slice(1) : 'Better'} Package
+            {estimate.client_name}
           </div>
           {openings.map(op => (
             <div key={op.id} className="sum-row">
