@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
 
   const { data: prof } = await supabase
     .from('profiles')
-    .select('company_name, first_name, last_name, plan, company_contact_email, interac_email')
+    .select('company_name, first_name, last_name, plan, company_contact_email, interac_email, logo_url')
     .eq('id', user.id)
     .single()
 
@@ -93,53 +93,24 @@ export async function POST(request: NextRequest) {
 
   const joinLink = `${request.nextUrl.origin}/team/join/${invitation.token}`
   const roleLabel = ROLE_LABELS[invitation.role] || invitation.role
-  const toName = invitation.invitee_name || inviteeEmail.split('@')[0]
 
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;font-family:Arial,sans-serif;background:#E8E9EC">
-<div style="max-width:520px;margin:0 auto;padding:28px 16px">
+  const inviteLogoHtml = (prof as any)?.logo_url
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td><img src="${(prof as any).logo_url}" style="height:44px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${companyName.charAt(0).toUpperCase()}</div></td></tr></table>`
 
-  <div style="background:linear-gradient(135deg,#0A0E1A 0%,#0D1630 50%,#1A2744 100%);border-radius:16px 16px 0 0;padding:32px 28px">
-    <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:-.01em;margin-bottom:20px">${companyName}</div>
-    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:4px">You're invited to join the team</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.5)">${companyName} · ${roleLabel}</div>
+  const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+<div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
+  <div style="padding:40px 40px 8px;text-align:center;">
+    ${inviteLogoHtml}
+    <div style="font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#94A0B4;margin-bottom:10px;">${companyName} invited you</div>
+    <h1 style="font-size:30px;font-weight:700;color:#0B1220;letter-spacing:-0.02em;line-height:1.15;margin:0 0 16px;">Come build estimates<br>with the team.</h1>
+    <p style="font-size:15px;line-height:1.6;color:#475467;margin:0 auto 28px;max-width:400px;">You've been added as <b style="color:#2563EB;">${roleLabel}</b>. Accept your invite to start closing jobs on-site — no more paperwork back at the office.</p>
+    <a href="${joinLink}" style="display:inline-block;background:#3B5BF5;color:#fff;text-decoration:none;font-size:16px;font-weight:800;padding:16px 40px;border-radius:14px;">Accept invite &#8594;</a>
   </div>
-
-  <div style="background:#fff;border-radius:0 0 16px 16px;padding:28px">
-    <p style="font-size:14px;color:#1A1A1A;font-weight:600;margin:0 0 8px">Hi ${toName},</p>
-    <p style="font-size:13px;color:#6b7280;line-height:1.7;margin:0 0 24px">
-      <strong style="color:#1A1A1A">${companyName}</strong> has invited you to join their workspace. Click below to create your account and get started.
-    </p>
-
-    <div style="background:#F4F5F7;border:1.5px solid #1A2744;border-radius:12px;padding:18px;margin-bottom:24px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2045B8;margin-bottom:10px">Your Invitation</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-bottom:6px">
-        <span>Company</span>
-        <span style="font-weight:600;color:#1A1A1A">${companyName}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280">
-        <span>Your role</span>
-        <span style="font-weight:700;color:#2045B8">${roleLabel}</span>
-      </div>
-    </div>
-
-    <div style="text-align:center;margin-bottom:24px">
-      <a href="${joinLink}" style="background:#3B6CFF;color:#fff;text-decoration:none;border-radius:10px;padding:14px 32px;font-size:14px;font-weight:700;display:inline-block">
-        Accept Invite &amp; Join →
-      </a>
-    </div>
-
-    <p style="font-size:11px;color:#9ca3af;line-height:1.7;text-align:center">
-      This invite expires in 7 days. If you didn't expect this, you can safely ignore it.
-    </p>
-  </div>
-
-  <p style="text-align:center;font-size:10px;color:#9ca3af;margin-top:16px">Powered by ApexScale</p>
+  <div style="text-align:center;font-size:13px;color:#94A0B4;padding:34px 40px 22px;">This invite expires in 7 days.</div>
+  <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
 </div>
-</body>
-</html>`
+</td></tr></table>`
 
   const inviteReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
   const { data: emailData, error: emailError } = await resend.emails.send({

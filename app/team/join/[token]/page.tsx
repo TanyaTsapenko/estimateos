@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
-import { Clock, Mail, Users, CheckCircle2, Check } from 'lucide-react'
+import { Clock, Mail, Users, CheckCircle2, Check, Shield, ClipboardList, BarChart2, Receipt } from 'lucide-react'
 
 interface Invite {
   invitee_email: string
@@ -11,11 +11,18 @@ interface Invite {
   role: string
 }
 
-const ROLE_LABELS: Record<string, { label: string; desc: string; icon: string }> = {
-  owner:     { label: 'Owner',             desc: 'Full access — estimates, billing, team management', icon: '👑' },
-  estimator: { label: 'Sales', desc: 'Create estimates, visit clients, collect signatures',  icon: '📋' },
-  manager:   { label: 'Manager',           desc: 'View all estimates and reports, read-only access',     icon: '📊' },
-  admin:     { label: 'Office Admin',      desc: 'Invoices and client list only',                        icon: '🧾' },
+const ROLE_ICONS: Record<string, React.ReactNode> = {
+  owner:     <Shield size={24} color="#2563eb" />,
+  estimator: <ClipboardList size={24} color="#2563eb" />,
+  manager:   <BarChart2 size={24} color="#2563eb" />,
+  admin:     <Receipt size={24} color="#2563eb" />,
+}
+
+const ROLE_LABELS: Record<string, { label: string; desc: string }> = {
+  owner:     { label: 'Owner',        desc: 'Full access — estimates, billing, team management' },
+  estimator: { label: 'Sales',        desc: 'Create estimates, visit clients, collect signatures' },
+  manager:   { label: 'Manager',      desc: 'View all estimates and reports, read-only access' },
+  admin:     { label: 'Office Admin', desc: 'Invoices and client list only' },
 }
 
 export default function JoinPage() {
@@ -195,7 +202,7 @@ export default function JoinPage() {
         <div style={{ background: 'rgba(59,108,255,.06)', border: '1.5px solid rgba(59,108,255,.2)', borderRadius: 14, padding: 16, marginBottom: 20 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#2045B8', marginBottom: 8 }}>Your Role</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ fontSize: 28 }}>{roleInfo.icon}</div>
+            <div>{ROLE_ICONS[invite?.role || 'estimator'] || ROLE_ICONS.estimator}</div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--jet)' }}>{roleInfo.label}</div>
               <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{roleInfo.desc}</div>
