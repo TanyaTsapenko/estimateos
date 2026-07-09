@@ -172,7 +172,7 @@ export const F: Record<string, FieldDef> = {
                            opts: ['Cable Support','Knee Brace','Seat Support'], half: true },
 
   // ── Operation & hardware
-  centerWindowType:  { label: 'Center window type',   kind: 'select', sec: 'config',
+  centerWindowType:  { label: 'Center window type',   kind: 'select', sec: 'basics',
                        opts: ['Fixed','Casement'], half: true },
   panelType:         { label: 'Panel type',           kind: 'select', sec: 'config',
                        opts: ['Fixed','Casement'], half: true },
