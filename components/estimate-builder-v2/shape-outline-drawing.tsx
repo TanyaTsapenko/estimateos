@@ -12,21 +12,21 @@ type Pair = [ReactElement, ReactElement]
 
 function rectPair(fill = GLASS, fr = FRAME): Pair {
   return [
-    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1}/>,
+    <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} fill="black"/>,
     <rect x={X1} y={Y1} width={X2 - X1} height={Y2 - Y1} rx="3" fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
 function pathPair(d: string, fill = GLASS, fr = FRAME): Pair {
   return [
-    <path d={d}/>,
+    <path d={d} fill="black"/>,
     <path d={d} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
 
 function polyPair(pts: string, fill = GLASS, fr = FRAME): Pair {
   return [
-    <polygon points={pts}/>,
+    <polygon points={pts} fill="black"/>,
     <polygon points={pts} fill={fill} stroke={fr} strokeWidth="2.5"/>,
   ]
 }
@@ -62,7 +62,7 @@ export function shapeElements(shape: string, fillColor?: string, frameColor?: st
 
     case 'circle':
       return [
-        <ellipse cx={CX} cy={CY} rx={RX} ry={RY}/>,
+        <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill="black"/>,
         <ellipse cx={CX} cy={CY} rx={RX} ry={RY} fill={fill} stroke={fr} strokeWidth="2.5"/>,
       ]
 
