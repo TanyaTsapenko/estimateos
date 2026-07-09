@@ -536,12 +536,20 @@ export default function ContractSettingsPage() {
                           {clause.content}
                         </div>
                       ) : (
-                        <textarea
-                          value={clause.content}
-                          rows={4}
-                          onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, content: e.target.value } : c))}
-                          style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
-                        />
+                        <>
+                          <input
+                            value={clause.title}
+                            onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, title: e.target.value } : c))}
+                            placeholder="Clause title"
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
+                          />
+                          <textarea
+                            value={clause.content}
+                            rows={4}
+                            onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, content: e.target.value } : c))}
+                            style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
+                          />
+                        </>
                       )}
                     </div>
                   )}
