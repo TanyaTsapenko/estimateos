@@ -335,7 +335,15 @@ function NewEstimateV2() {
         }
       }
 
-      const { data: paletteRows } = paletteResult
+      let { data: paletteRows, error: paletteErr } = paletteResult
+      if (paletteErr) {
+        console.error('palette fetch failed, retrying once:', paletteErr)
+        const retry = await supabase.from('color_palette').select('id, name, hex_color, category, price_addon').eq('user_id', user.id).order('sort_order').order('created_at')
+        paletteRows = retry.data
+        if (retry.error) {
+          console.error('palette fetch retry failed, using hardcoded fallback:', retry.error)
+        }
+      }
       if (paletteRows && paletteRows.length > 0) {
         type RawEntry = { id: string; name: string; hex_color: string | null; category: string; price_addon: number | null }
         const rows = paletteRows as RawEntry[]

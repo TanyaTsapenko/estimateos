@@ -62,12 +62,8 @@ export function Toggle({ on, onChange, label, sub }: { on: boolean; onChange: (v
 }
 
 // ── Swatches ──────────────────────────────────────────────────────
-function fieldPalette(_palette: string): PaletteEntry[] {
-  return FRAME_COLOURS
-}
-
-export function Swatches({ palette, entries, value, onChange }: { palette: string; entries?: PaletteEntry[]; value?: string; onChange: (v: string) => void }) {
-  const list = entries ?? fieldPalette(palette)
+export function Swatches({ palette, entries, value, onChange }: { palette: string; entries: PaletteEntry[]; value?: string; onChange: (v: string) => void }) {
+  const list = entries
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
       {list.map(c => {
@@ -156,7 +152,7 @@ export function FieldControl({ k, op, onVal, openPicker, palettes }: FCProps) {
       )
     }
     case 'color':
-      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={palettes?.frame} value={v as string} onChange={x => onVal(k, x)} /></div>
+      return <div><FieldLabel>{def.label}</FieldLabel><Swatches palette={def.palette!} entries={palettes?.frame ?? []} value={v as string} onChange={x => onVal(k, x)} /></div>
     case 'toggle':
       return <Toggle on={!!v} onChange={x => onVal(k, x)} label={def.label} sub={def.sub} />
     case 'photos':
