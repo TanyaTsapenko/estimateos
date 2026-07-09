@@ -153,7 +153,10 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
         <Text style={styles.sectionTitle}>Scope of Work</Text>
         {openings.map((op: any, i: number) => {
           const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] ?? op.type
-          const name = (customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type) + (op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : '')
+          const nameLabel = resolvedType === 'window_arch'
+            ? 'Special shape'
+            : (customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type)
+          const name = nameLabel + (op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : '')
           const specParts: string[] = []
           if (op.width_in && op.height_in) specParts.push(`${op.width_in}" × ${op.height_in}"`)
           const extCol = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
