@@ -17,7 +17,8 @@ const PRESETS = [25, 30, 50, 100]
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null
-  client_address: string | null; total: number
+  client_address: string | null; total: number; subtotal: number; tax_rate: number
+  discount_type: string | null; discount_value: number | null; status: string
 }
 
 export default function PaymentSetupPage() {
@@ -43,10 +44,15 @@ export default function PaymentSetupPage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: est }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, client_address, total').eq('id', id).single(),
+        supabase.from('estimates').select('id, estimate_number, client_name, client_address, total, subtotal, tax_rate, discount_type, discount_value, status').eq('id', id).single(),
         supabase.from('profiles').select('deposit_percent, payment_methods').eq('id', sanitizedId).single(),
       ])
-      if (est) setEstimate(est as Estimate)
+      if (est) {
+        setEstimate(est as Estimate)
+        if (est.discount_type === 'fixed' || est.discount_type === 'percent')
+          setDiscountType(est.discount_type === 'fixed' ? '$' : '%')
+        if (est.discount_value != null) setDiscountValue(est.discount_value)
+      }
       const defaultPct = (prof as any)?.deposit_percent ?? 30
       setDepositPercent(defaultPct)
       setCustomInput(String(defaultPct))
@@ -72,14 +78,25 @@ export default function PaymentSetupPage() {
     setUseCustom(false)
   }
 
-  function handleContinue() {
+  async function handleContinue() {
+    if (!estimate) return
     const pct = Math.min(100, Math.max(0, Math.round(effectivePct * 10) / 10))
+    const rawDiscount = discountType === '$' ? discountValue : estimate.subtotal * (discountValue / 100)
+    const newDiscountAmt = Math.round(Math.min(rawDiscount, estimate.subtotal) * 100) / 100
+    const newAfterDiscount = estimate.subtotal - newDiscountAmt
+    const newTaxAmt = Math.round(newAfterDiscount * estimate.tax_rate * 100) / 100
+    const newTotal = Math.round((newAfterDiscount + newTaxAmt) * 100) / 100
+    await supabase.from('estimates').update({
+      discount_type:   newDiscountAmt > 0 ? (discountType === '$' ? 'fixed' : 'percent') : null,
+      discount_value:  newDiscountAmt > 0 ? discountValue : null,
+      discount_amount: newDiscountAmt,
+      tax_amount:      newTaxAmt,
+      total:           newTotal,
+    }).eq('id', id)
     const params = new URLSearchParams({
       trigger,
       payment_method:  paymentMethod,
       deposit_percent: String(pct),
-      discount_amount: String(Math.round(discountAmount * 100) / 100),
-      discount_type:   discountType,
     })
     router.push(`/dashboard/estimates/${id}/contract?${params.toString()}`)
   }
@@ -200,6 +217,11 @@ export default function PaymentSetupPage() {
           {/* Discount */}
           <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 14, border: '0.5px solid #E5E7EB', padding: 16 }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 10 }}>Discount (optional)</div>
+            {estimate.status === 'sent' && (
+              <div style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '7px 10px', marginBottom: 10 }}>
+                This estimate was sent with a total of {fmtCAD(estimate.total)}. Changing the discount will update the contract amount.
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8 }}>
               <div style={{ display: 'flex', borderRadius: 10, overflow: 'hidden', border: '1px solid #E5E7EB', flexShrink: 0 }}>
                 <div onClick={() => setDiscountType('$')} style={{ padding: '10px 14px', background: discountType === '$' ? '#2563EB' : '#fff', color: discountType === '$' ? '#fff' : '#64748B', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>$</div>
