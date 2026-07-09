@@ -364,9 +364,11 @@ export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimSta
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>{line.value}</span>
               </div>
             ))}
-            <div style={{ fontSize: 11, color: C.inkFaint, borderTop: `1px solid ${C.border}`, paddingTop: 6, marginTop: 2 }}>
-              Included — no extra charge
-            </div>
+            {trimCost === 0 && (
+              <div style={{ fontSize: 11, color: C.inkFaint, borderTop: `1px solid ${C.border}`, paddingTop: 6, marginTop: 2 }}>
+                Included — no extra charge
+              </div>
+            )}
           </div>
         </div>
       )}

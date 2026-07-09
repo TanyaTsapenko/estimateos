@@ -496,7 +496,6 @@ export default function EstimateDetailPage() {
                   <span style={{ fontWeight: 600, color: '#0A1628' }}>{line.value}</span>
                 </div>
               ))}
-              <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4, fontStyle: 'italic' }}>Included — no extra charge</div>
             </div>
           )}
         </div>
