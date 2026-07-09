@@ -67,7 +67,7 @@ export function shapeElements(shape: string, fillColor?: string, frameColor?: st
       ]
 
     case 'octagon': {
-      const c = 55
+      const c = Math.round(Math.min(X2 - X1, Y2 - Y1) * 0.25)
       return polyPair(
         `${X1+c},${Y1} ${X2-c},${Y1} ${X2},${Y1+c} ${X2},${Y2-c} ` +
         `${X2-c},${Y2} ${X1+c},${Y2} ${X1},${Y2-c} ${X1},${Y1+c}`,

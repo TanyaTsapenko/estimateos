@@ -555,7 +555,10 @@ export default function SignContractPage() {
 
             {openings.map((op, i) => {
               const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
-              const name = `${OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type}${op.window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
+              const nameLabel = resolvedType === 'window_arch'
+                ? 'Special shape'
+                : (OPENING_TYPES[resolvedType]?.name ?? V2_TYPE_LABELS[op.type] ?? op.type)
+              const name = `${nameLabel}${op.window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
               const extCol      = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
               const intCol      = getInteriorColourLabel(op)
               const glass       = getGlassLabel(op)
