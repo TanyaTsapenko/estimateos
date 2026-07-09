@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import { SuccessBanner } from '@/components/SuccessBanner'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, fmtCAD } from '@/lib/pricing'
@@ -118,6 +119,7 @@ export default function ContractPage() {
   const [agreedToTerms,      setAgreedToTerms]      = useState(false)
   const [showSuccess,        setShowSuccess]        = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
+  const [flash,              setFlash]              = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -162,10 +164,15 @@ export default function ContractPage() {
     }
   }
 
+  function showFlash(message: string, variant: 'success' | 'error' = 'error') {
+    setFlash({ message, variant })
+    if (variant !== 'success') setTimeout(() => setFlash(null), 3500)
+  }
+
   async function handleAction() {
     if (trigger === 'sign') {
-      if (paths.length === 0) { alert('Please sign before submitting'); return }
-      if (!agreedToTerms) { alert('Please agree to the terms before signing'); return }
+      if (paths.length === 0) { showFlash('Please sign before submitting'); return }
+      if (!agreedToTerms) { showFlash('Please agree to the terms before signing'); return }
     }
 
     setSending(true)
@@ -196,7 +203,7 @@ export default function ContractPage() {
         .single()
 
       if (error || !contract) {
-        alert('Error creating contract: ' + error?.message)
+        showFlash('Error creating contract: ' + (error?.message || 'Unknown error'))
         return
       }
 
@@ -221,7 +228,7 @@ export default function ContractPage() {
           signatureBase64 = offscreen.toDataURL('image/png')
         } catch {
           setSending(false)
-          alert('Could not render signature. Please try again.')
+          showFlash('Could not render signature. Please try again.')
           return
         }
 
@@ -233,7 +240,7 @@ export default function ContractPage() {
         const result = await res.json()
         if (!res.ok) {
           setSending(false)
-          alert('Signing failed: ' + (result.error || 'Unknown error'))
+          showFlash('Signing failed: ' + (result.error || 'Unknown error'))
           return
         }
 
@@ -264,7 +271,7 @@ export default function ContractPage() {
         return
       }
 
-      if (!estimate?.client_email) { alert('No client email on this estimate'); return }
+      if (!estimate?.client_email) { showFlash('No client email on this estimate'); return }
       await fetch('/api/send-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -276,10 +283,10 @@ export default function ContractPage() {
           companyName: profile?.company_name || 'Your Contractor',
         }),
       })
-      alert('Contract sent to ' + estimate.client_email)
-      router.push(`/dashboard/estimates/${id}`)
+      showFlash('Contract sent to ' + estimate.client_email, 'success')
+      setTimeout(() => router.push(`/dashboard/estimates/${id}`), 1600)
     } catch (e: any) {
-      alert('Error: ' + (e?.message || JSON.stringify(e)))
+      showFlash('Error: ' + (e?.message || JSON.stringify(e)))
     } finally {
       setSending(false)
     }
@@ -702,6 +709,10 @@ export default function ContractPage() {
                 I have read and agree to the <span style={{ color: BLUE, fontWeight: 600 }}>Terms &amp; Conditions</span> and authorize the work described in this contract.
               </label>
             </div>
+          )}
+          {flash && (
+            <SuccessBanner message={flash.message} variant={flash.variant}
+              mode="floating" onDismiss={() => setFlash(null)} />
           )}
           <button
             onClick={handleAction}
