@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import ConfirmModal from '@/components/ConfirmModal'
 import AppTopBar from '@/components/AppTopBar'
 import { usePermissions } from '@/lib/usePermissions'
+import { SuccessBanner } from '@/components/SuccessBanner'
 import { type ContractClause, DEFAULT_CLAUSES } from '@/lib/contractClauses'
 
 // ── CONSTANTS ────────────────────────────────────
@@ -83,13 +84,6 @@ function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: b
   )
 }
 
-function Toast({ text }: { text: string }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-      {text}
-    </div>
-  )
-}
 
 function Toggle({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
   return (
@@ -144,11 +138,11 @@ export default function ContractSettingsPage() {
   const [isDrawing,   setIsDrawing]   = useState(false)
   const [redrawMode,  setRedrawMode]  = useState(false)
   const [hasStrokes,  setHasStrokes]  = useState(false)
-  const [toast,       setToast]       = useState('')
+  const [toast, setToast] = useState<{ message: string; submessage?: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
 
-  function flash(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(''), 2500)
+  const flash = (message: string, opts?: { submessage?: string; variant?: 'success' | 'error' | 'neutral' }) => {
+    setToast({ message, ...opts })
+    setTimeout(() => setToast(null), 3500)
   }
 
   useEffect(() => {
@@ -212,7 +206,7 @@ export default function ContractSettingsPage() {
       payment_methods:      paymentMethods,
       contract_clauses:     JSON.stringify(contractClauses),
     }).eq('id', userId)
-    if (error) { flash('Save failed: ' + error.message); return }
+    if (error) { flash('Save failed: ' + error.message, { variant: 'error' }); return }
     setSavedWarrantyPeriod(warrantyPeriod)
     setSavedDepositRequired(depositRequired)
     setSavedDepositPercent(depositPercent)
@@ -292,7 +286,7 @@ export default function ContractSettingsPage() {
     const blob = await res.blob()
     const path = `${userId}/signature.png`
     const { error } = await supabase.storage.from('signatures').upload(path, blob, { upsert: true, contentType: 'image/png' })
-    if (error) { flash('Save failed'); return }
+    if (error) { flash('Save failed', { variant: 'error' }); return }
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path)
     const url = urlData.publicUrl
     await supabase.from('profiles').update({ signature_url: url }).eq('id', userId)
@@ -632,7 +626,7 @@ export default function ContractSettingsPage() {
         <SaveBar dirty={isDirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
       </div>
 
-      {toast && <Toast text={toast} />}
+      {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
 
       <ConfirmModal
         open={clauseToDelete !== null}

@@ -6,6 +6,7 @@ import { ImagePlus, ArrowLeft } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import { usePermissions } from '@/lib/usePermissions'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 const PROVINCES = [
   { code: 'AB', name: 'Alberta' },
@@ -145,13 +146,6 @@ function SaveBar({ dirty, valid, saving, onSave, onDiscard }: { dirty: boolean; 
   )
 }
 
-function Toast({ text }: { text: string }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-      {text}
-    </div>
-  )
-}
 
 // ── PAGE ─────────────────────────────────────────
 
@@ -179,9 +173,12 @@ export default function CompanySettingsPage() {
   const [logoKey, setLogoKey] = useState(() => Date.now())
   const [logoUploading, setLogoUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ message: string; submessage?: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
 
-  function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
+  const flash = (message: string, opts?: { submessage?: string; variant?: 'success' | 'error' | 'neutral' }) => {
+    setToast({ message, ...opts })
+    setTimeout(() => setToast(null), 3500)
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -257,28 +254,28 @@ export default function CompanySettingsPage() {
       signing_rep_title:        normalized.signingRepTitle        || null,
       warranty_summary:         normalized.warrantySummary        || null,
     }).eq('id', userId)
-    if (error) { flash('Error saving: ' + error.message); setIsSaving(false); return }
+    if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); setIsSaving(false); return }
     if (website !== values.website) setValues(normalized)
     setInitial(normalized)
     setIsSaving(false)
-    flash('Company saved')
+    flash('Changes saved', { submessage: 'Company profile updated' })
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !userId) return
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp']
-    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG, SVG or WebP allowed'); return }
-    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB'); return }
+    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG, SVG or WebP allowed', { variant: 'error' }); return }
+    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB', { variant: 'error' }); return }
     setLogoUploading(true)
     const ext = file.name.split('.').pop()
     const path = `${userId}/logo.${ext}`
     const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { flash('Upload failed'); setLogoUploading(false); return }
+    if (error) { flash('Upload failed', { variant: 'error' }); setLogoUploading(false); return }
     const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
     const url = urlData.publicUrl
     const { error: urlErr } = await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
-    if (urlErr) { flash('Error saving logo: ' + urlErr.message); setLogoUploading(false); return }
+    if (urlErr) { flash('Error saving logo: ' + urlErr.message, { variant: 'error' }); setLogoUploading(false); return }
     setLogoUrl(url)
     setLogoKey(Date.now())
     setLogoUploading(false)
@@ -411,7 +408,7 @@ export default function CompanySettingsPage() {
         <SaveBar dirty={dirty} valid={valid} saving={isSaving} onSave={saveCompany} onDiscard={() => setValues({ ...initial })} />
       </div>
 
-      {toast && <Toast text={toast} />}
+      {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
     </div>
   )
 }

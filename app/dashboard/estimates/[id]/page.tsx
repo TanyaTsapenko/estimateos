@@ -10,6 +10,7 @@ import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } 
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 import ConfirmModal from '@/components/ConfirmModal'
+import { SuccessBanner } from '@/components/SuccessBanner'
 import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 interface Opening {
   id: string; type: string; qty: number; width: string | null
@@ -83,7 +84,7 @@ export default function EstimateDetailPage() {
   const [deleteOpen,          setDeleteOpen]          = useState(false)
   const [showDuplicateModal,  setShowDuplicateModal]  = useState(false)
   const [duplicating,         setDuplicating]         = useState(false)
-  const [toast,               setToast]               = useState('')
+  const [toast,               setToast]               = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [dupToast,            setDupToast]            = useState<{ num: string; id: string } | null>(null)
   const [customLabels,        setCustomLabels]        = useState<Record<string, string>>({})
   const [enlargedOpening,     setEnlargedOpening]     = useState<Opening | null>(null)
@@ -140,9 +141,9 @@ export default function EstimateDetailPage() {
     load()
   }, [id])
 
-  function showToast(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(''), 2500)
+  function showToast(msg: string, opts?: { variant?: 'success' | 'error' | 'neutral' }) {
+    setToast({ message: msg, ...opts })
+    setTimeout(() => setToast(null), 3500)
   }
 
   function openSendModal() {
@@ -153,7 +154,7 @@ export default function EstimateDetailPage() {
 
   async function handleSendEmail() {
     const email = sendEmail.trim() || estimate?.client_email
-    if (!email) { showToast('⚠️ No client email on this estimate'); return }
+    if (!email) { showToast('No client email on this estimate', { variant: 'error' }); return }
     setSending(true); setShowEmailModal(false)
     try {
       // If email was changed in the modal, persist it first
@@ -170,9 +171,9 @@ export default function EstimateDetailPage() {
       if (!res.ok) throw new Error(json.error || 'Failed')
       await supabase.from('estimates').update({ status: 'sent', sent_method: 'email_estimate' }).eq('id', id)
       setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'email_estimate' } : p)
-      showToast('📧 Sent to ' + (json.sentTo || email))
+      showToast('Sent to ' + (json.sentTo || email))
     } catch (e: any) {
-      showToast('⚠️ ' + e.message)
+      showToast(e.message, { variant: 'error' })
     }
     setSending(false)
   }
@@ -237,7 +238,7 @@ export default function EstimateDetailPage() {
       await supabase.from('estimates').update({ status: 'sent', sent_method: 'link' }).eq('id', id)
       setEstimate(p => p ? { ...p, status: 'sent', sent_method: 'link' } : p)
     }
-    showToast('📋 Client link copied!')
+    showToast('Client link copied')
   }
 
 
@@ -672,7 +673,7 @@ export default function EstimateDetailPage() {
       </div>
 
       {/* ── TOAST ── */}
-      <div className={`toast${toast ? ' show' : ''}`}>{toast}</div>
+      {toast && <SuccessBanner message={toast.message} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
 
       {/* ── DUPLICATE SUCCESS TOAST ── */}
       {dupToast && (

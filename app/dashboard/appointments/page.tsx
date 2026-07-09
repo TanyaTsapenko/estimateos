@@ -8,6 +8,7 @@ import { TAX_RATES } from '@/lib/pricing'
 import ConfirmModal from '@/components/ConfirmModal'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 import AppTopBar from '@/components/AppTopBar'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -770,7 +771,7 @@ export default function AppointmentsPage() {
   const [openId, setOpenId]             = useState<string | null>(null)
   const [editing, setEditing]           = useState<Appt | null>(null)
   const [editOpen, setEditOpen]         = useState(false)
-  const [toast, setToast]               = useState('')
+  const [toast, setToast]               = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [isDesktop, setIsDesktop]       = useState(false)
   const [selectedId, setSelectedId]     = useState<string | null>(null)
   const [desktopEditing, setDesktopEditing] = useState(false)
@@ -790,7 +791,7 @@ export default function AppointmentsPage() {
   const [monthDots,   setMonthDots]   = useState<Set<string>>(new Set())
   const [calendarOpen, setCalendarOpen] = useState(false)
 
-  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2200) }
+  const flash = (m: string, opts?: { variant?: 'success' | 'error' | 'neutral' }) => { setToast({ message: m, ...opts }); setTimeout(() => setToast(null), 3500) }
 
   // Existing load (desktop — all appointments)
   const load = useCallback(async () => {
@@ -964,7 +965,7 @@ export default function AppointmentsPage() {
   async function deleteAppt(id: string) {
     await supabase.from('appointments').delete().eq('id', id)
     setAppts(prev => prev.filter(a => a.id !== id))
-    closeEdit(); flash('Deleted')
+    closeEdit(); flash('Deleted', { variant: 'neutral' })
   }
 
   async function desktopSaveEdit(id: string, patch: Partial<Appt>) {
@@ -976,7 +977,7 @@ export default function AppointmentsPage() {
   async function desktopDeleteAppt(id: string) {
     await supabase.from('appointments').delete().eq('id', id)
     setAppts(prev => prev.filter(a => a.id !== id))
-    setSelectedId(null); setDesktopEditing(false); flash('Deleted')
+    setSelectedId(null); setDesktopEditing(false); flash('Deleted', { variant: 'neutral' })
   }
 
   async function createEstimate(appt: Appt) {
@@ -1059,7 +1060,7 @@ export default function AppointmentsPage() {
             })()}
           </div>
         </div>
-        {toast && <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', background: T.ink, color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>{toast}</div>}
+        {toast && <SuccessBanner message={toast.message} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
       </div>
     )
   }
@@ -1268,11 +1269,7 @@ export default function AppointmentsPage() {
         <EditScreen open={editOpen} appt={editing} onClose={closeEdit} onSave={saveEdit} onDelete={deleteAppt} />
 
         {/* Toast */}
-        {toast && (
-          <div style={{ position: 'fixed', bottom: 90, left: '50%', transform: 'translateX(-50%)', background: '#0B1220', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
-            {toast}
-          </div>
-        )}
+        {toast && <SuccessBanner message={toast.message} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
       </div>
     </>
   )

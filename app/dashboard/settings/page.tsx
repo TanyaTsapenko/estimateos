@@ -7,11 +7,13 @@ import type { IconName } from '@/components/SIcon'
 import { Camera, ImagePlus, Eye, EyeOff } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import AppTopBar from '@/components/AppTopBar'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 import { usePermissions } from '@/lib/usePermissions'
 import ConfirmModal from '@/components/ConfirmModal'
 import { type ContractClause, DEFAULT_CLAUSES } from '@/lib/contractClauses'
 // ── TYPES ────────────────────────────────────────
+type FlashFn   = (message: string, opts?: { submessage?: string; variant?: 'success' | 'error' | 'neutral' }) => void
 type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'quote' | 'reminders' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
 
 // ── NAV GROUPS ───────────────────────────────────
@@ -199,22 +201,10 @@ function SaveBar({ dirty, valid, saving, onSave, onDiscard }: { dirty: boolean; 
   )
 }
 
-function Toast({ text }: { text: string }) {
-  return (
-    <div style={{
-      position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-      background: '#0A1628', color: '#fff', padding: '10px 20px',
-      borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000,
-      boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-    }}>
-      {text}
-    </div>
-  )
-}
 
 // ── SECTIONS ─────────────────────────────────────
 
-function ProfileSection({ flash }: { flash: (m: string) => void }) {
+function ProfileSection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
   const [values, setValues] = useState({ firstName: '', lastName: '', email: '', phone: '' })
   const [initial, setInitial] = useState({ firstName: '', lastName: '', email: '', phone: '' })
@@ -257,7 +247,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { flash('Image must be under 5 MB'); return }
+    if (file.size > 5 * 1024 * 1024) { flash('Image must be under 5 MB', { variant: 'error' }); return }
     if (previewUrl) URL.revokeObjectURL(previewUrl)
     setPreviewUrl(URL.createObjectURL(file))
     setPendingAvatarFile(file)
@@ -268,7 +258,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   async function saveProfile() {
     if (!userId || saving) return
     if (values.phone && values.phone.replace(/\D/g, '').length < 10) {
-      flash('Please enter a valid phone number')
+      flash('Please enter a valid phone number', { variant: 'error' })
       return
     }
     setSaving(true)
@@ -277,7 +267,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
       const ext = pendingAvatarFile.type === 'image/png' ? 'png' : pendingAvatarFile.type === 'image/webp' ? 'webp' : pendingAvatarFile.type === 'image/gif' ? 'gif' : 'jpg'
       const path = `${userId}/avatar.${ext}`
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, pendingAvatarFile, { upsert: true, contentType: pendingAvatarFile.type })
-      if (upErr) { flash('Avatar upload failed'); setSaving(false); return }
+      if (upErr) { flash('Avatar upload failed', { variant: 'error' }); setSaving(false); return }
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(path)
       const url = urlData.publicUrl + '?t=' + Date.now()
       await supabase.auth.updateUser({ data: { avatar_url: url } })
@@ -293,7 +283,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
       phone:      values.phone,
     }).eq('id', userId)
 
-    if (profErr) { flash('Failed to save profile'); setSaving(false); return }
+    if (profErr) { flash('Failed to save profile', { variant: 'error' }); setSaving(false); return }
 
     setInitial({ ...values })
     setSaving(false)
@@ -364,7 +354,7 @@ function ProfileSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-function PasswordSection({ flash }: { flash: (m: string) => void }) {
+function PasswordSection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
   const router = useRouter()
   const [values, setValues] = useState({ current: '', next: '', confirm: '' })
@@ -385,16 +375,16 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
     if (!valid || saving) return
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user?.email) { flash('Could not get user email'); setSaving(false); return }
+    if (!user?.email) { flash('Could not get user email', { variant: 'error' }); setSaving(false); return }
     const { error: signInErr } = await supabase.auth.signInWithPassword({ email: user.email, password: values.current })
     if (signInErr) {
-      flash('Current password is incorrect. If you signed up with Google, use Forgot password to set one.')
+      flash('Current password is incorrect. If you signed up with Google, use Forgot password to set one.', { variant: 'error' })
       setSaving(false)
       return
     }
     const { error } = await supabase.auth.updateUser({ password: values.next })
     setSaving(false)
-    if (error) { flash('Error: ' + error.message); return }
+    if (error) { flash('Error: ' + error.message, { variant: 'error' }); return }
     setValues({ current: '', next: '', confirm: '' })
     flash('Password updated')
   }
@@ -447,7 +437,7 @@ function PasswordSection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-function NotificationsSection({ flash }: { flash: (m: string) => void }) {
+function NotificationsSection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
 
   const DEFAULT_EMAIL = { estimateViewed: true, estimateSigned: true, depositPaid: true, invoiceOverdue: true, teamInvite: false, estimateDeclined: true, estimateExpired: true }
@@ -487,7 +477,7 @@ function NotificationsSection({ flash }: { flash: (m: string) => void }) {
     const { error } = await supabase.from('profiles').update({
       notification_settings: { email, digest, inapp }
     }).eq('id', sanitizedId)
-    if (error) { flash('Failed to save notifications'); return }
+    if (error) { flash('Failed to save notifications', { variant: 'error' }); return }
     setSaved({ email, digest, inapp })
     flash('Notifications saved')
   }
@@ -610,7 +600,7 @@ const COMPANY_INIT = {
   wsibNumber: '', signingRepName: '', signingRepTitle: '', warrantySummary: '',
 }
 
-function CompanySection({ flash }: { flash: (m: string) => void }) {
+function CompanySection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
   const [values, setValues] = useState(COMPANY_INIT)
   const [initial, setInitial] = useState(COMPANY_INIT)
@@ -697,28 +687,28 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
       signing_rep_title:        normalized.signingRepTitle        || null,
       warranty_summary:         normalized.warrantySummary        || null,
     }).eq('id', userId)
-    if (error) { flash('Error saving: ' + error.message); setIsSaving(false); return }
+    if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); setIsSaving(false); return }
     if (website !== values.website) setValues(normalized)
     setInitial(normalized)
     setIsSaving(false)
-    flash('Company saved')
+    flash('Changes saved', { submessage: 'Company profile updated' })
   }
 
   async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file || !userId) return
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp']
-    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG, SVG or WebP allowed'); return }
-    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB'); return }
+    if (!allowedTypes.includes(file.type)) { flash('Only PNG, JPG, SVG or WebP allowed', { variant: 'error' }); return }
+    if (file.size > 5 * 1024 * 1024) { flash('File must be under 5 MB', { variant: 'error' }); return }
     setLogoUploading(true)
     const ext = file.name.split('.').pop()
     const path = `${userId}/logo.${ext}`
     const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
-    if (error) { flash('Upload failed'); setLogoUploading(false); return }
+    if (error) { flash('Upload failed', { variant: 'error' }); setLogoUploading(false); return }
     const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
     const url = urlData.publicUrl
     const { error: urlErr } = await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
-    if (urlErr) { flash('Error saving logo: ' + urlErr.message); setLogoUploading(false); return }
+    if (urlErr) { flash('Error saving logo: ' + urlErr.message, { variant: 'error' }); setLogoUploading(false); return }
     setLogoUrl(url); setLogoKey(Date.now()); setLogoUploading(false); flash('Logo uploaded')
   }
 
@@ -820,7 +810,7 @@ function CompanySection({ flash }: { flash: (m: string) => void }) {
   )
 }
 
-function TeamSection({ flash }: { flash: (m: string) => void }) {
+function TeamSection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
   const [myId, setMyId] = useState('')
   const [ownerProfile, setOwnerProfile] = useState<{ first_name: string | null; last_name: string | null; email: string | null } | null>(null)
@@ -859,14 +849,14 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
     const { error } = await supabase.from('profiles').update({ role: newRole, member_role: newRole }).eq('id', memberId)
     if (error) {
       setMembers(ms => ms.map(m => m.id === memberId ? { ...m, member_role: prev } : m))
-      flash('Failed to update role')
+      flash('Failed to update role', { variant: 'error' })
     } else {
       flash('Role updated')
     }
   }
 
   async function sendInvite() {
-    if (!inviteEmail.trim()) { flash('Enter an email address'); return }
+    if (!inviteEmail.trim()) { flash('Enter an email address', { variant: 'error' }); return }
     setSending(true)
     try {
       const res = await fetch('/api/team-invite', {
@@ -875,7 +865,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
         body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole, permissions: invitePerms }),
       })
       const json = await res.json()
-      if (!res.ok) { flash('Error: ' + (json.error || 'Failed to send invite')); setSending(false); return }
+      if (!res.ok) { flash('Error: ' + (json.error || 'Failed to send invite'), { variant: 'error' }); setSending(false); return }
       setPendingCount(p => p + 1)
       setInviteEmail('')
       setShowInvite(false)
@@ -885,7 +875,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
         flash('Invite sent to ' + inviteEmail.trim())
       }
     } catch {
-      flash('Network error — please try again')
+      flash('Network error — please try again', { variant: 'error' })
     }
     setSending(false)
   }
@@ -1034,7 +1024,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
                     .eq('team_owner_id', sanitizedUserId)
                     .select()
                   if (error) {
-                    flash('Failed to update: ' + error.message)
+                    flash('Failed to update: ' + error.message, { variant: 'error' })
                     return
                   }
                   setMembers(ms => ms.map(m => m.id === editingMember.id ? { ...m, member_role: editingMember.role, permissions: editingMember.permissions } : m))
@@ -1102,7 +1092,7 @@ function TeamSection({ flash }: { flash: (m: string) => void }) {
 
 const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-Transfer', 'Cheque', 'Financing']
 
-function ContractSection({ flash }: { flash: (m: string) => void }) {
+function ContractSection({ flash }: { flash: FlashFn }) {
   const supabase = createClient()
   const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
   const [depositRequired,    setDepositRequired]    = useState(true)
@@ -1196,7 +1186,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
       payment_methods:      paymentMethods,
       contract_clauses:     JSON.stringify(contractClauses),
     }).eq('id', userId)
-    if (error) { flash('Save failed: ' + error.message); return }
+    if (error) { flash('Save failed: ' + error.message, { variant: 'error' }); return }
     setSavedWarrantyPeriod(warrantyPeriod)
     setSavedDepositRequired(depositRequired)
     setSavedDepositPercent(depositPercent)
@@ -1276,7 +1266,7 @@ function ContractSection({ flash }: { flash: (m: string) => void }) {
     const blob = await res.blob()
     const path = `${userId}/signature.png`
     const { error } = await supabase.storage.from('signatures').upload(path, blob, { upsert: true, contentType: 'image/png' })
-    if (error) { flash('Save failed'); return }
+    if (error) { flash('Save failed', { variant: 'error' }); return }
     const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path)
     const url = urlData.publicUrl
     await supabase.from('profiles').update({ signature_url: url }).eq('id', userId)
@@ -1605,7 +1595,7 @@ function PriceListSection() {
   return null
 }
 
-function BillingSection({ flash }: { flash: (m: string) => void }) {
+function BillingSection({ flash }: { flash: FlashFn }) {
   return (
     <div>
       <SectionHeader kicker="BILLING" title="Plan & billing" subtitle="Manage your subscription and payment method." />
@@ -1677,7 +1667,7 @@ function InvoicesSection() {
 }
 
 // ── SECTION RENDERER ─────────────────────────────
-const SECTIONS: Record<SectionId, (props: { flash: (m: string) => void }) => React.ReactElement> = {
+const SECTIONS: Record<SectionId, (props: { flash: FlashFn }) => React.ReactElement> = {
   profile:       (p) => <ProfileSection {...p} />,
   password:      (p) => <PasswordSection {...p} />,
   notifications: (p) => <NotificationsSection {...p} />,
@@ -1697,7 +1687,7 @@ export default function SettingsPage() {
   const searchParams = useSearchParams()
   const supabase = createClient()
   const [active, setActive] = useState<SectionId>('profile')
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ message: string; submessage?: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
@@ -1762,7 +1752,7 @@ export default function SettingsPage() {
     }
   }, [permLoading, active])
 
-  const flash = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2000) }
+  const flash: FlashFn = (message, opts) => { setToast({ message, ...opts }); setTimeout(() => setToast(null), 3500) }
   const ActiveSection = SECTIONS[active]
 
   const handleNavClick = (id: SectionId) => {
@@ -1819,7 +1809,7 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
-        {toast && <Toast text={toast} />}
+        {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
       </div>
     )
   }
@@ -1911,7 +1901,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {toast && <Toast text={toast} />}
+      {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
     </div>
   )
 }

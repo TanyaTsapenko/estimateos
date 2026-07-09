@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppTopBar from '@/components/AppTopBar'
 import { usePermissions } from '@/lib/usePermissions'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
@@ -36,13 +37,6 @@ function SaveBar({ dirty, onSave, onDiscard }: { dirty: boolean; onSave: () => v
   )
 }
 
-function Toast({ text }: { text: string }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-      {text}
-    </div>
-  )
-}
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -91,12 +85,15 @@ export default function ReminderSettingsPage() {
   const [settings, setSettings] = useState<RemSettings>(DEFAULTS)
   const [initial, setInitial] = useState<RemSettings>(DEFAULTS)
   const [userId, setUserId] = useState<string | null>(null)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [activeTab, setActiveTab] = useState<1 | 2>(1)
 
   const dirty = JSON.stringify(settings) !== JSON.stringify(initial)
 
-  function flash(msg: string) { setToast(msg); setTimeout(() => setToast(''), 2500) }
+  const flash = (message: string, opts?: { variant?: 'success' | 'error' | 'neutral' }) => {
+    setToast({ message, ...opts })
+    setTimeout(() => setToast(null), 3500)
+  }
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -127,7 +124,7 @@ export default function ReminderSettingsPage() {
     const { error } = await supabase.from('profiles').update({
       quote_settings: { ...currentQS, reminders: settings },
     }).eq('id', userId)
-    if (error) { flash('Error saving: ' + error.message); return }
+    if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); return }
     setInitial({ ...settings })
     flash('Saved')
   }
@@ -222,7 +219,7 @@ export default function ReminderSettingsPage() {
         <SaveBar dirty={dirty} onSave={save} onDiscard={() => setSettings({ ...initial })} />
       </div>
 
-      {toast && <Toast text={toast} />}
+      {toast && <SuccessBanner message={toast.message} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
     </div>
   )
 }

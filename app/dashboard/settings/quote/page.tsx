@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ArrowLeft } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import AppTopBar from '@/components/AppTopBar'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 function Card({ children, padding = 22 }: { children: React.ReactNode; padding?: number }) {
   return (
@@ -37,13 +38,6 @@ function SaveBar({ dirty, valid, onSave, onDiscard }: { dirty: boolean; valid: b
   )
 }
 
-function Toast({ text }: { text: string }) {
-  return (
-    <div style={{ position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)', background: '#0A1628', color: '#fff', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 1000, boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
-      {text}
-    </div>
-  )
-}
 
 const VALID_DAY_OPTIONS = [15, 30, 45, 60]
 
@@ -55,14 +49,14 @@ export default function QuoteSettingsPage() {
   const [validDays, setValidDays] = useState(30)
   const [initialValidDays, setInitialValidDays] = useState(30)
   const [userId, setUserId] = useState<string | null>(null)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
 
   const dirty = validDays !== initialValidDays
   const valid = dirty
 
-  function flash(msg: string) {
-    setToast(msg)
-    setTimeout(() => setToast(''), 2500)
+  function flash(message: string, opts?: { variant?: 'success' | 'error' | 'neutral' }) {
+    setToast({ message, ...opts })
+    setTimeout(() => setToast(null), 3500)
   }
 
   useEffect(() => {
@@ -87,7 +81,7 @@ export default function QuoteSettingsPage() {
     const { error } = await supabase.from('profiles').update({
       default_valid_days: validDays,
     }).eq('id', userId)
-    if (error) { flash('Error saving: ' + error.message); return }
+    if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); return }
     setInitialValidDays(validDays)
     flash('Saved')
   }
@@ -132,7 +126,7 @@ export default function QuoteSettingsPage() {
         <SaveBar dirty={dirty} valid={valid} onSave={save} onDiscard={() => { setValidDays(initialValidDays) }} />
       </div>
 
-      {toast && <Toast text={toast} />}
+      {toast && <SuccessBanner message={toast.message} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
     </div>
   )
 }

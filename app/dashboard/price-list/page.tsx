@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import { ClipboardList, ArrowLeft } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import AppTopBar from '@/components/AppTopBar'
+import { SuccessBanner } from '@/components/SuccessBanner'
 
 interface PriceItem {
   key: string
@@ -294,10 +295,9 @@ export default function PriceListPage() {
     setShowModal(false)
   }
 
-  const [flashMsg, setFlashMsg] = useState('')
-  const [flashErr, setFlashErr] = useState('')
-  function flash(msg: string) { setFlashMsg(msg); setTimeout(() => setFlashMsg(''), 2500) }
-  function flashError(msg: string) { setFlashErr(msg); setTimeout(() => setFlashErr(''), 3000) }
+  const [flashBanner, setFlashBanner] = useState<{ message: string; variant?: 'success' | 'error' } | null>(null)
+  function flash(msg: string) { setFlashBanner({ message: msg }); setTimeout(() => setFlashBanner(null), 3500) }
+  function flashError(msg: string) { setFlashBanner({ message: msg, variant: 'error' }); setTimeout(() => setFlashBanner(null), 3500) }
 
   async function saveSurchargesHandler() {
     if (!userId) return
@@ -656,16 +656,7 @@ export default function PriceListPage() {
           ))}
         </div>
 
-        {flashMsg && (
-          <div style={{ margin: '10px 16px 0', background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#16A34A' }}>
-            {flashMsg}
-          </div>
-        )}
-        {flashErr && (
-          <div style={{ margin: '10px 16px 0', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, color: '#DC2626' }}>
-            {flashErr}
-          </div>
-        )}
+        {flashBanner && <div style={{ padding: '10px 16px 0' }}><SuccessBanner message={flashBanner.message} variant={flashBanner.variant} mode="inline" onDismiss={() => setFlashBanner(null)} /></div>}
 
         {/* ── BODY ── */}
         {activeTab === 'items' && <div style={{ padding: '8px 16px 100px' }}>
