@@ -323,14 +323,14 @@ export const CATALOG: Record<string, CatalogGroup> = {
         extraFieldsByValue: { roofType: { field: 'supportType', notEmpty: true } } },
 
       combination: { name: 'Combination', subs: [],
-        fields: ['owidth','oheight','qty',
+        fields: ['owidth','oheight','qty','room','floor',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,'material','install','condition',
           'egress','photos','notes'] },
 
       special: { name: 'Special shape',
         subs: ['Arch','Half arch','Circle','Half circle','Triangle','Trapezoid','Pentagon','Octagon','Gothic','Eyebrow','Custom'],
-        fields: ['width','height','qty','customShapeDesc',
+        fields: ['width','height','qty','room','floor','customShapeDesc',
           'extColour','intColour','grilleType',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
           'material','install','condition','photos','notes'] },
@@ -350,7 +350,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         subs: ['Single Door','Single + Left Sidelite','Single + Right Sidelite',
           'Single + Double Sidelite','Single + Transom',
           'Single + Sidelites + Transom'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'doorExt','doorInt','doorStyle','glassInsert','glassType2',
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
@@ -359,7 +359,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       doubleEntry: { name: 'Double entry', subs: ['Equal double','Unequal double',
           'Double + Sidelites','Double + Transom','Double + Sidelites + Transom'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'doorExt','doorInt','doorStyle','glassInsert','glassType2',
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
@@ -372,7 +372,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         } },
 
       french: { name: 'French door', subs: ['Single french','Double french','French + sidelites'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'grid','glassSize','glassType2',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
           'doorSwing','lockset','multipointLock',
@@ -384,7 +384,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
       },
 
       garden: { name: 'Garden door', subs: [],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'grid','glassSize','glassType2','sidelights','transomAbove',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
           'doorMaterial','install','condition','thresholdType',
@@ -392,7 +392,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'photos','notes'] },
 
       patio: { name: 'Patio sliding', subs: ['XO','OX','XOX','OXXO'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'extColour','intColour',
           'glassType','pane','lowE','tempered','argon','laminatedGlass',
           'material','install','condition','thresholdType','screen',
@@ -403,14 +403,14 @@ export const CATALOG: Record<string, CatalogGroup> = {
         } },
 
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'colour','glassType','glassType2','laminatedGlass',
           'stormDoorMaterial','install','condition','screen',
           'hingeSide','lockset','closerType','petDoor','ventilationType',
           'photos','notes'] },
 
       interior: { name: 'Interior door', subs: ['Single','Double','Pocket','Bifold'],
-        fields: ['width','height','qty',
+        fields: ['width','height','qty','room','floor',
           'doorExt','doorInt','doorStyle','glassInsert','glassType2','coreType',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
           'doorSwing','lockset',
