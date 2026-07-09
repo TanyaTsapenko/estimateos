@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import type { EmailOtpType } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 async function resolveDestination(
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { data, error } = await supabase.auth.verifyOtp({
       token_hash,
-      type: 'email',
+      type: type as EmailOtpType,
     })
     if (!error && data.user) {
       await supabase.from('profiles').upsert({
