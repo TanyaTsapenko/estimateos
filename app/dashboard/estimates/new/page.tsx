@@ -457,6 +457,7 @@ function NewEstimateV2() {
   const setSub = useCallback((subs: string[]) => {
     const newSub = subs[0]
     setOpenings(list => list.map((o, i) => i === activeIdx ? { ...o, sub: newSub } : o))
+    setSubtypeError('')
   }, [activeIdx])
 
   const setSections = useCallback((sections: Opening['sections']) => {
