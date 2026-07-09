@@ -78,13 +78,13 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     material:         String(v.material || v.doorMaterial || 'Vinyl').toLowerCase(),
     grid_pattern:     String(v.grid     || 'None').toLowerCase(),
     tilt_clean:       Boolean(v.tiltClean),
-    opening_direction:String(v.openDir  || v.operSide || '').toLowerCase(),
+    opening_direction:String(v.openDir  || v.operSide || v.doorSwing || v.doubleDoorSwing || v.hingeSide || '').toLowerCase(),
     panels_count:     String(v.numPanels || ''),
     bay_angle:        String(v.bayAngle  || ''),
     transom_panes:    String(v.transomPanes || ''),
     sidelight:        0,
-    sidelight_left:   0,
-    sidelight_right:  0,
+    sidelight_left:  (v.sidelights === 'Left'  || v.sidelights === 'Both') ? 1 : 0,
+    sidelight_right: (v.sidelights === 'Right' || v.sidelights === 'Both') ? 1 : 0,
     transom:          0,
     transom_above:    Boolean(v.transomAbove),
     core_type:        String(v.coreType || '').toLowerCase(),
@@ -103,6 +103,8 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     center_window_type: (v.centerWindowType as string) || null,
     panel_type:         (v.panelType        as string) || null,
     open_mode:          (v.openMode         as string) || null,
+    active_panel:       (v.activePanel      as string) || null,
+    astragal:           (v.astragal         as string) || null,
   }
 }
 
@@ -172,6 +174,8 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.center_window_type) vals.centerWindowType  = String(row.center_window_type)
   if (row.panel_type)         vals.panelType         = String(row.panel_type)
   if (row.open_mode)          vals.openMode          = String(row.open_mode)
+  if (row.active_panel)       vals.activePanel       = String(row.active_panel)
+  if (row.astragal)           vals.astragal          = String(row.astragal)
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {

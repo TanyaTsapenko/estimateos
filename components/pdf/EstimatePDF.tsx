@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
+import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 
 // ── Design tokens ──────────────────────────────────────────────────────────
@@ -214,12 +215,12 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
         <Text style={S.secLabel}>Scope of work</Text>
 
         {openings.map((op: any, i: number) => {
-          const typeName = customLabels?.[op.type] || OPENING_TYPES[op.type]?.name || humanize(op.type)
+          const typeName = customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || V2_TYPE_LABELS[op.type] || OPENING_TYPES[op.type]?.name || humanize(op.type)
           const subLabel = getSubtypeLabel(op, subtypesByType)
           const title    = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null, op.room ? `— ${op.room}` : null].filter(Boolean).join(' ')
           const extColour = getColourLabel(op)
           const intColour = getInteriorColourLabel(op)
-          const gridVal   = op.grid ? (op.grille_type ? humanize(op.grille_type) : 'Yes') : null
+          const gridVal   = (op.grid_pattern && op.grid_pattern !== 'none') ? humanize(op.grid_pattern) : null
           const floorVal  = op.floor && op.floor !== 'first' ? humanize(op.floor) : null
           const paneLabel = op.pane === 'triple' ? 'Triple Pane' : op.pane === 'single' ? 'Single Pane' : null
 
