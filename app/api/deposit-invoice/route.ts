@@ -70,19 +70,6 @@ export async function POST(request: NextRequest) {
 
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
 
-  await admin.from('estimates').update({ invoice_id: invoice.id }).eq('id', estimateId)
-
-  logActivity(admin, {
-    user_id: est.user_id,
-    event_type: 'deposit_invoice_sent',
-    actor_type: 'contractor',
-    entity_type: 'estimate',
-    entity_id: estimateId,
-    entity_number: est.estimate_number,
-    client_name: est.client_name,
-    amount: depositAmount,
-  }).catch((e: any) => console.error('[deposit-invoice] logActivity error:', e))
-
   if (est.client_email) {
     const { data: con } = await admin.from('contracts').select('id').eq('estimate_id', estimateId).order('created_at', { ascending: false }).limit(1).maybeSingle()
     const contractLink = con?.id
@@ -142,11 +129,26 @@ export async function POST(request: NextRequest) {
         ...(depositReplyTo ? { reply_to: depositReplyTo } : {}),
       })
     } catch (emailError) {
-      console.error('[deposit-invoice] Failed to send email:', emailError)
+      console.error('[deposit-invoice] Failed to send email — rolling back invoice record:', emailError)
+      await admin.from('invoices').delete().eq('id', invoice.id)
+      return NextResponse.json({ error: 'Failed to send deposit email', details: String(emailError) }, { status: 500 })
     }
   } else {
     console.error('[deposit-invoice] skipped email: no client_email for estimate', est.id)
   }
+
+  await admin.from('estimates').update({ invoice_id: invoice.id }).eq('id', estimateId)
+
+  logActivity(admin, {
+    user_id: est.user_id,
+    event_type: 'deposit_invoice_sent',
+    actor_type: 'contractor',
+    entity_type: 'estimate',
+    entity_id: estimateId,
+    entity_number: est.estimate_number,
+    client_name: est.client_name,
+    amount: depositAmount,
+  }).catch((e: any) => console.error('[deposit-invoice] logActivity error:', e))
 
   return NextResponse.json({ success: true, invoice })
 }

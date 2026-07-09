@@ -92,7 +92,8 @@ export default function PublicSignPage() {
         setError((json as any).error || 'Failed to save signature. Please try again.')
         return
       }
-      await fetch('/api/create-deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })
+      const depositRes = await fetch('/api/create-deposit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ estimateId: id }) })
+      if (!depositRes.ok) console.error('[sign] deposit invoice creation failed for estimate', id)
       setDone(true)
     } finally {
       setSaving(false)

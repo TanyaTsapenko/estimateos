@@ -207,7 +207,7 @@ export default function SignContractPage() {
 
       setClientSignatureUrl(result.signatureUrl)
 
-      await Promise.allSettled([
+      const [, , depositResult] = await Promise.allSettled([
         fetch('/api/send-contract-signed', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -241,6 +241,9 @@ export default function SignContractPage() {
           body: JSON.stringify({ estimateId: contract.estimate_id }),
         }),
       ])
+      if (depositResult.status === 'rejected' || (depositResult.status === 'fulfilled' && !depositResult.value.ok)) {
+        console.error('[sign-contract] deposit invoice creation failed for estimate', contract.estimate_id)
+      }
 
       if (isAnon) {
         setShowClientConfirm(true)
