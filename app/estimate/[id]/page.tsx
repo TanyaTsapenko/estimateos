@@ -264,7 +264,7 @@ export default function ClientEstimatePage() {
                   <div style={{ display: 'flex' }}>
                     {/* Diagram */}
                     <div className="opening-diagram" style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                      <OpeningDrawing op={op} />
+                      <OpeningDrawing op={{ ...op, colour: null }} />
                     </div>
                     {/* Specs */}
                     <div style={{ flex: 1, padding: '10px 12px' }}>
