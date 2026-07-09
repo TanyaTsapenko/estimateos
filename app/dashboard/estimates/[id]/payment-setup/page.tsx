@@ -67,8 +67,10 @@ export default function PaymentSetupPage() {
   }, [id])
 
   const effectivePct    = useCustom ? (parseFloat(customInput) || 0) : depositPercent
-  const discountAmount  = estimate ? (discountType === '$' ? discountValue : estimate.total * discountValue / 100) : 0
-  const afterDiscount   = estimate ? Math.max(0, estimate.total - discountAmount) : 0
+  const previewDiscount = estimate ? (discountType === '$' ? discountValue : estimate.subtotal * (discountValue / 100)) : 0
+  const discountAmount  = estimate ? Math.round(Math.min(previewDiscount, estimate.subtotal) * 100) / 100 : 0
+  const previewTax      = estimate ? Math.round((estimate.subtotal - discountAmount) * estimate.tax_rate * 100) / 100 : 0
+  const afterDiscount   = estimate ? (estimate.subtotal - discountAmount) + previewTax : 0
   const depositAmount   = afterDiscount * effectivePct / 100
   const balance         = Math.max(0, afterDiscount - depositAmount)
 
