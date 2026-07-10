@@ -11,6 +11,15 @@ import AppTopBar from '@/components/AppTopBar'
 import { SuccessBanner } from '@/components/SuccessBanner'
 import { getTeamUserIds } from '@/lib/teamScope'
 
+// ─── Rep avatar gradients (cycle per index, consistent across both pages) ─────
+const REP_GRADIENTS = [
+  'linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%)',
+  'linear-gradient(135deg,#7C3AED 0%,#6D28D9 100%)',
+  'linear-gradient(135deg,#059669 0%,#047857 100%)',
+  'linear-gradient(135deg,#DC2626 0%,#B91C1C 100%)',
+  'linear-gradient(135deg,#D97706 0%,#B45309 100%)',
+]
+
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
   bg:           '#F3F4F6',
@@ -53,6 +62,7 @@ interface Appt {
 
 interface TimelineAppt {
   id: string
+  user_id: string
   name: string
   rawTime: string | null
   endTime: string | null
@@ -782,6 +792,8 @@ export default function AppointmentsPage() {
   // Timeline state
   const [userId, setUserId]             = useState<string | null>(null)
   const [teamUserIds, setTeamUserIds]   = useState<string[] | null>(null)
+  const [repFilter, setRepFilter]       = useState<string>('all')
+  const [teamReps, setTeamReps]         = useState<{ id: string; name: string }[]>([])
   const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow' | string>('today')
   const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [dayCounts, setDayCounts]       = useState({ yesterday: 0, today: 0, tomorrow: 0 })
@@ -801,8 +813,15 @@ export default function AppointmentsPage() {
     if (!user) { router.push('/auth'); return }
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     setUserId(sanitizedId)
-    const { userIds } = await getTeamUserIds(supabase, user.id)
+    const { userIds, isOwnerOrManager } = await getTeamUserIds(supabase, user.id)
     setTeamUserIds(userIds)
+    if (isOwnerOrManager && userIds.length > 1) {
+      const { data: profs } = await supabase.from('profiles').select('id, first_name, last_name').in('id', userIds)
+      setTeamReps(userIds.map(uid => {
+        const p = (profs || []).find((x: any) => x.id === uid)
+        return { id: uid, name: uid === sanitizedId ? 'You' : ([p?.first_name, p?.last_name].filter(Boolean).join(' ') || 'Team member') }
+      }))
+    }
     const { data: rows } = await supabase
       .from('appointments').select('*').in('user_id', userIds)
       .order('appointment_date', { ascending: true })
@@ -868,7 +887,7 @@ export default function AppointmentsPage() {
 
       const { data: rows } = await supabase
         .from('appointments')
-        .select('id, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
+        .select('id, user_id, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
         .in('user_id', teamUserIds)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
@@ -886,6 +905,7 @@ export default function AppointmentsPage() {
         const total = a.estimate_id ? (estTotalMap.get(a.estimate_id) ?? null) : null
         return {
           id: a.id,
+          user_id: (a as any).user_id,
           name: a.client_name,
           rawTime: a.appointment_time ?? null,
           endTime: (a as any).appointment_end_time || null,
@@ -905,27 +925,29 @@ export default function AppointmentsPage() {
   }, [teamUserIds, selectedDay])
 
   // ── Computed ────────────────────────────────────────────────────────────────
-  const nowDate    = new Date()
-  const todayStr   = getDayDateStr('today')
-  const todayCount = appts.filter(a => a.appointment_date === todayStr).length
-  const NOW        = nowDate.getHours() + nowDate.getMinutes() / 60
+  const nowDate  = new Date()
+  const todayStr = getDayDateStr('today')
+  const NOW      = nowDate.getHours() + nowDate.getMinutes() / 60
 
   const followUpEnd = (a: TimelineAppt): number =>
     a.endTime ? toHour(a.endTime) : a.hour + 0.5
 
+  // Rep-filter derived sets
+  const repFilteredAppts  = repFilter !== 'all' ? appts.filter(a => (a as any).user_id === repFilter) : appts
+  const displayedDayAppts = repFilter !== 'all' ? dayAppts.filter(a => a.user_id === repFilter) : dayAppts
+  const showRepGrouped    = repFilter === 'all' && teamReps.length > 1
+
+  const todayCount         = repFilteredAppts.filter(a => a.appointment_date === todayStr).length
   const needsFollowUpCount = selectedDay === 'today'
-    ? dayAppts.filter(a => a.status === 'upcoming' && followUpEnd(a) < NOW).length
-    : 0
+    ? displayedDayAppts.filter(a => a.status === 'upcoming' && followUpEnd(a) < NOW).length : 0
+  const upcomingCount  = displayedDayAppts.filter(a =>
+    a.status === 'upcoming' && (selectedDay !== 'today' || followUpEnd(a) >= NOW)
+  ).length
+  const doneCount      = displayedDayAppts.filter(a => a.status === 'completed').length
+  const cancelledCount = displayedDayAppts.filter(a => a.status === 'cancelled').length
 
-  const upcomingCount  = dayAppts.filter(a => {
-    if (a.status !== 'upcoming') return false
-    return selectedDay !== 'today' || followUpEnd(a) >= NOW
-  }).length
-  const doneCount      = dayAppts.filter(a => a.status === 'completed').length
-  const cancelledCount = dayAppts.filter(a => a.status === 'cancelled').length
-
-  const nowInsertIdx = selectedDay === 'today'
-    ? (() => { const i = dayAppts.findIndex(a => a.hour >= NOW); return i === -1 ? dayAppts.length : i })()
+  const nowInsertIdx = selectedDay === 'today' && !showRepGrouped
+    ? (() => { const i = displayedDayAppts.findIndex(a => a.hour >= NOW); return i === -1 ? displayedDayAppts.length : i })()
     : -1
 
   function buildGroups(list: Appt[]) {
@@ -946,10 +968,10 @@ export default function AppointmentsPage() {
     })
   }
 
-  const deskUpcomingList = appts.filter(a => toDesignStatus(a.status) === 'upcoming')
-  const deskDoneList     = appts.filter(a => toDesignStatus(a.status) !== 'upcoming')
-  const deskCounts = { all: appts.length, upcoming: deskUpcomingList.length, done: deskDoneList.length }
-  const deskBase: Appt[] = desktopFilter === 'Upcoming' ? deskUpcomingList : desktopFilter === 'Done' ? deskDoneList : appts
+  const deskUpcomingList = repFilteredAppts.filter(a => toDesignStatus(a.status) === 'upcoming')
+  const deskDoneList     = repFilteredAppts.filter(a => toDesignStatus(a.status) !== 'upcoming')
+  const deskCounts = { all: repFilteredAppts.length, upcoming: deskUpcomingList.length, done: deskDoneList.length }
+  const deskBase: Appt[] = desktopFilter === 'Upcoming' ? deskUpcomingList : desktopFilter === 'Done' ? deskDoneList : repFilteredAppts
   const deskFiltered = search.trim() ? deskBase.filter(a => a.client_name.toLowerCase().includes(search.toLowerCase()) || (a.client_address ?? '').toLowerCase().includes(search.toLowerCase())) : deskBase
   const deskToday  = deskFiltered.filter(a => a.appointment_date === todayStr)
   const deskFuture = deskFiltered.filter(a => a.appointment_date > todayStr)
@@ -1029,6 +1051,18 @@ export default function AppointmentsPage() {
               )
             })}
           </div>
+          {teamReps.length > 1 && (
+            <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+              {[{ id: 'all', name: 'All reps' }, ...teamReps].map(m => {
+                const active = repFilter === m.id
+                return (
+                  <button key={m.id} onClick={() => { setRepFilter(m.id); setDesktopEditing(false) }} style={{ flexShrink: 0, height: 30, padding: '0 12px', borderRadius: 99, border: `1.5px solid ${active ? T.blue : T.borderStrong}`, background: active ? T.blueSoft : T.card, color: active ? T.blue : T.inkMid, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    {m.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
         <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
           <div style={{ width: 420, flexShrink: 0, background: T.surface, borderRight: `1px solid ${T.border}`, overflowY: 'auto' }}>
@@ -1048,12 +1082,39 @@ export default function AppointmentsPage() {
                 </button>
               </div>
             )}
-            {!loading && deskGroups.map(({ label, items }) => (
+            {/* Flat date-grouped (single rep or no team) */}
+            {!loading && !showRepGrouped && deskGroups.map(({ label, items }) => (
               <div key={label}>
                 <DesktopSectionHeader label={label} color={sectionColor(label)} count={`${items.length} ${items.length === 1 ? 'visit' : 'visits'}`} />
                 {items.map(appt => <DesktopListRow key={appt.id} appt={appt} active={selectedId === appt.id} onClick={() => { setSelectedId(appt.id); setDesktopEditing(false) }} />)}
               </div>
             ))}
+            {/* Rep-grouped (All reps + team) */}
+            {!loading && showRepGrouped && teamReps.map((rep, ri) => {
+              const repAppts = deskFiltered.filter(a => (a as any).user_id === rep.id)
+              if (repAppts.length === 0) return null
+              const rt = repAppts.filter(a => a.appointment_date === todayStr)
+              const rf = repAppts.filter(a => a.appointment_date > todayStr)
+              const rp = [...repAppts.filter(a => a.appointment_date < todayStr)].sort((a, b) => a.appointment_date < b.appointment_date ? -1 : 1)
+              const rg = [...buildGroups(rt), ...buildGroups(rf), ...buildGroups(rp).reverse()]
+              return (
+                <div key={rep.id}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 6px', borderBottom: `1px solid ${T.border}` }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 9, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                      {rep.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: T.ink }}>{rep.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
+                  </div>
+                  {rg.map(({ label, items }) => (
+                    <div key={label}>
+                      <DesktopSectionHeader label={label} color={sectionColor(label)} count={`${items.length} ${items.length === 1 ? 'visit' : 'visits'}`} />
+                      {items.map(appt => <DesktopListRow key={appt.id} appt={appt} active={selectedId === appt.id} onClick={() => { setSelectedId(appt.id); setDesktopEditing(false) }} />)}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: T.bg, overflow: 'hidden' }}>
             {(() => {
@@ -1092,6 +1153,20 @@ export default function AppointmentsPage() {
             </div>
           </div>
         </AppTopBar>
+
+        {/* Rep chip row — owner/manager with team only */}
+        {teamReps.length > 1 && (
+          <div style={{ padding: '8px 16px 4px', display: 'flex', gap: 6, overflowX: 'auto', background: '#fff', flexShrink: 0, WebkitOverflowScrolling: 'touch' as any }}>
+            {[{ id: 'all', name: 'All reps' }, ...teamReps].map(m => {
+              const active = repFilter === m.id
+              return (
+                <button key={m.id} onClick={() => setRepFilter(m.id)} style={{ flexShrink: 0, height: 30, padding: '0 12px', borderRadius: 99, border: `1.5px solid ${active ? T.blue : 'rgba(15,23,42,0.08)'}`, background: active ? T.blueSoft : '#fff', color: active ? T.blue : T.inkMid, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {m.name}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Day filter pills */}
         <div style={{ padding: '0 16px 12px', display: 'flex', gap: 8, background: '#fff', flexShrink: 0 }}>
@@ -1228,41 +1303,50 @@ export default function AppointmentsPage() {
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A94A6', fontSize: 13 }}>Loading…</div>
             )}
 
-            {!dayLoading && dayAppts.length === 0 && (
+            {/* Empty state */}
+            {!dayLoading && displayedDayAppts.length === 0 && !(showRepGrouped && dayAppts.length > 0) && (
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                   <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628', marginBottom: 4 }}>No visits yet</div>
                 <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 16 }}>Schedule your first appointment to get started.</div>
-                <button
-                  onClick={() => router.push('/dashboard/appointments/new')}
-                  style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
-                >
+                <button onClick={() => router.push('/dashboard/appointments/new')} style={{ height: 40, padding: '0 20px', borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   + Schedule one
                 </button>
               </div>
             )}
 
-            {!dayLoading && dayAppts.length > 0 && dayAppts.flatMap((appt, i) => {
+            {/* Rep-grouped view (All reps + team) */}
+            {!dayLoading && showRepGrouped && dayAppts.length > 0 && teamReps.map((rep, ri) => {
+              const repAppts = dayAppts.filter(a => a.user_id === rep.id)
+              if (repAppts.length === 0) return null
+              return (
+                <div key={rep.id} style={{ marginBottom: 20 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 10, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                      {rep.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: T.ink }}>{rep.name}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
+                  </div>
+                  {repAppts.map((appt, i) => (
+                    <TimelineRow key={appt.id} appt={appt} isLast={i === repAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(p => p === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={false} />
+                  ))}
+                </div>
+              )
+            })}
+
+            {/* Flat / single-rep view */}
+            {!dayLoading && !showRepGrouped && displayedDayAppts.length > 0 && displayedDayAppts.flatMap((appt, i) => {
               const rows: React.ReactNode[] = []
-              if (selectedDay === 'today' && i === nowInsertIdx) {
-                rows.push(<NowRow key="now" />)
-              }
+              if (selectedDay === 'today' && i === nowInsertIdx) rows.push(<NowRow key="now" />)
               rows.push(
-                <TimelineRow
-                  key={appt.id}
-                  appt={appt}
-                  isLast={i === dayAppts.length - 1}
-                  expanded={expandedId === appt.id}
-                  onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)}
-                  onNavigate={path => router.push(path)}
-                  isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW}
-                />
+                <TimelineRow key={appt.id} appt={appt} isLast={i === displayedDayAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW} />
               )
               return rows
             })}
-            {!dayLoading && selectedDay === 'today' && nowInsertIdx === dayAppts.length && dayAppts.length > 0 && (
+            {!dayLoading && !showRepGrouped && selectedDay === 'today' && nowInsertIdx === displayedDayAppts.length && displayedDayAppts.length > 0 && (
               <NowRow key="now-end" />
             )}
 
