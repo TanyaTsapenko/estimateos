@@ -57,6 +57,7 @@ export default function InvoicesPage() {
   const [pageError, setPageError] = useState('')
   const [repFilter, setRepFilter] = useState<string>('all')
   const [teamReps, setTeamReps]   = useState<{ id: string; name: string }[]>([])
+  const [expandedRepIds, setExpandedRepIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!roleLoading && role !== 'owner') router.replace('/dashboard')
@@ -70,10 +71,12 @@ export default function InvoicesPage() {
       const { userIds, isOwnerOrManager } = await getTeamUserIds(supabase, user.id)
       if (isOwnerOrManager && userIds.length > 1) {
         const { data: profs } = await supabase.from('profiles').select('id, first_name, last_name').in('id', userIds)
-        setTeamReps(userIds.map(uid => {
+        const reps = userIds.map(uid => {
           const p = (profs || []).find((x: any) => x.id === uid)
           return { id: uid, name: uid === sanitizedId ? 'You' : ([p?.first_name, p?.last_name].filter(Boolean).join(' ') || 'Team member') }
-        }))
+        })
+        setTeamReps(reps)
+        setExpandedRepIds(new Set([reps[0].id]))
       }
       const { data } = await supabase.from('invoices')
         .select('id, invoice_number, status, amount, invoice_type, due_date, created_at, estimate_id, user_id, estimates!invoices_estimate_id_fkey(client_name, estimate_number)')
@@ -293,14 +296,15 @@ export default function InvoicesPage() {
                 const repTotal = repInvs.reduce((s, i) => s + i.amount, 0)
                 return (
                   <div key={rep.id}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 18px', borderBottom: '1px solid rgba(10,22,40,0.05)', background: '#FAFBFC' }}>
+                    <button onClick={() => setExpandedRepIds(prev => { const s = new Set(prev); s.has(rep.id) ? s.delete(rep.id) : s.add(rep.id); return s })} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 18px', border: 'none', borderBottom: '1px solid rgba(10,22,40,0.05)', background: '#FAFBFC', cursor: 'pointer', fontFamily: 'inherit' }}>
                       <div style={{ width: 26, height: 26, borderRadius: 8, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                         {rep.name.charAt(0).toUpperCase()}
                       </div>
                       <span style={{ flex: 1, fontSize: 12.5, fontWeight: 700, color: '#0A1628' }}>{rep.name}</span>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8' }}>{fmtInv(repTotal)}</span>
-                    </div>
-                    {repInvs.map((inv, idx) => {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    {expandedRepIds.has(rep.id) && repInvs.map((inv, idx) => {
                       const ds = displayStatus(inv)
                       const sc = SC[ds] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
                       return (
@@ -346,14 +350,15 @@ export default function InvoicesPage() {
                 const repTotal = repInvs.reduce((s, i) => s + i.amount, 0)
                 return (
                   <div key={rep.id} style={{ marginBottom: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 4px 8px' }}>
+                    <button onClick={() => setExpandedRepIds(prev => { const s = new Set(prev); s.has(rep.id) ? s.delete(rep.id) : s.add(rep.id); return s })} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 4px 8px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                       <div style={{ width: 28, height: 28, borderRadius: 9, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                         {rep.name.charAt(0).toUpperCase()}
                       </div>
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: '#0A1628' }}>{rep.name}</span>
                       <span style={{ fontSize: 12, fontWeight: 600, color: '#94A3B8' }}>{fmtInv(repTotal)}</span>
-                    </div>
-                    {repInvs.map(inv => {
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    {expandedRepIds.has(rep.id) && repInvs.map(inv => {
                       const ds = displayStatus(inv)
                       const sc = SC[ds] || { text: '#64748B', bg: 'rgba(100,116,139,.1)' }
                       return (

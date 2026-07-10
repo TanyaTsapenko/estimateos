@@ -794,6 +794,7 @@ export default function AppointmentsPage() {
   const [teamUserIds, setTeamUserIds]   = useState<string[] | null>(null)
   const [repFilter, setRepFilter]       = useState<string>('all')
   const [teamReps, setTeamReps]         = useState<{ id: string; name: string }[]>([])
+  const [expandedRepIds, setExpandedRepIds] = useState<Set<string>>(new Set())
   const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow' | string>('today')
   const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [dayCounts, setDayCounts]       = useState({ yesterday: 0, today: 0, tomorrow: 0 })
@@ -817,10 +818,12 @@ export default function AppointmentsPage() {
     setTeamUserIds(userIds)
     if (isOwnerOrManager && userIds.length > 1) {
       const { data: profs } = await supabase.from('profiles').select('id, first_name, last_name').in('id', userIds)
-      setTeamReps(userIds.map(uid => {
+      const reps = userIds.map(uid => {
         const p = (profs || []).find((x: any) => x.id === uid)
         return { id: uid, name: uid === sanitizedId ? 'You' : ([p?.first_name, p?.last_name].filter(Boolean).join(' ') || 'Team member') }
-      }))
+      })
+      setTeamReps(reps)
+      setExpandedRepIds(new Set([reps[0].id]))
     }
     const { data: rows } = await supabase
       .from('appointments').select('*').in('user_id', userIds)
@@ -1099,14 +1102,15 @@ export default function AppointmentsPage() {
               const rg = [...buildGroups(rt), ...buildGroups(rf), ...buildGroups(rp).reverse()]
               return (
                 <div key={rep.id}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 6px', borderBottom: `1px solid ${T.border}` }}>
+                  <button onClick={() => setExpandedRepIds(prev => { const s = new Set(prev); s.has(rep.id) ? s.delete(rep.id) : s.add(rep.id); return s })} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '12px 16px 6px', border: 'none', borderBottom: `1px solid ${T.border}`, background: 'transparent', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ width: 28, height: 28, borderRadius: 9, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                       {rep.name.charAt(0).toUpperCase()}
                     </div>
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: T.ink }}>{rep.name}</span>
                     <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
-                  </div>
-                  {rg.map(({ label, items }) => (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.inkSoft} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  {expandedRepIds.has(rep.id) && rg.map(({ label, items }) => (
                     <div key={label}>
                       <DesktopSectionHeader label={label} color={sectionColor(label)} count={`${items.length} ${items.length === 1 ? 'visit' : 'visits'}`} />
                       {items.map(appt => <DesktopListRow key={appt.id} appt={appt} active={selectedId === appt.id} onClick={() => { setSelectedId(appt.id); setDesktopEditing(false) }} />)}
@@ -1323,14 +1327,15 @@ export default function AppointmentsPage() {
               if (repAppts.length === 0) return null
               return (
                 <div key={rep.id} style={{ marginBottom: 20 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <button onClick={() => setExpandedRepIds(prev => { const s = new Set(prev); s.has(rep.id) ? s.delete(rep.id) : s.add(rep.id); return s })} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', marginBottom: 12, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                     <div style={{ width: 32, height: 32, borderRadius: 10, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                       {rep.name.charAt(0).toUpperCase()}
                     </div>
                     <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: T.ink }}>{rep.name}</span>
                     <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
-                  </div>
-                  {repAppts.map((appt, i) => (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.inkSoft} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  {expandedRepIds.has(rep.id) && repAppts.map((appt, i) => (
                     <TimelineRow key={appt.id} appt={appt} isLast={i === repAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(p => p === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={false} />
                   ))}
                 </div>
