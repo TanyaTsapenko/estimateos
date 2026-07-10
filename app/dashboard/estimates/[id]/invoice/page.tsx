@@ -6,7 +6,7 @@ const fmtInv = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractio
 import { ArrowLeft, Info, Send } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 
-interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; tax_rate: number; status: string; user_id: string }
+interface Estimate { id: string; estimate_number: string; client_name: string | null; client_email: string | null; total: number; tax_rate: number; status: string; user_id: string; deposit_percent: number | null }
 interface DepositInvoice { id: string; amount: number; status: string }
 
 export default function CreateInvoicePage() {
@@ -40,7 +40,7 @@ export default function CreateInvoicePage() {
       const { data: { user } } = await supabase.auth.getUser()
       const sanitizedId = user ? user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '') : null
       const [{ data: est }, { data: existingInvoices }, { data: prof }] = await Promise.all([
-        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, tax_rate, status, user_id').eq('id', id).single(),
+        supabase.from('estimates').select('id, estimate_number, client_name, client_email, total, tax_rate, status, user_id, deposit_percent').eq('id', id).single(),
         supabase.from('invoices').select('id, amount, status, invoice_type, invoice_number').eq('estimate_id', id).in('invoice_type', ['deposit', 'final']),
         sanitizedId ? supabase.from('profiles').select('interac_email').eq('id', sanitizedId).single() : Promise.resolve({ data: null }),
       ])
@@ -57,9 +57,11 @@ export default function CreateInvoicePage() {
     load()
   }, [id])
 
-  const isFinal = !!depositInvoice
+  const estimateDepositPct = estimate?.deposit_percent ?? 0
+  const isFinal             = !!depositInvoice || estimateDepositPct > 0
+  const depositPaid         = depositInvoice?.amount
+    ?? (estimate ? Math.round(estimate.total * estimateDepositPct / 100 * 100) / 100 : 0)
   const additionalTotal = additionalCharges.reduce((s, c) => s + (c.amount || 0), 0)
-  const depositPaid = isFinal ? (depositInvoice!.amount ?? 0) : 0
   const balanceAmount = isFinal
     ? Math.round((estimate ? estimate.total - depositPaid : 0) * 100) / 100
     : (estimate?.total ?? 0)
