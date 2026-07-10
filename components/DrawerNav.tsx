@@ -164,7 +164,11 @@ export default function DrawerNav() {
           transition: 'opacity .18s, transform .18s',
         }}>
           {/* New estimate */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <button
+            aria-label="New estimate"
+            onClick={() => { setFabOpen(false); router.push('/dashboard/estimates/new') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
             <div style={{
               background: C.card, borderRadius: 12,
               boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
@@ -173,23 +177,22 @@ export default function DrawerNav() {
               <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New estimate</div>
               <div style={{ fontSize: 11, color: C.inkSoft }}>Build a quote</div>
             </div>
-            <button
-              aria-label="New estimate"
-              onClick={() => { setFabOpen(false); router.push('/dashboard/estimates/new') }}
-              style={{
-                width: 48, height: 48, borderRadius: 15,
-                background: C.card, border: `1px solid ${C.border}`,
-                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
+            <div style={{
+              width: 48, height: 48, borderRadius: 15,
+              background: C.card, border: `1px solid ${C.border}`,
+              boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               <NIcon name="doc" size={21} color={C.blue} />
-            </button>
-          </div>
+            </div>
+          </button>
 
           {/* New appointment */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <button
+            aria-label="New appointment"
+            onClick={() => { setFabOpen(false); router.push('/dashboard/appointments/new') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
             <div style={{
               background: C.card, borderRadius: 12,
               boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
@@ -198,23 +201,22 @@ export default function DrawerNav() {
               <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New appointment</div>
               <div style={{ fontSize: 11, color: C.inkSoft }}>Schedule a visit</div>
             </div>
-            <button
-              aria-label="New appointment"
-              onClick={() => { setFabOpen(false); router.push('/dashboard/appointments/new') }}
-              style={{
-                width: 48, height: 48, borderRadius: 15,
-                background: C.card, border: `1px solid ${C.border}`,
-                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
+            <div style={{
+              width: 48, height: 48, borderRadius: 15,
+              background: C.card, border: `1px solid ${C.border}`,
+              boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               <NIcon name="calendar" size={21} color={C.blue} />
-            </button>
-          </div>
+            </div>
+          </button>
 
           {/* New client */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+          <button
+            aria-label="New client"
+            onClick={() => { setFabOpen(false); router.push('/dashboard/clients/new') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          >
             <div style={{
               background: C.card, borderRadius: 12,
               boxShadow: '0 6px 18px rgba(15,23,42,0.16)',
@@ -223,20 +225,15 @@ export default function DrawerNav() {
               <div style={{ fontSize: 13.5, fontWeight: 800, color: C.ink }}>New client</div>
               <div style={{ fontSize: 11, color: C.inkSoft }}>Add a new lead</div>
             </div>
-            <button
-              aria-label="New client"
-              onClick={() => { setFabOpen(false); router.push('/dashboard/clients/new') }}
-              style={{
-                width: 48, height: 48, borderRadius: 15,
-                background: C.card, border: `1px solid ${C.border}`,
-                boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
+            <div style={{
+              width: 48, height: 48, borderRadius: 15,
+              background: C.card, border: `1px solid ${C.border}`,
+              boxShadow: '0 6px 16px rgba(15,23,42,0.14)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               <NIcon name="user-plus" size={21} color={C.blue} />
-            </button>
-          </div>
+            </div>
+          </button>
         </div>
 
         {/* FAB button */}
