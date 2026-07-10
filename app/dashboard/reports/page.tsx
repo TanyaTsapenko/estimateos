@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { fmtCAD } from '@/lib/pricing'
 import { useRole } from '@/lib/useRole'
+import { getTeamUserIds } from '@/lib/teamScope'
 import { DollarSign, Send, Target, TrendingUp } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 
@@ -70,10 +71,10 @@ export default function ReportsPage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-      const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      const { userIds } = await getTeamUserIds(supabase, user.id)
       const { data } = await supabase.from('estimates')
         .select('id, status, total, client_province, created_at')
-        .eq('user_id', sanitizedId)
+        .in('user_id', userIds)
         .order('created_at', { ascending: false })
       setEstimates(data || [])
       setLoading(false)

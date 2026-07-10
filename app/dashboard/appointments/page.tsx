@@ -9,6 +9,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import TimePickerDropdown from '@/components/TimePickerDropdown'
 import AppTopBar from '@/components/AppTopBar'
 import { SuccessBanner } from '@/components/SuccessBanner'
+import { getTeamUserIds } from '@/lib/teamScope'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -780,6 +781,7 @@ export default function AppointmentsPage() {
 
   // Timeline state
   const [userId, setUserId]             = useState<string | null>(null)
+  const [teamUserIds, setTeamUserIds]   = useState<string[] | null>(null)
   const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow' | string>('today')
   const [expandedId, setExpandedId]     = useState<string | null>(null)
   const [dayCounts, setDayCounts]       = useState({ yesterday: 0, today: 0, tomorrow: 0 })
@@ -799,8 +801,10 @@ export default function AppointmentsPage() {
     if (!user) { router.push('/auth'); return }
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     setUserId(sanitizedId)
+    const { userIds } = await getTeamUserIds(supabase, user.id)
+    setTeamUserIds(userIds)
     const { data: rows } = await supabase
-      .from('appointments').select('*').eq('user_id', sanitizedId)
+      .from('appointments').select('*').in('user_id', userIds)
       .order('appointment_date', { ascending: true })
       .order('appointment_time', { ascending: true, nullsFirst: false })
       .limit(50)
@@ -826,35 +830,35 @@ export default function AppointmentsPage() {
 
   // Load day counts
   useEffect(() => {
-    if (!userId) return
+    if (!teamUserIds) return
     ;(async () => {
       const [{ count: yc }, { count: tc }, { count: tmc }] = await Promise.all([
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('appointment_date', getDayDateStr('yesterday')),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('appointment_date', getDayDateStr('today')),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('appointment_date', getDayDateStr('tomorrow')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('yesterday')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('today')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('tomorrow')),
       ])
       setDayCounts({ yesterday: yc ?? 0, today: tc ?? 0, tomorrow: tmc ?? 0 })
     })()
-  }, [userId])
+  }, [teamUserIds])
 
   // Load dots for the displayed calendar month
   useEffect(() => {
-    if (!userId) return
+    if (!teamUserIds) return
     const firstDay = toDateStr(calYear, calMonth, 1)
     const lastDate = new Date(calYear, calMonth + 1, 0).getDate()
     const lastDay  = toDateStr(calYear, calMonth, lastDate)
     supabase
       .from('appointments')
       .select('appointment_date')
-      .eq('user_id', userId)
+      .in('user_id', teamUserIds)
       .gte('appointment_date', firstDay)
       .lte('appointment_date', lastDay)
       .then(({ data }) => setMonthDots(new Set((data || []).map((a: { appointment_date: string }) => a.appointment_date))))
-  }, [userId, calYear, calMonth])
+  }, [teamUserIds, calYear, calMonth])
 
   // Load day appointments when userId or selectedDay changes
   useEffect(() => {
-    if (!userId) return
+    if (!teamUserIds) return
     setExpandedId(null)
     setDayLoading(true)
     ;(async () => {
@@ -865,7 +869,7 @@ export default function AppointmentsPage() {
       const { data: rows } = await supabase
         .from('appointments')
         .select('id, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
-        .eq('user_id', userId)
+        .in('user_id', teamUserIds)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
         .limit(50)
@@ -898,7 +902,7 @@ export default function AppointmentsPage() {
       setDayAppts(mapped)
       setDayLoading(false)
     })()
-  }, [userId, selectedDay])
+  }, [teamUserIds, selectedDay])
 
   // ── Computed ────────────────────────────────────────────────────────────────
   const nowDate    = new Date()
