@@ -245,7 +245,7 @@ export default function SignContractPage() {
         console.error('[sign-contract] deposit invoice creation failed for estimate', contract.estimate_id)
       }
 
-      if (isAnon) {
+      if (isAnon !== false) {
         setShowClientConfirm(true)
       } else {
         setShowDeposit(true)
@@ -409,7 +409,7 @@ export default function SignContractPage() {
       )}
 
       {/* ── AUTHENTICATED REP CLIENT POST-SIGN OVERLAY ── */}
-      {showDeposit && !showSuccess && !isAnon && (
+      {showDeposit && !showSuccess && isAnon === false && (
         <div className="no-print" style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#F5F6F8', fontFamily: F, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 24px' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#16A34A', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
