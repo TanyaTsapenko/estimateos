@@ -123,8 +123,11 @@ export default function DrawerNav() {
     router.push('/auth')
   }
 
-  const settingsActive = pathname.startsWith('/dashboard/settings')
-  const isContractPage = /^\/dashboard\/estimates\/[^/]+\/contract/.test(pathname)
+  const settingsActive  = pathname.startsWith('/dashboard/settings')
+  const isContractPage  = /^\/dashboard\/estimates\/[^/]+\/contract/.test(pathname)
+  const isClientNew     = pathname === '/dashboard/clients/new'
+  const isClientDetail  = /^\/dashboard\/clients\/[^/]+$/.test(pathname)
+  const hideFab         = isContractPage || isClientNew || isClientDetail
 
   if (!mounted) return null
   return createPortal(
@@ -150,7 +153,7 @@ export default function DrawerNav() {
         right: 18,
         bottom: 'calc(env(safe-area-inset-bottom, 0px) + 26px)',
         zIndex: 47,
-        display: isContractPage ? 'none' : 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
+        display: hideFab ? 'none' : 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 12,
         pointerEvents: 'none',
       }}>
         <div style={{
