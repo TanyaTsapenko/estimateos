@@ -15,6 +15,7 @@ interface Contract {
   id: string; estimate_id: string; profile_id: string; status: string
   contract_terms_snapshot: string | null; contractor_signature_url: string | null
   company_name: string | null; company_email: string | null; company_phone: string | null
+  rep_name: string | null
   signed_at: string | null; created_at: string
   payment_method?: string; deposit_percent?: number
 }
@@ -742,7 +743,7 @@ export default function SignContractPage() {
                 </div>
                 <div style={{ borderTop: '1.5px solid ' + INK, marginTop: 6, paddingTop: 6 }}>
                   <div style={{ fontSize: 11, fontWeight: 600 }}>{companyName}</div>
-                  <div style={{ fontSize: 10, color: INK_S, marginTop: 1 }}>{companyName} · {createdDate}</div>
+                  <div style={{ fontSize: 10, color: INK_S, marginTop: 1 }}>{[contract.rep_name, createdDate].filter(Boolean).join(' · ')}</div>
                 </div>
               </div>
 

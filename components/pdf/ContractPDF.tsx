@@ -88,7 +88,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
   const depositAmount = (estimate.total || 0) * (depositPct / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses       = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
-  const companyName   = company.company_name || 'Your Company'
+  const companyName   = contract.company_name || company.company_name || 'Your Contractor'
   const conId         = `CON-${contract.contract_number || contract.id.slice(-6).toUpperCase()}`
   const docDate       = formatDate(contract.signed_at || contract.created_at)
 
@@ -305,8 +305,8 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                 <Image style={styles.signatureImage} src={contract.contractor_signature_url || company.signature_url} />
               )}
               <View style={styles.signatureLine} />
-              <Text style={styles.signatureName}>{company.signing_rep_name || companyName}</Text>
-              <Text style={styles.signatureDate}>{companyName} · {docDate}</Text>
+              <Text style={styles.signatureName}>{companyName}</Text>
+              <Text style={styles.signatureDate}>{[contract.rep_name, docDate].filter(Boolean).join(' · ')}</Text>
             </View>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Client</Text>

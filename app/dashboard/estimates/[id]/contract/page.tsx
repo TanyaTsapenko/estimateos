@@ -31,6 +31,7 @@ interface Opening {
 }
 interface Profile {
   id: string
+  first_name: string | null; last_name: string | null; team_owner_id: string | null
   company_name: string | null; phone: string | null; email: string | null
   address: string | null; city: string | null; province: string | null; postal: string | null; website: string | null
   licence: string | null
@@ -111,6 +112,8 @@ export default function ContractPage() {
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile,  setProfile]  = useState<Profile | null>(null)
   const [resolvedCompanyName, setResolvedCompanyName] = useState<string>('Your Contractor')
+  const [ownerSignatureUrl, setOwnerSignatureUrl] = useState<string | null>(null)
+  const [repName, setRepName] = useState<string>('')
   const [loading,  setLoading]  = useState(true)
   const [sending,  setSending]  = useState(false)
 
@@ -136,10 +139,16 @@ export default function ContractPage() {
       const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, company_name, phone, email, address, city, province, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title')
+        .select('id, company_name, phone, email, address, city, province, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title, first_name, last_name, team_owner_id')
         .eq('id', estOwnerId)
         .single()
       if (prof) setProfile(prof as Profile)
+      setRepName([prof?.first_name, prof?.last_name].filter(Boolean).join(' '))
+      if (prof?.team_owner_id) {
+        const ownerSanitized = prof.team_owner_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+        const { data: ownerProf } = await supabase.from('profiles').select('signature_url').eq('id', ownerSanitized).single()
+        if (ownerProf?.signature_url) setOwnerSignatureUrl(ownerProf.signature_url)
+      }
       const name = await getCompanyName(supabase, est.user_id)
       setResolvedCompanyName(name)
       setLoading(false)
@@ -196,7 +205,8 @@ export default function ContractPage() {
           profile_id: profile?.id,
           status: contractStatus,
           contract_terms_snapshot: profile?.contract_terms,
-          contractor_signature_url: profile?.signature_url,
+          contractor_signature_url: profile?.signature_url || ownerSignatureUrl || null,
+          rep_name: repName || null,
           company_name: resolvedCompanyName,
           company_email: profile?.email || '',
           company_phone: profile?.phone || '',
@@ -595,14 +605,14 @@ export default function ContractPage() {
               <div>
                 <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: INK_S, marginBottom: 8 }}>Contractor</div>
                 <div style={{ height: 64, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-                  {profile?.signature_url
-                    ? <img src={profile.signature_url} alt="Contractor signature" style={{ maxHeight: 64, maxWidth: '100%', objectFit: 'contain' }} />
+                  {(profile?.signature_url || ownerSignatureUrl)
+                    ? <img src={profile?.signature_url || ownerSignatureUrl!} alt="Contractor signature" style={{ maxHeight: 64, maxWidth: '100%', objectFit: 'contain' }} />
                     : <div style={{ height: 64 }} />
                   }
                 </div>
                 <div style={{ borderTop: '1.5px solid ' + INK, marginTop: 6, paddingTop: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600 }}>{profile?.signing_rep_name || companyName}</div>
-                  <div style={{ fontSize: 10, color: INK_S, marginTop: 1 }}>{companyName} · {createdDate}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600 }}>{companyName}</div>
+                  <div style={{ fontSize: 10, color: INK_S, marginTop: 1 }}>{[repName, createdDate].filter(Boolean).join(' · ')}</div>
                 </div>
               </div>
 

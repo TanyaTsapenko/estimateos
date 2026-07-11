@@ -8,7 +8,7 @@ function isUUID(s: string) {
 const CONTRACT_COLS = [
   'id', 'estimate_id', 'profile_id', 'status',
   'contract_terms_snapshot', 'contractor_signature_url', 'client_signature_url',
-  'company_name', 'company_email', 'company_phone',
+  'company_name', 'company_email', 'company_phone', 'rep_name',
   'signed_at', 'created_at', 'payment_method', 'deposit_percent',
 ].join(', ')
 
