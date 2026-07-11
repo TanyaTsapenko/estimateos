@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { getTeamUserIds } from '@/lib/teamScope'
 import { fmtCAD } from '@/lib/pricing'
 import { Search, ChevronRight, UserPlus } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
@@ -50,31 +51,16 @@ export default function ClientsPage() {
       if (!user) { router.push('/auth'); return }
       const uid = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-      // Resolve role and team owner
-      let role: string | null = null
-      let memberRole: string | null = null
-      let teamOwnerId: string | null = null
-      try {
-        const { data: prof } = await supabase
-          .from('profiles').select('role, member_role, team_owner_id').eq('id', uid).single()
-        role        = prof?.role ?? null
-        memberRole  = prof?.member_role ?? null
-        teamOwnerId = prof?.team_owner_id ?? null
-      } catch {}
+      const { userIds, isOwnerOrManager } = await getTeamUserIds(supabase, uid)
 
       // Build clients query based on role
       let clientsQuery = supabase.from('clients')
         .select('id, name, phone, email, address, city, created_at')
         .order('created_at', { ascending: false })
 
-      let estimatesOwnerId = uid
-      if (role === 'owner') {
-        clientsQuery = clientsQuery.eq('owner_id', uid)
-      } else if (memberRole === 'manager' && teamOwnerId) {
-        clientsQuery = clientsQuery.or(`owner_id.eq.${uid},owner_id.eq.${teamOwnerId}`)
-        estimatesOwnerId = teamOwnerId
+      if (isOwnerOrManager) {
+        clientsQuery = clientsQuery.in('owner_id', userIds)
       } else {
-        // sales, estimator, or unknown — own clients only
         clientsQuery = clientsQuery.eq('owner_id', uid)
       }
 
@@ -82,7 +68,7 @@ export default function ClientsPage() {
         clientsQuery.limit(50),
         supabase.from('estimates')
           .select('id, client_id, status, total')
-          .eq('user_id', estimatesOwnerId)
+          .in('user_id', userIds)
           .not('client_id', 'is', null)
           .limit(20),
       ])

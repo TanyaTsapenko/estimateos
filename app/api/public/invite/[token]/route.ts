@@ -16,7 +16,6 @@ export async function GET(
     .from('team_invitations')
     .select('invitee_email, invitee_name, role, owner_id, expires_at, status')
     .eq('token', token)
-    .eq('status', 'pending')
     .maybeSingle()
 
   if (!invite) return NextResponse.json({ error: 'Invite not found or already used' }, { status: 404 })
@@ -33,6 +32,10 @@ export async function GET(
   const companyName = prof?.company_name
     || `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim()
     || 'the team'
+
+  if (invite.status !== 'pending') {
+    return NextResponse.json({ error: 'Already a member', companyName }, { status: 409 })
+  }
 
   // Return only what the page needs — no token, no owner_id, no invitation id
   return NextResponse.json({

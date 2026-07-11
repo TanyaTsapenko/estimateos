@@ -946,8 +946,12 @@ const [dashToast, setDashToast] = useState('')
                 }
                 return (
                   <div style={{ background: 'rgba(255,255,255,0.13)', borderRadius: 16, padding: '20px 16px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>No visits today</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>Tap + to add an appointment</div>
+                    <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>
+                      {isRestrictedRole ? `Welcome to ${companyName || 'the team'}!` : 'No visits today'}
+                    </div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+                      {isRestrictedRole ? 'Tap + to create your first estimate' : 'Tap + to add an appointment'}
+                    </div>
                   </div>
                 )
               })()
@@ -1065,10 +1069,10 @@ const [dashToast, setDashToast] = useState('')
               {filteredAppts.length === 0 ? (
                 <>
                   <div className="db-hero-title" style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.7px', marginTop: 6, opacity: 0.65 }}>
-                    No appointments today{signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}
+                    {isRestrictedRole ? `Welcome to ${companyName || 'the team'}!` : `No appointments today${signaturesNeeded > 0 ? ` · ${signaturesNeeded} signature${signaturesNeeded !== 1 ? 's' : ''} pending` : ''}`}
                   </div>
                   <div className="db-hero-sub" style={{ fontSize: 13, opacity: 0.65, marginTop: 4 }}>
-                    {signaturesNeeded > 0 ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : 'Add your first appointment to get started.'}
+                    {isRestrictedRole ? 'Tap + to create your first estimate.' : (signaturesNeeded > 0 ? `${signaturesNeeded} signed job${signaturesNeeded !== 1 ? 's' : ''} ready to invoice.` : 'Add your first appointment to get started.')}
                   </div>
                 </>
               ) : (

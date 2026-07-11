@@ -307,31 +307,41 @@ function NewEstimateV2() {
         supabase.from('profiles').select('surcharges, team_owner_id').eq('id', user.id).single(),
       ])
 
-      const { data: priceRows, error: priceErr } = priceResult
+      // Extract profile data first to get teamOwnerId for fallbacks
+      const { data: profRow } = profileResult
+      const teamOwnerId: string | null = (profRow as any)?.team_owner_id ?? null
+
+      let { data: priceRows, error: priceErr } = priceResult
       if (priceErr) {
         console.error('[price_lists] fetch failed, falling back to default pricing:', priceErr)
-      } else if (priceRows && priceRows.length > 0) {
-        // Invert V2_TO_OLD_TYPE_KEY: { window_cas: 'casement', ... } so we can
-        // convert DB opening_type keys back to the v2 typeIds that computePrice() uses.
-        const dbToV2: Record<string, string> = {}
-        for (const [typeId, dbKey] of Object.entries(V2_TO_OLD_TYPE_KEY)) {
-          dbToV2[dbKey] = typeId
+      } else {
+        if ((!priceRows || priceRows.length === 0) && teamOwnerId) {
+          const { data: ownerPrices } = await supabase
+            .from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', teamOwnerId)
+          priceRows = ownerPrices
         }
-        const base: Record<string, number> = {}
-        priceRows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
-          const typeId = dbToV2[r.opening_type] ?? r.opening_type
-          base[typeId] = (r.base_price || 0) + (r.labour_price || 0)
-        })
-        setCustomPricing(prev => ({ ...prev, base }))
+        if (priceRows && priceRows.length > 0) {
+          // Invert V2_TO_OLD_TYPE_KEY: { window_cas: 'casement', ... } so we can
+          // convert DB opening_type keys back to the v2 typeIds that computePrice() uses.
+          const dbToV2: Record<string, string> = {}
+          for (const [typeId, dbKey] of Object.entries(V2_TO_OLD_TYPE_KEY)) {
+            dbToV2[dbKey] = typeId
+          }
+          const base: Record<string, number> = {}
+          priceRows.forEach((r: { opening_type: string; base_price: number; labour_price: number }) => {
+            const typeId = dbToV2[r.opening_type] ?? r.opening_type
+            base[typeId] = (r.base_price || 0) + (r.labour_price || 0)
+          })
+          setCustomPricing(prev => ({ ...prev, base }))
+        }
       }
 
       // Load surcharges (from owner profile for team members)
-      const { data: profRow } = profileResult
       if (profRow) {
         let rawSurcharges: Record<string, number> = (profRow as any).surcharges || {}
-        if ((profRow as any).team_owner_id && Object.keys(rawSurcharges).length === 0) {
+        if (teamOwnerId && Object.keys(rawSurcharges).length === 0) {
           const { data: ownerProf } = await supabase
-            .from('profiles').select('surcharges').eq('id', (profRow as any).team_owner_id).single()
+            .from('profiles').select('surcharges').eq('id', teamOwnerId).single()
           rawSurcharges = (ownerProf as any)?.surcharges || {}
         }
         if (Object.keys(rawSurcharges).length > 0) {
@@ -347,6 +357,12 @@ function NewEstimateV2() {
         if (retry.error) {
           console.error('palette fetch retry failed, using hardcoded fallback:', retry.error)
         }
+      }
+      if ((!paletteRows || paletteRows.length === 0) && teamOwnerId) {
+        const { data: ownerPalette } = await supabase
+          .from('color_palette').select('id, name, hex_color, category, price_addon')
+          .eq('user_id', teamOwnerId).order('sort_order').order('created_at')
+        paletteRows = ownerPalette
       }
       if (paletteRows && paletteRows.length > 0) {
         type RawEntry = { id: string; name: string; hex_color: string | null; category: string; price_addon: number | null }

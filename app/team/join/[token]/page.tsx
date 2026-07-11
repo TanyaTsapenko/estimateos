@@ -38,6 +38,8 @@ export default function JoinPage() {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const [expired, setExpired] = useState(false)
+  const [alreadyMember, setAlreadyMember] = useState(false)
+  const [alreadyMemberCompany, setAlreadyMemberCompany] = useState('')
 
   // Registration form state
   const [password, setPassword] = useState('')
@@ -52,6 +54,13 @@ export default function JoinPage() {
         fetch(`/api/public/invite/${encodeURIComponent(token)}`),
       ])
       setUser(u)
+      if (invRes.status === 409) {
+        const invData = await invRes.json()
+        setAlreadyMemberCompany(invData.companyName || 'the team')
+        setAlreadyMember(true)
+        setLoading(false)
+        return
+      }
       if (!invRes.ok) { setExpired(true); setLoading(false); return }
       const invData = await invRes.json()
       setInvite({ invitee_email: invData.inviteeEmail, invitee_name: invData.inviteeName ?? null, role: invData.role })
@@ -109,6 +118,29 @@ export default function JoinPage() {
       <div className="gh"><div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div></div>
       <div className="card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
         <div style={{ color: 'var(--ash)', fontSize: 13 }}>Loading invite…</div>
+      </div>
+    </div>
+  )
+
+  // ── Already a member ─────────────────────────────────────────────────────────
+  if (alreadyMember) return (
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <div className="gh">
+        <div className="h-top"><ApexScaleLogo theme="dark" size={28} /></div>
+        <div className="h-title">
+          <div className="h-eye">Team Invite</div>
+          <div className="h-big">Already a member</div>
+        </div>
+      </div>
+      <div className="card" style={{ textAlign: 'center', paddingTop: 40 }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}><CheckCircle2 size={48} color="#16a34a" /></div>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--jet)', marginBottom: 8 }}>
+          You&apos;re already a member of {alreadyMemberCompany}
+        </div>
+        <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6, marginBottom: 24 }}>
+          Sign in to access your workspace.
+        </div>
+        <button className="gen-btn" style={{ maxWidth: 240, margin: '0 auto' }} onClick={() => router.push('/auth/login')}>Sign In →</button>
       </div>
     </div>
   )
