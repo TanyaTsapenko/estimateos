@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
   }
   if (invite.permissions) profileData.permissions = invite.permissions
 
+  // Backfill name from user metadata only when profile has no name yet — never clobber
+  const meta = (user.user_metadata || {}) as Record<string, string>
+  if (meta.first_name || meta.last_name) {
+    const { data: existing } = await admin
+      .from('profiles').select('first_name, last_name').eq('id', user.id).maybeSingle()
+    if (!existing?.first_name) profileData.first_name = meta.first_name || null
+    if (!existing?.last_name)  profileData.last_name  = meta.last_name  || null
+  }
+
   const { error: profileErr } = await admin
     .from('profiles')
     .upsert(profileData, { onConflict: 'id' })
