@@ -1166,7 +1166,7 @@ const [dashToast, setDashToast] = useState('')
               style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', padding: '4px 0 8px', WebkitOverflowScrolling: 'touch' as any, scrollbarWidth: 'none' } as React.CSSProperties}
             >
               {teamCards.map((rep, ri) => (
-                <div key={rep.id} style={{ flex: '0 0 88%', scrollSnapAlign: 'center', background: '#fff', borderRadius: 20, border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 6px 20px rgba(15,23,42,0.07)', overflow: 'hidden' }}>
+                <div key={rep.id} style={{ flex: teamCards.length === 1 ? '0 0 100%' : '0 0 88%', scrollSnapAlign: teamCards.length === 1 ? undefined : 'center', background: '#fff', borderRadius: 20, border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 6px 20px rgba(15,23,42,0.07)', overflow: 'hidden' }}>
                   {/* Head */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px' }}>
                     <div style={{ width: 42, height: 42, borderRadius: 13, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,0.25)' }}>
