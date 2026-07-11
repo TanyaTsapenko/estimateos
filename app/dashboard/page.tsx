@@ -769,7 +769,7 @@ const [dashToast, setDashToast] = useState('')
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
   const isTeamView = isOwnerOrManager && Object.keys(repNames).length > 1
   const teamCards = isTeamView
-    ? Object.entries(repNames).map(([id, name]) => ({
+    ? Object.entries(repNames).filter(([id]) => id !== currentUserId).map(([id, name]) => ({
         id, name,
         todayCount:  appointments.filter(a => a.userId === id).length,
         doneCount:   appointments.filter(a => a.userId === id && a.pillStatus === 'DONE').length,
@@ -1168,7 +1168,7 @@ const [dashToast, setDashToast] = useState('')
               {teamCards.map((rep, ri) => (
                 <div key={rep.id} style={{ flex: '0 0 88%', scrollSnapAlign: 'center', background: '#fff', borderRadius: 20, border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 6px 20px rgba(15,23,42,0.07)', overflow: 'hidden' }}>
                   {/* Head */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px', background: 'linear-gradient(180deg,#EEF3FF 0%,rgba(238,243,255,0) 100%)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px' }}>
                     <div style={{ width: 42, height: 42, borderRadius: 13, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,0.25)' }}>
                       {rep.name.charAt(0).toUpperCase()}
                     </div>
