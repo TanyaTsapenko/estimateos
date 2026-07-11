@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell } from 'lucide-react'
@@ -31,6 +31,20 @@ interface AttentionItem {
 interface ActivityItem {
   event_type: string; actor_type: 'contractor' | 'client'; actor_name: string
   entity_id: string; entity_number: string; client_name: string; amount: number | null; time: string
+}
+
+const REP_GRADIENTS = [
+  'linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%)',
+  'linear-gradient(135deg,#7C3AED 0%,#6D28D9 100%)',
+  'linear-gradient(135deg,#059669 0%,#047857 100%)',
+  'linear-gradient(135deg,#DC2626 0%,#B91C1C 100%)',
+  'linear-gradient(135deg,#D97706 0%,#B45309 100%)',
+]
+
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000) return `CA$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `CA$${Math.round(n / 1_000)}K`
+  return `CA$${Math.round(n)}`
 }
 
 function Sparkline({ data, color }: { data: number[]; color: string }) {
@@ -237,6 +251,9 @@ const [dashToast, setDashToast] = useState('')
   const [isOwnerOrManager, setIsOwnerOrManager] = useState(false)
   const [repFilter, setRepFilter] = useState<string>('all')
   const [repNames, setRepNames] = useState<Record<string, string>>({})
+  const [repSignedTotals, setRepSignedTotals] = useState<Record<string, number>>({})
+  const [teamCardIdx, setTeamCardIdx] = useState(0)
+  const teamTrackRef = useRef<HTMLDivElement>(null)
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -257,7 +274,7 @@ const [dashToast, setDashToast] = useState('')
       const { data: teamProfs } = await supabase
         .from('profiles').select('id, first_name, last_name, company_name').in('id', userIds)
       for (const p of teamProfs || []) {
-        nameMap[p.id] = p.first_name || p.company_name || 'Rep'
+        nameMap[p.id] = [p.first_name, p.last_name].filter(Boolean).join(' ') || p.company_name || 'Rep'
       }
       setRepNames(nameMap)
     }
@@ -328,7 +345,7 @@ const [dashToast, setDashToast] = useState('')
       const todayUTC = new Date().toISOString().slice(0, 10)
       const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }, { data: remProfile }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name,last_reminder_sent_at,reminder_count,viewed_at').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
-        supabase.from('estimates').select('id,total,estimate_number,client_name,status').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
+        supabase.from('estimates').select('id,total,estimate_number,client_name,status,user_id').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total,created_at,status').in('user_id', userIds).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
         supabase.from('estimates').select('total').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('created_at', lastMonthStart).lte('created_at', lastMonthEnd),
         supabase.from('invoices').select('id,invoice_number,amount,invoice_type,estimate_id,created_at').in('user_id', userIds).eq('status', 'pending').eq('invoice_type', 'deposit').order('created_at', { ascending: false }).limit(20),
@@ -374,6 +391,13 @@ const [dashToast, setDashToast] = useState('')
           signed: [...(estSignedToday||[])].sort((a:any,b:any)=>new Date(a.updated_at).getTime()-new Date(b.updated_at).getTime()).map((e:any)=>e.total||0).slice(-6),
         },
       })
+
+      const signedByRep: Record<string, number> = {}
+      for (const e of estSigned || []) {
+        const uid = (e as any).user_id
+        if (uid) signedByRep[uid] = (signedByRep[uid] || 0) + ((e as any).total || 0)
+      }
+      setRepSignedTotals(signedByRep)
 
       const attItems: AttentionItem[] = []
       const pendingEstimateIds = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id))
@@ -744,6 +768,15 @@ const [dashToast, setDashToast] = useState('')
 
   const signaturesNeeded = metrics?.signaturesNeeded ?? 0
   const isTeamView = isOwnerOrManager && Object.keys(repNames).length > 1
+  const teamCards = isTeamView
+    ? Object.entries(repNames).map(([id, name]) => ({
+        id, name,
+        todayCount:  appointments.filter(a => a.userId === id).length,
+        doneCount:   appointments.filter(a => a.userId === id && a.pillStatus === 'DONE').length,
+        signedTotal: repSignedTotals[id] ?? 0,
+        appts:       appointments.filter(a => a.userId === id),
+      }))
+    : []
   const filteredAppts = repFilter === 'all' ? appointments : appointments.filter(a => a.userId === repFilter)
   const repPills = isTeamView
     ? [{ id: 'all', name: `All (${appointments.length})` },
@@ -1116,6 +1149,76 @@ const [dashToast, setDashToast] = useState('')
             onClick={() => router.push('/dashboard/estimates')}
           />
         </div>
+
+        {/* ── TEAM REP CARDS ── */}
+        {isTeamView && teamCards.length > 0 && (
+          <section style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Team</div>
+            <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 8 }}>Today's rep overview</div>
+            {/* Swipe track */}
+            <div
+              ref={teamTrackRef}
+              onScroll={e => {
+                const el = e.currentTarget
+                const idx = Math.round(el.scrollLeft / (el.clientWidth * 0.88 + 12))
+                setTeamCardIdx(Math.max(0, Math.min(idx, teamCards.length - 1)))
+              }}
+              style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', padding: '4px 0 8px', WebkitOverflowScrolling: 'touch' as any, scrollbarWidth: 'none' } as React.CSSProperties}
+            >
+              {teamCards.map((rep, ri) => (
+                <div key={rep.id} style={{ flex: '0 0 88%', scrollSnapAlign: 'center', background: '#fff', borderRadius: 20, border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 6px 20px rgba(15,23,42,0.07)', overflow: 'hidden' }}>
+                  {/* Head */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px', background: 'linear-gradient(180deg,#EEF3FF 0%,rgba(238,243,255,0) 100%)' }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 13, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,0.25)' }}>
+                      {rep.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ fontWeight: 800, fontSize: 16, color: '#0B1220' }}>{rep.name}</div>
+                  </div>
+                  {/* Stats */}
+                  <div style={{ display: 'flex', padding: '14px 18px', gap: 10, borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                    {([
+                      { num: rep.todayCount, label: 'Today' },
+                      { num: rep.doneCount,  label: 'Done'  },
+                      { num: fmtCompact(rep.signedTotal), label: 'Signed' },
+                    ] as const).map(({ num, label }) => (
+                      <div key={label} style={{ flex: 1, textAlign: 'center' }}>
+                        <div style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>{num}</div>
+                        <div style={{ fontSize: 10, color: '#94A0B4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', marginTop: 2 }}>{label}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Appointment list */}
+                  <div style={{ padding: '12px 18px 18px' }}>
+                    {rep.appts.length > 0 ? (
+                      <>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: '#94A0B4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Today's appointments</div>
+                        {rep.appts.map((appt, ai) => (
+                          <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: ai < rep.appts.length - 1 ? '1px solid rgba(15,23,42,0.06)' : 'none' }}>
+                            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: appt.pillStatus === 'DONE' ? '#0F8A4D' : '#2563EB' }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: 13, color: '#0B1220', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
+                              <div style={{ fontSize: 11, color: '#94A0B4', marginTop: 1 }}>{appt.time}{appt.address ? ` · ${appt.address.split(',')[0]}` : ''}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div style={{ fontSize: 12, color: '#94A0B4', textAlign: 'center', padding: '8px 0' }}>No visits today</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Dot pagination */}
+            {teamCards.length > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingTop: 4 }}>
+                {teamCards.map((_, i) => (
+                  <div key={i} style={{ height: 6, borderRadius: 3, background: i === teamCardIdx ? '#2563EB' : 'rgba(15,23,42,0.10)', width: i === teamCardIdx ? 16 : 6, transition: 'width .2s, background .2s' }} />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── MOBILE SECTIONS ── */}
         {isMobile ? (
