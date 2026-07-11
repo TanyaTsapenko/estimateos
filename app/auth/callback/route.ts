@@ -50,13 +50,20 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error && data.user) {
-      await supabase.from('profiles').upsert({
+      const meta = (data.user.user_metadata || {}) as Record<string, string>
+      const firstName = meta.first_name || (meta.full_name ? meta.full_name.split(' ')[0] : null) || null
+      const lastName  = meta.last_name  || (meta.full_name ? meta.full_name.split(' ').slice(1).join(' ') || null : null) || null
+      const upsertPayload: Record<string, unknown> = {
         id: data.user.id,
         email: data.user.email,
-        first_name: data.user.user_metadata?.full_name?.split(' ')[0] ?? null,
-        last_name:  data.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'id', ignoreDuplicates: false })
+      }
+      if (firstName || lastName) {
+        const { data: existing } = await supabase.from('profiles').select('first_name, last_name').eq('id', data.user.id).maybeSingle()
+        if (!existing?.first_name) upsertPayload.first_name = firstName
+        if (!existing?.last_name)  upsertPayload.last_name  = lastName
+      }
+      await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
       return resolveDestination(supabase, data.user.id, next, origin)
     }
   }
