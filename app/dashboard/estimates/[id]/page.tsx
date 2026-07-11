@@ -7,6 +7,7 @@ import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
+import { getCompanyName } from '@/lib/getCompanyName'
 import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -76,6 +77,7 @@ export default function EstimateDetailPage() {
   const [depositInvoice, setDepositInvoice] = useState<{ id: string; amount: number; status: string } | null>(null)
   const [contract,       setContract]       = useState<{ id: string; status: string } | null>(null)
   const [profile,        setProfile]        = useState<{ id: string; contract_terms: string | null; company_name: string | null; email: string | null; phone: string | null; signature_url: string | null } | null>(null)
+  const [resolvedCompanyName, setResolvedCompanyName] = useState<string>('')
   const [loading,             setLoading]             = useState(true)
   const [sending,             setSending]             = useState(false)
   const [showEmailModal,      setShowEmailModal]      = useState(false)
@@ -127,6 +129,8 @@ export default function EstimateDetailPage() {
       if (est?.user_id) {
         const { data: prof } = await supabase.from('profiles').select('id, contract_terms, company_name, email, phone, signature_url').eq('id', est.user_id).single()
         setProfile(prof)
+        const name = await getCompanyName(supabase, est.user_id)
+        setResolvedCompanyName(name)
       }
       if (est?.status === 'signed' || est?.status === 'invoiced' || est?.status === 'paid') {
         const [{ data: dep }, { data: con }] = await Promise.all([
@@ -326,9 +330,9 @@ export default function EstimateDetailPage() {
 
       {/* ── HERO ── */}
       <div style={{ background: 'linear-gradient(160deg, #1a3a7c 0%, #2563EB 100%)', padding: '20px 20px 32px' }}>
-        {profile?.company_name && (
+        {resolvedCompanyName && (
           <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
-            {profile.company_name}
+            {resolvedCompanyName}
           </div>
         )}
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>

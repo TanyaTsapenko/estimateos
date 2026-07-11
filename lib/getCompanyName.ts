@@ -19,5 +19,5 @@ export async function getCompanyName(admin: SupabaseClient, profileUserId: strin
     if (ownerProf?.company_name) return ownerProf.company_name
   }
 
-  return `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim() || 'Your contractor'
+  return `${prof?.first_name || ''} ${prof?.last_name || ''}`.trim() || 'Your Contractor'
 }

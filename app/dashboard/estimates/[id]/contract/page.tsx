@@ -8,6 +8,7 @@ import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 import { getColourLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
 import { substituteProvince } from '@/lib/provinces'
 import { getEffectiveClauses } from '@/lib/contractClauses'
+import { getCompanyName } from '@/lib/getCompanyName'
 import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 import AppTopBar from '@/components/AppTopBar'
 
@@ -109,6 +110,7 @@ export default function ContractPage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile,  setProfile]  = useState<Profile | null>(null)
+  const [resolvedCompanyName, setResolvedCompanyName] = useState<string>('Your Contractor')
   const [loading,  setLoading]  = useState(true)
   const [sending,  setSending]  = useState(false)
 
@@ -138,6 +140,8 @@ export default function ContractPage() {
         .eq('id', estOwnerId)
         .single()
       if (prof) setProfile(prof as Profile)
+      const name = await getCompanyName(supabase, est.user_id)
+      setResolvedCompanyName(name)
       setLoading(false)
     }
     load()
@@ -193,7 +197,7 @@ export default function ContractPage() {
           status: contractStatus,
           contract_terms_snapshot: profile?.contract_terms,
           contractor_signature_url: profile?.signature_url,
-          company_name: profile?.company_name || '',
+          company_name: resolvedCompanyName,
           company_email: profile?.email || '',
           company_phone: profile?.phone || '',
           ...(urlDeposit ? { deposit_percent: parseFloat(urlDeposit) } : {}),
@@ -252,9 +256,9 @@ export default function ContractPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contractorEmail: profile?.email || '',
-              contractorName: profile?.company_name || '',
+              contractorName: resolvedCompanyName,
               clientName: estimate?.client_name || '',
-              companyName: profile?.company_name || 'Your Company',
+              companyName: resolvedCompanyName,
               total: estimate?.total || 0,
               depositPercent: depositPct,
               contractId: contract.id,
@@ -280,7 +284,7 @@ export default function ContractPage() {
           estimateId: id,
           clientEmail: estimate.client_email,
           clientName: estimate.client_name,
-          companyName: profile?.company_name || 'Your Contractor',
+          companyName: resolvedCompanyName,
         }),
       })
       showFlash('Contract sent to ' + estimate.client_email, 'success')
@@ -298,7 +302,7 @@ export default function ContractPage() {
   const depositAmt  = estimate.total * (depositPct / 100)
   const balanceAmt  = estimate.total - depositAmt
   const isEmpty     = paths.length === 0
-  const companyName = profile?.company_name || 'Your Company'
+  const companyName = resolvedCompanyName
   const taxRate     = estimate.subtotal > 0 ? Math.round(estimate.tax_amount / estimate.subtotal * 100) : 0
   const taxLabel    = estimate.tax_amount > 0 ? (taxRate > 0 ? `Tax (${taxRate}%)` : 'Tax') : null
 
