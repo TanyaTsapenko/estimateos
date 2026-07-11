@@ -826,7 +826,8 @@ export default function AppointmentsPage() {
       setExpandedRepIds(new Set([reps[0].id]))
     }
     const { data: rows } = await supabase
-      .from('appointments').select('*').in('user_id', userIds)
+      .from('appointments').select('*')
+      .or(`user_id.in.(${userIds.join(',')}),assigned_to.in.(${userIds.join(',')})`)
       .order('appointment_date', { ascending: true })
       .order('appointment_time', { ascending: true, nullsFirst: false })
       .limit(50)
@@ -837,7 +838,7 @@ export default function AppointmentsPage() {
       const { data: ests } = await supabase.from('estimates').select('id, estimate_number').in('id', estIds)
       estMap = new Map((ests ?? []).map(e => [e.id, e.estimate_number]))
     }
-    setAppts(apptList.map(a => ({ ...a, estimate_number: a.estimate_id ? (estMap.get(a.estimate_id) ?? null) : null })))
+    setAppts(apptList.map(a => ({ ...a, user_id: (a as any).assigned_to || a.user_id, estimate_number: a.estimate_id ? (estMap.get(a.estimate_id) ?? null) : null })))
     setLoading(false)
   }, [])
 
@@ -854,10 +855,11 @@ export default function AppointmentsPage() {
   useEffect(() => {
     if (!teamUserIds) return
     ;(async () => {
+      const apptIdFilter = `user_id.in.(${teamUserIds.join(',')}),assigned_to.in.(${teamUserIds.join(',')})`
       const [{ count: yc }, { count: tc }, { count: tmc }] = await Promise.all([
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('yesterday')),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('today')),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).in('user_id', teamUserIds).eq('appointment_date', getDayDateStr('tomorrow')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).or(apptIdFilter).eq('appointment_date', getDayDateStr('yesterday')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).or(apptIdFilter).eq('appointment_date', getDayDateStr('today')),
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).or(apptIdFilter).eq('appointment_date', getDayDateStr('tomorrow')),
       ])
       setDayCounts({ yesterday: yc ?? 0, today: tc ?? 0, tomorrow: tmc ?? 0 })
     })()
@@ -872,7 +874,7 @@ export default function AppointmentsPage() {
     supabase
       .from('appointments')
       .select('appointment_date')
-      .in('user_id', teamUserIds)
+      .or(`user_id.in.(${teamUserIds.join(',')}),assigned_to.in.(${teamUserIds.join(',')})`)
       .gte('appointment_date', firstDay)
       .lte('appointment_date', lastDay)
       .then(({ data }) => setMonthDots(new Set((data || []).map((a: { appointment_date: string }) => a.appointment_date))))
@@ -890,8 +892,8 @@ export default function AppointmentsPage() {
 
       const { data: rows } = await supabase
         .from('appointments')
-        .select('id, user_id, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
-        .in('user_id', teamUserIds)
+        .select('id, user_id, assigned_to, client_name, client_phone, client_address, appointment_time, appointment_end_time, status, estimate_id, notes')
+        .or(`user_id.in.(${teamUserIds.join(',')}),assigned_to.in.(${teamUserIds.join(',')})`)
         .eq('appointment_date', dateStr)
         .order('appointment_time', { ascending: true, nullsFirst: false })
         .limit(50)
@@ -908,7 +910,7 @@ export default function AppointmentsPage() {
         const total = a.estimate_id ? (estTotalMap.get(a.estimate_id) ?? null) : null
         return {
           id: a.id,
-          user_id: (a as any).user_id,
+          user_id: (a as any).assigned_to || (a as any).user_id,
           name: a.client_name,
           rawTime: a.appointment_time ?? null,
           endTime: (a as any).appointment_end_time || null,

@@ -305,8 +305,9 @@ const [dashToast, setDashToast] = useState('')
     const now = new Date()
     const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`
     const { data: appts } = await supabase
-        .from('appointments').select('id,user_id,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates!appointments_estimate_id_fkey(status)')
-        .in('user_id', userIds).eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
+        .from('appointments').select('id,user_id,assigned_to,client_name,client_address,client_phone,appointment_time,appointment_end_time,status,estimate_id,estimates!appointments_estimate_id_fkey(status)')
+        .or(`user_id.in.(${userIds.join(',')}),assigned_to.in.(${userIds.join(',')})`)
+        .eq('appointment_date', today).order('appointment_time', { ascending: true }).limit(20)
       if (appts) {
         setAppointments(appts.map((a: any) => {
           const t = a.appointment_time || ''
@@ -334,8 +335,8 @@ const [dashToast, setDashToast] = useState('')
             pillStatus,
             estimateId: a.estimate_id || null,
             duration: a.duration_minutes ? `${a.duration_minutes}m` : '60m',
-            userId: a.user_id || '',
-            repName: nameMap[a.user_id] || '',
+            userId: a.assigned_to || a.user_id || '',
+            repName: nameMap[a.assigned_to] || nameMap[a.user_id] || '',
           }
         }))
       }
