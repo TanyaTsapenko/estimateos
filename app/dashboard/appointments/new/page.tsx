@@ -88,7 +88,7 @@ export default function NewAppointmentPage() {
       const all = [owner, ...extras]
       setTeamMembers(extras)
       setAllMembers(all)
-      set('assigned_to', ownerName)
+      set('assigned_to', sanitizedId)
     })
   }, [])
 
@@ -342,7 +342,7 @@ export default function NewAppointmentPage() {
           <label>Assigned To</label>
           {allMembers.length >= 2 ? (
             <select value={form.assigned_to} onChange={e => set('assigned_to', e.target.value)}>
-              {allMembers.map(m => <option key={m.id} value={m.name}>{m.name}</option>)}
+              {allMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           ) : (
             <input

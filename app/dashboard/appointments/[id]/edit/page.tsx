@@ -100,6 +100,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
         name: [m.first_name, m.last_name].filter(Boolean).join(' ') || m.email || 'Team member',
       }))
       setTeamMembers([owner, ...extras])
+      const validIds = new Set([sanitizedId, ...(members || []).map((m: any) => m.id)])
 
       setForm({
         client_name:      appt.client_name ?? '',
@@ -115,7 +116,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
         lead_source:          appt.lead_source          ?? '',
         notes:            appt.notes ?? '',
         status:           appt.status ?? 'scheduled',
-        assigned_to:      appt.assigned_to ?? '',
+        assigned_to:      validIds.has(appt.assigned_to ?? '') ? (appt.assigned_to ?? '') : '',
       })
       setLoading(false)
     }
