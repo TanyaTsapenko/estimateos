@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell, Activity } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
 import BellButton, { type AppNotification } from '@/components/BellButton'
@@ -1271,8 +1271,14 @@ const [dashToast, setDashToast] = useState('')
               {(() => {
                 const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
                 if (filtered.length === 0) return (
-                  <div style={{ padding: '28px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                    No activity yet. Send your first estimate to get started.
+                  <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', padding: '28px 20px', textAlign: 'center' }}>
+                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: 46, height: 46, borderRadius: 14, background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Activity size={22} color="#2563EB" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 3 }}>No activity yet</div>
+                    <div style={{ fontSize: 12.5, color: '#94A0B4' }}>Send your first estimate to get started.</div>
                   </div>
                 )
                 const groups = groupActivity(filtered)
@@ -1440,8 +1446,14 @@ const [dashToast, setDashToast] = useState('')
               {(() => {
                 const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
                 if (filtered.length === 0) return (
-                  <div style={{ padding: '32px 0', textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>
-                    No activity yet. Send your first estimate to get started.
+                  <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', padding: '28px 20px', textAlign: 'center' }}>
+                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: 46, height: 46, borderRadius: 14, background: '#EEF3FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Activity size={22} color="#2563EB" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 3 }}>No activity yet</div>
+                    <div style={{ fontSize: 12.5, color: '#94A0B4' }}>Send your first estimate to get started.</div>
                   </div>
                 )
                 const groups = groupActivity(filtered)
