@@ -1207,14 +1207,16 @@ const [dashToast, setDashToast] = useState('')
               <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 12 }}>
                 {attention.length > 0 ? `${attention.length} item${attention.length !== 1 ? 's' : ''} waiting on you` : 'Nothing pending'}
               </div>
-              <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+              <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', overflow: 'hidden' }}>
                 {attention.length === 0 ? (
-                  <div style={{ padding: '28px 16px', textAlign: 'center' }}>
-                    <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                      <CheckCircle size={28} color="#10B981" strokeWidth={1.5} />
+                  <div style={{ padding: '28px 20px', textAlign: 'center' }}>
+                    <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: 46, height: 46, borderRadius: 14, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
                     </div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 3 }}>All caught up!</div>
-                    <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 3 }}>All caught up!</div>
+                    <div style={{ fontSize: 12.5, color: '#94A0B4' }}>No action items right now.</div>
                   </div>
                 ) : attention.slice(0, showAllAttention ? attention.length : 7).map((item, i) => {
                   const visible = showAllAttention ? attention.length : Math.min(attention.length, 7)
@@ -1365,7 +1367,7 @@ const [dashToast, setDashToast] = useState('')
           <div className="db-lower-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
             {/* Needs attention */}
-            {permissions.payments && <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
+            {permissions.payments && <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', overflow: 'hidden' }}>
               <div className="db-panel-header" style={{ padding: '14px 16px', borderBottom: '1px solid #EEF0F4' }}>
                 <div className="db-panel-title" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#2045B8', textTransform: 'uppercase' }}>Needs Attention</div>
                 <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
@@ -1373,12 +1375,14 @@ const [dashToast, setDashToast] = useState('')
                 </div>
               </div>
               {attention.length === 0 ? (
-                <div style={{ padding: '36px 16px', textAlign: 'center' }}>
-                  <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}>
-                    <CheckCircle size={32} color="#10B981" strokeWidth={1.5} />
+                <div style={{ padding: '28px 20px', textAlign: 'center' }}>
+                  <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: 46, height: 46, borderRadius: 14, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 4 }}>All caught up!</div>
-                  <div style={{ fontSize: 11, color: '#94A3B8' }}>No action items right now.</div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#0B1220', marginBottom: 4 }}>All caught up!</div>
+                  <div style={{ fontSize: 12.5, color: '#94A0B4' }}>No action items right now.</div>
                 </div>
               ) : attention.slice(0, showAllAttention ? attention.length : 7).map((item, i) => {
                 const visible = showAllAttention ? attention.length : Math.min(attention.length, 7)
