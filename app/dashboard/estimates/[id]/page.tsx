@@ -8,7 +8,7 @@ import { trimSummaryLines, hasTrim } from '@/lib/v2/trimUtils'
 import { getSubtypeLabel } from '@/lib/openingLabels'
 import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel } from '@/lib/openingLabels'
 import { getCompanyName } from '@/lib/getCompanyName'
-import { Mail, FileDown, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
+import { Mail, FileDown, Eye, FileText, Receipt, Trash2, ArrowLeft, Loader2, Check, Copy, FileSignature, Clock, Tablet } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 import ConfirmModal from '@/components/ConfirmModal'
 import { SuccessBanner } from '@/components/SuccessBanner'
@@ -661,7 +661,7 @@ export default function EstimateDetailPage() {
             More actions
           </div>
           {[
-            { icon: <FileDown      size={16} color="#475467" />, label: 'Download Estimate PDF', onClick: () => window.open(`/api/estimate-pdf?id=${id}`, '_blank'), danger: false, show: true },
+            { icon: <Eye           size={16} color="#475467" />, label: 'View Estimate PDF',     onClick: () => router.push(`/dashboard/pdf-viewer?url=${encodeURIComponent('/api/estimate-pdf?id=' + id)}&label=${encodeURIComponent('Estimate ' + (estimate?.estimate_number || 'PDF'))}`), danger: false, show: true },
             { icon: <FileSignature size={16} color="#475467" />, label: 'View signed contract',   onClick: () => router.push(`/sign/contract/${contract!.id}`),      danger: false, show: !!contract },
             { icon: <Copy         size={16} color="#475467" />, label: 'Duplicate estimate',     onClick: () => setShowDuplicateModal(true),                          danger: false, show: true },
             { icon: <Trash2       size={16} color="#DC2626" />, label: 'Delete estimate',        onClick: () => setDeleteOpen(true),                                  danger: true,  show: true },
