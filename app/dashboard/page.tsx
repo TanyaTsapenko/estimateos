@@ -252,8 +252,6 @@ const [dashToast, setDashToast] = useState('')
   const [repFilter, setRepFilter] = useState<string>('all')
   const [repNames, setRepNames] = useState<Record<string, string>>({})
   const [repSignedTotals, setRepSignedTotals] = useState<Record<string, number>>({})
-  const [teamCardIdx, setTeamCardIdx] = useState(0)
-  const teamTrackRef = useRef<HTMLDivElement>(null)
   const router    = useRouter()
   const todayStr  = getTodayStr()
   const loadAll = useCallback(async () => {
@@ -864,30 +862,33 @@ const [dashToast, setDashToast] = useState('')
           <div style={{ position: 'absolute', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,108,255,0.45) 0%, transparent 70%)', top: -130, right: -100, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%)', bottom: -60, left: -50, pointerEvents: 'none' }} />
 
-          {/* Day + done count */}
+          {/* Day + Team/Mine toggle */}
           <div style={{ padding: '16px 20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', zIndex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>
               {isTeamView ? 'TEAM DAY' : 'YOUR DAY'} · {todayStr.toUpperCase()}
             </div>
-            {filteredAppts.length > 0 && (
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>
-                {doneCount}/{filteredAppts.length} done
+            {isTeamView ? (
+              <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: 2 }}>
+                {([{ val: 'all', label: 'Team' }, { val: currentUserId, label: 'Mine' }]).map(({ val, label }) => {
+                  const active = repFilter === val
+                  return (
+                    <button key={val} onClick={() => setRepFilter(val)} style={{
+                      padding: '3px 10px', borderRadius: 99, border: 'none',
+                      background: active ? '#fff' : 'transparent',
+                      color: active ? '#2045B8' : 'rgba(255,255,255,0.7)',
+                      fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                    }}>{label}</button>
+                  )
+                })}
               </div>
+            ) : (
+              filteredAppts.length > 0 ? (
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.65)' }}>
+                  {doneCount}/{filteredAppts.length} done
+                </div>
+              ) : null
             )}
           </div>
-          {isTeamView && repPills.length > 0 && (
-            <div style={{ padding: '10px 16px 0', display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none', position: 'relative', zIndex: 1 }}>
-              {repPills.map(p => (
-                <button key={p.id} onClick={() => setRepFilter(p.id)} style={{
-                  flexShrink: 0, padding: '4px 12px', borderRadius: 99,
-                  border: repFilter === p.id ? 'none' : '1px solid rgba(255,255,255,0.3)',
-                  background: repFilter === p.id ? '#fff' : 'rgba(255,255,255,0.1)',
-                  color: repFilter === p.id ? '#2045B8' : 'rgba(255,255,255,0.8)',
-                  fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                }}>{p.name}</button>
-              ))}
-            </div>
-          )}
 
           {/* Next appointment card */}
           <div style={{ margin: '14px 16px 0', position: 'relative', zIndex: 1 }}>
@@ -960,9 +961,9 @@ const [dashToast, setDashToast] = useState('')
               <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.15)', padding: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                       <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1.6px', color: 'rgba(255,255,255,0.5)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 8px', textTransform: 'uppercase' }}>NEXT</span>
-                      {isTeamView && nextAppt.repName && <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: '1px', color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.18)', borderRadius: 99, padding: '2px 8px' }}>{nextAppt.repName}</span>}
+                      {isTeamView && nextAppt.repName && <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{nextAppt.repName.split(' ')[0]}</span>}
                     </div>
                     <div style={{ fontSize: 38, fontWeight: 900, color: '#fff', lineHeight: 1, marginBottom: 4, fontVariantNumeric: 'tabular-nums', letterSpacing: '-1.5px' }}>
                       {nextAppt.time}{nextAppt.endTime ? <span style={{ fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '-0.5px' }}> – {nextAppt.endTime}</span> : null}
@@ -1023,7 +1024,7 @@ const [dashToast, setDashToast] = useState('')
                     <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)', fontVariantNumeric: 'tabular-nums', textDecoration: isDone ? 'line-through' : 'none', flexShrink: 0 }}>{appt.time}{appt.endTime ? ` – ${appt.endTime}` : ''}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', flexShrink: 0 }}>·</span>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#fff', textDecoration: isDone ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.client}</span>
-                    {isTeamView && appt.repName && <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: '2px 7px' }}>{appt.repName}</span>}
+                    {isTeamView && appt.repName && <span style={{ flexShrink: 0, fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{appt.repName.split(' ')[0]}</span>}
                   </div>
                 )
               })}
@@ -1058,14 +1059,21 @@ const [dashToast, setDashToast] = useState('')
                 <div className="db-hero-kicker" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase' }}>
                   {isTeamView ? 'TEAM DAY' : 'YOUR DAY'} · {todayStr.toUpperCase()}
                 </div>
-                {isTeamView && repPills.map(p => (
-                  <button key={p.id} onClick={() => setRepFilter(p.id)} style={{
-                    padding: '3px 10px', borderRadius: 99, fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                    border: repFilter === p.id ? 'none' : '1px solid rgba(255,255,255,0.3)',
-                    background: repFilter === p.id ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.1)',
-                    color: repFilter === p.id ? '#2045B8' : 'rgba(255,255,255,0.75)',
-                  }}>{p.name}</button>
-                ))}
+                {isTeamView && (
+                  <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,0.12)', borderRadius: 99, padding: 2 }}>
+                    {([{ val: 'all', label: 'Team' }, { val: currentUserId, label: 'Mine' }]).map(({ val, label }) => {
+                      const active = repFilter === val
+                      return (
+                        <button key={val} onClick={() => setRepFilter(val)} style={{
+                          padding: '3px 10px', borderRadius: 99, border: 'none',
+                          background: active ? 'rgba(255,255,255,0.9)' : 'transparent',
+                          color: active ? '#2045B8' : 'rgba(255,255,255,0.75)',
+                          fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                        }}>{label}</button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
               {filteredAppts.length === 0 ? (
                 <>
@@ -1106,7 +1114,7 @@ const [dashToast, setDashToast] = useState('')
                 <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{appt.address}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '2px 7px', borderRadius: 999, textTransform: 'uppercase', ...apptPillStyle(effectivePill(appt)) }}>{effectivePill(appt)}</div>
-                  {isTeamView && appt.repName && <div style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.8)' }}>{appt.repName}</div>}
+                  {isTeamView && appt.repName && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>{appt.repName.split(' ')[0]}</div>}
                 </div>
                 <button
                   onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
@@ -1155,73 +1163,38 @@ const [dashToast, setDashToast] = useState('')
           />
         </div>
 
-        {/* ── TEAM REP CARDS ── */}
+        {/* ── TEAM REP ROWS ── */}
         {isTeamView && teamCards.length > 0 && (
           <section style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#2045B8', textTransform: 'uppercase', marginBottom: 2 }}>Team</div>
             <div style={{ fontSize: 13, color: '#94A3B8', marginBottom: 8 }}>Today's rep overview</div>
-            {/* Swipe track */}
-            <div
-              ref={teamTrackRef}
-              onScroll={e => {
-                const el = e.currentTarget
-                const idx = Math.round(el.scrollLeft / (el.clientWidth * 0.88 + 12))
-                setTeamCardIdx(Math.max(0, Math.min(idx, teamCards.length - 1)))
-              }}
-              style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', padding: '4px 0 8px', WebkitOverflowScrolling: 'touch' as any, scrollbarWidth: 'none' } as React.CSSProperties}
-            >
+            <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 0 0 1px rgba(10,22,40,0.06)', overflow: 'hidden' }}>
               {teamCards.map((rep, ri) => (
-                <div key={rep.id} style={{ flex: teamCards.length === 1 ? '0 0 100%' : '0 0 88%', scrollSnapAlign: teamCards.length === 1 ? undefined : 'center', background: '#fff', borderRadius: 20, border: '1px solid rgba(15,23,42,0.10)', boxShadow: '0 6px 20px rgba(15,23,42,0.07)', overflow: 'hidden' }}>
-                  {/* Head */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 18px 16px' }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 13, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 16, flexShrink: 0, boxShadow: '0 3px 10px rgba(37,99,235,0.25)' }}>
-                      {rep.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 16, color: '#0B1220' }}>{rep.name}</div>
+                <button
+                  key={rep.id}
+                  onClick={() => router.push(`/dashboard/appointments?rep=${rep.id}`)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '13px 16px', background: 'transparent', border: 'none', borderBottom: ri < teamCards.length - 1 ? '1px solid rgba(15,23,42,0.06)' : 'none', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}
+                >
+                  <div style={{ width: 32, height: 32, borderRadius: 9, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+                    {rep.name.charAt(0).toUpperCase()}
                   </div>
-                  {/* Stats */}
-                  <div style={{ display: 'flex', padding: '14px 18px', gap: 10, borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                  <div style={{ flex: 1, fontWeight: 700, fontSize: 14, color: '#0B1220', textAlign: 'left' }}>{rep.name}</div>
+                  <div style={{ display: 'flex', gap: 16, flexShrink: 0 }}>
                     {([
-                      { num: rep.todayCount, label: 'Today' },
-                      { num: rep.doneCount,  label: 'Done'  },
-                      { num: fmtCompact(rep.signedTotal), label: 'Signed' },
+                      { num: rep.todayCount,               label: 'Today'  },
+                      { num: rep.doneCount,                 label: 'Done'   },
+                      { num: fmtCompact(rep.signedTotal),   label: 'Signed' },
                     ] as const).map(({ num, label }) => (
-                      <div key={label} style={{ flex: 1, textAlign: 'center' }}>
-                        <div style={{ fontSize: 18, fontWeight: 800, color: '#1D4ED8' }}>{num}</div>
-                        <div style={{ fontSize: 10, color: '#94A0B4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', marginTop: 2 }}>{label}</div>
+                      <div key={label} style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: '#1D4ED8' }}>{num}</div>
+                        <div style={{ fontSize: 9, color: '#94A0B4', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', marginTop: 1 }}>{label}</div>
                       </div>
                     ))}
                   </div>
-                  {/* Appointment list */}
-                  <div style={{ padding: '12px 18px 18px' }}>
-                    {rep.appts.length > 0 ? (
-                      <>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: '#94A0B4', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Today's appointments</div>
-                        {rep.appts.map((appt, ai) => (
-                          <div key={appt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: ai < rep.appts.length - 1 ? '1px solid rgba(15,23,42,0.06)' : 'none' }}>
-                            <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: appt.pillStatus === 'DONE' ? '#0F8A4D' : '#2563EB' }} />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontWeight: 700, fontSize: 13, color: '#0B1220', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{appt.client}</div>
-                              <div style={{ fontSize: 11, color: '#94A0B4', marginTop: 1 }}>{appt.time}{appt.address ? ` · ${appt.address.split(',')[0]}` : ''}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <div style={{ fontSize: 12, color: '#94A0B4', textAlign: 'center', padding: '8px 0' }}>No visits today</div>
-                    )}
-                  </div>
-                </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A0B4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6"/></svg>
+                </button>
               ))}
             </div>
-            {/* Dot pagination */}
-            {teamCards.length > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 6, paddingTop: 4 }}>
-                {teamCards.map((_, i) => (
-                  <div key={i} style={{ height: 6, borderRadius: 3, background: i === teamCardIdx ? '#2563EB' : 'rgba(15,23,42,0.10)', width: i === teamCardIdx ? 16 : 6, transition: 'width .2s, background .2s' }} />
-                ))}
-              </div>
-            )}
           </section>
         )}
 

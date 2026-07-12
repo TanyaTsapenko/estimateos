@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Phone, MapPin, Pencil, Calendar } from 'lucide-react'
 import { formatPhone, validateName, validatePhone, validateAddress, hasErrors, type ClientErrors } from '@/lib/clientValidation'
@@ -773,8 +773,9 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: { appt: Appt; on
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AppointmentsPage() {
-  const router   = useRouter()
-  const supabase = createClient()
+  const router      = useRouter()
+  const searchParams = useSearchParams()
+  const supabase    = createClient()
 
   // Existing state
   const [appts, setAppts]               = useState<Appt[]>([])
@@ -792,7 +793,7 @@ export default function AppointmentsPage() {
   // Timeline state
   const [userId, setUserId]             = useState<string | null>(null)
   const [teamUserIds, setTeamUserIds]   = useState<string[] | null>(null)
-  const [repFilter, setRepFilter]       = useState<string>('all')
+  const [repFilter, setRepFilter]       = useState<string>(searchParams?.get('rep') || 'all')
   const [teamReps, setTeamReps]         = useState<{ id: string; name: string }[]>([])
   const [expandedRepIds, setExpandedRepIds] = useState<Set<string>>(new Set())
   const [selectedDay, setSelectedDay]   = useState<'yesterday' | 'today' | 'tomorrow' | string>('today')
@@ -1164,6 +1165,9 @@ export default function AppointmentsPage() {
         {teamReps.length > 1 && (
           <div style={{ padding: '8px 16px 4px', display: 'flex', gap: 6, overflowX: 'auto', background: '#fff', flexShrink: 0, WebkitOverflowScrolling: 'touch' as any }}>
             {[{ id: 'all', name: 'All reps' }, ...teamReps].map(m => {
+              const isMe = m.id === userId
+              const repDayCount = m.id === 'all' ? dayAppts.length : dayAppts.filter(a => a.user_id === m.id).length
+              if (m.id !== 'all' && !isMe && repDayCount === 0) return null
               const active = repFilter === m.id
               return (
                 <button key={m.id} onClick={() => setRepFilter(m.id)} style={{ flexShrink: 0, height: 30, padding: '0 12px', borderRadius: 99, border: `1.5px solid ${active ? T.blue : 'rgba(15,23,42,0.08)'}`, background: active ? T.blueSoft : '#fff', color: active ? T.blue : T.inkMid, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
