@@ -1117,7 +1117,7 @@ const [dashToast, setDashToast] = useState('')
                   {isTeamView && appt.repName && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>{appt.repName.split(' ')[0]}</div>}
                 </div>
                 <button
-                  onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}`)}
+                  onClick={() => appt.estimateId ? router.push(`/dashboard/estimates/${appt.estimateId}`) : router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.userId)}`)}
                   style={{ marginTop: 10, padding: '6px 0', width: '100%', background: appt.estimateId ? 'rgba(5,150,105,.25)' : 'rgba(255,255,255,.18)', border: `1px solid ${appt.estimateId ? 'rgba(5,150,105,.5)' : 'rgba(255,255,255,.35)'}`, borderRadius: 7, fontSize: 11, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>
                   {appt.estimateId ? 'View EST →' : 'Start estimate'}
                 </button>

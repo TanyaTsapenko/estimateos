@@ -247,6 +247,8 @@ function NewEstimateV2() {
 
   const apptId  = searchParams.get('appointment_id') || ''
   const editId  = searchParams.get('edit') || ''
+  // When creating from an assigned rep's appointment, attribute the estimate to that rep
+  const repId   = searchParams.get('rep_id') || ''
 
   const [clientInfo, setClientInfo] = useState<ClientInfo>({
     name:    searchParams.get('client_name')    || '',
@@ -567,6 +569,8 @@ function NewEstimateV2() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
       const uid = user.id
+      // Use the rep's id when creating from an assigned appointment; fall back to session user
+      const estimateUserId = repId || uid
 
       // 1. Resolve client_id
       let clientId: string | null = clientInfo.id || null
@@ -647,14 +651,14 @@ function NewEstimateV2() {
         const { count } = await supabase
           .from('estimates')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', uid)
+          .eq('user_id', estimateUserId)
         const estimateNumber = 'EST-' + String((count || 0) + 1).padStart(4, '0')
         const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
 
         const { data: est, error: estErr } = await supabase
           .from('estimates')
           .insert({
-            user_id:         uid,
+            user_id:         estimateUserId,
             estimate_number: estimateNumber,
             ...clientFields,
             ...priceFields,

@@ -268,7 +268,7 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
               <button
                 onClick={e => {
                   e.stopPropagation()
-                  onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}`)
+                  onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.user_id)}`)
                 }}
                 style={{
                   height: 30, padding: '0 11px', borderRadius: 9,
@@ -366,7 +366,7 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
                 </button>
               ) : (
                 <button
-                  onClick={e => { e.stopPropagation(); onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}`) }}
+                  onClick={e => { e.stopPropagation(); onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.user_id)}`) }}
                   style={{
                     display: 'block', width: '100%', height: 50, marginTop: 12, borderRadius: 13,
                     border: 'none', background: '#2563EB', color: '#fff',
@@ -1015,7 +1015,7 @@ export default function AppointmentsPage() {
   async function createEstimate(appt: Appt) {
     await supabase.from('appointments').update({ status: 'completed' }).eq('id', appt.id)
     setAppts(prev => prev.map(a => a.id === appt.id ? { ...a, status: 'completed' } : a))
-    router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client_name)}&client_address=${encodeURIComponent(appt.client_address || '')}`)
+    router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client_name)}&client_address=${encodeURIComponent(appt.client_address || '')}&rep_id=${encodeURIComponent((appt as any).user_id || '')}`)
   }
 
   // ── Desktop render ───────────────────────────────────────────────────────────
