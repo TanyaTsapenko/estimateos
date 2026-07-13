@@ -109,6 +109,11 @@ function humanize(s?: string | null): string {
   if (!s) return ''
   return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
+function parseSectionsPdf(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 function SR({ label, value }: { label: string; value?: string | null }) {
@@ -222,6 +227,8 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
           const gridVal   = (op.grid_pattern && op.grid_pattern !== 'none') ? humanize(op.grid_pattern) : null
           const floorVal  = op.floor && op.floor !== 'first' ? humanize(op.floor) : null
           const paneLabel = op.pane === 'triple' ? 'Triple Pane' : op.pane === 'single' ? 'Single Pane' : null
+          const isCombo   = op.type === 'combination' || op.type === 'window_combo'
+          const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
 
           const glassChips: string[] = []
           if (paneLabel) glassChips.push(paneLabel)
@@ -266,6 +273,16 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
 
                 {/* Specs */}
                 <View style={S.specsCol}>
+                  {/* Sections (combination windows) */}
+                  {isCombo && comboSecs.length > 0 && (
+                    <>
+                      <GrpHdr>Sections</GrpHdr>
+                      {comboSecs.map((sec: any, idx: number) => (
+                        <Text key={idx} style={S.specVal}>{idx + 1}. {sec.type} — {sec.width}"</Text>
+                      ))}
+                    </>
+                  )}
+
                   {/* Location */}
                   {hasLocation && (
                     <>

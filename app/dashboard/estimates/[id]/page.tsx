@@ -68,6 +68,11 @@ function parseSec(raw: any): { type: string; width: number }[] {
   return []
 }
 
+const SECTION_TYPE_MAP: Record<string, string> = {
+  'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+}
+
 export default function EstimateDetailPage() {
   const router   = useRouter()
   const { id }   = useParams<{ id: string }>()
@@ -406,10 +411,46 @@ export default function EstimateDetailPage() {
               const comboSecs = isCombo ? parseSec(op.sections) : []
               return (
                 <div key={op.id} style={{ background: '#fff', borderRadius: 16, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', overflow: 'hidden' }}>
+                  {isCombo ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, padding: '12px 14px 8px' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#0B1220', lineHeight: 1.3, minWidth: 0 }}>
+                          {typeName}{op.qty > 1 ? ` × ${op.qty}` : ''}
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: '#2563EB', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                          {fmtCAD(op.total_cost)}
+                        </div>
+                      </div>
+                      <div onClick={() => setEnlargedOpening(op)} style={{ background: '#F8FAFC', borderTop: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9', padding: '16px', cursor: 'zoom-in', boxSizing: 'border-box' }}>
+                        <div style={{ pointerEvents: 'none' }}>
+                          <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels />
+                        </div>
+                        {comboSecs.length > 0 && (
+                          <div style={{ display: 'flex', gap: 10, paddingTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                            {comboSecs.map((sec: any, si: number) => (
+                              <div key={si} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                                <div style={{ width: 64, height: 64, pointerEvents: 'none' }}>
+                                  <OpeningDrawing op={{ ...op, type: SECTION_TYPE_MAP[sec.type] || 'picture', width_in: sec.width, colour: null }} />
+                                </div>
+                                <span style={{ fontSize: 10, color: '#94A3B8' }}>{sec.type}</span>
+                                <span style={{ fontSize: 10, color: '#94A3B8' }}>{sec.width}"</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {(subtitle || pills.length > 0) && (
+                        <div style={{ padding: '10px 14px 12px' }}>
+                          {subtitle && <div style={{ fontSize: 12, color: '#475467', marginBottom: pills.length ? 8 : 0 }}>{subtitle}</div>}
+                          {pills.length > 0 && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>{pills}</div>}
+                        </div>
+                      )}
+                    </>
+                  ) : (
                   <div style={{ display: 'flex' }}>
-                    <div onClick={() => setEnlargedOpening(op)} style={{ width: isCombo ? 160 : 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
-                      <div style={{ width: isCombo ? 136 : 116, minHeight: isCombo ? 63 : 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
-                        <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels={isCombo} />
+                    <div onClick={() => setEnlargedOpening(op)} style={{ width: 140, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'zoom-in', borderRight: '1px solid #F1F5F9', padding: 12 }}>
+                      <div style={{ width: 116, minHeight: 100, pointerEvents: 'none', padding: 8, boxSizing: 'border-box' }}>
+                        <OpeningDrawing op={{ ...op, colour: null }} />
                       </div>
                     </div>
                     <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
@@ -421,11 +462,6 @@ export default function EstimateDetailPage() {
                           {fmtCAD(op.total_cost)}
                         </div>
                       </div>
-                      {isCombo && comboSecs.length > 0 && (
-                        <div style={{ fontSize: 11, color: '#94A0B4', marginBottom: 2 }}>
-                          {comboSecs.length} sections: {comboSecs.map(s => s.type).join(' · ')}
-                        </div>
-                      )}
                       {subtitle && (
                         <div style={{ fontSize: 12, color: '#475467', marginBottom: pills.length ? 8 : 0 }}>{subtitle}</div>
                       )}
@@ -434,6 +470,7 @@ export default function EstimateDetailPage() {
                       )}
                     </div>
                   </div>
+                  )}
                   {(op.interior_photo_url || op.exterior_photo_url || op.photo_3_url || op.photo_4_url) && (
                     <div style={{ padding: '8px 14px 12px', borderTop: '1px solid #F1F5F9', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       {[

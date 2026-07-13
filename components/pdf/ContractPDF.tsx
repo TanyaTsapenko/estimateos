@@ -180,7 +180,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                   Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
                 </Text>
                 {openingPngs?.[op.id] && (
-                  <Image src={openingPngs[op.id]} style={{ width: '100%', maxHeight: 56, objectFit: 'contain', marginBottom: 5 }} />
+                  <Image src={openingPngs[op.id]} style={{ width: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: 5 }} />
                 )}
                 {comboSecs.length > 0 && (
                   <View style={{ marginBottom: 4 }}>
