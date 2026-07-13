@@ -1,22 +1,22 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { MessageSquare } from 'lucide-react'
 // reads go through /api/public/estimate/[id] (service role, limited projection)
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
-import { getColourLabel, getShapeLabel, getGlassLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
+import { getColourLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/openingLabels'
+import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 
-const SANS = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
-const MONO = 'ui-monospace, "SF Mono", "JetBrains Mono", monospace'
-const BG        = '#F5F6F8'
-const BLUE      = '#2563EB'
-const BLUE_SOFT = '#EEF3FF'
-const BLUE_BDR  = '#BFDBFE'
-const INK       = '#0F172A'
-const INK_MID   = '#475467'
-const INK_SOFT  = '#94A3B8'
-const CARD: React.CSSProperties = { background: '#fff', borderRadius: 16, padding: 16, border: '0.5px solid #E5E7EB' }
+const SANS    = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
+const PAGE_BG = '#F5F6F8'
+const NAVY    = '#0A1628'
+const BLUE    = '#2563EB'
+const BLUE_D  = '#1D4ED8'
+const BLUE_BG = '#EEF3FF'
+const GRAY_BG = '#F8FAFC'
+const BORDER  = '#E2E8F0'
+const MUTED   = '#64748B'
+const FAINT   = '#94A3B8'
 
 interface Estimate {
   id: string; estimate_number: string; client_name: string | null; client_address: string | null
@@ -55,20 +55,42 @@ function fmtDate(iso: string) {
   return new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(iso + 'T00:00:00'))
 }
 
-function SLabel({ children, blue }: { children: React.ReactNode; blue?: boolean }) {
+function humanize(s?: string | null): string {
+  if (!s) return ''
+  return s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function SecLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: blue ? BLUE : INK_SOFT, marginBottom: 12 }}>
+    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: BLUE, marginBottom: 8, marginTop: 4 }}>
       {children}
     </div>
   )
 }
 
-function MRow({ label, value, mono, blue, last }: { label: string; value: string; mono?: boolean; blue?: boolean; last?: boolean }) {
+function GrpHdr({ children }: { children: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: last ? 'none' : '1px solid #F1F5F9' }}>
-      <span style={{ fontSize: 13, color: INK_SOFT }}>{label}</span>
-      <span style={{ fontSize: 13, fontWeight: 600, color: blue ? BLUE : INK, fontFamily: mono ? MONO : SANS }}>{value}</span>
+    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: FAINT, marginTop: 10, marginBottom: 4, borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 3 }}>
+      {children}
     </div>
+  )
+}
+
+function SR({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 3 }}>
+      <span style={{ fontSize: 11, color: FAINT, width: 90, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 11, color: NAVY }}>{value}</span>
+    </div>
+  )
+}
+
+function Chip({ label }: { label: string }) {
+  return (
+    <span style={{ borderRadius: 4, border: `0.5px solid ${BLUE}`, padding: '2px 7px', marginRight: 4, marginBottom: 4, display: 'inline-block', fontSize: 10, color: BLUE, fontWeight: 700 }}>
+      {label}
+    </span>
   )
 }
 
@@ -109,261 +131,247 @@ export default function ClientEstimatePage() {
   }, [estimate])
 
   if (docStatus === 'loading' || !estimate) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS }}>
-      <div style={{ fontSize: 13, color: INK_SOFT }}>Loading…</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: PAGE_BG, fontFamily: SANS }}>
+      <div style={{ fontSize: 13, color: MUTED }}>Loading…</div>
     </div>
   )
 
   if (docStatus === 'signed') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: PAGE_BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: INK, marginBottom: 8 }}>Already signed</div>
-      <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Already signed</div>
+      <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
         {estimate.estimate_number} has already been signed. Contact {profile?.company_name || 'the contractor'} if you have questions.
       </div>
     </div>
   )
 
   if (docStatus === 'declined') return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: PAGE_BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: INK, marginBottom: 8 }}>Estimate declined</div>
-      <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.6 }}>
+      <div style={{ fontSize: 20, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Estimate declined</div>
+      <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
         Feel free to reach out to {profile?.company_name || 'us'} if you change your mind.
       </div>
     </div>
   )
 
   const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
-  const validUntil  = estimate.valid_until ? fmtDate(estimate.valid_until) : null
-  const issuedDate  = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
-  const depositPct  = profile?.deposit_percent ?? 30
-  const depositAmt  = Math.round(estimate.total * depositPct) / 100
-  const balanceAmt  = estimate.total - depositAmt
-  const hasClientDetails = !!(estimate.client_email || estimate.client_phone || estimate.client_address)
+  const validUntil = estimate.valid_until ? fmtDate(estimate.valid_until) : null
+  const issuedDate = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
+  const depositPct = profile?.deposit_percent ?? 0
+  const depositAmt = estimate.total * (depositPct / 100)
+  const balanceAmt = estimate.total - depositAmt
+  const projectSite = [estimate.client_address, estimate.client_city, estimate.client_province].filter(Boolean).join(', ')
 
-  const statusPill = estimate.status === 'signed'
-    ? <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: 'rgba(5,150,105,0.25)', border: '1px solid rgba(16,185,129,0.4)', color: '#6EE7B7' }}>✓ Signed</span>
-    : <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff' }}>Sent</span>
-
-  const SHAPE_LABELS:   Record<string, string> = { rect: 'Rectangle', arch: 'Arch', custom: 'Custom shape' }
-  const COLOUR_LABELS:  Record<string, string> = { white: 'White', black: 'Black', grey: 'Grey', custom: 'Custom colour' }
-  const FRAME_LABELS:   Record<string, string> = { none: 'Good condition', repair: 'Needs repair', rotted: 'Rotted frame' }
-  const FLOOR_LABELS:   Record<string, string> = { first: 'Ground floor', second: '2nd floor', third: '3rd floor' }
-  const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe: 'Full frame', stud_to_stud: 'Stud to Stud' }
-  const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
-  const GRID_LABELS: Record<string, string> = { none: 'No grid', colonial: 'Colonial grid', prairie: 'Prairie grid', diamond: 'Diamond grid', custom: 'Custom grid' }
-  const DIRECTION_LABELS: Record<string, string> = { left: 'Opens left', right: 'Opens right', both: 'Opens both sides' }
-  const GLASS_TYPE_LABELS: Record<string, string> = { full: 'Full glass', half: 'Half glass' }
-  const CORE_LABELS: Record<string, string> = { hollow: 'Hollow core', solid: 'Solid core' }
   return (
-    <div style={{ minHeight: '100vh', fontFamily: SANS, background: BG }}>
+    <div style={{ minHeight: '100vh', fontFamily: SANS, background: PAGE_BG, paddingBottom: 100 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        .est-paper { max-width: 720px; margin: 0 auto; background: #fff; box-shadow: 0 1px 6px rgba(10,22,40,0.09); }
+        .est-meta-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 18px; }
+        @media (min-width: 520px) { .est-meta-row { grid-template-columns: 1fr 1fr 1fr; } }
+        .est-card-body { display: flex; flex-direction: column; }
+        @media (min-width: 520px) { .est-card-body { flex-direction: row; } }
+        .est-drawing-col { width: 100%; border-bottom: 0.5px solid ${BORDER}; background: ${GRAY_BG}; display: flex; align-items: center; justify-content: center; padding: 16px; flex-shrink: 0; }
+        @media (min-width: 520px) { .est-drawing-col { width: 200px; border-bottom: none; border-right: 0.5px solid ${BORDER}; padding: 12px; } }
+        .est-bottom-half { display: flex; flex-direction: column; gap: 16px; margin-top: 14px; }
+        @media (min-width: 520px) { .est-bottom-half { flex-direction: row; align-items: flex-start; } }
         @media print {
           .print-hide { display: none !important; }
           @page { margin: 10mm; size: A4; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .opening-diagram { width: 200px !important; padding: 16px !important; }
-          .opening-diagram svg { width: 170px !important; height: 170px !important; }
         }
       `}</style>
 
-      <div id="estimate-content">
+      <div className="est-paper">
 
-        {/* ── DARK HEADER ── */}
-        <div style={{ background: 'linear-gradient(135deg, #080E1C 0%, #0E1F3D 50%, #0C2847 100%)', padding: '28px 24px 48px' }}>
-
-          {/* Company name */}
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', marginBottom: 24 }}>
-            {profile?.company_name || ''}
-          </div>
-
-          {/* Kicker */}
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 6 }}>
-            Prepared for
-          </div>
-
-          {/* Client name */}
-          <div style={{ fontSize: 24, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', lineHeight: 1.2, marginBottom: 4 }}>
-            {estimate.client_name || 'Client'}
-          </div>
-
-          {/* Address */}
-          {estimate.client_address && (
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: -8, marginBottom: 10 }}>
-              {estimate.client_address}
-            </div>
-          )}
-
-          {/* Pills */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: estimate.client_address ? 0 : 10 }}>
-            {statusPill}
-            <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 700, background: BLUE, color: '#fff', fontFamily: MONO }}>
-              {estimate.estimate_number}
-            </span>
-            {validUntil && (
-              <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 10, fontWeight: 600, border: '1px solid rgba(255,255,255,0.22)', color: 'rgba(255,255,255,0.55)' }}>
-                Valid until {validUntil}
-              </span>
+        {/* ── HEADER ── */}
+        <div style={{ padding: '24px 28px 20px', borderBottom: `2px solid ${BLUE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            {profile?.logo_url && (
+              <img src={profile.logo_url} alt="" style={{ height: 38, objectFit: 'contain', display: 'block', marginBottom: 6 }} />
             )}
+            <div style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>{profile?.company_name || ''}</div>
+            {profile?.phone && <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{profile.phone}</div>}
+            {profile?.address && (
+              <div style={{ fontSize: 11, color: MUTED }}>
+                {[profile.address, profile.city, profile.province, profile.postal].filter(Boolean).join(', ')}
+              </div>
+            )}
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <span style={{ display: 'inline-block', background: BLUE, borderRadius: 4, padding: '3px 10px', fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '0.14em', marginBottom: 8 }}>
+              ESTIMATE
+            </span>
+            <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, marginBottom: 3 }}>{estimate.estimate_number}</div>
+            {issuedDate  && <div style={{ fontSize: 11, color: MUTED }}>Date: {issuedDate}</div>}
+            {validUntil  && <div style={{ fontSize: 11, color: MUTED }}>Valid until: {validUntil}</div>}
           </div>
         </div>
 
-        {/* ── BODY ── */}
-        <div style={{ background: BG, borderRadius: '24px 24px 0 0', marginTop: -24, padding: 20, display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 110 }}>
+        <div style={{ padding: '20px 28px 32px' }}>
 
-          {/* 1 — Estimate meta */}
-          <div style={CARD}>
-            <SLabel>Estimate Details</SLabel>
-            <MRow label="Estimate number" value={estimate.estimate_number} mono blue />
-            {issuedDate && <MRow label="Date issued" value={issuedDate} />}
-            {validUntil && <MRow label="Valid until" value={validUntil} />}
-            {profile?.company_name && <MRow label="Prepared by" value={profile.company_name} last />}
-          </div>
-
-          {/* 2 — Total */}
-          <div style={{ ...CARD, border: `1.5px solid ${BLUE_BDR}` }}>
-            <SLabel>Estimate Total</SLabel>
-            <div style={{ fontSize: 40, fontWeight: 800, color: BLUE, letterSpacing: '-0.03em', lineHeight: 1 }}>
-              {fmtCAD(estimate.total)}
-            </div>
-            <div style={{ fontSize: 12, color: INK_SOFT, marginTop: 6 }}>inc. {taxLabel}</div>
-          </div>
-
-          {/* 3 — Client details */}
-          {hasClientDetails && (
-            <div style={CARD}>
-              <SLabel>Client Details</SLabel>
-              {estimate.client_name    && <MRow label="Name"    value={estimate.client_name} />}
-              {estimate.client_email   && <MRow label="Email"   value={estimate.client_email} />}
-              {estimate.client_phone   && <MRow label="Phone"   value={estimate.client_phone} />}
+          {/* ── META ROW ── */}
+          <div className="est-meta-row">
+            <div style={{ background: GRAY_BG, borderRadius: 6, padding: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Prepared for</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: NAVY, marginBottom: 2 }}>{estimate.client_name}</div>
               {estimate.client_address && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '9px 0' }}>
-                  <span style={{ fontSize: 13, color: INK_SOFT, flexShrink: 0 }}>Address</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: INK, textAlign: 'right' }}>{estimate.client_address}</span>
+                <div style={{ fontSize: 11, color: MUTED }}>
+                  {[estimate.client_address, estimate.client_city, estimate.client_province].filter(Boolean).join(', ')}
+                </div>
+              )}
+              {estimate.client_phone && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_phone}</div>}
+              {estimate.client_email && <div style={{ fontSize: 11, color: MUTED }}>{estimate.client_email}</div>}
+            </div>
+            <div style={{ background: GRAY_BG, borderRadius: 6, padding: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Project site</div>
+              {projectSite
+                ? <div style={{ fontSize: 12, fontWeight: 700, color: NAVY }}>{projectSite}</div>
+                : <div style={{ fontSize: 11, color: MUTED }}>Same as above</div>}
+            </div>
+            <div style={{ background: GRAY_BG, borderRadius: 6, padding: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Summary</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: NAVY, marginBottom: 2 }}>
+                {openings.length} opening{openings.length !== 1 ? 's' : ''}
+              </div>
+              <div style={{ fontSize: 11, color: MUTED }}>Total incl. tax: {fmtCAD(estimate.total)}</div>
+              {depositPct > 0 && (
+                <div style={{ fontSize: 11, color: MUTED }}>Deposit ({depositPct}%): {fmtCAD(depositAmt)}</div>
+              )}
+            </div>
+          </div>
+
+          {/* ── SCOPE OF WORK ── */}
+          {openings.length > 0 && (
+            <>
+              <SecLabel>Scope of work</SecLabel>
+              {openings.map((op, i) => {
+                const typeName = V2_TYPE_LABELS[op.type] || OPENING_TYPES[op.type]?.name || humanize(op.type)
+                const subLabel = getSubtypeLabel(op as any)
+                const title    = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null, op.room ? `— ${op.room}` : null].filter(Boolean).join(' ')
+                const extColour = getColourLabel(op as any)
+                const intColour = getInteriorColourLabel(op as any)
+                const gridVal   = op.grid_pattern && op.grid_pattern !== 'none' ? humanize(op.grid_pattern) : null
+                const floorVal  = op.floor && op.floor !== 'first' ? humanize(op.floor) : null
+                const hasLocation = !!(op.room || floorVal)
+
+                const glassChips: string[] = []
+                if (op.glass_kind && op.glass_kind !== 'clear') glassChips.push(humanize(op.glass_kind))
+                if (op.low_e)    glassChips.push('Low-E')
+                if (op.tempered) glassChips.push('Tempered')
+
+                return (
+                  <div key={op.id} style={{ border: `0.5px solid ${BORDER}`, borderRadius: 6, marginBottom: 8, overflow: 'hidden' }}>
+                    {/* Card header */}
+                    <div style={{ display: 'flex', alignItems: 'center', background: GRAY_BG, padding: '8px 12px', borderBottom: `0.5px solid ${BORDER}` }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: FAINT, width: 22, flexShrink: 0 }}>{i + 1}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: NAVY, flex: 1 }}>{title}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: BLUE, flexShrink: 0 }}>{fmtCAD(op.total_cost || 0)}</span>
+                    </div>
+                    {/* Card body */}
+                    <div className="est-card-body">
+                      <div className="est-drawing-col">
+                        <OpeningDrawing op={{ ...op, colour: null }} />
+                      </div>
+                      <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
+                        {hasLocation && (
+                          <>
+                            <GrpHdr>Location</GrpHdr>
+                            <SR label="Room"  value={op.room} />
+                            <SR label="Floor" value={floorVal} />
+                          </>
+                        )}
+                        <GrpHdr>Product</GrpHdr>
+                        {op.width_in && op.height_in && <SR label="Size" value={`${op.width_in}" × ${op.height_in}"`} />}
+                        <SR label="Material"     value={humanize(op.material)} />
+                        <SR label="Ext. colour"  value={extColour || undefined} />
+                        <SR label="Int. colour"  value={intColour || undefined} />
+                        <SR label="Grid"         value={gridVal || undefined} />
+                        <SR label="Installation" value={humanize(op.install)} />
+                        {glassChips.length > 0 && (
+                          <>
+                            <GrpHdr>Glass</GrpHdr>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
+                              {glassChips.map(c => <Chip key={c} label={c} />)}
+                            </div>
+                          </>
+                        )}
+                        {!!op.notes && (
+                          <>
+                            <GrpHdr>Notes</GrpHdr>
+                            <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.55, fontStyle: 'italic' }}>{op.notes}</div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )}
+
+          {/* ── PRICING + NOTES ── */}
+          <div className="est-bottom-half">
+            {!!estimate.scope_notes && (
+              <div style={{ flex: 3, minWidth: 0 }}>
+                <SecLabel>Notes</SecLabel>
+                <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
+              </div>
+            )}
+            <div style={{ flex: 2, minWidth: 220, marginLeft: !estimate.scope_notes ? 'auto' : undefined }}>
+              <SecLabel>Pricing</SecLabel>
+              <div style={{ borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 5, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: MUTED }}>Subtotal</span>
+                <span style={{ fontSize: 12, color: NAVY }}>{fmtCAD(estimate.subtotal || 0)}</span>
+              </div>
+              {estimate.discount_amount > 0 && (
+                <div style={{ borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 5, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: MUTED }}>
+                    Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}
+                  </span>
+                  <span style={{ fontSize: 12, color: NAVY }}>−{fmtCAD(estimate.discount_amount)}</span>
+                </div>
+              )}
+              <div style={{ borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 5, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: MUTED }}>{taxLabel} ({((estimate.tax_rate || 0) * 100).toFixed(0)}%)</span>
+                <span style={{ fontSize: 12, color: NAVY }}>{fmtCAD(estimate.tax_amount || 0)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>Total</span>
+                <span style={{ fontSize: 15, fontWeight: 700, color: BLUE }}>{fmtCAD(estimate.total || 0)}</span>
+              </div>
+              {depositPct > 0 && (
+                <div style={{ background: BLUE_BG, borderRadius: 6, padding: 12 }}>
+                  <div style={{ fontSize: 11, color: BLUE_D, marginBottom: 3 }}>Deposit on signing ({depositPct}%)</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: BLUE_D }}>{fmtCAD(depositAmt)}</div>
+                  <div style={{ fontSize: 10, color: BLUE_D, marginTop: 3 }}>Balance on completion: {fmtCAD(balanceAmt)}</div>
                 </div>
               )}
             </div>
-          )}
+          </div>
 
-          {/* 4 — Items */}
-          {openings.length > 0 && (
-            <div style={CARD}>
-              <SLabel>Items ({openings.length})</SLabel>
-              {openings.map((op, i) => (
-                <div key={op.id} style={{ border: '0.5px solid #E5E7EB', borderRadius: 10, overflow: 'hidden', marginBottom: 10 }}>
-                  {/* Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#F8FAFC', borderBottom: '0.5px solid #E5E7EB' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: INK }}>
-                      {OPENING_TYPES[op.type]?.name || op.type}{(op as any).window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''} × {op.qty}
-                    </div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(op.total_cost)}</div>
-                  </div>
-                  {/* Body */}
-                  <div style={{ display: 'flex' }}>
-                    {/* Diagram */}
-                    <div className="opening-diagram" style={{ width: 140, borderRight: '0.5px solid #F1F5F9', background: '#FAFAFA', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 12, flexShrink: 0 }}>
-                      <OpeningDrawing op={{ ...op, colour: null }} />
-                    </div>
-                    {/* Specs */}
-                    <div style={{ flex: 1, padding: '10px 12px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px 12px', marginBottom: 8 }}>
-                        {op.colour && op.colour !== 'white' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 70 }}>Ext. Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getColourLabel(op)}</span></div>}
-                        {getInteriorColourLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 70 }}>Int. Colour</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getInteriorColourLabel(op)}</span></div>}
-                        {getGlassLabel(op) && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 70 }}>Glass</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getGlassLabel(op)}</span></div>}
-                        {op.install && op.install !== 'retrofit' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Install</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{INSTALL_LABELS[op.install] || op.install}</span></div>}
-                        {op.frame && op.frame !== 'none' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Frame</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FRAME_LABELS[op.frame] || op.frame}</span></div>}
-                        {op.floor && op.floor !== 'first' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Floor</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{FLOOR_LABELS[op.floor] || op.floor}</span></div>}
-                        {op.shape && op.shape !== 'rect' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Shape</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{getShapeLabel(op)}</span></div>}
-                        {op.material && op.material !== 'vinyl' && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Material</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{MATERIAL_LABELS[op.material] || op.material}</span></div>}
-                        {op.brand && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Brand</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.brand}</span></div>}
-                        {op.width_in && op.height_in && <div style={{ display: 'flex', gap: 5 }}><span style={{ fontSize: 10, color: INK_SOFT, minWidth: 50 }}>Size</span><span style={{ fontSize: 11, fontWeight: 600, color: INK }}>{op.width_in}" × {op.height_in}"</span></div>}
-                      </div>
-                      {(() => {
-                        const pills: React.ReactNode[] = []
-                        if (op.has_screen) pills.push(<span key="screen" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Screen ✓</span>)
-                        if (op.tilt_clean) pills.push(<span key="tilt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Tilt-in ✓</span>)
-                        if (op.opening_direction) pills.push(<span key="dir" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{DIRECTION_LABELS[op.opening_direction]}</span>)
-                        if (op.panels_count) pills.push(<span key="panels" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.panels_count} panels</span>)
-                        if (op.bay_angle) pills.push(<span key="angle" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.bay_angle}°</span>)
-                        if (op.transom_panes) pills.push(<span key="tpanes" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{op.transom_panes} panes</span>)
-                        if (op.sidelight_left) pills.push(<span key="sll" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>← SL {op.sidelight_left}"</span>)
-                        if (op.sidelight_right) pills.push(<span key="slr" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>→ SL {op.sidelight_right}"</span>)
-                        if (op.transom_above) pills.push(<span key="ta" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>Transom above</span>)
-                        if (op.glass_type) pills.push(<span key="gt" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
-                        if (op.core_type) pills.push(<span key="ct" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{CORE_LABELS[op.core_type]}</span>)
-                        if (op.grid_pattern && op.grid_pattern !== 'none') pills.push(<span key="grid" style={{ background: '#EFF4FF', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: BLUE, border: '0.5px solid #BFDBFE' }}>{GRID_LABELS[op.grid_pattern]}</span>)
-                        if (op.room) pills.push(<span key="room" style={{ background: '#F0FDF4', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#16A34A', border: '0.5px solid #BBF7D0' }}>{op.room}</span>)
-                        if (op.notes) pills.push(<span key="notes" style={{ background: '#FFF7ED', borderRadius: 5, padding: '2px 8px', fontSize: 10, color: '#C2410C', border: '0.5px solid #FED7AA', display: 'inline-flex', alignItems: 'center', gap: 4 }}><MessageSquare size={12}/>{op.notes}</span>)
-                        if (pills.length === 0) return null
-                        return <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, borderTop: '0.5px solid #F1F5F9', paddingTop: 8 }}>{pills}</div>
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <div style={{ borderTop: '1.5px solid #E5E7EB', paddingTop: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 6 }}>
-                  <span>Subtotal</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.subtotal)}</span>
-                </div>
-                {estimate.discount_amount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#16a34a', fontWeight: 600, marginBottom: 6 }}>
-                    <span>Discount{estimate.discount_type === 'percent' ? ` (${estimate.discount_value}%)` : ''}</span>
-                    <span style={{ fontFamily: MONO }}>−{fmtCAD(estimate.discount_amount)}</span>
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: INK_SOFT, marginBottom: 12 }}>
-                  <span>{taxLabel}</span><span style={{ fontFamily: MONO }}>{fmtCAD(estimate.tax_amount)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderTop: `1.5px solid ${INK}`, paddingTop: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>Total</span>
-                  <span style={{ fontSize: 24, fontWeight: 800, color: BLUE, fontFamily: MONO }}>{fmtCAD(estimate.total)}</span>
-                </div>
+          {/* ── VALIDITY ── */}
+          {validUntil && (
+            <div style={{ background: GRAY_BG, borderRadius: 6, padding: 12, marginTop: 18 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Validity</div>
+              <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>
+                This estimate is valid until {validUntil}. Pricing is subject to change after this date.
               </div>
             </div>
           )}
 
-          {/* 5 — Payment schedule */}
-          <div style={{ ...CARD, border: `1.5px solid ${BLUE_BDR}` }}>
-            <SLabel blue>Payment Schedule</SLabel>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0', borderBottom: '1px solid #F1F5F9' }}>
-              <span style={{ fontSize: 13, color: INK_SOFT }}>Deposit on signing ({depositPct}%)</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: INK, fontFamily: MONO }}>{fmtCAD(depositAmt)}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '9px 0' }}>
-              <span style={{ fontSize: 13, color: INK_SOFT }}>Balance on completion</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: BLUE, fontFamily: MONO }}>{fmtCAD(balanceAmt)}</span>
-            </div>
-          </div>
-
-          {/* 6 — Notes */}
-          {estimate.scope_notes && (
-            <div style={CARD}>
-              <SLabel>Notes</SLabel>
-              <div style={{ fontSize: 13, color: INK_MID, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{estimate.scope_notes}</div>
-            </div>
-          )}
-
-          {/* 7 — Terms */}
-          {profile?.contract_terms && (
-            <div style={CARD}>
-              <SLabel>Terms &amp; Conditions</SLabel>
-              <div style={{ fontSize: 12.5, color: INK_SOFT, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{profile.contract_terms}</div>
-            </div>
-          )}
-
           {/* Footer */}
-          <div style={{ textAlign: 'center', fontSize: 11, color: INK_SOFT, padding: '4px 0 8px' }}>
-            Powered by ApexScale · useapexscale.com
+          <div style={{ textAlign: 'center', fontSize: 11, color: FAINT, paddingTop: 20, marginTop: 20, borderTop: `0.5px solid ${BORDER}` }}>
+            {[profile?.company_name, estimate.estimate_number].filter(Boolean).join(' · ')} · Powered by ApexScale
           </div>
 
         </div>
       </div>
 
       {/* ── DOWNLOAD BUTTON ── */}
-      <div className="print-hide" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 28px', background: `linear-gradient(to top, ${BG} 60%, transparent)` }}>
+      <div className="print-hide" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 28px', background: `linear-gradient(to top, ${PAGE_BG} 60%, transparent)` }}>
         <button
           onClick={() => window.location.href = `/api/estimate-pdf?id=${id}`}
           style={{ display: 'block', width: '100%', maxWidth: 480, margin: '0 auto', height: 54, borderRadius: 14, background: BLUE, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, boxShadow: '0 4px 20px rgba(37,99,235,0.28)' }}
