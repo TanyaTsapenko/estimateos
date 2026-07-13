@@ -242,7 +242,7 @@ const [dashToast, setDashToast] = useState('')
   const [checklistData, setChecklistData] = useState<{ logoUrl: string | null; contractTerms: string | null; hasPriceList: boolean } | null>(null)
   const [reminderModal, setReminderModal] = useState<{
     estimateId: string; estimateNumber: string; clientName: string
-    clientEmail: string; address: string; message: string; reminderCount: number
+    clientEmail: string; address: string; message: string; reminderCount: number; maxCount: number
   } | null>(null)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
   const [unreadCount,   setUnreadCount]   = useState(0)
@@ -447,9 +447,17 @@ const [dashToast, setDashToast] = useState('')
         })
       }
       // Stale sent estimate → blue, reminder
-      const firstAfterDays: number = (remProfile as any)?.quote_settings?.reminders?.first_after_days ?? 2
-      const staleAgo = new Date(Date.now() - firstAfterDays * 86400000).toISOString()
-      const stale = (estAll||[]).filter((e:any) => e.status === 'sent' && (e.sent_at || e.created_at) < staleAgo)
+      const reminders = (remProfile as any)?.quote_settings?.reminders
+      const firstAfterDays: number = reminders?.first_after_days ?? 2
+      const secondAfterDays: number = reminders?.second_after_days ?? 3
+      const maxCount: number = reminders?.max_count ?? 3
+      const stale = (estAll||[]).filter((e:any) => {
+        if (e.status !== 'sent') return false
+        const count = e.reminder_count ?? 0
+        if (count >= maxCount) return false
+        if (count === 0) return new Date(e.sent_at || e.created_at).getTime() < Date.now() - firstAfterDays * 86400000
+        return !!e.last_reminder_sent_at && new Date(e.last_reminder_sent_at).getTime() < Date.now() - secondAfterDays * 86400000
+      })
       stale.forEach((e: any) => {
         const sentDate = e.sent_at || e.created_at
         const daysSince = Math.floor((Date.now() - new Date(sentDate).getTime()) / 86400000)
@@ -640,7 +648,7 @@ const [dashToast, setDashToast] = useState('')
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const [{ data: est }, { data: prof }] = await Promise.all([
       supabase.from('estimates').select('client_name, client_email, client_address, estimate_number, last_reminder_sent_at, reminder_count').eq('id', estimateId).single(),
-      supabase.from('profiles').select('company_name').eq('id', sanitizedId).single(),
+      supabase.from('profiles').select('company_name, quote_settings').eq('id', sanitizedId).single(),
     ])
     if (!est) return
     if (!est.client_email) {
@@ -659,6 +667,7 @@ const [dashToast, setDashToast] = useState('')
     }
     const companyName = (prof as any)?.company_name || ''
     const address = est.client_address || ''
+    const maxCount: number = (prof as any)?.quote_settings?.reminders?.max_count ?? 3
     const msg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
     setReminderModal({
       estimateId,
@@ -668,6 +677,7 @@ const [dashToast, setDashToast] = useState('')
       address,
       message: msg,
       reminderCount: est.reminder_count ?? 0,
+      maxCount,
     })
   }
 
@@ -680,7 +690,7 @@ const [dashToast, setDashToast] = useState('')
       if (!user) return
 
       const newCount = (reminderModal.reminderCount ?? 0) + 1
-      const isAutoExpiring = newCount >= 3
+      const isAutoExpiring = newCount >= (reminderModal.maxCount ?? 3)
 
       const emailRes = await fetch('/api/send-email', {
         method: 'POST',

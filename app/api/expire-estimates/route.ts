@@ -10,12 +10,13 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
 
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const today = new Date().toISOString().slice(0, 10)
 
   const { data: estimates, error } = await supabase
     .from('estimates')
     .select('id, estimate_number, client_name, user_id')
     .eq('status', 'sent')
-    .lt('created_at', cutoff)
+    .or(`created_at.lt.${cutoff},valid_until.lt.${today}`)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!estimates || estimates.length === 0) {
