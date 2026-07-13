@@ -87,19 +87,16 @@ export async function GET(request: NextRequest) {
     ).join('')
     const repName = prof.first_name || companyName
     const replyTo = prof.company_contact_email || prof.interac_email || undefined
-    const logoCell = prof.logo_url
-      ? `<td style="vertical-align:middle;"><img src="${prof.logo_url}" style="height:34px;max-width:120px;display:block;object-fit:contain;" alt="${companyName}" /></td>`
-      : `<td width="34" height="34" style="width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;vertical-align:middle;"><div style="width:34px;height:34px;line-height:34px;color:#fff;font-weight:800;font-size:15px;text-align:center;">${companyName.charAt(0).toUpperCase()}</div></td>`
+    const logoHtml = prof.logo_url
+      ? `<img src="${prof.logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
+      : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;vertical-align:middle;">${companyName.charAt(0).toUpperCase()}</td><td style="vertical-align:middle;padding-left:8px;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
 
     const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
 <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
-  <div style="padding:26px 40px 20px;">
-    <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-      ${logoCell}
-      <td style="padding-left:10px;vertical-align:middle;">
-        <div style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</div>
-        <div style="font-size:12px;color:#94A0B4;">re: your estimate ${est.estimate_number || ''}</div>
-      </td>
+  <div style="padding:22px 40px 18px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td align="left" style="vertical-align:middle;">${logoHtml}</td>
+      <td align="right" style="vertical-align:middle;white-space:nowrap;"><span style="background:#EEF3FF;color:#2563EB;font-size:12px;font-weight:800;padding:6px 14px;border-radius:99px;">${est.estimate_number || ''}</span></td>
     </tr></table>
   </div>
   <div style="height:1px;background:rgba(15,23,42,0.07);margin:0 40px;"></div>

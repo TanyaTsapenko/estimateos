@@ -95,8 +95,8 @@ export async function POST(request: NextRequest) {
   const roleLabel = ROLE_LABELS[invitation.role] || invitation.role
 
   const inviteLogoHtml = (prof as any)?.logo_url
-    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td><img src="${(prof as any).logo_url}" style="height:44px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
-    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 22px;"><tr><td width="44" height="44" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${companyName.charAt(0).toUpperCase()}</div></td></tr></table>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr><td><img src="${(prof as any).logo_url}" style="height:44px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" /></td></tr></table>`
+    : `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr><td width="44" height="44" style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1a3a7c,#2563EB);text-align:center;"><div style="width:44px;height:44px;line-height:44px;color:#fff;font-weight:800;font-size:19px;">${companyName.charAt(0).toUpperCase()}</div></td></tr></table>`
 
   const html = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
 <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
