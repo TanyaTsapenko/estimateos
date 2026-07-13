@@ -295,8 +295,8 @@ export default function ClientEstimatePage() {
                     </div>
                     {isCombo ? (
                       <>
-                        <div style={{ background: GRAY_BG, borderBottom: `0.5px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-                          <div style={{ maxWidth: 340, width: '100%' }}>
+                        <div style={{ background: GRAY_BG, borderBottom: `0.5px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 16px' }}>
+                          <div style={{ width: '100%' }}>
                             <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels />
                           </div>
                         </div>
@@ -308,9 +308,9 @@ export default function ClientEstimatePage() {
                             <>
                               <GrpHdr>Sections</GrpHdr>
                               {comboSecs.map((sec, idx) => (
-                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: idx < comboSecs.length - 1 ? `0.5px solid ${BORDER}` : 'none' }}>
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: idx < comboSecs.length - 1 ? `0.5px solid ${BORDER}` : 'none' }}>
                                   <span style={{ fontSize: 10, color: FAINT, width: 18, textAlign: 'right' as const, flexShrink: 0 }}>{idx + 1}.</span>
-                                  <div style={{ width: 34, flexShrink: 0, pointerEvents: 'none' as const }}>
+                                  <div style={{ width: 64, flexShrink: 0, pointerEvents: 'none' as const }}>
                                     <OpeningDrawing op={{ id: `${op.id}-s${idx}`, type: SECTION_TYPE_MAP[sec.type] ?? 'picture' }} />
                                   </div>
                                   <div>

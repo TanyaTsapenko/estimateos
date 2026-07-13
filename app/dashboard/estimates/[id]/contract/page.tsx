@@ -452,15 +452,15 @@ export default function ContractPage() {
                     <div style={{ fontSize: 11, color: INK_S, marginBottom: 10 }}>
                       Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
                     </div>
-                    <div style={{ maxWidth: 280, margin: '0 auto', marginBottom: 12 }}>
+                    <div style={{ width: '100%', marginBottom: 12 }}>
                       <OpeningDrawing op={{ ...op, type: resolvedType, colour: null }} hideComboLabels />
                     </div>
                     {comboSecs.length > 0 && (
                       <div style={{ marginBottom: 10 }}>
                         {comboSecs.map((sec, idx) => (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: idx < comboSecs.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: idx < comboSecs.length - 1 ? `1px solid ${HAIR}` : 'none' }}>
                             <div style={{ fontSize: 10, color: INK_S, width: 16, textAlign: 'right' as const, flexShrink: 0 }}>{idx + 1}.</div>
-                            <div style={{ width: 34, flexShrink: 0, pointerEvents: 'none' as const }}>
+                            <div style={{ width: 64, flexShrink: 0, pointerEvents: 'none' as const }}>
                               <OpeningDrawing op={{ id: `${op.id}-s${idx}`, type: SECTION_TYPE_MAP[sec.type] ?? 'picture' }} />
                             </div>
                             <div>
