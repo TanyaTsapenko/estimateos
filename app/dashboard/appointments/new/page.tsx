@@ -325,12 +325,12 @@ export default function NewAppointmentPage() {
         <div className="sl">When</div>
 
         <div style={{ background: '#EEF3FF', borderRadius: 14, padding: 14, marginBottom: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 10 }}>
-            <div className="f">
-              <label>Date</label>
-              <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
-                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-            </div>
+          <div className="f" style={{ marginBottom: 10 }}>
+            <label>Date</label>
+            <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
             <div className="f">
               <label>Arrives after</label>
               <TimePickerDropdown
@@ -360,7 +360,7 @@ export default function NewAppointmentPage() {
                 <button key={mins} type="button"
                   onClick={() => { if (form.appointment_time) set('appointment_end_time', addMinutesToTime(form.appointment_time, mins)) }}
                   style={{
-                    height: 30, padding: '0 12px', borderRadius: 10,
+                    height: 30, padding: '0 12px', borderRadius: 6,
                     background: isActive ? '#2563EB' : '#fff',
                     color: isActive ? '#fff' : '#475467',
                     border: isActive ? '1px solid #2563EB' : '1px solid #D0D5DD',

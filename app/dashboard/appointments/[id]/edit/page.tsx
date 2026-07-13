@@ -308,12 +308,12 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           {/* WHEN */}
           <div style={secHdr}>When</div>
           <div style={{ background: '#EEF3FF', borderRadius: 14, padding: 14, marginBottom: 8 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 10 }}>
-              <div style={{ minWidth: 0 }}>
-                <label style={fldLbl}>Date</label>
-                <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
-                  style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', WebkitAppearance: 'none', appearance: 'none', color: form.appointment_date ? '#0A1628' : '#9CA3AF' }} />
-              </div>
+            <div style={{ minWidth: 0, marginBottom: 10 }}>
+              <label style={fldLbl}>Date</label>
+              <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', WebkitAppearance: 'none', appearance: 'none', color: form.appointment_date ? '#0A1628' : '#9CA3AF' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
               <div style={{ minWidth: 0 }}>
                 <label style={fldLbl}>Arrives after</label>
                 <TimePickerDropdown
@@ -343,7 +343,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                   <button key={mins} type="button"
                     onClick={() => { if (form.appointment_time) set('appointment_end_time', addMinutesToTime(form.appointment_time, mins)) }}
                     style={{
-                      height: 30, padding: '0 12px', borderRadius: 10,
+                      height: 30, padding: '0 12px', borderRadius: 6,
                       background: isActive ? '#2563EB' : '#fff',
                       color: isActive ? '#fff' : '#475467',
                       border: isActive ? '1px solid #2563EB' : '1px solid #D0D5DD',
