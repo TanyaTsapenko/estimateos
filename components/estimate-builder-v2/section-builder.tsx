@@ -129,8 +129,8 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor, 
   const boundaries = [FX, ...segs.slice(1).map(s => s.segX), FR]
   // When labels are hidden use a tighter viewBox that excludes the dimension/label area below the frame
   const vb = hideLabels ? `0 0 ${SVG_W} ${FB + 10}` : `0 0 ${SVG_W} ${SVG_H}`
-  const fw = hideLabels ? '4' : '2.5'
-  const dw = hideLabels ? '2.5' : '1.5'
+  const fw = '2.5'
+  const dw = '1.5'
 
   return (
     <svg viewBox={vb} style={{ width: '100%', height: 'auto', display: 'block' }} aria-hidden>
