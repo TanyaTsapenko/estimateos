@@ -360,10 +360,10 @@ export default function NewAppointmentPage() {
                 <button key={mins} type="button"
                   onClick={() => { if (form.appointment_time) set('appointment_end_time', addMinutesToTime(form.appointment_time, mins)) }}
                   style={{
-                    height: 30, padding: '0 12px', borderRadius: 99,
+                    height: 30, padding: '0 12px', borderRadius: 10,
                     background: isActive ? '#2563EB' : '#fff',
                     color: isActive ? '#fff' : '#475467',
-                    border: isActive ? 'none' : '1px solid #D0D5DD',
+                    border: isActive ? '1px solid #2563EB' : '1px solid #D0D5DD',
                     fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                   }}>
                   {mins / 60} hr

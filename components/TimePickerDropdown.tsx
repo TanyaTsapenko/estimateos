@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 
-// All slots 12:00 AM – 11:45 PM, every 15 min
+// Full 15-min grid — kept for display label resolution (legacy stored :15/:45 values still show correctly)
 const ALL_SLOTS: { value: string; label: string }[] = []
 for (let h = 0; h < 24; h++) {
   for (const m of [0, 15, 30, 45]) {
@@ -14,6 +14,18 @@ for (let h = 0; h < 24; h++) {
   }
 }
 
+// Picker slots — 30-min increments (48 options)
+const PICKER_SLOTS: { value: string; label: string }[] = []
+for (let h = 0; h < 24; h++) {
+  for (const m of [0, 30]) {
+    const value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    const ampm  = h >= 12 ? 'PM' : 'AM'
+    const h12   = h % 12 || 12
+    const label = `${h12}:${String(m).padStart(2, '0')} ${ampm}`
+    PICKER_SLOTS.push({ value, label })
+  }
+}
+
 const NONE_SLOT = { value: '', label: '—' }
 
 function todayStr() {
@@ -21,11 +33,11 @@ function todayStr() {
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 }
 
-// Next 15-min boundary from now (exclusive)
+// Next 30-min boundary from now (exclusive)
 function nextSlotMins(): number {
   const now = new Date()
   const total = now.getHours() * 60 + now.getMinutes()
-  return Math.ceil((total + 1) / 15) * 15
+  return Math.ceil((total + 1) / 30) * 30
 }
 
 interface Props {
@@ -45,11 +57,11 @@ export default function TimePickerDropdown({ value, date, onChange, style, allow
 
   const isToday = !noTodayFilter && date === todayStr()
   const baseSlots = isToday
-    ? ALL_SLOTS.filter(s => {
+    ? PICKER_SLOTS.filter(s => {
         const [h, m] = s.value.split(':').map(Number)
         return h * 60 + m >= nextSlotMins()
       })
-    : ALL_SLOTS
+    : PICKER_SLOTS
 
   const filteredSlots = minAfter
     ? baseSlots.filter(s => s.value > minAfter)
@@ -94,7 +106,7 @@ export default function TimePickerDropdown({ value, date, onChange, style, allow
           width: '100%', border: '1px solid #E8E8E8', borderRadius: 12,
           padding: '12px 36px 12px 14px', fontSize: 15, background: '#fff',
           boxSizing: 'border-box', fontFamily: 'inherit', cursor: 'pointer',
-          color: (displayLabel && displayLabel !== '—') ? '#0A1628' : '#9CA3AF',
+          color: displayLabel ? '#0A1628' : '#9CA3AF',
           position: 'relative', userSelect: 'none',
         }}
       >
