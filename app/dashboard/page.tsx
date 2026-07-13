@@ -857,8 +857,7 @@ const [dashToast, setDashToast] = useState('')
           position: 'sticky', top: 0, zIndex: 10,
         }}>
           <div style={{ flex: 1 }}>
-            {companyName && <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.4px', color: '#94A3B8', textTransform: 'uppercase' }}>{companyName}</div>}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: '#0A1628' }}>{userName || '—'}</span>
               <span style={{ color: '#CBD5E1' }}>·</span>
               <span style={{ fontSize: 13, color: '#475569' }}>{todayStr}</span>
@@ -882,7 +881,6 @@ const [dashToast, setDashToast] = useState('')
         <>
         <AppTopBar
           variant="dark"
-          eyebrow={companyName || undefined}
           title={userName || '—'}
           right={<BellButton notifications={notifications} unreadCount={unreadCount} onMarkRead={handleMarkRead} onMarkAllRead={handleMarkAllRead} onDeleteOne={handleDeleteOne} onClearAll={handleClearAll} variant="dark" isMobile={isMobile} />}
         />
