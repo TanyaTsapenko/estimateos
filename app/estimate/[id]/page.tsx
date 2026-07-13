@@ -199,15 +199,26 @@ export default function ClientEstimatePage() {
         {/* ── HEADER ── */}
         <div style={{ padding: '24px 28px 20px', borderBottom: `2px solid ${BLUE}`, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
           <div style={{ flex: 1 }}>
-            {profile?.logo_url && (
-              <img src={profile.logo_url} alt="" style={{ height: 38, objectFit: 'contain', display: 'block', marginBottom: 6 }} />
-            )}
-            <div style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>{profile?.company_name || ''}</div>
-            {profile?.phone && <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{profile.phone}</div>}
-            {profile?.address && (
-              <div style={{ fontSize: 11, color: MUTED }}>
-                {[profile.address, profile.city, profile.province, profile.postal].filter(Boolean).join(', ')}
-              </div>
+            {profile?.logo_url ? (
+              <>
+                <img src={profile.logo_url} alt="" style={{ height: 38, objectFit: 'contain', display: 'block', marginBottom: 8 }} />
+                {profile?.phone && <div style={{ fontSize: 11, color: MUTED }}>{profile.phone}</div>}
+                {profile?.address && (
+                  <div style={{ fontSize: 11, color: MUTED }}>
+                    {[profile.address, profile.city, profile.province, profile.postal].filter(Boolean).join(', ')}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>{profile?.company_name || ''}</div>
+                {profile?.phone && <div style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{profile.phone}</div>}
+                {profile?.address && (
+                  <div style={{ fontSize: 11, color: MUTED }}>
+                    {[profile.address, profile.city, profile.province, profile.postal].filter(Boolean).join(', ')}
+                  </div>
+                )}
+              </>
             )}
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>

@@ -165,7 +165,6 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
               ? <Image style={S.logo} src={company.logo_url} />
               : <Text style={S.coName}>{company.company_name || 'Your Company'}</Text>
             }
-            {company.logo_url && <Text style={S.coName}>{company.company_name}</Text>}
             {company.phone    && <Text style={S.coInfo}>{company.phone}</Text>}
             {contactEmail     && <Text style={S.coInfo}>{contactEmail}</Text>}
             {company.website  && <Text style={S.coInfo}>{company.website}</Text>}
