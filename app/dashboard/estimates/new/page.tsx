@@ -281,6 +281,14 @@ function NewEstimateV2() {
       const raw = sessionStorage.getItem('estimate-draft')
       if (!raw) return
       const draft = JSON.parse(raw)
+      // Discard stale draft when entering from a different client's appointment
+      if (apptId) {
+        const urlName = searchParams.get('client_name') || ''
+        if (urlName && draft.clientInfo?.name && draft.clientInfo.name !== urlName) {
+          sessionStorage.removeItem('estimate-draft')
+          return
+        }
+      }
       if (draft.clientInfo) setClientInfo(draft.clientInfo)
       if (draft.openings?.length) setOpenings(draft.openings)
       if (draft.activeIdx != null) setActiveIdx(draft.activeIdx)
@@ -449,21 +457,25 @@ function NewEstimateV2() {
     async function fetchAppt() {
       const { data: appt } = await supabase
         .from('appointments')
-        .select('client_name, client_phone, client_email, client_address, client_city, client_province, postal_code, client_id')
+        .select('client_name, client_phone, client_email, client_address, client_city, client_province, postal_code, client_id, notes')
         .eq('id', apptId)
         .maybeSingle()
       if (!appt) return
       const row = appt as Record<string, string | null>
       setClientInfo(prev => ({
         ...prev,
-        ...(row.client_id    && { id:      row.client_id }),
-        ...(row.client_name  && { name:    row.client_name }),
-        ...(row.client_phone && { phone:   row.client_phone }),
-        ...(row.client_email && { email:   row.client_email }),
-        ...(row.client_address && {
+        ...(row.client_id       && { id:         row.client_id }),
+        ...(row.client_name     && { name:        row.client_name }),
+        ...(row.client_phone    && { phone:       row.client_phone }),
+        ...(row.client_email    && { email:       row.client_email }),
+        ...(row.client_address  && {
           address: [row.client_address, row.client_city].filter(Boolean).join(', '),
         }),
+        ...(row.client_city     && { city:        row.client_city }),
+        ...(row.client_province && { province:    row.client_province }),
+        ...(row.postal_code     && { postalCode:  row.postal_code }),
       }))
+      if (row.notes) setScopeNotes(prev => prev || (row.notes as string))
     }
     fetchAppt()
   }, [apptId])

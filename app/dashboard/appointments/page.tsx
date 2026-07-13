@@ -195,6 +195,7 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
   onNavigate: (path: string) => void
   isFollowUp?: boolean
 }) {
+  const [navigating, setNavigating] = useState(false)
   const { time, ampm } = fmtTimeParts(appt.rawTime)
   const endFmt = appt.endTime ? fmt12h(appt.endTime) : null
   const dotColor = appt.status === 'completed' ? '#16A34A' : isFollowUp ? '#F97316' : '#2563EB'
@@ -266,15 +267,18 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
               </div>
             ) : (
               <button
+                disabled={navigating}
                 onClick={e => {
                   e.stopPropagation()
+                  if (navigating) return
+                  setNavigating(true)
                   onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.user_id)}`)
                 }}
                 style={{
                   height: 30, padding: '0 11px', borderRadius: 9,
                   background: '#EFF4FF', border: 'none',
                   color: '#2563EB', fontSize: 12, fontWeight: 700,
-                  cursor: 'pointer', flexShrink: 0,
+                  cursor: navigating ? 'default' : 'pointer', flexShrink: 0,
                 }}
               >
                 + Est
@@ -366,12 +370,18 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
                 </button>
               ) : (
                 <button
-                  onClick={e => { e.stopPropagation(); onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.user_id)}`) }}
+                  disabled={navigating}
+                  onClick={e => {
+                    e.stopPropagation()
+                    if (navigating) return
+                    setNavigating(true)
+                    onNavigate(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.name)}&client_address=${encodeURIComponent(appt.address)}&rep_id=${encodeURIComponent(appt.user_id)}`)
+                  }}
                   style={{
                     display: 'block', width: '100%', height: 50, marginTop: 12, borderRadius: 13,
-                    border: 'none', background: '#2563EB', color: '#fff',
-                    fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                    boxShadow: '0 8px 20px -6px rgba(37,99,235,0.55)',
+                    border: 'none', background: navigating ? '#9CA3AF' : '#2563EB', color: '#fff',
+                    fontSize: 15, fontWeight: 700, cursor: navigating ? 'default' : 'pointer',
+                    boxShadow: navigating ? 'none' : '0 8px 20px -6px rgba(37,99,235,0.55)',
                   }}
                 >
                   + Create estimate
@@ -392,6 +402,7 @@ function AppointmentCard({
   appt: Appt; expanded: boolean; onToggle: () => void
   onEdit: (a: Appt) => void; onCreateEstimate: (a: Appt) => void; onViewEstimate: (id: string) => void
 }) {
+  const [navigating, setNavigating] = useState(false)
   const ds        = toDesignStatus(appt.status)
   const railColor = { upcoming: T.blue, completed: T.green, canceled: T.red }[ds]
   const faded     = (ds === 'completed' || ds === 'canceled') && !expanded
@@ -428,7 +439,7 @@ function AppointmentCard({
             {appt.estimate_id ? (
               <button onClick={e => { e.stopPropagation(); onViewEstimate(appt.estimate_id!) }} style={{ flex: 1.6, height: 36, borderRadius: 9, border: 'none', background: T.blue, color: '#fff', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>View estimate</button>
             ) : ds !== 'canceled' ? (
-              <button onClick={e => { e.stopPropagation(); onCreateEstimate(appt) }} style={{ flex: 1.6, height: 36, borderRadius: 9, border: 'none', background: T.blueSoft, color: T.blue, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>+ Create estimate</button>
+              <button disabled={navigating} onClick={e => { e.stopPropagation(); if (navigating) return; setNavigating(true); onCreateEstimate(appt) }} style={{ flex: 1.6, height: 36, borderRadius: 9, border: 'none', background: T.blueSoft, color: T.blue, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: navigating ? 'default' : 'pointer' }}>+ Create estimate</button>
             ) : null}
           </div>
           <button onClick={e => { e.stopPropagation(); onEdit(appt) }} style={{ marginTop: 6, width: '100%', height: 32, borderRadius: 9, border: 'none', background: 'transparent', color: T.inkMid, fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, cursor: 'pointer' }}>
@@ -603,6 +614,7 @@ function DesktopSectionHeader({ label, color, count }: { label: string; color: s
 }
 
 function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: { appt: Appt; onEdit: () => void; onCreateEstimate: (a: Appt) => void; onViewEstimate: (id: string) => void }) {
+  const [navigating, setNavigating] = useState(false)
   const ds = toDesignStatus(appt.status)
   const dl = dateLabel(appt.appointment_date)
   const btnBase: React.CSSProperties = { height: 40, padding: '0 14px', borderRadius: 10, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, fontSize: 13.5, fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }
@@ -655,7 +667,7 @@ function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: { 
               <div style={{ fontSize: 15, fontWeight: 600, color: T.ink, marginTop: 2 }}>Quote this visit when you're ready.</div>
             </div>
           </div>
-          <button onClick={() => onCreateEstimate(appt)} style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', background: T.blue, color: '#fff', fontSize: 13.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create estimate</button>
+          <button disabled={navigating} onClick={() => { if (navigating) return; setNavigating(true); onCreateEstimate(appt) }} style={{ height: 40, padding: '0 16px', borderRadius: 10, border: 'none', background: navigating ? T.inkSoft : T.blue, color: '#fff', fontSize: 13.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: navigating ? 'default' : 'pointer' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create estimate</button>
         </div>
       ) : null}
     </div>
@@ -1012,9 +1024,7 @@ export default function AppointmentsPage() {
     setSelectedId(null); setDesktopEditing(false); flash('Deleted', { variant: 'neutral' })
   }
 
-  async function createEstimate(appt: Appt) {
-    await supabase.from('appointments').update({ status: 'completed' }).eq('id', appt.id)
-    setAppts(prev => prev.map(a => a.id === appt.id ? { ...a, status: 'completed' } : a))
+  function createEstimate(appt: Appt) {
     router.push(`/dashboard/estimates/new?appointment_id=${appt.id}&client_name=${encodeURIComponent(appt.client_name)}&client_address=${encodeURIComponent(appt.client_address || '')}&rep_id=${encodeURIComponent((appt as any).user_id || '')}`)
   }
 
