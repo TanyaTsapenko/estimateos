@@ -329,7 +329,7 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
     const remSettings = (prof as any)?.quote_settings?.reminders
     const remCount: number = est.reminder_count ?? 0
     const rawTemplate: string =
-      (remCount <= 1 ? remSettings?.template_1 : remSettings?.template_2) || customMessage || ''
+      customMessage || (remCount <= 1 ? remSettings?.template_1 : remSettings?.template_2) || ''
     const expiryFmt = est.valid_until
       ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
       : ''

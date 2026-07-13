@@ -647,7 +647,7 @@ const [dashToast, setDashToast] = useState('')
     if (!user) return
     const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
     const [{ data: est }, { data: prof }] = await Promise.all([
-      supabase.from('estimates').select('client_name, client_email, client_address, estimate_number, last_reminder_sent_at, reminder_count').eq('id', estimateId).single(),
+      supabase.from('estimates').select('client_name, client_email, client_address, estimate_number, last_reminder_sent_at, reminder_count, valid_until, total').eq('id', estimateId).single(),
       supabase.from('profiles').select('company_name, quote_settings').eq('id', sanitizedId).single(),
     ])
     if (!est) return
@@ -668,7 +668,25 @@ const [dashToast, setDashToast] = useState('')
     const companyName = (prof as any)?.company_name || ''
     const address = est.client_address || ''
     const maxCount: number = (prof as any)?.quote_settings?.reminders?.max_count ?? 3
-    const msg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
+    const remCount: number = est.reminder_count ?? 0
+    const remSettings = (prof as any)?.quote_settings?.reminders
+    const rawTemplate: string = remSettings
+      ? (remCount <= 1 ? remSettings.template_1 : remSettings.template_2) || ''
+      : ''
+    const expiryFmt = est.valid_until
+      ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
+      : ''
+    const amtFmt = typeof est.total === 'number'
+      ? `CA$${(est.total as number).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : ''
+    const resolvedTemplate = rawTemplate
+      .replace(/\{client_name\}/g, est.client_name || '')
+      .replace(/\{address\}/g, address)
+      .replace(/\{amount\}/g, amtFmt)
+      .replace(/\{expiry_date\}/g, expiryFmt)
+      .replace(/\{estimate_number\}/g, est.estimate_number || '')
+    const msg = resolvedTemplate ||
+      `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
     setReminderModal({
       estimateId,
       estimateNumber: est.estimate_number,
