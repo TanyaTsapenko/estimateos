@@ -26,6 +26,12 @@ function formatPostal(v: string): string {
   return raw.length > 3 ? `${raw.slice(0, 3)} ${raw.slice(3)}` : raw
 }
 
+function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = h * 60 + m + minutes
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 export default function NewAppointmentPage() {
   const router       = useRouter()
   const searchParams = useSearchParams()
@@ -36,6 +42,7 @@ export default function NewAppointmentPage() {
   const [allMembers, setAllMembers] = useState<TeamMember[]>([])
   const [errors, setErrors] = useState<ClientErrors>({})
   const [prefillClientId] = useState(searchParams.get('prefill_client_id') || '')
+  const [overlapWarning, setOverlapWarning] = useState<{ clientName: string; time: string } | null>(null)
 
   const now   = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -68,6 +75,23 @@ export default function NewAppointmentPage() {
       set('appointment_end_time', '')
     }
   }, [form.appointment_time])
+
+  useEffect(() => {
+    async function check() {
+      if (!form.appointment_date || !form.appointment_time || !form.appointment_end_time || !form.assigned_to) {
+        setOverlapWarning(null); return
+      }
+      const { data } = await supabase.from('appointments')
+        .select('client_name, appointment_time')
+        .eq('assigned_to', form.assigned_to)
+        .eq('appointment_date', form.appointment_date)
+        .lt('appointment_time', form.appointment_end_time)
+        .gt('appointment_end_time', form.appointment_time)
+        .limit(1)
+      setOverlapWarning(data?.length ? { clientName: (data[0] as any).client_name || 'a client', time: (data[0] as any).appointment_time } : null)
+    }
+    check()
+  }, [form.appointment_date, form.appointment_time, form.appointment_end_time, form.assigned_to])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -300,31 +324,62 @@ export default function NewAppointmentPage() {
 
         <div className="sl">When</div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 8 }}>
-          <div className="f">
-            <label>Date</label>
-            <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
-              style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+        <div style={{ background: '#EEF3FF', borderRadius: 14, padding: 14, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 10 }}>
+            <div className="f">
+              <label>Date</label>
+              <input type="date" lang="en" min={today} value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
+            </div>
+            <div className="f">
+              <label>Arrives after</label>
+              <TimePickerDropdown
+                value={form.appointment_time}
+                date={form.appointment_date}
+                onChange={v => set('appointment_time', v)}
+              />
+            </div>
+            <div className="f">
+              <label>Arrives before</label>
+              <TimePickerDropdown
+                value={form.appointment_end_time}
+                date={form.appointment_date}
+                onChange={v => set('appointment_end_time', v)}
+                allowNone
+                noTodayFilter
+                minAfter={form.appointment_time}
+              />
+            </div>
           </div>
-          <div className="f">
-            <label>Time</label>
-            <TimePickerDropdown
-              value={form.appointment_time}
-              date={form.appointment_date}
-              onChange={v => set('appointment_time', v)}
-            />
+
+          <div style={{ display: 'flex', gap: 6, marginBottom: overlapWarning ? 10 : 0 }}>
+            {[60, 120, 180, 240].map(mins => {
+              const expectedEnd = form.appointment_time ? addMinutesToTime(form.appointment_time, mins) : ''
+              const isActive = !!form.appointment_time && !!form.appointment_end_time && form.appointment_end_time === expectedEnd
+              return (
+                <button key={mins} type="button"
+                  onClick={() => { if (form.appointment_time) set('appointment_end_time', addMinutesToTime(form.appointment_time, mins)) }}
+                  style={{
+                    height: 30, padding: '0 12px', borderRadius: 99,
+                    background: isActive ? '#2563EB' : '#fff',
+                    color: isActive ? '#fff' : '#475467',
+                    border: isActive ? 'none' : '1px solid #D0D5DD',
+                    fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}>
+                  {mins / 60} hr
+                </button>
+              )
+            })}
           </div>
-          <div className="f">
-            <label>Until (optional)</label>
-            <TimePickerDropdown
-              value={form.appointment_end_time}
-              date={form.appointment_date}
-              onChange={v => set('appointment_end_time', v)}
-              allowNone
-              noTodayFilter
-              minAfter={form.appointment_time}
-            />
-          </div>
+
+          {overlapWarning && (
+            <div style={{ background: '#FEF3E2', border: '1px solid #FBDFA8', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 15, lineHeight: '20px' }}>⚠️</span>
+              <div style={{ fontSize: 13, color: '#92400E', lineHeight: 1.5 }}>
+                <strong>{allMembers.find(m => m.id === form.assigned_to)?.name || 'This rep'}</strong> already has an appointment with <strong>{overlapWarning.clientName}</strong> at {overlapWarning.time} that overlaps.
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="sl">Details</div>

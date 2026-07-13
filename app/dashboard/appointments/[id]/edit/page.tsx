@@ -23,6 +23,12 @@ function formatPostal(v: string): string {
   return raw.length > 3 ? `${raw.slice(0, 3)} ${raw.slice(3)}` : raw
 }
 
+function addMinutesToTime(time: string, minutes: number): string {
+  const [h, m] = time.split(':').map(Number)
+  const total = h * 60 + m + minutes
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
 const T = {
   bg:           '#F3F4F6',
   card:         '#FFFFFF',
@@ -48,6 +54,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [errors, setErrors]       = useState<ClientErrors>({})
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [overlapWarning, setOverlapWarning] = useState<{ clientName: string; time: string } | null>(null)
 
   const [form, setForm] = useState({
     client_name:      '',
@@ -76,6 +83,24 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
       set('appointment_end_time', '')
     }
   }, [form.appointment_time])
+
+  useEffect(() => {
+    async function check() {
+      if (!form.appointment_date || !form.appointment_time || !form.appointment_end_time || !form.assigned_to) {
+        setOverlapWarning(null); return
+      }
+      const { data } = await supabase.from('appointments')
+        .select('client_name, appointment_time')
+        .eq('assigned_to', form.assigned_to)
+        .eq('appointment_date', form.appointment_date)
+        .lt('appointment_time', form.appointment_end_time)
+        .gt('appointment_end_time', form.appointment_time)
+        .neq('id', id)
+        .limit(1)
+      setOverlapWarning(data?.length ? { clientName: (data[0] as any).client_name || 'a client', time: (data[0] as any).appointment_time } : null)
+    }
+    check()
+  }, [form.appointment_date, form.appointment_time, form.appointment_end_time, form.assigned_to])
 
   useEffect(() => {
     async function load() {
@@ -282,31 +307,62 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
           {/* WHEN */}
           <div style={secHdr}>When</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            <div style={{ minWidth: 0 }}>
-              <label style={fldLbl}>Date</label>
-              <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
-                style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', WebkitAppearance: 'none', appearance: 'none', color: form.appointment_date ? '#0A1628' : '#9CA3AF' }} />
+          <div style={{ background: '#EEF3FF', borderRadius: 14, padding: 14, marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 10 }}>
+              <div style={{ minWidth: 0 }}>
+                <label style={fldLbl}>Date</label>
+                <input type="date" lang="en" value={form.appointment_date} onChange={e => set('appointment_date', e.target.value)}
+                  style={{ width: '100%', border: '1px solid #E8E8E8', borderRadius: 12, padding: '12px 14px', fontSize: 15, background: '#fff', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', WebkitAppearance: 'none', appearance: 'none', color: form.appointment_date ? '#0A1628' : '#9CA3AF' }} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <label style={fldLbl}>Arrives after</label>
+                <TimePickerDropdown
+                  value={form.appointment_time}
+                  date={form.appointment_date}
+                  onChange={v => set('appointment_time', v)}
+                />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <label style={fldLbl}>Arrives before</label>
+                <TimePickerDropdown
+                  value={form.appointment_end_time}
+                  date={form.appointment_date}
+                  onChange={v => set('appointment_end_time', v)}
+                  allowNone
+                  noTodayFilter
+                  minAfter={form.appointment_time}
+                />
+              </div>
             </div>
-            <div style={{ minWidth: 0 }}>
-              <label style={fldLbl}>Time</label>
-              <TimePickerDropdown
-                value={form.appointment_time}
-                date={form.appointment_date}
-                onChange={v => set('appointment_time', v)}
-              />
+
+            <div style={{ display: 'flex', gap: 6, marginBottom: overlapWarning ? 10 : 0 }}>
+              {[60, 120, 180, 240].map(mins => {
+                const expectedEnd = form.appointment_time ? addMinutesToTime(form.appointment_time, mins) : ''
+                const isActive = !!form.appointment_time && !!form.appointment_end_time && form.appointment_end_time === expectedEnd
+                return (
+                  <button key={mins} type="button"
+                    onClick={() => { if (form.appointment_time) set('appointment_end_time', addMinutesToTime(form.appointment_time, mins)) }}
+                    style={{
+                      height: 30, padding: '0 12px', borderRadius: 99,
+                      background: isActive ? '#2563EB' : '#fff',
+                      color: isActive ? '#fff' : '#475467',
+                      border: isActive ? 'none' : '1px solid #D0D5DD',
+                      fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    }}>
+                    {mins / 60} hr
+                  </button>
+                )
+              })}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <label style={fldLbl}>Until (optional)</label>
-              <TimePickerDropdown
-                value={form.appointment_end_time}
-                date={form.appointment_date}
-                onChange={v => set('appointment_end_time', v)}
-                allowNone
-                noTodayFilter
-                minAfter={form.appointment_time}
-              />
-            </div>
+
+            {overlapWarning && (
+              <div style={{ background: '#FEF3E2', border: '1px solid #FBDFA8', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 15, lineHeight: '20px' }}>⚠️</span>
+                <div style={{ fontSize: 13, color: '#92400E', lineHeight: 1.5 }}>
+                  <strong>{teamMembers.find(m => m.id === form.assigned_to)?.name || 'This rep'}</strong> already has an appointment with <strong>{overlapWarning.clientName}</strong> at {overlapWarning.time} that overlaps.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* DETAILS */}
