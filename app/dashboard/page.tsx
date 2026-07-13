@@ -235,6 +235,7 @@ export default function DashboardPage() {
   const [openDealIdx, setOpenDealIdx] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 const [dashToast, setDashToast] = useState('')
+  const [viewedByEstimate, setViewedByEstimate] = useState<Record<string, string>>({})
   const [reminderSending, setReminderSending] = useState(false)
   const [paying, setPaying] = useState<string | null>(null)
   const [checklistDismissed, setChecklistDismissed] = useState(false)
@@ -484,6 +485,9 @@ const [dashToast, setDashToast] = useState('')
           amount: e.amount ?? null,
           time: actTimeAgo(e.created_at),
         })))
+        const vbMap: Record<string, string> = {}
+        ;(estAll || []).forEach((e: any) => { if (e.viewed_at) vbMap[e.id] = e.viewed_at })
+        setViewedByEstimate(vbMap)
       }
   }, [])
 
@@ -1295,14 +1299,16 @@ const [dashToast, setDashToast] = useState('')
                         const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
                         const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
                         const initials = (clientName || '?').slice(0, 1).toUpperCase()
-                        const statusBadge = STATUS_BADGE[topEvent.event_type]
+                        const isClientViewed = topEvent.event_type === 'estimate_sent' && !!entityId && !!viewedByEstimate[entityId]
+                        const effectiveAccent = isClientViewed ? '#059669' : accent
+                        const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
                             <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                               onClick={() => setOpenDealIdx(isOpen ? -1 : gi)}>
-                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${accent}99, ${accent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${effectiveAccent}99, ${effectiveAccent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{initials}</span>
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1312,7 +1318,7 @@ const [dashToast, setDashToast] = useState('')
                                 </div>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: accent + '18', color: accent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
+                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: effectiveAccent + '18', color: effectiveAccent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
                                 {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
                               </div>
                             </div>
@@ -1470,14 +1476,16 @@ const [dashToast, setDashToast] = useState('')
                         const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
                         const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
                         const initials = (clientName || '?').slice(0, 1).toUpperCase()
-                        const statusBadge = STATUS_BADGE[topEvent.event_type]
+                        const isClientViewed = topEvent.event_type === 'estimate_sent' && !!entityId && !!viewedByEstimate[entityId]
+                        const effectiveAccent = isClientViewed ? '#059669' : accent
+                        const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
                             <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
                               onClick={() => setOpenDealIdx(isOpen ? -1 : gi)}>
-                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${accent}99, ${accent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${effectiveAccent}99, ${effectiveAccent})`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span style={{ fontSize: 14.5, fontWeight: 800, color: '#fff' }}>{initials}</span>
                               </div>
                               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1487,7 +1495,7 @@ const [dashToast, setDashToast] = useState('')
                                 </div>
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: accent + '18', color: accent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
+                                {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: effectiveAccent + '18', color: effectiveAccent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
                                 {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
                               </div>
                             </div>
