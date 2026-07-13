@@ -7,6 +7,16 @@ import { getColourLabel, getInteriorColourLabel, getSubtypeLabel } from '@/lib/o
 import { V2_TYPE_LABELS } from '@/lib/v2/openingTypes'
 import { OpeningDrawing } from '@/components/estimate-builder-v2/opening-drawing'
 
+const SECTION_TYPE_MAP: Record<string, string> = {
+  'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+}
+function parseSections(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
+
 const SANS    = '"Plus Jakarta Sans", "Inter", system-ui, sans-serif'
 const PAGE_BG = '#F5F6F8'
 const NAVY    = '#0A1628'
@@ -250,7 +260,7 @@ export default function ClientEstimatePage() {
               {openings.map((op, i) => {
                 const typeName = V2_TYPE_LABELS[op.type] || OPENING_TYPES[op.type]?.name || humanize(op.type)
                 const subLabel = getSubtypeLabel(op as any)
-                const title    = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null, op.room ? `— ${op.room}` : null].filter(Boolean).join(' ')
+                const title    = [op.qty > 1 ? `${op.qty}×` : null, typeName, subLabel ? `(${subLabel})` : null].filter(Boolean).join(' ')
                 const extColour = getColourLabel(op as any)
                 const intColour = getInteriorColourLabel(op as any)
                 const gridVal   = op.grid_pattern && op.grid_pattern !== 'none' ? humanize(op.grid_pattern) : null
@@ -262,50 +272,111 @@ export default function ClientEstimatePage() {
                 if (op.low_e)    glassChips.push('Low-E')
                 if (op.tempered) glassChips.push('Tempered')
 
+                const isCombo = op.type === 'combination' || op.type === 'window_combo'
+                const comboSecs = isCombo ? parseSections(op.sections) : []
+
                 return (
                   <div key={op.id} style={{ border: `0.5px solid ${BORDER}`, borderRadius: 6, marginBottom: 8, overflow: 'hidden' }}>
-                    {/* Card header */}
                     <div style={{ display: 'flex', alignItems: 'center', background: GRAY_BG, padding: '8px 12px', borderBottom: `0.5px solid ${BORDER}` }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: FAINT, width: 22, flexShrink: 0 }}>{i + 1}</span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: NAVY, flex: 1 }}>{title}</span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: BLUE, flexShrink: 0 }}>{fmtCAD(op.total_cost || 0)}</span>
                     </div>
-                    {/* Card body */}
-                    <div className="est-card-body">
-                      <div className="est-drawing-col">
-                        <OpeningDrawing op={{ ...op, colour: null }} />
+                    {isCombo ? (
+                      <>
+                        <div style={{ background: GRAY_BG, borderBottom: `0.5px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+                          <div style={{ maxWidth: 340, width: '100%' }}>
+                            <OpeningDrawing op={{ ...op, colour: null }} hideComboLabels />
+                          </div>
+                        </div>
+                        <div style={{ padding: '12px 14px' }}>
+                          <div style={{ fontSize: 11, color: MUTED, marginBottom: 10 }}>
+                            Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
+                          </div>
+                          {comboSecs.length > 0 && (
+                            <>
+                              <GrpHdr>Sections</GrpHdr>
+                              {comboSecs.map((sec, idx) => (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderBottom: idx < comboSecs.length - 1 ? `0.5px solid ${BORDER}` : 'none' }}>
+                                  <span style={{ fontSize: 10, color: FAINT, width: 18, textAlign: 'right' as const, flexShrink: 0 }}>{idx + 1}.</span>
+                                  <div style={{ width: 34, flexShrink: 0, pointerEvents: 'none' as const }}>
+                                    <OpeningDrawing op={{ id: `${op.id}-s${idx}`, type: SECTION_TYPE_MAP[sec.type] ?? 'picture' }} />
+                                  </div>
+                                  <div>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: NAVY }}>{sec.type}</span>
+                                    <span style={{ fontSize: 11, color: MUTED }}> · {sec.width}"</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </>
+                          )}
+                          {hasLocation && (
+                            <>
+                              <GrpHdr>Location</GrpHdr>
+                              <SR label="Room"  value={op.room} />
+                              <SR label="Floor" value={floorVal} />
+                            </>
+                          )}
+                          <GrpHdr>Product</GrpHdr>
+                          {op.width_in && op.height_in && <SR label="Size" value={`${op.width_in}" × ${op.height_in}"`} />}
+                          <SR label="Material"     value={humanize(op.material)} />
+                          <SR label="Ext. colour"  value={extColour || undefined} />
+                          <SR label="Int. colour"  value={intColour || undefined} />
+                          <SR label="Grid"         value={gridVal || undefined} />
+                          <SR label="Installation" value={humanize(op.install)} />
+                          {glassChips.length > 0 && (
+                            <>
+                              <GrpHdr>Glass</GrpHdr>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
+                                {glassChips.map(c => <Chip key={c} label={c} />)}
+                              </div>
+                            </>
+                          )}
+                          {!!op.notes && (
+                            <>
+                              <GrpHdr>Notes</GrpHdr>
+                              <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.55, fontStyle: 'italic' }}>{op.notes}</div>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="est-card-body">
+                        <div className="est-drawing-col">
+                          <OpeningDrawing op={{ ...op, colour: null }} />
+                        </div>
+                        <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
+                          {hasLocation && (
+                            <>
+                              <GrpHdr>Location</GrpHdr>
+                              <SR label="Room"  value={op.room} />
+                              <SR label="Floor" value={floorVal} />
+                            </>
+                          )}
+                          <GrpHdr>Product</GrpHdr>
+                          {op.width_in && op.height_in && <SR label="Size" value={`${op.width_in}" × ${op.height_in}"`} />}
+                          <SR label="Material"     value={humanize(op.material)} />
+                          <SR label="Ext. colour"  value={extColour || undefined} />
+                          <SR label="Int. colour"  value={intColour || undefined} />
+                          <SR label="Grid"         value={gridVal || undefined} />
+                          <SR label="Installation" value={humanize(op.install)} />
+                          {glassChips.length > 0 && (
+                            <>
+                              <GrpHdr>Glass</GrpHdr>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
+                                {glassChips.map(c => <Chip key={c} label={c} />)}
+                              </div>
+                            </>
+                          )}
+                          {!!op.notes && (
+                            <>
+                              <GrpHdr>Notes</GrpHdr>
+                              <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.55, fontStyle: 'italic' }}>{op.notes}</div>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div style={{ flex: 1, padding: '12px 14px', minWidth: 0 }}>
-                        {hasLocation && (
-                          <>
-                            <GrpHdr>Location</GrpHdr>
-                            <SR label="Room"  value={op.room} />
-                            <SR label="Floor" value={floorVal} />
-                          </>
-                        )}
-                        <GrpHdr>Product</GrpHdr>
-                        {op.width_in && op.height_in && <SR label="Size" value={`${op.width_in}" × ${op.height_in}"`} />}
-                        <SR label="Material"     value={humanize(op.material)} />
-                        <SR label="Ext. colour"  value={extColour || undefined} />
-                        <SR label="Int. colour"  value={intColour || undefined} />
-                        <SR label="Grid"         value={gridVal || undefined} />
-                        <SR label="Installation" value={humanize(op.install)} />
-                        {glassChips.length > 0 && (
-                          <>
-                            <GrpHdr>Glass</GrpHdr>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
-                              {glassChips.map(c => <Chip key={c} label={c} />)}
-                            </div>
-                          </>
-                        )}
-                        {!!op.notes && (
-                          <>
-                            <GrpHdr>Notes</GrpHdr>
-                            <div style={{ fontSize: 11, color: MUTED, lineHeight: 1.55, fontStyle: 'italic' }}>{op.notes}</div>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )
               })}
