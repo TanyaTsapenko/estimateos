@@ -150,6 +150,8 @@ export default function ContractPage() {
   const [showSuccess,        setShowSuccess]        = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
   const [flash,              setFlash]              = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
+  const [signingFailed,      setSigningFailed]      = useState(false)
+  const [pendingContractId,  setPendingContractId]  = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -214,36 +216,45 @@ export default function ContractPage() {
     }
 
     setSending(true)
+    setSigningFailed(false)
     try {
-      const estimateUpdate: Record<string, unknown> = {}
-      if (urlPayment) estimateUpdate.payment_method  = urlPayment
-      if (urlDeposit) estimateUpdate.deposit_percent = parseFloat(urlDeposit!)
-      if (Object.keys(estimateUpdate).length > 0) {
-        await supabase.from('estimates').update(estimateUpdate).eq('id', id)
-      }
+      // On retry after network failure, reuse the already-created contract to avoid duplicates
+      let contractId = pendingContractId
 
-      const contractStatus = trigger === 'sign' ? 'signing' : 'sent'
-      const { data: contract, error } = await supabase
-        .from('contracts')
-        .insert({
-          estimate_id: id,
-          profile_id: profile?.id,
-          status: contractStatus,
-          contract_terms_snapshot: profile?.contract_terms,
-          contractor_signature_url: profile?.signature_url || ownerSignatureUrl || null,
-          rep_name: repName || null,
-          company_name: resolvedCompanyName,
-          company_email: profile?.email || '',
-          company_phone: profile?.phone || '',
-          ...(urlDeposit ? { deposit_percent: parseFloat(urlDeposit) } : {}),
-          ...(urlPayment ? { payment_method: urlPayment } : {}),
-        })
-        .select()
-        .single()
+      if (!contractId) {
+        const estimateUpdate: Record<string, unknown> = {}
+        if (urlPayment) estimateUpdate.payment_method  = urlPayment
+        if (urlDeposit) estimateUpdate.deposit_percent = parseFloat(urlDeposit!)
+        if (Object.keys(estimateUpdate).length > 0) {
+          await supabase.from('estimates').update(estimateUpdate).eq('id', id)
+        }
 
-      if (error || !contract) {
-        showFlash('Error creating contract: ' + (error?.message || 'Unknown error'))
-        return
+        const contractStatus = trigger === 'sign' ? 'signing' : 'sent'
+        const { data: newContract, error } = await supabase
+          .from('contracts')
+          .insert({
+            estimate_id: id,
+            profile_id: profile?.id,
+            status: contractStatus,
+            contract_terms_snapshot: profile?.contract_terms,
+            contractor_signature_url: profile?.signature_url || ownerSignatureUrl || null,
+            rep_name: repName || null,
+            company_name: resolvedCompanyName,
+            company_email: profile?.email || '',
+            company_phone: profile?.phone || '',
+            ...(urlDeposit ? { deposit_percent: parseFloat(urlDeposit) } : {}),
+            ...(urlPayment ? { payment_method: urlPayment } : {}),
+          })
+          .select()
+          .single()
+
+        if (error || !newContract) {
+          showFlash('Error creating contract: ' + (error?.message || 'Unknown error'))
+          return
+        }
+
+        contractId = newContract.id
+        if (trigger === 'sign') setPendingContractId(contractId)
       }
 
       if (trigger === 'sign') {
@@ -271,18 +282,26 @@ export default function ContractPage() {
           return
         }
 
-        const res = await fetch('/api/sign-contract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name, agreedToTerms }),
-        })
-        const result = await res.json()
-        if (!res.ok) {
-          setSending(false)
+        let signRes: Response
+        try {
+          signRes = await fetch('/api/sign-contract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contractId, signatureBase64, clientName: estimate?.client_name, agreedToTerms }),
+          })
+        } catch {
+          setSigningFailed(true)
+          return
+        }
+        const result = await signRes.json()
+        if (!signRes.ok) {
+          setSigningFailed(false)
           showFlash('Signing failed: ' + (result.error || 'Unknown error'))
           return
         }
 
+        setPendingContractId(null)
+        setSigningFailed(false)
         setClientSignatureUrl(result.signatureUrl)
 
         await Promise.allSettled([
@@ -296,10 +315,10 @@ export default function ContractPage() {
               companyName: resolvedCompanyName,
               total: estimate?.total || 0,
               depositPercent: depositPct,
-              contractId: contract.id,
+              contractId,
             }),
           }),
-          fetch('/api/deposit-invoice', {
+          fetch('/api/create-deposit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estimateId: id }),
@@ -315,7 +334,7 @@ export default function ContractPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contractId: contract.id,
+          contractId,
           estimateId: id,
           clientEmail: estimate.client_email,
           clientName: estimate.client_name,
@@ -768,6 +787,11 @@ export default function ContractPage() {
               </label>
             </div>
           )}
+          {signingFailed && (
+            <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#92400E', textAlign: 'center' as const }}>
+              Connection lost — your signature is preserved. Tap below to retry.
+            </div>
+          )}
           {flash && (
             <SuccessBanner message={flash.message} variant={flash.variant}
               mode="floating" onDismiss={() => setFlash(null)} />
@@ -783,7 +807,7 @@ export default function ContractPage() {
               cursor: ctaDisabled ? 'not-allowed' : 'pointer',
             }}>
             {trigger === 'sign'
-              ? (sending ? 'Signing…' : 'Sign Contract')
+              ? (sending ? 'Signing…' : signingFailed ? 'Retry signing →' : 'Sign Contract')
               : (sending ? 'Sending…' : 'Send to client →')}
           </button>
         </div>

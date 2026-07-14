@@ -145,6 +145,7 @@ export default function SignContractPage() {
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
   const [isAnon, setIsAnon] = useState<boolean | null>(null)
   const [showClientConfirm, setShowClientConfirm] = useState(false)
+  const [signingFailed, setSigningFailed] = useState(false)
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
@@ -223,15 +224,26 @@ export default function SignContractPage() {
         return
       }
 
-      const res = await fetch('/api/sign-contract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name, agreedToTerms }),
-      })
-      const result = await res.json()
-      if (!res.ok) { alert('Signing failed: ' + (result.error || 'Unknown error')); return }
+      let signRes: Response
+      try {
+        signRes = await fetch('/api/sign-contract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name, agreedToTerms }),
+        })
+      } catch {
+        setSigningFailed(true)
+        return
+      }
+      const result = await signRes.json()
+      if (!signRes.ok) {
+        setSigningFailed(false)
+        alert('Signing failed: ' + (result.error || 'Unknown error'))
+        return
+      }
+      setSigningFailed(false)
 
-      setClientSignatureUrl(result.signatureUrl)
+      setClientSignatureUrl(result.signatureUrl as string)
 
       const [, , depositResult] = await Promise.allSettled([
         fetch('/api/send-contract-signed', {
@@ -904,6 +916,11 @@ export default function SignContractPage() {
                 I have read and agree to the <span style={{ color: BLUE, fontWeight: 600 }}>Terms &amp; Conditions</span> and authorize the work described in this contract.
               </label>
             </div>
+            {signingFailed && (
+              <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#92400E', textAlign: 'center' as const }}>
+                Connection lost — your signature is preserved. Tap below to retry.
+              </div>
+            )}
             <button
               onClick={handleSign}
               disabled={!hasValidSig || !agreedToTerms || signing || isAnon === null}
@@ -911,11 +928,11 @@ export default function SignContractPage() {
                 width: '100%', background: BLUE, color: '#fff', border: 'none',
                 borderRadius: 12, padding: 15,
                 font: `800 15px ${F}`,
-                opacity: (isEmpty || !agreedToTerms || signing) ? 0.45 : 1,
-                cursor: (isEmpty || !agreedToTerms || signing) ? 'not-allowed' : 'pointer',
+                opacity: (!hasValidSig || !agreedToTerms || signing) ? 0.45 : 1,
+                cursor: (!hasValidSig || !agreedToTerms || signing) ? 'not-allowed' : 'pointer',
                 marginBottom: 8,
               }}>
-              {signing ? 'Signing…' : 'Sign Contract'}
+              {signing ? 'Signing…' : signingFailed ? 'Retry signing →' : 'Sign Contract'}
             </button>
             <button onClick={handleDecline}
               style={{ width: '100%', background: 'transparent', border: 'none', borderRadius: 12, padding: 10, fontSize: 13, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: F }}>

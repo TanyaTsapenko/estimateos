@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
   const { data: contract, error: conErr } = await supabase
     .from('contracts').select('*').eq('id', contractId).single()
   if (conErr || !contract) return NextResponse.json({ error: 'Contract not found' }, { status: 404 })
-  if (contract.status === 'signed') return NextResponse.json({ error: 'Already signed' }, { status: 400 })
+  if (contract.status === 'signed') {
+    return NextResponse.json({ success: true, signatureUrl: contract.client_signature_url }, { status: 200 })
+  }
 
   // Upload PNG blob server-side (bypasses storage RLS)
   const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, '')
@@ -84,7 +86,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { data: estForLog } = await supabase.from('estimates')
-      .select('estimate_number, total, client_name').eq('id', contract.estimate_id).single()
+      .select('estimate_number, total, client_name, appointment_id').eq('id', contract.estimate_id).single()
     await logActivity(supabase, {
       user_id: contract.profile_id,
       event_type: 'contract_signed',
@@ -120,6 +122,12 @@ export async function POST(request: NextRequest) {
           read: false,
         })
       }
+    }
+    if (estForLog?.appointment_id) {
+      await supabase.from('appointments')
+        .update({ status: 'completed' })
+        .eq('id', estForLog.appointment_id)
+        .neq('status', 'completed')
     }
   } catch (logErr) {
     console.error('[sign-contract] logActivity error:', logErr)
