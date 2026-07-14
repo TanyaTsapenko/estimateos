@@ -54,6 +54,7 @@ interface Opening {
   glass_kind: string | null; low_e: boolean | null; tempered: boolean | null
   interior_colour_palette_id: string | null; interior_colour_name: string | null; interior_colour: string | null
   window_subtype: string | null; sections?: { type: string; width: number }[] | null
+  astragal?: string | null; astragal_type?: string | null
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
@@ -334,7 +335,9 @@ export default function ClientEstimatePage() {
                           <SR label="Ext. colour"  value={extColour || undefined} />
                           <SR label="Int. colour"  value={intColour || undefined} />
                           <SR label="Grid"         value={gridVal || undefined} />
-                          <SR label="Installation" value={humanize(op.install)} />
+                          <SR label="Installation"  value={humanize(op.install)} />
+                          <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
+                          <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
                           {glassChips.length > 0 && (
                             <>
                               <GrpHdr>Glass</GrpHdr>
@@ -370,7 +373,9 @@ export default function ClientEstimatePage() {
                           <SR label="Ext. colour"  value={extColour || undefined} />
                           <SR label="Int. colour"  value={intColour || undefined} />
                           <SR label="Grid"         value={gridVal || undefined} />
-                          <SR label="Installation" value={humanize(op.install)} />
+                          <SR label="Installation"  value={humanize(op.install)} />
+                          <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
+                          <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
                           {glassChips.length > 0 && (
                             <>
                               <GrpHdr>Glass</GrpHdr>

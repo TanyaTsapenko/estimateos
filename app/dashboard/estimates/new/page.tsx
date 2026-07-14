@@ -105,6 +105,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     open_mode:          (v.openMode         as string) || null,
     active_panel:       (v.activePanel      as string) || null,
     astragal:           (v.astragal         as string) || null,
+    astragal_type:      (v.astragalType     as string) || null,
   }
 }
 
@@ -176,6 +177,7 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.open_mode)          vals.openMode          = String(row.open_mode)
   if (row.active_panel)       vals.activePanel       = String(row.active_panel)
   if (row.astragal)           vals.astragal          = String(row.astragal)
+  if (row.astragal_type)      vals.astragalType       = String(row.astragal_type)
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {

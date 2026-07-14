@@ -32,6 +32,7 @@ interface Opening {
   glass_kind: string | null; low_e: boolean | null; tempered: boolean | null
   interior_colour_palette_id: string | null; interior_colour_name: string | null; interior_colour: string | null
   pane: string | null; egress_required: boolean | null; window_subtype: string | null
+  astragal: string | null; astragal_type: string | null
   sections?: { type: string; width: number }[] | null
 }
 
@@ -108,7 +109,7 @@ export default function EstimateDetailPage() {
 
       const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections, side_unit, center_window_type, panel_type, open_mode').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections, side_unit, center_window_type, panel_type, open_mode, astragal, astragal_type').eq('estimate_id', id).order('sort_order'),
       ])
 
       if (estErr) console.error('[estimate-detail] query error:', estErr.message)
@@ -405,7 +406,9 @@ export default function EstimateDetailPage() {
               if (op.sidelight_right)     pills.push(<span key="slr"     style={chipBlue}>→ SL {op.sidelight_right}"</span>)
               if (op.transom_above)       pills.push(<span key="ta"      style={chipBlue}>Transom above</span>)
               if (op.glass_type)          pills.push(<span key="gt"      style={chipBlue}>{GLASS_TYPE_LABELS[op.glass_type]}</span>)
-              if (op.core_type)           pills.push(<span key="ct"      style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
+              if (op.core_type)           pills.push(<span key="ct"        style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
+              if (op.astragal && op.astragal !== 'None')                         pills.push(<span key="astragal"    style={chipBlue}>{op.astragal}</span>)
+              if (op.astragal_type && op.astragal_type !== 'None')               pills.push(<span key="astragaltype" style={chipBlue}>{op.astragal_type}</span>)
               if (op.notes)               pills.push(<span key="notes"   style={{ ...chipOrange, gap: 4 }}><FileText size={12}/>{op.notes}</span>)
               const isCombo = op.type === 'combination' || op.type === 'window_combo'
               const comboSecs = isCombo ? parseSec(op.sections) : []

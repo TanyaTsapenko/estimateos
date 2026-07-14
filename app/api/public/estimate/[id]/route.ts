@@ -29,7 +29,7 @@ const OPENING_COLS = [
   'colour_palette_id', 'colour_name', 'interior_photo_url', 'exterior_photo_url',
   'photo_3_url', 'photo_4_url', 'glass_kind', 'low_e', 'tempered',
   'interior_colour_palette_id', 'interior_colour_name', 'interior_colour', 'window_subtype',
-  'sections',
+  'sections', 'astragal', 'astragal_type',
 ].join(', ')
 
 type Row = Record<string, unknown>
