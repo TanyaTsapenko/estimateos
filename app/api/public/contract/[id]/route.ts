@@ -30,6 +30,9 @@ const OPENING_COLS = [
   'sections', 'open_mode', 'center_window_type', 'side_unit', 'panel_type',
   'install', 'material', 'interior_colour', 'interior_colour_name',
   'interior_colour_palette_id', 'colour_palette_id', 'room',
+  'pane', 'lockset', 'deadbolt', 'deadbolt_type', 'brickmould', 'jamb', 'threshold_type',
+  'door_style', 'glass_insert', 'glass_finish', 'screen_coverage', 'ventilation_type',
+  'closer_type', 'pet_door', 'seat_board', 'head_board', 'astragal', 'astragal_type',
 ].join(', ')
 
 const PROFILE_COLS = [

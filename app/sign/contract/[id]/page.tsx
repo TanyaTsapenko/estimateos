@@ -40,6 +40,14 @@ interface Opening {
   install?: string | null; material?: string | null; room?: string | null
   interior_colour?: string | null; interior_colour_name?: string | null
   interior_colour_palette_id?: string | null; colour_palette_id?: string | null
+  pane?: string | null
+  lockset?: string | null; deadbolt?: boolean | null; deadbolt_type?: string | null
+  brickmould?: string | null; jamb?: string | null; threshold_type?: string | null
+  door_style?: string | null; glass_insert?: string | null; glass_finish?: string | null
+  screen_coverage?: string | null; ventilation_type?: string | null
+  closer_type?: string | null; pet_door?: string | null
+  seat_board?: boolean | null; head_board?: boolean | null
+  astragal?: string | null; astragal_type?: string | null
 }
 interface Profile {
   warranty_period: string | null; deposit_percent: number | null; signature_url: string | null
@@ -95,6 +103,23 @@ function DetCard({ label, value, fullWidth }: { label: string; value: string; fu
       <div style={{ fontSize: 12, fontWeight: 700 }}>{value}</div>
     </div>
   )
+}
+
+function getTotalPathLength(paths: string[]): number {
+  let total = 0
+  for (const d of paths) {
+    const tokens = d.trim().split(/\s+/)
+    let prevX = 0, prevY = 0, i = 0
+    while (i < tokens.length) {
+      if (tokens[i] === 'M') { prevX = parseFloat(tokens[i + 1]); prevY = parseFloat(tokens[i + 2]); i += 3 }
+      else if (tokens[i] === 'L') {
+        const x = parseFloat(tokens[i + 1]), y = parseFloat(tokens[i + 2])
+        total += Math.sqrt((x - prevX) ** 2 + (y - prevY) ** 2)
+        prevX = x; prevY = y; i += 3
+      } else { i++ }
+    }
+  }
+  return total
 }
 
 export default function SignContractPage() {
@@ -173,7 +198,7 @@ export default function SignContractPage() {
 
   async function handleSign() {
     if (signing) return
-    if (paths.length === 0) { alert('Please sign before submitting'); return }
+    if (!hasValidSig) { alert('Please sign using your finger or stylus'); return }
     if (!contract) return
     setSigning(true)
     try {
@@ -201,7 +226,7 @@ export default function SignContractPage() {
       const res = await fetch('/api/sign-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name }),
+        body: JSON.stringify({ contractId: contract.id, signatureBase64, clientName: estimate?.client_name, agreedToTerms }),
       })
       const result = await res.json()
       if (!res.ok) { alert('Signing failed: ' + (result.error || 'Unknown error')); return }
@@ -301,6 +326,7 @@ export default function SignContractPage() {
 
   const isSignedView = contract.status === 'signed' && !clientSignatureUrl
   const isEmpty = paths.length === 0
+  const hasValidSig = getTotalPathLength(paths) >= 50
 
   return (
     <>
@@ -568,6 +594,22 @@ export default function SignContractPage() {
               const glass       = getGlassLabel(op)
               const installLbl  = (op.install  && op.install  !== 'retrofit') ? (INSTALL_LABELS[op.install]   || op.install)  : null
               const materialLbl = (op.material && op.material !== 'vinyl')    ? (MATERIAL_LABELS[op.material] || op.material) : null
+              const specExtras: string[] = []
+              if (op.door_style) specExtras.push(op.door_style)
+              if (op.glass_insert && op.glass_insert !== 'None') specExtras.push(op.glass_insert)
+              if (op.glass_finish) specExtras.push(op.glass_finish)
+              if (op.lockset) specExtras.push(op.lockset)
+              if (op.deadbolt) specExtras.push(op.deadbolt_type ? `Deadbolt — ${op.deadbolt_type}` : 'Deadbolt')
+              if (op.brickmould && op.brickmould !== 'None') specExtras.push(`${op.brickmould} brickmould`)
+              if (op.jamb) specExtras.push(`Jamb ${op.jamb}`)
+              if (op.threshold_type) specExtras.push(`${op.threshold_type} threshold`)
+              if (op.screen_coverage && op.screen_coverage !== 'No Screen') specExtras.push(op.screen_coverage)
+              if (op.ventilation_type) specExtras.push(op.ventilation_type)
+              if (op.closer_type && op.closer_type !== 'None') specExtras.push(`${op.closer_type} closer`)
+              if (op.pet_door && op.pet_door !== 'None') specExtras.push(`Pet door — ${op.pet_door}`)
+              if (op.seat_board) specExtras.push('Seat board')
+              if (op.head_board) specExtras.push('Head board')
+              if (op.astragal && op.astragal !== 'None') specExtras.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
               const isCombo = op.type === 'combination' || op.type === 'window_combo'
               const comboSecs = isCombo ? parseSections(op.sections) : []
               const borderStyle = i < openings.length - 1 ? `1px solid ${HAIR}` : 'none'
@@ -601,7 +643,7 @@ export default function SignContractPage() {
                         ))}
                       </div>
                     )}
-                    {(extCol || intCol || glass || installLbl || materialLbl) && (
+                    {(extCol || intCol || glass || installLbl || materialLbl || specExtras.length > 0) && (
                       <div style={{ fontSize: 11, color: INK_M, lineHeight: 1.6 }}>
                         {(extCol || intCol) && (
                           <div>
@@ -618,6 +660,7 @@ export default function SignContractPage() {
                             {materialLbl && <>Material: <strong style={{ color: INK, fontWeight: 600 }}>{materialLbl}</strong></>}
                           </div>
                         )}
+                        {specExtras.length > 0 && <div>{specExtras.join(' · ')}</div>}
                       </div>
                     )}
                   </div>
@@ -655,6 +698,7 @@ export default function SignContractPage() {
                           {materialLbl && <>Material: <strong style={{ color: INK, fontWeight: 600 }}>{materialLbl}</strong></>}
                         </div>
                       )}
+                      {specExtras.length > 0 && <div>{specExtras.join(' · ')}</div>}
                     </div>
                   </div>
                 </div>
@@ -862,7 +906,7 @@ export default function SignContractPage() {
             </div>
             <button
               onClick={handleSign}
-              disabled={isEmpty || !agreedToTerms || signing || isAnon === null}
+              disabled={!hasValidSig || !agreedToTerms || signing || isAnon === null}
               style={{
                 width: '100%', background: BLUE, color: '#fff', border: 'none',
                 borderRadius: 12, padding: 15,

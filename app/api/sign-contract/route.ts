@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/service'
 import { logActivity } from '@/lib/activity'
 
 export async function POST(request: NextRequest) {
-  const { contractId, signatureBase64, clientName } = await request.json()
+  const { contractId, signatureBase64, clientName, agreedToTerms } = await request.json()
   if (!contractId || !signatureBase64) {
     return NextResponse.json({ error: 'Missing contractId or signature' }, { status: 400 })
   }
+
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+          ?? request.headers.get('x-real-ip')
+          ?? 'unknown'
+  const userAgent = request.headers.get('user-agent') ?? 'unknown'
 
   const supabase = createServiceClient()
 
@@ -32,10 +38,34 @@ export async function POST(request: NextRequest) {
   const signatureUrl = urlData.publicUrl
   const now = new Date().toISOString()
 
+  // Compute SHA-256 of the key contract content at the moment of signing
+  const [{ data: estForHash }, { data: openingsForHash }] = await Promise.all([
+    supabase.from('estimates')
+      .select('total, subtotal, tax_amount, discount_amount, deposit_percent, payment_method')
+      .eq('id', contract.estimate_id).single(),
+    supabase.from('estimate_openings')
+      .select('id, type, qty, total_cost, pane, colour, interior_colour, material, lockset, deadbolt, deadbolt_type, brickmould, jamb, threshold_type, door_style, glass_insert, glass_finish')
+      .eq('estimate_id', contract.estimate_id).order('sort_order'),
+  ])
+  const documentHash = createHash('sha256')
+    .update(JSON.stringify({
+      estimate_id: contract.estimate_id,
+      total: estForHash?.total,
+      deposit_percent: contract.deposit_percent,
+      payment_method: contract.payment_method,
+      terms: contract.contract_terms_snapshot,
+      openings: openingsForHash,
+    }), 'utf8')
+    .digest('hex')
+
   await supabase.from('contracts').update({
     status: 'signed',
     client_signature_url: signatureUrl,
     signed_at: now,
+    ip_address: ip,
+    user_agent: userAgent,
+    document_hash: documentHash,
+    agreed_to_terms: agreedToTerms === true,
   }).eq('id', contractId)
 
   await supabase.from('estimates').update({

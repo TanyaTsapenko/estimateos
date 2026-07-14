@@ -1,6 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer'
 import { substituteProvince } from '@/lib/provinces'
-import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, type SubtypeMap } from '@/lib/openingLabels'
+import { getColourLabel, getInteriorColourLabel, getSubtypeLabel, getGlassLabel, type SubtypeMap } from '@/lib/openingLabels'
 import { OPENING_TYPES } from '@/lib/pricing'
 import { V2_TYPE_LABELS, V2_TO_OLD_TYPE_KEY } from '@/lib/v2/openingTypes'
 
@@ -163,9 +163,26 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           const intCol = getInteriorColourLabel(op)
           if (extCol) specParts.push(`Ext. ${extCol}`)
           if (intCol) specParts.push(`Int. ${intCol}`)
+          const glass = getGlassLabel(op)
+          if (glass) specParts.push(`Glass: ${glass}`)
           if (op.install  && op.install  !== 'retrofit') specParts.push(`Install: ${INSTALL_LABELS[op.install]  || op.install}`)
           if (op.material && op.material !== 'vinyl')    specParts.push(`Material: ${MATERIAL_LABELS[op.material] || op.material}`)
           if (op.room) specParts.push(op.room)
+          if (op.door_style) specParts.push(op.door_style)
+          if (op.glass_insert && op.glass_insert !== 'None') specParts.push(op.glass_insert)
+          if (op.glass_finish) specParts.push(op.glass_finish)
+          if (op.lockset) specParts.push(op.lockset)
+          if (op.deadbolt) specParts.push(op.deadbolt_type ? `Deadbolt — ${op.deadbolt_type}` : 'Deadbolt')
+          if (op.brickmould && op.brickmould !== 'None') specParts.push(`${op.brickmould} brickmould`)
+          if (op.jamb) specParts.push(`Jamb ${op.jamb}`)
+          if (op.threshold_type) specParts.push(`${op.threshold_type} threshold`)
+          if (op.screen_coverage && op.screen_coverage !== 'No Screen') specParts.push(op.screen_coverage)
+          if (op.ventilation_type) specParts.push(op.ventilation_type)
+          if (op.closer_type && op.closer_type !== 'None') specParts.push(`${op.closer_type} closer`)
+          if (op.pet_door && op.pet_door !== 'None') specParts.push(`Pet door — ${op.pet_door}`)
+          if (op.seat_board) specParts.push('Seat board')
+          if (op.head_board) specParts.push('Head board')
+          if (op.astragal && op.astragal !== 'None') specParts.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
           const isCombo = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
 
