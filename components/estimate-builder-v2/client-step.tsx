@@ -35,6 +35,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [nameErr, setNameErr] = useState('')
+  const [estimateCount, setEstimateCount] = useState<number | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -61,7 +62,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
       )
     : clients
 
-  const selectClient = (c: ClientRow) => {
+  const selectClient = async (c: ClientRow) => {
     onChange({
       id:         c.id,
       name:       c.name,
@@ -74,6 +75,9 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
     })
     setSubMode('selected')
     setSearch('')
+    setEstimateCount(null)
+    const { count } = await supabase.from('estimates').select('*', { count: 'exact', head: true }).eq('client_id', c.id)
+    setEstimateCount(count ?? 0)
   }
 
   const startCreate = () => {
@@ -84,6 +88,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
   const backToBrowse = () => {
     onChange({ name: '', email: '', phone: '', address: '' })
     setNameErr('')
+    setEstimateCount(null)
     setSubMode('browse')
     setTimeout(() => searchRef.current?.focus(), 50)
   }
@@ -117,6 +122,11 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>{value.name}</div>
+              {estimateCount !== null && estimateCount > 0 && (
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, marginTop: 2 }}>
+                  Existing client · {estimateCount} {estimateCount === 1 ? 'estimate' : 'estimates'}
+                </div>
+              )}
               {(value.phone || value.email) && (
                 <div style={{ fontSize: 12, color: C.inkSoft, marginTop: 2 }}>
                   {[value.phone, value.email].filter(Boolean).join(' · ')}
