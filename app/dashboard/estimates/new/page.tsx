@@ -587,22 +587,44 @@ function NewEstimateV2() {
       // 1. Resolve client_id
       let clientId: string | null = clientInfo.id || null
       if (!clientId) {
-        const { data: created, error: cErr } = await supabase
-          .from('clients')
-          .insert({
-            owner_id:    uid,
-            name:        clientInfo.name,
-            phone:       clientInfo.phone  || null,
-            email:       clientInfo.email  || null,
-            address:     clientInfo.address || null,
-            city:        clientInfo.city    || null,
-            province:    clientInfo.province || null,
-            postal_code: clientInfo.postalCode || null,
-          })
-          .select('id')
-          .single()
-        if (cErr || !created) throw new Error('Failed to create client: ' + (cErr?.message || 'unknown'))
-        clientId = created.id as string
+        // Resolve team owner so team members share the same client list
+        let ownerId = uid
+        try {
+          const { data: prof } = await supabase.from('profiles').select('team_owner_id').eq('id', uid).single()
+          if (prof?.team_owner_id) ownerId = prof.team_owner_id
+        } catch {}
+
+        const phone = clientInfo.phone?.trim() || null
+        const email = clientInfo.email?.trim() || null
+
+        // Find existing client by phone, then email — prevents duplicates
+        if (phone) {
+          const { data: existing } = await supabase.from('clients').select('id').eq('owner_id', ownerId).eq('phone', phone).maybeSingle()
+          if (existing) clientId = existing.id
+        }
+        if (!clientId && email) {
+          const { data: byEmail } = await supabase.from('clients').select('id').eq('owner_id', ownerId).eq('email', email).maybeSingle()
+          if (byEmail) clientId = byEmail.id
+        }
+
+        if (!clientId) {
+          const { data: created, error: cErr } = await supabase
+            .from('clients')
+            .insert({
+              owner_id:    ownerId,
+              name:        clientInfo.name,
+              phone,
+              email,
+              address:     clientInfo.address || null,
+              city:        clientInfo.city    || null,
+              province:    clientInfo.province || null,
+              postal_code: clientInfo.postalCode || null,
+            })
+            .select('id')
+            .single()
+          if (cErr || !created) throw new Error('Failed to create client: ' + (cErr?.message || 'unknown'))
+          clientId = created.id as string
+        }
       }
 
       const trimFields = {

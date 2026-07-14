@@ -6,6 +6,7 @@ import { EBIcon } from './icons'
 import { FieldLabel } from './primitives'
 import { formatPhone } from '@/lib/clientValidation'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
+import { TAX_RATES } from '@/lib/pricing'
 
 export type ClientInfo = {
   id?: string
@@ -18,7 +19,7 @@ export type ClientInfo = {
   postalCode?: string
 }
 
-type ClientRow = { id: string; name: string; email: string | null; phone: string | null; address: string | null; city: string | null }
+type ClientRow = { id: string; name: string; email: string | null; phone: string | null; address: string | null; city: string | null; province: string | null; postal_code: string | null }
 type SubMode = 'browse' | 'create' | 'selected'
 
 type Props = {
@@ -42,7 +43,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
       if (!user) { setLoading(false); return }
       const { data } = await supabase
         .from('clients')
-        .select('id, name, email, phone, address, city')
+        .select('id, name, email, phone, address, city, province, postal_code')
         .eq('owner_id', user.id)
         .order('name')
         .limit(200)
@@ -61,7 +62,16 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
     : clients
 
   const selectClient = (c: ClientRow) => {
-    onChange({ id: c.id, name: c.name, email: c.email || '', phone: c.phone || '', address: [c.address, c.city].filter(Boolean).join(', ') })
+    onChange({
+      id:         c.id,
+      name:       c.name,
+      email:      c.email       || '',
+      phone:      c.phone       || '',
+      address:    [c.address, c.city].filter(Boolean).join(', '),
+      city:       c.city        || undefined,
+      province:   c.province    || undefined,
+      postalCode: c.postal_code || undefined,
+    })
     setSubMode('selected')
     setSearch('')
   }
@@ -120,6 +130,18 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
             >
               Change
             </button>
+          </div>
+          <div className="f" style={{ marginTop: 12 }}>
+            <label>Province</label>
+            <select
+              value={value.province || ''}
+              onChange={e => onChange({ ...value, province: e.target.value || undefined })}
+            >
+              <option value="">Select province</option>
+              {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                <option key={k} value={k}>{k} — {lbl}</option>
+              ))}
+            </select>
           </div>
         </div>
       )}
@@ -243,6 +265,21 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
                 }
                 placeholder="123 Maple St, Calgary, AB"
               />
+            </div>
+          </div>
+
+          <div className="r1">
+            <div className="f">
+              <label>Province</label>
+              <select
+                value={value.province || ''}
+                onChange={e => onChange({ ...value, province: e.target.value || undefined })}
+              >
+                <option value="">Select province</option>
+                {Object.entries(TAX_RATES).sort().map(([k, [, lbl]]) => (
+                  <option key={k} value={k}>{k} — {lbl}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
