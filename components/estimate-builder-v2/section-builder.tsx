@@ -56,7 +56,7 @@ function buildSegs(sections: CombinationSection[]): SegInfo[] {
   })
 }
 
-function SegContent({ info, fr }: { info: SegInfo; fr?: string }) {
+function SegContent({ info, fr, flipHinge }: { info: SegInfo; fr?: string; flipHinge?: boolean }) {
   const { sL, sR, sCX, segX, segW, sec } = info
 
   if (sec.type === 'Picture' || sec.type === 'Fixed') {
@@ -68,15 +68,25 @@ function SegContent({ info, fr }: { info: SegInfo; fr?: string }) {
     )
   }
   if (sec.type === 'Casement') {
-    return (
-      <>
-        <line x1={sL} y1={sT} x2={sL} y2={sB} stroke={SEC} strokeWidth="1.5"/>
-        <path d={`M${sL},${sB} Q${sR},${sB} ${sR},${sT}`} stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
-        <line x1={sL} y1={sT} x2={sR} y2={sT} stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
-        <line x1={sL} y1={sB} x2={sR} y2={sT} stroke={MOV} strokeWidth="1.5"/>
-        <rect x={sR - 5} y={MID_Y - 4} width={4} height={8} rx="1.5" fill={SEC}/>
-      </>
-    )
+    return flipHinge
+      ? (
+        <>
+          <line x1={sR} y1={sT} x2={sR} y2={sB} stroke={SEC} strokeWidth="1.5"/>
+          <path d={`M${sR},${sB} Q${sL},${sB} ${sL},${sT}`} stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+          <line x1={sR} y1={sT} x2={sL} y2={sT} stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
+          <line x1={sR} y1={sB} x2={sL} y2={sT} stroke={MOV} strokeWidth="1.5"/>
+          <rect x={sL + 1} y={MID_Y - 4} width={4} height={8} rx="1.5" fill={SEC}/>
+        </>
+      )
+      : (
+        <>
+          <line x1={sL} y1={sT} x2={sL} y2={sB} stroke={SEC} strokeWidth="1.5"/>
+          <path d={`M${sL},${sB} Q${sR},${sB} ${sR},${sT}`} stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+          <line x1={sL} y1={sT} x2={sR} y2={sT} stroke={MOV} strokeWidth="1.5" strokeDasharray="4 2"/>
+          <line x1={sL} y1={sB} x2={sR} y2={sT} stroke={MOV} strokeWidth="1.5"/>
+          <rect x={sR - 5} y={MID_Y - 4} width={4} height={8} rx="1.5" fill={SEC}/>
+        </>
+      )
   }
   if (sec.type === 'Awning') {
     return (
@@ -138,7 +148,7 @@ export function CombinationDrawing({ sections, heightIn, glassType, frameColor, 
       {segs.slice(0, -1).map((seg, i) => (
         <line key={i} x1={seg.segX + seg.segW} y1={FY} x2={seg.segX + seg.segW} y2={FB} stroke={FC} strokeWidth={dw}/>
       ))}
-      {segs.map((seg, i) => <SegContent key={i} info={seg} fr={FC}/>)}
+      {segs.map((seg, i) => <SegContent key={i} info={seg} fr={FC} flipHinge={i >= segs.length / 2}/>)}
       {!hideLabels && <>
         <line x1={FX} y1={DIM_Y} x2={FR} y2={DIM_Y} stroke={SEC} strokeWidth="1"/>
         {boundaries.map((bx, i) => (

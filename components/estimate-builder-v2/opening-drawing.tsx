@@ -93,7 +93,7 @@ export function OpeningDrawing({ op, hideComboLabels }: { op: DrawableOpening; h
       return <CombinationDrawing sections={comboSecs} heightIn={hIn} hideLabels={hideComboLabels} />
     }
     case 'transom':
-      return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
+      return <ShapeOutlineDrawing shape={shape} transomPanes={op.transom_panes ?? undefined} subtype={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'special':
       return <ShapeOutlineDrawing shape={op.window_subtype ?? undefined} widthIn={wIn} heightIn={hIn} uid={op.id} glassType={gk} frameColor={fr} />
     case 'entry':

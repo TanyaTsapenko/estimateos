@@ -1,6 +1,6 @@
 'use client'
 import type { ReactElement } from 'react'
-import { GLASS, FRAME, SEC, DIM } from '@/components/WindowDiagram'
+import { GLASS, FRAME, SEC, DIM, MOV } from '@/components/WindowDiagram'
 
 // Drawing bounds (consistent with winDims in WindowDiagram)
 const X1 = 10, Y1 = 10, X2 = 190, Y2 = 220
@@ -105,6 +105,7 @@ export function ShapeOutlineDrawing({
   shape,
   transomPanes,
   position,
+  subtype,
   widthIn,
   heightIn,
   uid,
@@ -120,6 +121,7 @@ export function ShapeOutlineDrawing({
   widthIn?: number
   heightIn?: number
   uid: string
+  subtype?: string
   grid?: string
   grilleType?: string
   glassType?: string
@@ -143,6 +145,7 @@ export function ShapeOutlineDrawing({
   const dividers = isRect && paneN > 1
 
   const panelW = (X2 - X1) / (dividers ? paneN : 1)
+  const isOperable = (subtype ?? '').toLowerCase().includes('operable')
 
   return (
     <svg viewBox="0 0 215 255" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -158,24 +161,49 @@ export function ShapeOutlineDrawing({
 
         {/* Interior indicators — clipped to shape outline */}
         <g clipPath={`url(#${clipId})`}>
-          {dividers
-            ? Array.from({ length: paneN }, (_, i) => {
-                const px1 = X1 + panelW * i
-                const px2 = px1 + panelW
-                return (
-                  <g key={i}>
-                    {i > 0 && (
-                      <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>
-                    )}
-                    <line x1={px1+3} y1={Y1+3} x2={px2-3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-                    <line x1={px2-3} y1={Y1+3} x2={px1+3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
-                  </g>
-                )
-              })
-            : <>
-                <line x1={X1+5} y1={Y1+5} x2={X2-5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
-                <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
-              </>
+          {isOperable
+            ? dividers
+                ? Array.from({ length: paneN }, (_, i) => {
+                    const px1 = X1 + panelW * i
+                    const px2 = px1 + panelW
+                    const pCX = (px1 + px2) / 2
+                    const aL = px1 + 5, aR = px2 - 5
+                    return (
+                      <g key={i}>
+                        {i > 0 && <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>}
+                        <line x1={aL} y1={Y1+5} x2={aR} y2={Y1+5} stroke={SEC} strokeWidth="1.5"/>
+                        <path d={`M${aL},${Y1+5} Q${aL},${Y2-5} ${pCX},${Y2-5} Q${aR},${Y2-5} ${aR},${Y1+5}`} stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+                        <line x1={aL} y1={Y1+5} x2={pCX} y2={Y2-5} stroke={MOV} strokeWidth="1.5"/>
+                        <line x1={aR} y1={Y1+5} x2={pCX} y2={Y2-5} stroke={MOV} strokeWidth="1.5"/>
+                        <rect x={pCX-5} y={Y2-8} width={10} height={4} rx="1.5" fill={SEC}/>
+                      </g>
+                    )
+                  })
+                : <>
+                    <line x1={X1+5} y1={Y1+5} x2={X2-5} y2={Y1+5} stroke={SEC} strokeWidth="1.5"/>
+                    <path d={`M${X1+5},${Y1+5} Q${X1+5},${Y2-5} ${CX},${Y2-5} Q${X2-5},${Y2-5} ${X2-5},${Y1+5}`} stroke={MOV} strokeWidth="1.5" strokeDasharray="5 3" fill="none"/>
+                    <line x1={X1+5} y1={Y1+5} x2={CX} y2={Y2-5} stroke={MOV} strokeWidth="1.5"/>
+                    <line x1={X2-5} y1={Y1+5} x2={CX} y2={Y2-5} stroke={MOV} strokeWidth="1.5"/>
+                    <rect x={CX-5} y={Y2-8} width={10} height={4} rx="1.5" fill={SEC}/>
+                  </>
+            : dividers
+                ? Array.from({ length: paneN }, (_, i) => {
+                    const px1 = X1 + panelW * i
+                    const px2 = px1 + panelW
+                    return (
+                      <g key={i}>
+                        {i > 0 && (
+                          <line x1={px1} y1={Y1} x2={px1} y2={Y2} stroke={FR} strokeWidth="1.5"/>
+                        )}
+                        <line x1={px1+3} y1={Y1+3} x2={px2-3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+                        <line x1={px2-3} y1={Y1+3} x2={px1+3} y2={Y2-3} stroke={SEC} strokeWidth="1" strokeDasharray="5 3"/>
+                      </g>
+                    )
+                  })
+                : <>
+                    <line x1={X1+5} y1={Y1+5} x2={X2-5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+                    <line x1={X2-5} y1={Y1+5} x2={X1+5} y2={Y2-5} stroke={SEC} strokeWidth="1.2" strokeDasharray="5 3"/>
+                  </>
           }
         </g>
 
