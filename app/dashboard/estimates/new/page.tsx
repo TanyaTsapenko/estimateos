@@ -63,19 +63,19 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     height_in:        heightIn || null,
     width:            widthIn && heightIn ? dimToSizeBucket(widthIn, heightIn) : 'md',
     shape:            String(v.shape || 'rect').toLowerCase(),
-    colour:           String(v.extColour || v.doorExt || v.colour || 'White').toLowerCase(),
+    colour:           (v.extColour || v.doorExt || v.colour) ? String(v.extColour || v.doorExt || v.colour).toLowerCase() : null,
     interior_colour:  String(v.intColour || v.doorInt || 'White').toLowerCase(),
     frame:            'none',
     glass,
     glass_kind:       glassKind,
     low_e:            Boolean(v.lowE),
     tempered:         Boolean(v.tempered),
-    pane:             String(v.pane || 'Double').toLowerCase(),
+    pane:             v.pane ? String(v.pane).toLowerCase() : null,
     install:          INSTALL_MAP[rawInstall] ?? rawInstall.toLowerCase(),
     floor:            FLOOR_MAP[rawFloor]   ?? rawFloor.toLowerCase(),
     room:             (v.room     as string) || null,
     has_screen:       Boolean(v.screen && v.screen !== 'None'),
-    material:         String(v.material || v.doorMaterial || 'Vinyl').toLowerCase(),
+    material:         (v.material || v.doorMaterial) ? String(v.material || v.doorMaterial).toLowerCase() : null,
     grid_pattern:     String(v.grid     || 'None').toLowerCase(),
     tilt_clean:       Boolean(v.tiltClean),
     opening_direction:String(v.openDir  || v.operSide || v.doorSwing || v.doubleDoorSwing || v.hingeSide || '').toLowerCase(),
@@ -266,6 +266,7 @@ function NewEstimateV2() {
   const [pendingAdd, setPendingAdd] = useState(false)
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
   const [subtypeError, setSubtypeError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<string[]>([])
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS })
   const [saving, setSaving] = useState(false)
@@ -874,12 +875,34 @@ function NewEstimateV2() {
               <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>{subtypeError}</span>
             </div>
           )}
+          {fieldErrors.length > 0 && (
+            <div style={{ padding: '10px 16px', background: '#FEF2F2', borderTop: '1px solid #FECACA' }}>
+              {fieldErrors.map((e, i) => (
+                <div key={i} style={{ fontSize: 13, color: '#DC2626', fontWeight: 600, lineHeight: 1.6 }}>{e}</div>
+              ))}
+            </div>
+          )}
           <BottomBar
-            onBack={() => { setSubtypeError(''); setMode('client') }}
+            onBack={() => { setSubtypeError(''); setFieldErrors([]); setMode('client') }}
             onContinue={() => {
               const missing = openings.find(o => getType(o.typeId).subs.length > 0 && !o.sub)
               if (missing) { setSubtypeError('Please select a subtype for all openings'); return }
               setSubtypeError('')
+              const errs: string[] = []
+              openings.forEach((op, i) => {
+                const t = getType(op.typeId)
+                const v = op.vals
+                const need: string[] = []
+                if (t.fields.includes('pane') && !v.pane) need.push('Glass pane')
+                if (t.fields.includes('material') && !v.material) need.push('Material')
+                if (t.fields.includes('doorMaterial') && !v.doorMaterial) need.push('Material')
+                if (t.fields.includes('extColour') && !v.extColour) need.push('Colour')
+                if (t.fields.includes('doorExt') && !v.doorExt) need.push('Colour')
+                if (t.fields.includes('colour') && !v.colour) need.push('Colour')
+                if (need.length) errs.push(`Opening #${i + 1} (${t.name}): select ${need.join(' and ')}`)
+              })
+              if (errs.length) { setFieldErrors(errs); return }
+              setFieldErrors([])
               setMode('review')
             }}
             ctaLabel="Continue to details"
