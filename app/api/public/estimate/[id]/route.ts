@@ -29,7 +29,10 @@ const OPENING_COLS = [
   'colour_palette_id', 'colour_name', 'interior_photo_url', 'exterior_photo_url',
   'photo_3_url', 'photo_4_url', 'glass_kind', 'low_e', 'tempered',
   'interior_colour_palette_id', 'interior_colour_name', 'interior_colour', 'window_subtype',
-  'sections', 'astragal', 'astragal_type',
+  'sections', 'astragal', 'astragal_type', 'pane',
+  'lockset', 'deadbolt', 'deadbolt_type', 'brickmould', 'jamb', 'threshold_type',
+  'door_style', 'glass_insert', 'glass_finish', 'screen_coverage', 'ventilation_type',
+  'closer_type', 'pet_door', 'seat_board', 'head_board',
 ].join(', ')
 
 type Row = Record<string, unknown>

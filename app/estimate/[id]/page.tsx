@@ -55,6 +55,12 @@ interface Opening {
   interior_colour_palette_id: string | null; interior_colour_name: string | null; interior_colour: string | null
   window_subtype: string | null; sections?: { type: string; width: number }[] | null
   astragal?: string | null; astragal_type?: string | null
+  pane?: string | null
+  lockset?: string | null; deadbolt?: boolean | null; deadbolt_type?: string | null
+  brickmould?: string | null; jamb?: string | null; threshold_type?: string | null
+  door_style?: string | null; glass_insert?: string | null; glass_finish?: string | null
+  screen_coverage?: string | null; ventilation_type?: string | null; closer_type?: string | null
+  pet_door?: string | null; seat_board?: boolean | null; head_board?: boolean | null
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
@@ -280,6 +286,8 @@ export default function ClientEstimatePage() {
                 const hasLocation = !!(op.room || floorVal)
 
                 const glassChips: string[] = []
+                if (op.pane === 'triple') glassChips.push('Triple Pane')
+                else if (op.pane === 'double') glassChips.push('Double Pane')
                 if (op.glass_kind && op.glass_kind !== 'clear') glassChips.push(humanize(op.glass_kind))
                 if (op.low_e)    glassChips.push('Low-E')
                 if (op.tempered) glassChips.push('Tempered')
@@ -338,6 +346,21 @@ export default function ClientEstimatePage() {
                           <SR label="Installation"  value={humanize(op.install)} />
                           <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
                           <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
+                          <SR label="Door style"    value={op.door_style || undefined} />
+                          <SR label="Glass insert"  value={op.glass_insert && op.glass_insert !== 'None' ? op.glass_insert : undefined} />
+                          <SR label="Glass finish"  value={op.glass_finish || undefined} />
+                          <SR label="Lockset"       value={op.lockset || undefined} />
+                          <SR label="Deadbolt"      value={op.deadbolt ? 'Yes' : undefined} />
+                          <SR label="Deadbolt type" value={op.deadbolt_type || undefined} />
+                          <SR label="Brickmould"    value={op.brickmould && op.brickmould !== 'None' ? op.brickmould : undefined} />
+                          <SR label="Jamb"          value={op.jamb || undefined} />
+                          <SR label="Threshold"     value={op.threshold_type || undefined} />
+                          <SR label="Screen"        value={op.screen_coverage && op.screen_coverage !== 'No Screen' ? op.screen_coverage : undefined} />
+                          <SR label="Ventilation"   value={op.ventilation_type || undefined} />
+                          <SR label="Closer"        value={op.closer_type && op.closer_type !== 'None' ? op.closer_type : undefined} />
+                          <SR label="Pet door"      value={op.pet_door && op.pet_door !== 'None' ? op.pet_door : undefined} />
+                          <SR label="Seat board"    value={op.seat_board ? 'Yes' : undefined} />
+                          <SR label="Head board"    value={op.head_board ? 'Yes' : undefined} />
                           {glassChips.length > 0 && (
                             <>
                               <GrpHdr>Glass</GrpHdr>
@@ -376,6 +399,21 @@ export default function ClientEstimatePage() {
                           <SR label="Installation"  value={humanize(op.install)} />
                           <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
                           <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
+                          <SR label="Door style"    value={op.door_style || undefined} />
+                          <SR label="Glass insert"  value={op.glass_insert && op.glass_insert !== 'None' ? op.glass_insert : undefined} />
+                          <SR label="Glass finish"  value={op.glass_finish || undefined} />
+                          <SR label="Lockset"       value={op.lockset || undefined} />
+                          <SR label="Deadbolt"      value={op.deadbolt ? 'Yes' : undefined} />
+                          <SR label="Deadbolt type" value={op.deadbolt_type || undefined} />
+                          <SR label="Brickmould"    value={op.brickmould && op.brickmould !== 'None' ? op.brickmould : undefined} />
+                          <SR label="Jamb"          value={op.jamb || undefined} />
+                          <SR label="Threshold"     value={op.threshold_type || undefined} />
+                          <SR label="Screen"        value={op.screen_coverage && op.screen_coverage !== 'No Screen' ? op.screen_coverage : undefined} />
+                          <SR label="Ventilation"   value={op.ventilation_type || undefined} />
+                          <SR label="Closer"        value={op.closer_type && op.closer_type !== 'None' ? op.closer_type : undefined} />
+                          <SR label="Pet door"      value={op.pet_door && op.pet_door !== 'None' ? op.pet_door : undefined} />
+                          <SR label="Seat board"    value={op.seat_board ? 'Yes' : undefined} />
+                          <SR label="Head board"    value={op.head_board ? 'Yes' : undefined} />
                           {glassChips.length > 0 && (
                             <>
                               <GrpHdr>Glass</GrpHdr>

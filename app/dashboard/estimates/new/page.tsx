@@ -64,7 +64,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     width:            widthIn && heightIn ? dimToSizeBucket(widthIn, heightIn) : 'md',
     shape:            String(v.shape || 'rect').toLowerCase(),
     colour:           (v.extColour || v.doorExt || v.colour) ? String(v.extColour || v.doorExt || v.colour).toLowerCase() : null,
-    interior_colour:  String(v.intColour || v.doorInt || 'White').toLowerCase(),
+    interior_colour:  (v.intColour || v.doorInt) ? String(v.intColour || v.doorInt).toLowerCase() : null,
     frame:            'none',
     glass,
     glass_kind:       glassKind,
@@ -106,6 +106,21 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     active_panel:       (v.activePanel      as string) || null,
     astragal:           (v.astragal         as string) || null,
     astragal_type:      (v.astragalType     as string) || null,
+    lockset:            (v.lockset          as string) || null,
+    deadbolt:           Boolean(v.deadbolt),
+    deadbolt_type:      (v.deadboltType     as string) || null,
+    brickmould:         (v.brickmould       as string) || null,
+    jamb:               (v.jamb             as string) || null,
+    threshold_type:     (v.thresholdType    as string) || null,
+    door_style:         (v.doorStyle        as string) || null,
+    glass_insert:       (v.glassInsert      as string) || null,
+    glass_finish:       (v.glassType2       as string) || null,
+    screen_coverage:    (v.screenCoverage   as string) || null,
+    ventilation_type:   (v.ventilationType  as string) || null,
+    closer_type:        (v.closerType       as string) || null,
+    pet_door:           (v.petDoor          as string) || null,
+    seat_board:         Boolean(v.seatBoard),
+    head_board:         Boolean(v.headBoard),
   }
 }
 
@@ -178,6 +193,21 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.active_panel)       vals.activePanel       = String(row.active_panel)
   if (row.astragal)           vals.astragal          = String(row.astragal)
   if (row.astragal_type)      vals.astragalType       = String(row.astragal_type)
+  if (row.lockset)            vals.lockset            = String(row.lockset)
+  if (row.deadbolt != null)   vals.deadbolt           = Boolean(row.deadbolt)
+  if (row.deadbolt_type)      vals.deadboltType       = String(row.deadbolt_type)
+  if (row.brickmould)         vals.brickmould         = String(row.brickmould)
+  if (row.jamb)               vals.jamb               = String(row.jamb)
+  if (row.threshold_type)     vals.thresholdType      = String(row.threshold_type)
+  if (row.door_style)         vals.doorStyle          = String(row.door_style)
+  if (row.glass_insert)       vals.glassInsert        = String(row.glass_insert)
+  if (row.glass_finish)       vals.glassType2         = String(row.glass_finish)
+  if (row.screen_coverage)    vals.screenCoverage     = String(row.screen_coverage)
+  if (row.ventilation_type)   vals.ventilationType    = String(row.ventilation_type)
+  if (row.closer_type)        vals.closerType         = String(row.closer_type)
+  if (row.pet_door)           vals.petDoor            = String(row.pet_door)
+  if (row.seat_board != null) vals.seatBoard          = Boolean(row.seat_board)
+  if (row.head_board != null) vals.headBoard          = Boolean(row.head_board)
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {
@@ -900,6 +930,8 @@ function NewEstimateV2() {
                 if (t.fields.includes('extColour') && !v.extColour) need.push('Colour')
                 if (t.fields.includes('doorExt') && !v.doorExt) need.push('Colour')
                 if (t.fields.includes('colour') && !v.colour) need.push('Colour')
+                if (t.fields.includes('intColour') && !v.intColour) need.push('Interior colour')
+                if (t.fields.includes('doorInt') && !v.doorInt) need.push('Interior colour')
                 if (need.length) errs.push(`Opening #${i + 1} (${t.name}): select ${need.join(' and ')}`)
               })
               if (errs.length) { setFieldErrors(errs); return }

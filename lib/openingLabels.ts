@@ -62,6 +62,7 @@ export function getSubtypeLabel(
 export function getGlassLabel(op: { glass?: string | null; glass_kind?: string | null; low_e?: boolean | null; tempered?: boolean | null; pane?: string | null }): string {
   const parts: string[] = []
   if (op.pane === 'triple') parts.push('Triple Pane')
+  else if (op.pane === 'double') parts.push('Double Pane')
   if (op.glass_kind != null) {
     if (op.glass_kind && op.glass_kind !== 'clear') parts.push(GLASS_KIND_MAP[op.glass_kind] || op.glass_kind)
     if (op.low_e) parts.push('Low-E')

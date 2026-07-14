@@ -34,6 +34,11 @@ interface Opening {
   pane: string | null; egress_required: boolean | null; window_subtype: string | null
   astragal: string | null; astragal_type: string | null
   sections?: { type: string; width: number }[] | null
+  lockset: string | null; deadbolt: boolean | null; deadbolt_type: string | null
+  brickmould: string | null; jamb: string | null; threshold_type: string | null
+  door_style: string | null; glass_insert: string | null; glass_finish: string | null
+  screen_coverage: string | null; ventilation_type: string | null; closer_type: string | null
+  pet_door: string | null; seat_board: boolean | null; head_board: boolean | null
 }
 
 const INSTALL_LABELS: Record<string, string> = {
@@ -109,7 +114,7 @@ export default function EstimateDetailPage() {
 
       const [{ data: est, error: estErr }, { data: ops }] = await Promise.all([
         estQuery.maybeSingle(),
-        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections, side_unit, center_window_type, panel_type, open_mode, astragal, astragal_type').eq('estimate_id', id).order('sort_order'),
+        supabase.from('estimate_openings').select('id, type, qty, width, width_in, height_in, room, total_cost, install, shape, colour, glass, frame, floor, material, grid_pattern, brand, notes, has_screen, tilt_clean, opening_direction, panels_count, bay_angle, transom_panes, sidelight_left, sidelight_right, transom_above, glass_type, core_type, custom_shape_label, custom_colour_label, colour_palette_id, colour_name, interior_photo_url, exterior_photo_url, photo_3_url, photo_4_url, glass_kind, low_e, tempered, interior_colour_palette_id, interior_colour_name, interior_colour, pane, egress_required, window_subtype, sections, side_unit, center_window_type, panel_type, open_mode, astragal, astragal_type, lockset, deadbolt, deadbolt_type, brickmould, jamb, threshold_type, door_style, glass_insert, glass_finish, screen_coverage, ventilation_type, closer_type, pet_door, seat_board, head_board').eq('estimate_id', id).order('sort_order'),
       ])
 
       if (estErr) console.error('[estimate-detail] query error:', estErr.message)
@@ -409,6 +414,21 @@ export default function EstimateDetailPage() {
               if (op.core_type)           pills.push(<span key="ct"        style={chipBlue}>{CORE_LABELS[op.core_type]}</span>)
               if (op.astragal && op.astragal !== 'None')                         pills.push(<span key="astragal"    style={chipBlue}>{op.astragal}</span>)
               if (op.astragal_type && op.astragal_type !== 'None')               pills.push(<span key="astragaltype" style={chipBlue}>{op.astragal_type}</span>)
+              if (op.door_style)                                                  pills.push(<span key="dstyle"   style={chipBlue}>{op.door_style}</span>)
+              if (op.glass_insert && op.glass_insert !== 'None')                 pills.push(<span key="ginsert"  style={chipBlue}>{op.glass_insert}</span>)
+              if (op.glass_finish)                                                pills.push(<span key="gfinish"  style={chipBlue}>{op.glass_finish}</span>)
+              if (op.lockset)                                                     pills.push(<span key="lockset"  style={chipBlue}>{op.lockset}</span>)
+              if (op.deadbolt)                                                    pills.push(<span key="deadbolt" style={chipBlue}>Deadbolt</span>)
+              if (op.deadbolt_type)                                               pills.push(<span key="dbtype"   style={chipBlue}>{op.deadbolt_type}</span>)
+              if (op.brickmould && op.brickmould !== 'None')                     pills.push(<span key="bm"       style={chipBlue}>{op.brickmould} brickmould</span>)
+              if (op.jamb)                                                        pills.push(<span key="jamb"     style={chipBlue}>Jamb {op.jamb}</span>)
+              if (op.threshold_type)                                              pills.push(<span key="thresh"   style={chipBlue}>{op.threshold_type} threshold</span>)
+              if (op.screen_coverage && op.screen_coverage !== 'No Screen')      pills.push(<span key="scov"     style={chipBlue}>{op.screen_coverage}</span>)
+              if (op.ventilation_type)                                            pills.push(<span key="vent"     style={chipBlue}>{op.ventilation_type}</span>)
+              if (op.closer_type && op.closer_type !== 'None')                   pills.push(<span key="closer"   style={chipBlue}>{op.closer_type} closer</span>)
+              if (op.pet_door && op.pet_door !== 'None')                         pills.push(<span key="petdoor"  style={chipBlue}>Pet door {op.pet_door}</span>)
+              if (op.seat_board)                                                  pills.push(<span key="seatb"    style={chipBlue}>Seat board</span>)
+              if (op.head_board)                                                  pills.push(<span key="headb"    style={chipBlue}>Head board</span>)
               if (op.notes)               pills.push(<span key="notes"   style={{ ...chipOrange, gap: 4 }}><FileText size={12}/>{op.notes}</span>)
               const isCombo = op.type === 'combination' || op.type === 'window_combo'
               const comboSecs = isCombo ? parseSec(op.sections) : []

@@ -144,6 +144,31 @@ function specLines(op: Opening): { base: string; opts: string[] } {
   const petDoor = v.petDoor as string | undefined
   if (petDoor && petDoor !== 'None') opts.push(`Pet door ${petDoor}`)
 
+  const doorStyle = v.doorStyle as string | undefined
+  if (doorStyle) opts.push(doorStyle)
+  const glassInsert = v.glassInsert as string | undefined
+  if (glassInsert && glassInsert !== 'None') opts.push(glassInsert)
+  const glassType2 = v.glassType2 as string | undefined
+  if (glassType2) opts.push(glassType2)
+  const lockset = v.lockset as string | undefined
+  if (lockset) opts.push(lockset)
+  const deadboltType = v.deadboltType as string | undefined
+  if (deadboltType) opts.push(deadboltType)
+  const brickmould = v.brickmould as string | undefined
+  if (brickmould && brickmould !== 'None') opts.push(`${brickmould} brickmould`)
+  const jamb = v.jamb as string | undefined
+  if (jamb) opts.push(`Jamb ${jamb}`)
+  const thresholdType = v.thresholdType as string | undefined
+  if (thresholdType) opts.push(`${thresholdType} threshold`)
+  const screenCoverage = v.screenCoverage as string | undefined
+  if (screenCoverage && screenCoverage !== 'No Screen') opts.push(screenCoverage)
+  const ventilationType = v.ventilationType as string | undefined
+  if (ventilationType) opts.push(ventilationType)
+  const closerType = v.closerType as string | undefined
+  if (closerType && closerType !== 'None') opts.push(`${closerType} closer`)
+  if (bool('seatBoard')) opts.push('Seat board')
+  if (bool('headBoard')) opts.push('Head board')
+
   return { base, opts }
 }
 
