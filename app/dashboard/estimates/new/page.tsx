@@ -51,7 +51,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
   const totalCost = Math.round(computePrice(op, custom) * 100) / 100
 
   const rawInstall = String(v.install || 'Retrofit')
-  const rawFloor   = String(v.floor   || 'Ground floor')
+  const rawFloor   = v.floor ? String(v.floor) : ''
 
   return {
     id:               crypto.randomUUID(),
@@ -72,7 +72,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     tempered:         Boolean(v.tempered),
     pane:             v.pane ? String(v.pane).toLowerCase() : null,
     install:          INSTALL_MAP[rawInstall] ?? rawInstall.toLowerCase(),
-    floor:            FLOOR_MAP[rawFloor]   ?? rawFloor.toLowerCase(),
+    floor:            rawFloor ? (FLOOR_MAP[rawFloor] ?? rawFloor.toLowerCase()) : null,
     room:             (v.room     as string) || null,
     has_screen:       Boolean(v.screen && v.screen !== 'None'),
     material:         (v.material || v.doorMaterial) ? String(v.material || v.doorMaterial).toLowerCase() : null,
@@ -893,6 +893,7 @@ function NewEstimateV2() {
                 const t = getType(op.typeId)
                 const v = op.vals
                 const need: string[] = []
+                if (t.fields.includes('floor') && !v.floor) need.push('Floor')
                 if (t.fields.includes('pane') && !v.pane) need.push('Glass pane')
                 if (t.fields.includes('material') && !v.material) need.push('Material')
                 if (t.fields.includes('doorMaterial') && !v.doorMaterial) need.push('Material')

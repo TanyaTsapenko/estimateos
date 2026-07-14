@@ -435,7 +435,7 @@ export function getType(id: string): FlatType {
 
 // ── Smart defaults ─────────────────────────────────────────────────
 export const DEFAULTS: Record<string, string | number | boolean | null> = {
-  qty: 1, floor: 'Ground floor', extColour: null, intColour: null,
+  qty: 1, floor: null, extColour: null, intColour: null,
   doorExt: null, doorInt: null, colour: null, grid: 'None',
   glassType: null, pane: null, lowE: null, tempered: false, argon: null,
   laminatedGlass: false,
@@ -445,7 +445,7 @@ export const DEFAULTS: Record<string, string | number | boolean | null> = {
   screenCoverage: null,
   lockset: null, deadbolt: false,
   brickmould: null, jamb: null, sideUnit: null,
-  numPanels: null, seatBoard: true, headBoard: true, egress: false,
+  numPanels: null, seatBoard: false, headBoard: false, egress: false,
   coreType: null, transomPanes: '1 Lite', bayAngle: '45°', tiltClean: false,
   position: 'Standalone',
   sidelights: 'None', transomAbove: 'None',
