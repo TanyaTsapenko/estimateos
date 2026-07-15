@@ -27,23 +27,38 @@ export async function POST(req: NextRequest) {
   // Tags come as either { estimate_id: 'value' } or [{ name, value }]
   const tags = event?.data?.tags
   let estimateId: string | null = null
+  let contractId: string | null = null
 
   if (Array.isArray(tags)) {
     estimateId = tags.find((t: { name: string; value: string }) => t.name === 'estimate_id')?.value ?? null
+    contractId = tags.find((t: { name: string; value: string }) => t.name === 'contract_id')?.value ?? null
   } else if (tags && typeof tags === 'object') {
     estimateId = tags['estimate_id'] ?? null
+    contractId = tags['contract_id'] ?? null
   }
 
-  if (!estimateId) {
-    return NextResponse.json({ received: true, skipped: 'no estimate_id tag' })
+  if (!estimateId && !contractId) {
+    return NextResponse.json({ received: true, skipped: 'no estimate_id or contract_id tag' })
   }
 
   const supabase = createServiceClient()
-  await supabase
-    .from('estimates')
-    .update({ status: 'opened', opened_at: new Date().toISOString() })
-    .eq('id', estimateId)
-    .eq('status', 'sent') // only update if still 'sent', don't overwrite signed/declined
+  const now = new Date().toISOString()
 
-  return NextResponse.json({ received: true, estimateId })
+  if (estimateId) {
+    await supabase
+      .from('estimates')
+      .update({ status: 'opened', opened_at: now })
+      .eq('id', estimateId)
+      .eq('status', 'sent') // only update if still 'sent', don't overwrite signed/declined
+  }
+
+  if (contractId) {
+    await supabase
+      .from('contracts')
+      .update({ opened_at: now })
+      .eq('id', contractId)
+      .neq('status', 'signed') // don't overwrite signed contracts
+  }
+
+  return NextResponse.json({ received: true, estimateId, contractId })
 }

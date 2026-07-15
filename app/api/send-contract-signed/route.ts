@@ -66,13 +66,17 @@ export async function POST(req: Request) {
 </div>
 </td></tr></table>`
 
-  await resend.emails.send({
-    from: `${companyName} <noreply@useapexscale.com>`,
-    to: clientEmail,
-    subject: `Your signed contract from ${companyName}`,
-    ...(companyEmail ? { reply_to: companyEmail } : {}),
-    html,
-  })
+  try {
+    await resend.emails.send({
+      from: `${companyName} <noreply@useapexscale.com>`,
+      to: clientEmail,
+      subject: `Your signed contract from ${companyName}`,
+      ...(companyEmail ? { reply_to: companyEmail } : {}),
+      html,
+    })
+  } catch (e: any) {
+    console.error('[send-contract-signed] resend error:', e.message)
+  }
 
   return NextResponse.json({ success: true })
 }

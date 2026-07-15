@@ -1,10 +1,16 @@
 import { Resend } from 'resend'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { logActivity } from '@/lib/activity'
+import { emailRateLimit } from '@/lib/rateLimit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1'
+  const { success } = await emailRateLimit.limit(ip)
+  if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+
   const { contractId, estimateId, clientEmail, clientName, companyName } = await req.json()
 
   if (!clientEmail) return NextResponse.json({ error: 'No client email' }, { status: 400 })
@@ -20,7 +26,7 @@ export async function POST(req: Request) {
 
   if (estimateId) {
     const { data: e } = await svc.from('estimates')
-      .select('client_name, client_address, client_city, total, user_id')
+      .select('client_name, client_address, client_city, total, user_id, deposit_percent, estimate_number')
       .eq('id', estimateId).single()
     est = e
     if (est?.user_id) {
@@ -32,7 +38,7 @@ export async function POST(req: Request) {
   }
 
   const contractReplyTo = prof?.company_contact_email || prof?.interac_email || undefined
-  const depositPct = prof?.deposit_percent ?? 30
+  const depositPct = est?.deposit_percent ?? prof?.deposit_percent ?? 30
   const projectAddress = [est?.client_address, est?.client_city].filter(Boolean).join(', ')
   const totalFmt = est?.total != null ? fmt(est.total) : null
   const depositFmt = est?.total != null ? fmt(est.total * depositPct / 100) : null
@@ -58,13 +64,7 @@ export async function POST(req: Request) {
     ? `Questions before signing?<br>Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
     : `Questions before signing? Contact <b style="color:#475467;">${companyName}</b>`
 
-  try {
-    await resend.emails.send({
-      from: `${companyName} <noreply@useapexscale.com>`,
-      to: clientEmail,
-      subject: `Contract from ${companyName} — Ready to Sign`,
-      ...(contractReplyTo ? { reply_to: contractReplyTo } : {}),
-      html: `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
+  const emailHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
 <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
   <div style="padding:22px 40px 18px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -82,8 +82,35 @@ export async function POST(req: Request) {
   <div style="text-align:center;font-size:13.5px;color:#94A0B4;padding:18px 40px 22px;line-height:1.5;">${phoneFooter}</div>
   <div style="padding:16px 40px 24px;text-align:center;border-top:1px solid rgba(15,23,42,0.06);font-size:12px;color:#94A0B4;">Powered by <b style="color:#475467;">ApexScale</b></div>
 </div>
-</td></tr></table>`,
-    })
+</td></tr></table>`
+
+  try {
+    const emailOpts: any = {
+      from: `${companyName} <noreply@useapexscale.com>`,
+      to: clientEmail,
+      subject: `Contract from ${companyName} — Ready to Sign`,
+      ...(contractReplyTo ? { reply_to: contractReplyTo } : {}),
+      open_tracking: true,
+      tags: [{ name: 'contract_id', value: contractId }],
+      html: emailHtml,
+    }
+    await resend.emails.send(emailOpts)
+    if (est?.user_id) {
+      try {
+        await logActivity(svc, {
+          user_id: est.user_id,
+          event_type: 'contract_sent',
+          actor_type: 'contractor',
+          entity_type: 'estimate',
+          entity_id: estimateId,
+          entity_number: est.estimate_number,
+          client_name: est.client_name,
+          amount: est.total,
+        })
+      } catch (logErr) {
+        console.error('[send-contract] logActivity error:', logErr)
+      }
+    }
     return NextResponse.json({ success: true })
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })

@@ -330,7 +330,7 @@ export default function ContractPage() {
       }
 
       if (!estimate?.client_email) { showFlash('No client email on this estimate'); return }
-      await fetch('/api/send-contract', {
+      const sendRes = await fetch('/api/send-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -341,6 +341,11 @@ export default function ContractPage() {
           companyName: resolvedCompanyName,
         }),
       })
+      const sendResult = await sendRes.json()
+      if (!sendRes.ok) {
+        showFlash('Failed to send: ' + (sendResult.error || 'Unknown error'))
+        return
+      }
       showFlash('Contract sent to ' + estimate.client_email, 'success')
       setTimeout(() => router.push(`/dashboard/estimates/${id}`), 1600)
     } catch (e: any) {

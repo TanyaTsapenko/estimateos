@@ -60,28 +60,19 @@ export async function POST(request: NextRequest) {
     .trim()
     .replace(/[^\x20-\x7E]/g, '')
 
-  const { data: profiles, error: profError } = await supabase
+  const { data: prof, error: profError } = await supabase
     .from('profiles')
     .select('*')
-
-  console.log('[send-email] profiles fetched:', profiles?.length ?? 0, 'error:', profError)
+    .eq('id', cleanUserId)
+    .maybeSingle()
 
   if (profError) {
-    console.error('Error fetching profiles:', profError)
+    console.error('[send-email] profile fetch error:', profError)
     return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
   }
 
-  const prof = (profiles ?? []).find(p => {
-    const cleanProfileId = (p.id ?? '')
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[^\x20-\x7E]/g, '')
-    return cleanProfileId === cleanUserId
-  }) ?? null
-
   if (!prof) {
-    console.error('Profile not found. cleanUserId:', JSON.stringify(cleanUserId))
+    console.error('[send-email] Profile not found for user_id:', cleanUserId)
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
@@ -395,9 +386,11 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
   } else if (type === 'send') {
     subject = `Your estimate from ${companyName} — ${est.estimate_number}`
     const projectAddress = [est.client_address, est.client_city].filter(Boolean).join(', ')
-    const validUntilDate = new Date(new Date(est.created_at).getTime() + 30 * 24 * 60 * 60 * 1000)
+    const validUntilDate = est.valid_until
+      ? new Date(est.valid_until + 'T00:00:00')
+      : new Date(new Date(est.created_at).getTime() + 30 * 24 * 60 * 60 * 1000)
     const validUntilFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(validUntilDate)
-    const estimateUrl = `https://useapexscale.com/estimate/${est.id}`
+    const estimateUrl = clientLink
     const sendLogoHtml = (prof as any)?.logo_url
       ? `<img src="${(prof as any).logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
       : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;vertical-align:middle;">${companyName.charAt(0).toUpperCase()}</td></tr></table></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
