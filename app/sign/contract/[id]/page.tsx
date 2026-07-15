@@ -81,6 +81,8 @@ export default function SignContractPage() {
   const [isAnon,             setIsAnon]             = useState<boolean | null>(null)
   const [showClientConfirm,  setShowClientConfirm]  = useState(false)
   const [signingFailed,      setSigningFailed]      = useState(false)
+  const [resendingEmail,     setResendingEmail]     = useState(false)
+  const [resendEmailMsg,     setResendEmailMsg]     = useState<'sent' | 'error' | null>(null)
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
@@ -224,6 +226,33 @@ export default function SignContractPage() {
       }
     } finally {
       setSigning(false)
+    }
+  }
+
+  async function handleResendEmail() {
+    if (resendingEmail) return
+    setResendingEmail(true)
+    setResendEmailMsg(null)
+    try {
+      const res = await fetch('/api/send-contract-signed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientEmail: estimate?.client_email,
+          clientName: estimate?.client_name,
+          companyName: contract?.company_name || 'Your Contractor',
+          companyPhone: contract?.company_phone || '',
+          companyEmail: contract?.company_email || '',
+          contractId,
+          total: estimate?.total || 0,
+          logoUrl: profile?.logo_url || null,
+        }),
+      })
+      setResendEmailMsg(res.ok ? 'sent' : 'error')
+    } catch {
+      setResendEmailMsg('error')
+    } finally {
+      setResendingEmail(false)
     }
   }
 
@@ -456,8 +485,22 @@ export default function SignContractPage() {
                 </div>
               )}
             </div>
-            <button style={{ background: 'none', border: 'none', fontSize: 13, fontWeight: 600, color: BLUE, cursor: 'pointer', fontFamily: F, padding: '4px 0', marginBottom: 24 }}>
-              Resend confirmation email →
+            {resendEmailMsg === 'sent' && (
+              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#16A34A', textAlign: 'center' as const }}>
+                Confirmation email resent ✓
+              </div>
+            )}
+            {resendEmailMsg === 'error' && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#DC2626', textAlign: 'center' as const }}>
+                Failed to resend — please try again.
+              </div>
+            )}
+            <button
+              onClick={handleResendEmail}
+              disabled={resendingEmail}
+              style={{ background: 'none', border: 'none', fontSize: 13, fontWeight: 600, color: resendingEmail ? INK_S : BLUE, cursor: resendingEmail ? 'not-allowed' : 'pointer', fontFamily: F, padding: '4px 0', marginBottom: 24 }}
+            >
+              {resendingEmail ? 'Sending…' : 'Resend confirmation email →'}
             </button>
             <button onClick={() => setShowSuccess(true)}
               style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: '#94A3B8', cursor: 'pointer', fontFamily: F, padding: '10px 24px' }}>
