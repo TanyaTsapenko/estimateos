@@ -8,6 +8,7 @@ import type { DocumentProps } from '@react-pdf/renderer'
 import { createServiceClient } from '@/lib/supabase/service'
 import { EstimatePDF } from '@/components/pdf/EstimatePDF'
 import { renderDrawingPng } from '@/lib/renderDrawingPng'
+import { PDFDocument } from 'pdf-lib'
 import React from 'react'
 
 export async function GET(req: NextRequest) {
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     const [{ data: openings, error: opErr }, { data: company, error: compErr }, { data: priceRows }, { data: subtypeRows }] = await Promise.all([
       admin.from('estimate_openings').select('*').eq('estimate_id', estimateId).order('sort_order'),
-      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, wsib_number, logo_url, warranty_summary').eq('id', estimate.user_id).maybeSingle(),
+      admin.from('profiles').select('company_name, first_name, last_name, email, phone, address, city, province, postal, website, licence, wsib_number, logo_url, warranty_summary, warranty_pdf_url').eq('id', estimate.user_id).maybeSingle(),
       admin.from('price_lists').select('opening_type, custom_label').eq('user_id', estimate.user_id).neq('opening_type', '_sizes'),
       admin.from('window_subtypes').select('type_key, subtype_key, subtype_label').order('sort_order'),
     ])
@@ -99,10 +100,28 @@ export async function GET(req: NextRequest) {
 
     console.log('[estimate-pdf] renderToBuffer done, size:', pdfBuffer.length)
 
+    let finalBuffer: Uint8Array = new Uint8Array(pdfBuffer)
+
+    if (company?.warranty_pdf_url) {
+      try {
+        const warrantyRes = await fetch(company.warranty_pdf_url)
+        if (!warrantyRes.ok) throw new Error(`warranty PDF fetch ${warrantyRes.status}`)
+        const warrantyBytes = await warrantyRes.arrayBuffer()
+        const estimateDoc  = await PDFDocument.load(finalBuffer)
+        const warrantyDoc  = await PDFDocument.load(warrantyBytes)
+        const copied = await estimateDoc.copyPages(warrantyDoc, warrantyDoc.getPageIndices())
+        copied.forEach(p => estimateDoc.addPage(p))
+        finalBuffer = await estimateDoc.save()
+        console.log('[estimate-pdf] warranty PDF merged, final size:', finalBuffer.length)
+      } catch (mergeErr) {
+        console.error('[estimate-pdf] warranty PDF merge skipped:', mergeErr instanceof Error ? mergeErr.message : mergeErr)
+      }
+    }
+
     const clientSlug = (estimate.client_name || 'Client').replace(/[^a-zA-Z0-9]/g, '-')
     const filename = `Estimate-${estimate.estimate_number}-${clientSlug}.pdf`
 
-    return new NextResponse(new Uint8Array(pdfBuffer), {
+    return new NextResponse(Buffer.from(finalBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `inline; filename="${filename}"`,

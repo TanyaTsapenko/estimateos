@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { SIcon } from '@/components/SIcon'
 import type { IconName } from '@/components/SIcon'
-import { Camera, ImagePlus, Eye, EyeOff } from 'lucide-react'
+import { Camera, ImagePlus, Eye, EyeOff, FileText, Upload } from 'lucide-react'
 import AddressAutocomplete from '@/components/AddressAutocomplete'
 import AppTopBar from '@/components/AppTopBar'
 import { SuccessBanner } from '@/components/SuccessBanner'
@@ -611,6 +611,8 @@ function CompanySection({ flash }: { flash: FlashFn }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [logoKey, setLogoKey] = useState(() => Date.now())
   const [logoUploading, setLogoUploading] = useState(false)
+  const [warrantyPdfUrl, setWarrantyPdfUrl] = useState<string | null>(null)
+  const [warrantyPdfUploading, setWarrantyPdfUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -620,7 +622,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
       setUserId(sanitizedId)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('company_name, phone, website, address, city, province, postal, licence, insurance, insurance_policy_number, logo_url, interac_email, gst_hst_number, company_contact_email, financing_info, google_review_link, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary')
+        .select('company_name, phone, website, address, city, province, postal, licence, insurance, insurance_policy_number, logo_url, interac_email, gst_hst_number, company_contact_email, financing_info, google_review_link, licence_issuing_province, licence_expiry_date, insurance_provider, insurance_expiry_date, wsib_number, signing_rep_name, signing_rep_title, warranty_summary, warranty_pdf_url')
         .eq('id', sanitizedId)
         .single()
       if (prof) {
@@ -651,6 +653,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
         setValues(loaded)
         setInitial(loaded)
         if ((prof as any).logo_url) setLogoUrl((prof as any).logo_url)
+        if ((prof as any).warranty_pdf_url) setWarrantyPdfUrl((prof as any).warranty_pdf_url)
       }
     })
   }, [])
@@ -710,6 +713,22 @@ function CompanySection({ flash }: { flash: FlashFn }) {
     const { error: urlErr } = await supabase.from('profiles').update({ logo_url: url }).eq('id', userId)
     if (urlErr) { flash('Error saving logo: ' + urlErr.message, { variant: 'error' }); setLogoUploading(false); return }
     setLogoUrl(url); setLogoKey(Date.now()); setLogoUploading(false); flash('Logo uploaded')
+  }
+
+  async function handleWarrantyPdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !userId) return
+    if (file.type !== 'application/pdf') { flash('Only PDF files allowed', { variant: 'error' }); return }
+    if (file.size > 20 * 1024 * 1024) { flash('File must be under 20 MB', { variant: 'error' }); return }
+    setWarrantyPdfUploading(true)
+    const path = `${userId}/warranty.pdf`
+    const { error } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: 'application/pdf' })
+    if (error) { flash('Upload failed', { variant: 'error' }); setWarrantyPdfUploading(false); return }
+    const { data: urlData } = supabase.storage.from('logos').getPublicUrl(path)
+    const url = urlData.publicUrl
+    const { error: urlErr } = await supabase.from('profiles').update({ warranty_pdf_url: url }).eq('id', userId)
+    if (urlErr) { flash('Error saving: ' + urlErr.message, { variant: 'error' }); setWarrantyPdfUploading(false); return }
+    setWarrantyPdfUrl(url); setWarrantyPdfUploading(false); flash('Warranty PDF uploaded')
   }
 
   const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -803,6 +822,38 @@ function CompanySection({ flash }: { flash: FlashFn }) {
             <Field label="Title" value={values.signingRepTitle} onChange={set('signingRepTitle')} placeholder="Owner / GM" />
           </div>
           <CompanyTextArea label="Warranty Summary" value={values.warrantySummary} onChange={set('warrantySummary')} placeholder="Describe your warranty terms..." hint="Appears in the Warranty section of contracts" />
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.2px', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 8 }}>
+              Warranty PDF <span style={{ fontSize: 10, fontWeight: 400, color: '#94A3B8', textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+            </div>
+            {warrantyPdfUrl ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 8, padding: '8px 12px' }}>
+                  <FileText size={15} color="#2563EB" />
+                  <span style={{ fontSize: 12, color: '#0A1628', flex: 1 }}>Warranty PDF attached</span>
+                  <a href={warrantyPdfUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#2563EB', textDecoration: 'none', flexShrink: 0 }}>Preview</a>
+                </div>
+                <label style={{ cursor: warrantyPdfUploading ? 'not-allowed' : 'pointer', opacity: warrantyPdfUploading ? 0.6 : 1, flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, color: '#2563EB', cursor: 'inherit' }}>{warrantyPdfUploading ? 'Uploading…' : 'Replace'}</span>
+                  <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleWarrantyPdfUpload} disabled={warrantyPdfUploading} />
+                </label>
+                <button
+                  onClick={async () => { if (!userId) return; await supabase.from('profiles').update({ warranty_pdf_url: null }).eq('id', userId); setWarrantyPdfUrl(null); flash('Warranty PDF removed') }}
+                  style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: 12, cursor: 'pointer', padding: 0, fontFamily: 'inherit', flexShrink: 0 }}>
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <label style={{ display: 'inline-flex', cursor: warrantyPdfUploading ? 'not-allowed' : 'pointer', opacity: warrantyPdfUploading ? 0.6 : 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 14px', border: '1px dashed #CBD5E1', borderRadius: 8, fontSize: 12, color: '#475569' }}>
+                  <Upload size={13} color="#475569" />
+                  {warrantyPdfUploading ? 'Uploading…' : 'Upload Warranty PDF'}
+                </div>
+                <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleWarrantyPdfUpload} disabled={warrantyPdfUploading} />
+              </label>
+            )}
+            <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 6 }}>Automatically appended to every generated estimate PDF · Max 20 MB</div>
+          </div>
         </Card>
       </div>
       <SaveBar dirty={dirty} valid={valid} saving={isSaving} onSave={saveCompany} onDiscard={() => setValues({ ...initial })} />
