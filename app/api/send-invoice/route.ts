@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
 </td></tr></table>`
 
   const invoiceReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
+  let invoiceEmailErrMsg: string | null = null
   try {
     const { error } = await resend.emails.send({
       from: `${companyName} <noreply@useapexscale.com>`,
@@ -153,9 +154,9 @@ export async function POST(request: NextRequest) {
       html,
       ...(invoiceReplyTo ? { reply_to: invoiceReplyTo } : {}),
     })
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) invoiceEmailErrMsg = error.message
   } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    invoiceEmailErrMsg = e.message
   }
 
   logActivity(createServiceClient(), {
@@ -169,5 +170,6 @@ export async function POST(request: NextRequest) {
     amount: inv.amount,
   }).catch(() => {})
 
+  if (invoiceEmailErrMsg) return NextResponse.json({ error: invoiceEmailErrMsg }, { status: 500 })
   return NextResponse.json({ success: true })
 }

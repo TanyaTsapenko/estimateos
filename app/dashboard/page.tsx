@@ -738,19 +738,6 @@ const [dashToast, setDashToast] = useState('')
         console.error('[handleSendReminder] DB update failed after email sent:', updateErr.message)
       }
 
-      fetch('/api/log-activity', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: user.id,
-          event_type: 'reminder_sent',
-          actor_type: 'contractor',
-          entity_type: 'estimate',
-          entity_id: reminderModal.estimateId,
-          entity_number: reminderModal.estimateNumber,
-          client_name: reminderModal.clientName,
-        }),
-      }).catch(() => {})
       if (isAutoExpiring) {
         fetch('/api/log-activity', {
           method: 'POST',

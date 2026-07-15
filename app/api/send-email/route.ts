@@ -511,22 +511,25 @@ ${hdrBlock('Prepared for', est.client_name || 'Client',
       open_tracking: true,
     } : {}),
   }
+  let emailData: any = null
+  let emailErrMsg: string | null = null
   try {
     const { data, error } = await resend.emails.send(emailPayload)
-    if (error) {
-      console.error('RESEND ERROR:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-    try {
-      if (type === 'send') {
-        await logActivity(supabase, { user_id: est.user_id, event_type: 'estimate_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: est.total })
-      }
-    } catch (logErr) {
-      console.error('[send-email] logActivity error:', logErr)
-    }
-    return NextResponse.json({ success: true, id: data?.id, sentTo: est.client_email, subject })
+    emailData = data
+    if (error) { console.error('RESEND ERROR:', error); emailErrMsg = error.message }
   } catch (e: any) {
     console.error('RESEND EXCEPTION:', e.message)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    emailErrMsg = e.message
   }
+  try {
+    if (type === 'send') {
+      await logActivity(supabase, { user_id: est.user_id, event_type: 'estimate_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name, amount: est.total })
+    } else if (type === 'reminder') {
+      await logActivity(supabase, { user_id: est.user_id, event_type: 'reminder_sent', actor_type: 'contractor', entity_type: 'estimate', entity_id: estimateId, entity_number: est.estimate_number, client_name: est.client_name })
+    }
+  } catch (logErr) {
+    console.error('[send-email] logActivity error:', logErr)
+  }
+  if (emailErrMsg) return NextResponse.json({ error: emailErrMsg }, { status: 500 })
+  return NextResponse.json({ success: true, id: emailData?.id, sentTo: est.client_email, subject })
 }
