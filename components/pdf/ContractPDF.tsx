@@ -157,34 +157,59 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
             ? 'Special shape'
             : (customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type)
           const name = nameLabel + (op.window_subtype ? ` (${getSubtypeLabel(op, subtypesByType)})` : '')
-          const specParts: string[] = []
-          if (op.width_in && op.height_in) specParts.push(`${op.width_in}" × ${op.height_in}"`)
           const extCol = op.colour && op.colour !== 'white' ? getColourLabel(op) : null
           const intCol = getInteriorColourLabel(op)
-          if (extCol) specParts.push(`Ext. ${extCol}`)
-          if (intCol) specParts.push(`Int. ${intCol}`)
           const glass = getGlassLabel(op)
-          if (glass) specParts.push(`Glass: ${glass}`)
-          if (op.install  && op.install  !== 'retrofit') specParts.push(`Install: ${INSTALL_LABELS[op.install]  || op.install}`)
-          if (op.material && op.material !== 'vinyl')    specParts.push(`Material: ${MATERIAL_LABELS[op.material] || op.material}`)
-          if (op.room) specParts.push(op.room)
-          if (op.door_style) specParts.push(op.door_style)
-          if (op.glass_insert && op.glass_insert !== 'None') specParts.push(op.glass_insert)
-          if (op.glass_finish) specParts.push(op.glass_finish)
-          if (op.lockset) specParts.push(op.lockset)
-          if (op.deadbolt) specParts.push(op.deadbolt_type ? `Deadbolt — ${op.deadbolt_type}` : 'Deadbolt')
-          if (op.brickmould && op.brickmould !== 'None') specParts.push(`${op.brickmould} brickmould`)
-          if (op.jamb) specParts.push(`Jamb ${op.jamb}`)
-          if (op.threshold_type) specParts.push(`${op.threshold_type} threshold`)
-          if (op.screen_coverage && op.screen_coverage !== 'No Screen') specParts.push(op.screen_coverage)
-          if (op.ventilation_type) specParts.push(op.ventilation_type)
-          if (op.closer_type && op.closer_type !== 'None') specParts.push(`${op.closer_type} closer`)
-          if (op.pet_door && op.pet_door !== 'None') specParts.push(`Pet door — ${op.pet_door}`)
-          if (op.seat_board) specParts.push('Seat board')
-          if (op.head_board) specParts.push('Head board')
-          if (op.astragal && op.astragal !== 'None') specParts.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
+          const installLbl = op.install && op.install !== 'retrofit' ? (INSTALL_LABELS[op.install] || op.install) : null
+          const materialLbl = op.material && op.material !== 'vinyl' ? (MATERIAL_LABELS[op.material] || op.material) : null
+          const specExtras: string[] = []
+          if (op.room) specExtras.push(op.room)
+          if (op.door_style) specExtras.push(op.door_style)
+          if (op.glass_insert && op.glass_insert !== 'None') specExtras.push(op.glass_insert)
+          if (op.glass_finish) specExtras.push(op.glass_finish)
+          if (op.lockset) specExtras.push(op.lockset)
+          if (op.deadbolt) specExtras.push(op.deadbolt_type ? `Deadbolt — ${op.deadbolt_type}` : 'Deadbolt')
+          if (op.brickmould && op.brickmould !== 'None') specExtras.push(`${op.brickmould} brickmould`)
+          if (op.jamb) specExtras.push(`Jamb ${op.jamb}`)
+          if (op.threshold_type) specExtras.push(`${op.threshold_type} threshold`)
+          if (op.screen_coverage && op.screen_coverage !== 'No Screen') specExtras.push(op.screen_coverage)
+          if (op.ventilation_type) specExtras.push(op.ventilation_type)
+          if (op.closer_type && op.closer_type !== 'None') specExtras.push(`${op.closer_type} closer`)
+          if (op.pet_door && op.pet_door !== 'None') specExtras.push(`Pet door — ${op.pet_door}`)
+          if (op.seat_board) specExtras.push('Seat board')
+          if (op.head_board) specExtras.push('Head board')
+          if (op.astragal && op.astragal !== 'None') specExtras.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
           const isCombo = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
+          const specBlock = (
+            <View>
+              {(extCol || intCol) && (
+                <View style={{ flexDirection: 'row', marginBottom: 1 }}>
+                  {extCol && <Text style={{ fontSize: 8, color: INK_M }}>Ext. </Text>}
+                  {extCol && <Text style={{ fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold' }}>{extCol}</Text>}
+                  {extCol && intCol && <Text style={{ fontSize: 8, color: INK_M }}> · Int. </Text>}
+                  {!extCol && intCol && <Text style={{ fontSize: 8, color: INK_M }}>Int. </Text>}
+                  {intCol && <Text style={{ fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold' }}>{intCol}</Text>}
+                </View>
+              )}
+              {glass && (
+                <View style={{ flexDirection: 'row', marginBottom: 1 }}>
+                  <Text style={{ fontSize: 8, color: INK_M }}>Glass: </Text>
+                  <Text style={{ fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold' }}>{glass}</Text>
+                </View>
+              )}
+              {(installLbl || materialLbl) && (
+                <View style={{ flexDirection: 'row', marginBottom: 1 }}>
+                  {installLbl && <Text style={{ fontSize: 8, color: INK_M }}>Install: </Text>}
+                  {installLbl && <Text style={{ fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold' }}>{installLbl}</Text>}
+                  {installLbl && materialLbl && <Text style={{ fontSize: 8, color: INK_M }}> · Material: </Text>}
+                  {!installLbl && materialLbl && <Text style={{ fontSize: 8, color: INK_M }}>Material: </Text>}
+                  {materialLbl && <Text style={{ fontSize: 8, color: INK, fontFamily: 'Helvetica-Bold' }}>{materialLbl}</Text>}
+                </View>
+              )}
+              {specExtras.length > 0 && <Text style={{ fontSize: 8, color: INK_M }}>{specExtras.join(' · ')}</Text>}
+            </View>
+          )
 
           if (isCombo) {
             return (
@@ -197,7 +222,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                   Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}{comboSecs.length > 0 ? ` · ${comboSecs.length} sections` : ''}
                 </Text>
                 {openingPngs?.[op.id] && (
-                  <Image src={openingPngs[op.id]} style={{ width: '100%', maxHeight: 100, objectFit: 'contain', marginBottom: 5 }} />
+                  <Image src={openingPngs[op.id]} style={{ width: '100%', maxHeight: 160, objectFit: 'contain', marginBottom: 5 }} />
                 )}
                 {comboSecs.length > 0 && (
                   <View style={{ marginBottom: 4 }}>
@@ -208,9 +233,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                     ))}
                   </View>
                 )}
-                {specParts.length > 0 && (
-                  <Text style={{ fontSize: 8, color: INK_M }}>{specParts.filter((p: string) => !p.includes('" ×')).join(' · ')}</Text>
-                )}
+                {specBlock}
               </View>
             )
           }
@@ -226,8 +249,10 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
               </View>
               <View style={{ flex: 1, paddingLeft: 8, justifyContent: 'center' }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: INK, marginBottom: 3 }}>{name}</Text>
-                <Text style={{ fontSize: 8, color: INK_S, marginBottom: specParts.length > 0 ? 2 : 0 }}>Qty {op.qty}</Text>
-                {specParts.length > 0 && <Text style={{ fontSize: 8, color: INK_M }}>{specParts.join(' · ')}</Text>}
+                <Text style={{ fontSize: 8, color: INK_S, marginBottom: 2 }}>
+                  Qty {op.qty}{op.width_in && op.height_in ? ` · ${op.width_in}" × ${op.height_in}"` : ''}
+                </Text>
+                {specBlock}
               </View>
               <View style={{ width: '16%', alignItems: 'flex-end', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: INK }}>{formatCurrency(op.total_cost)}</Text>

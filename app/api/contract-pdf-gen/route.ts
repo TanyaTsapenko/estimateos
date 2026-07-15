@@ -63,10 +63,12 @@ export async function GET(req: NextRequest) {
     console.log('[contract-pdf] contract_clauses type:', typeof contractWithClauses.contract_clauses)
     // Pre-render each opening to PNG using the same shape-aware pipeline as the estimate PDF
     const openingPngs: Record<string, string> = {}
+    const isComboOp = (op: any) => op.type === 'combination' || op.type === 'window_combo'
     await Promise.allSettled(
       (openings || []).map(async (op: any) => {
+        const [w, h] = isComboOp(op) ? [600, 200] : [400, 480]
         try {
-          const { png } = await renderDrawingPng(op, 200, 240)
+          const { png } = await renderDrawingPng(op, w, h)
           openingPngs[op.id] = png
         } catch (e) {
           console.error('[contract-pdf] drawing render failed for opening', op.id, e)
