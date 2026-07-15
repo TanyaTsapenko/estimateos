@@ -169,6 +169,19 @@ function specLines(op: Opening): { base: string; opts: string[] } {
   if (bool('seatBoard')) opts.push('Seat board')
   if (bool('headBoard')) opts.push('Head board')
 
+  const astragal = v.astragal as string | undefined
+  if (astragal && astragal !== 'None') opts.push(astragal)
+  const astragalType = v.astragalType as string | undefined
+  if (astragalType && astragalType !== 'None') opts.push(astragalType)
+  const coreType = v.coreType as string | undefined
+  if (coreType) opts.push(coreType)
+  const sidelights = v.sidelights as string | undefined
+  if (sidelights && sidelights !== 'None') opts.push(`${sidelights} sidelights`)
+  const transomAbove = v.transomAbove as string | undefined
+  if (transomAbove && transomAbove !== 'None') opts.push('Transom above')
+  const transomPanes = v.transomPanes as string | undefined
+  if (transomPanes && transomPanes !== '1 Lite') opts.push(transomPanes)
+
   return { base, opts }
 }
 

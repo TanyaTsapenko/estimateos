@@ -12,7 +12,7 @@ const ESTIMATE_COLS = [
   'subtotal', 'tax_rate', 'tax_amount', 'total',
   'discount_type', 'discount_value', 'discount_amount',
   'scope_notes', 'valid_until', 'created_at', 'user_id',
-  'signed_at', 'client_signature_url',
+  'signed_at', 'client_signature_url', 'additional_charges',
 ].join(', ')
 
 const PROFILE_COLS = [

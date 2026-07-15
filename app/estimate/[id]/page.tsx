@@ -35,6 +35,7 @@ interface Estimate {
   discount_type: string | null; discount_value: number | null; discount_amount: number
   scope_notes: string | null; valid_until: string | null; created_at: string | null
   tax_rate: number | null; view_count: number | null
+  additional_charges: { label: string; amount: number }[] | null
 }
 interface Opening {
   id: string; type: string; qty: number; total_cost: number; room: string | null
@@ -344,6 +345,8 @@ export default function ClientEstimatePage() {
                           <SR label="Int. colour"  value={intColour || undefined} />
                           <SR label="Grid"         value={gridVal || undefined} />
                           <SR label="Installation"  value={humanize(op.install)} />
+                          <SR label="Door glass"    value={op.glass_type === 'full' ? 'Full glass' : op.glass_type === 'half' ? 'Half glass' : undefined} />
+                          <SR label="Core"          value={op.core_type === 'hollow' ? 'Hollow core' : op.core_type === 'solid' ? 'Solid core' : undefined} />
                           <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
                           <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
                           <SR label="Door style"    value={op.door_style || undefined} />
@@ -397,6 +400,8 @@ export default function ClientEstimatePage() {
                           <SR label="Int. colour"  value={intColour || undefined} />
                           <SR label="Grid"         value={gridVal || undefined} />
                           <SR label="Installation"  value={humanize(op.install)} />
+                          <SR label="Door glass"    value={op.glass_type === 'full' ? 'Full glass' : op.glass_type === 'half' ? 'Half glass' : undefined} />
+                          <SR label="Core"          value={op.core_type === 'hollow' ? 'Hollow core' : op.core_type === 'solid' ? 'Solid core' : undefined} />
                           <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : undefined} />
                           <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : undefined} />
                           <SR label="Door style"    value={op.door_style || undefined} />
@@ -447,6 +452,12 @@ export default function ClientEstimatePage() {
             )}
             <div style={{ flex: 2, minWidth: 220, marginLeft: !estimate.scope_notes ? 'auto' : undefined }}>
               <SecLabel>Pricing</SecLabel>
+              {estimate.additional_charges?.filter(c => c.label).map((c, ci) => (
+                <div key={ci} style={{ borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 5, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 12, color: MUTED }}>{c.label}</span>
+                  <span style={{ fontSize: 12, color: NAVY }}>{fmtCAD(c.amount)}</span>
+                </div>
+              ))}
               <div style={{ borderBottom: `0.5px solid ${BORDER}`, paddingBottom: 5, marginBottom: 5, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 12, color: MUTED }}>Subtotal</span>
                 <span style={{ fontSize: 12, color: NAVY }}>{fmtCAD(estimate.subtotal || 0)}</span>

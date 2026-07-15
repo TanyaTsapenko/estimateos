@@ -58,6 +58,31 @@ export async function GET(req: NextRequest) {
     const drawingPngs   = drawingResults.map(r => r.png)
     const drawingLabels = drawingResults.map(r => ({ w: r.wLabel, h: r.hLabel }))
 
+    const SECTION_TYPE_MAP: Record<string, string> = {
+      'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
+      'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+    }
+    function parseSec(raw: any): { type: string; width: number }[] {
+      if (Array.isArray(raw)) return raw
+      if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+      return []
+    }
+    const sectionDrawingPngs: string[][] = await Promise.all(
+      (openings || []).map(async (op: any) => {
+        if (op.type !== 'combination' && op.type !== 'window_combo') return []
+        const secs = parseSec(op.sections)
+        if (!secs.length) return []
+        return Promise.all(
+          secs.map((sec: { type: string; width: number }) => {
+            const typeKey = SECTION_TYPE_MAP[sec.type] || 'picture'
+            return renderDrawingPng({ type: typeKey }, 120, 144)
+              .then(r => r.png)
+              .catch(() => '')
+          })
+        )
+      })
+    )
+
     console.log('[estimate-pdf] calling renderToBuffer...')
     const pdfBuffer = await renderToBuffer(
       React.createElement(EstimatePDF, {
@@ -68,6 +93,7 @@ export async function GET(req: NextRequest) {
         subtypesByType,
         drawingPngs,
         drawingLabels,
+        sectionDrawingPngs,
       }) as React.ReactElement<DocumentProps>
     )
 

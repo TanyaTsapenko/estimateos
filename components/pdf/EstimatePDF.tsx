@@ -145,12 +145,13 @@ export interface EstimatePDFProps {
   company: any
   customLabels?: Record<string, string>
   subtypesByType?: SubtypeMap
-  drawingPngs?:   string[]
-  drawingLabels?: { w: string; h: string }[]
+  drawingPngs?:    string[]
+  drawingLabels?:  { w: string; h: string }[]
+  sectionDrawingPngs?: string[][]
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType, drawingPngs, drawingLabels }: EstimatePDFProps) {
+export function EstimatePDF({ estimate, openings, company, customLabels, subtypesByType, drawingPngs, drawingLabels, sectionDrawingPngs }: EstimatePDFProps) {
   const depositPct    = estimate.deposit_percent || 0
   const depositAmt    = (estimate.total || 0) * (depositPct / 100)
   const balanceAmt    = (estimate.total || 0) - depositAmt
@@ -226,7 +227,7 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
           const intColour = getInteriorColourLabel(op)
           const gridVal   = (op.grid_pattern && op.grid_pattern !== 'none') ? humanize(op.grid_pattern) : null
           const floorVal  = op.floor && op.floor !== 'first' ? humanize(op.floor) : null
-          const paneLabel = op.pane === 'triple' ? 'Triple Pane' : op.pane === 'single' ? 'Single Pane' : null
+          const paneLabel = op.pane === 'triple' ? 'Triple Pane' : op.pane === 'double' ? 'Double Pane' : op.pane === 'single' ? 'Single Pane' : null
           const isCombo   = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
 
@@ -277,9 +278,19 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
                   {isCombo && comboSecs.length > 0 && (
                     <>
                       <GrpHdr>Sections</GrpHdr>
-                      {comboSecs.map((sec: any, idx: number) => (
-                        <Text key={idx} style={S.specVal}>{idx + 1}. {sec.type} — {sec.width}"</Text>
-                      ))}
+                      {comboSecs.map((sec: any, idx: number) => {
+                        const secPng = sectionDrawingPngs?.[i]?.[idx]
+                        return (
+                          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                            {secPng ? (
+                              <Image src={secPng} style={{ width: 28, height: 34, marginRight: 6 }} />
+                            ) : (
+                              <View style={{ width: 28, height: 34, marginRight: 6 }} />
+                            )}
+                            <Text style={S.specVal}>{idx + 1}. {sec.type} — {sec.width}"</Text>
+                          </View>
+                        )
+                      })}
                     </>
                   )}
 
@@ -300,6 +311,15 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
                   <SR label="Int. colour"  value={intColour || undefined} />
                   <SR label="Grid"         value={gridVal || undefined} />
                   <SR label="Installation" value={humanize(op.install)} />
+                  <SR label="Bay angle"    value={op.bay_angle ? `${op.bay_angle}°` : null} />
+                  <SR label="Opens"        value={humanize(op.opening_direction)} />
+                  <SR label="Panels"       value={op.panels_count} />
+                  <SR label="Transom"      value={op.transom_panes} />
+                  <SR label="Sidelight L"  value={op.sidelight_left  ? `${op.sidelight_left}"` : null} />
+                  <SR label="Sidelight R"  value={op.sidelight_right ? `${op.sidelight_right}"` : null} />
+                  {op.transom_above ? <SR label="Transom above" value="Yes" /> : null}
+                  <SR label="Door glass"   value={op.glass_type === 'full' ? 'Full glass' : op.glass_type === 'half' ? 'Half glass' : null} />
+                  <SR label="Core"         value={op.core_type === 'hollow' ? 'Hollow core' : op.core_type === 'solid' ? 'Solid core' : null} />
 
                   {/* Glass */}
                   {hasGlass && (
@@ -316,6 +336,30 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
                     <>
                       <GrpHdr>Notes</GrpHdr>
                       <Text style={S.notesTxt}>{op.notes}</Text>
+                    </>
+                  )}
+
+                  {/* Door */}
+                  {!!(op.door_style || op.glass_insert || op.glass_finish || op.lockset || op.deadbolt || op.brickmould || op.jamb || op.threshold_type || op.astragal || op.seat_board || op.head_board || op.screen_coverage || op.ventilation_type || op.closer_type || op.pet_door) && (
+                    <>
+                      <GrpHdr>Door</GrpHdr>
+                      <SR label="Style"        value={op.door_style} />
+                      <SR label="Glass insert"  value={op.glass_insert && op.glass_insert !== 'None' ? op.glass_insert : null} />
+                      <SR label="Glass finish"  value={op.glass_finish} />
+                      <SR label="Lockset"       value={op.lockset} />
+                      <SR label="Deadbolt"      value={op.deadbolt ? 'Yes' : null} />
+                      <SR label="Deadbolt type" value={op.deadbolt_type} />
+                      <SR label="Brickmould"    value={op.brickmould && op.brickmould !== 'None' ? `${op.brickmould} brickmould` : null} />
+                      <SR label="Jamb"          value={op.jamb ? `Jamb ${op.jamb}` : null} />
+                      <SR label="Threshold"     value={op.threshold_type ? `${op.threshold_type} threshold` : null} />
+                      <SR label="Screen"        value={op.screen_coverage && op.screen_coverage !== 'No Screen' ? op.screen_coverage : null} />
+                      <SR label="Ventilation"   value={op.ventilation_type} />
+                      <SR label="Closer"        value={op.closer_type && op.closer_type !== 'None' ? `${op.closer_type} closer` : null} />
+                      <SR label="Pet door"      value={op.pet_door && op.pet_door !== 'None' ? op.pet_door : null} />
+                      <SR label="Seat board"    value={op.seat_board ? 'Yes' : null} />
+                      <SR label="Head board"    value={op.head_board ? 'Yes' : null} />
+                      <SR label="Astragal"      value={op.astragal && op.astragal !== 'None' ? op.astragal : null} />
+                      <SR label="Astragal type" value={op.astragal_type && op.astragal_type !== 'None' ? op.astragal_type : null} />
                     </>
                   )}
                 </View>
