@@ -93,6 +93,35 @@ function Toggle({ on, onChange, disabled }: { on: boolean; onChange: (v: boolean
   )
 }
 
+// ── CLAUSE MERGE ─────────────────────────────────
+
+function mergeNewDefaults(saved: ContractClause[]): ContractClause[] {
+  const savedIds = new Set(saved.map(c => c.id))
+  const missing  = DEFAULT_CLAUSES.filter(c => !savedIds.has(c.id))
+  if (missing.length === 0) return saved
+
+  // Sorted copy preserving the contractor's existing order
+  const result = [...saved].sort((a, b) => a.order - b.order)
+
+  // Process in DEFAULT_CLAUSES order so newly-inserted clauses are available
+  // as reference points for subsequent insertions in the same pass
+  for (const newClause of missing) {
+    const defaultIdx = DEFAULT_CLAUSES.findIndex(c => c.id === newClause.id)
+
+    // Walk back in DEFAULT_CLAUSES to find the nearest predecessor
+    // that already exists in result (including ones just spliced in)
+    let insertAfterResultIdx = -1
+    for (let i = defaultIdx - 1; i >= 0; i--) {
+      const pos = result.findIndex(c => c.id === DEFAULT_CLAUSES[i].id)
+      if (pos !== -1) { insertAfterResultIdx = pos; break }
+    }
+
+    result.splice(insertAfterResultIdx + 1, 0, { ...newClause })
+  }
+
+  return result.map((c, i) => ({ ...c, order: i }))
+}
+
 // ── PAGE ─────────────────────────────────────────
 
 export default function ContractSettingsPage() {
@@ -175,9 +204,15 @@ export default function ContractSettingsPage() {
           const rawClauses = (prof as any)?.contract_clauses
           if (rawClauses) {
             try {
-              const parsed = JSON.parse(rawClauses)
-              setContractClauses(parsed)
-              setSavedClauses(rawClauses)
+              const parsed    = JSON.parse(rawClauses)
+              const merged    = mergeNewDefaults(parsed)
+              const parsedIds = new Set(parsed.map((p: ContractClause) => p.id))
+              const hasNew    = merged.some(c => !parsedIds.has(c.id))
+              setContractClauses(merged)
+              // Keep savedClauses pointing at the pre-merge JSON when new clauses
+              // were injected — isDirty becomes true, SaveBar appears, contractor
+              // reviews and saves consciously before the merge is persisted to DB.
+              setSavedClauses(hasNew ? JSON.stringify(parsed) : rawClauses)
             } catch {}
           } else {
             const migrated = DEFAULT_CLAUSES.map(c => {
