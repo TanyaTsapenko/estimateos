@@ -18,6 +18,7 @@ const ESTIMATE_COLS = [
 const PROFILE_COLS = [
   'company_name', 'address', 'city', 'province', 'postal',
   'phone', 'logo_url', 'contract_terms', 'deposit_percent',
+  'warranty_summary', 'warranty_period',
 ].join(', ')
 
 const OPENING_COLS = [
@@ -32,7 +33,7 @@ const OPENING_COLS = [
   'sections', 'astragal', 'astragal_type', 'pane',
   'lockset', 'deadbolt', 'deadbolt_type', 'brickmould', 'jamb', 'threshold_type',
   'door_style', 'glass_insert', 'glass_finish', 'screen_coverage', 'ventilation_type',
-  'closer_type', 'pet_door', 'seat_board', 'head_board',
+  'closer_type', 'pet_door', 'seat_board', 'head_board', 'energy_rating',
 ].join(', ')
 
 type Row = Record<string, unknown>

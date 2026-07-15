@@ -322,11 +322,12 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
                   <SR label="Core"         value={op.core_type === 'hollow' ? 'Hollow core' : op.core_type === 'solid' ? 'Solid core' : null} />
 
                   {/* Glass */}
-                  {hasGlass && (
+                  {(hasGlass || !!op.energy_rating) && (
                     <>
                       <GrpHdr>Glass</GrpHdr>
                       <View style={S.chipsRow}>
                         {glassChips.map(c => <Chip key={c} label={c} />)}
+                        {!!op.energy_rating && <Chip label={`Energy Rating: ${op.energy_rating}`} />}
                       </View>
                     </>
                   )}

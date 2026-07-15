@@ -62,11 +62,13 @@ interface Opening {
   door_style?: string | null; glass_insert?: string | null; glass_finish?: string | null
   screen_coverage?: string | null; ventilation_type?: string | null; closer_type?: string | null
   pet_door?: string | null; seat_board?: boolean | null; head_board?: boolean | null
+  energy_rating?: string | null
 }
 interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
   phone: string | null; logo_url: string | null; contract_terms: string | null
   deposit_percent: number | null
+  warranty_summary?: string | null; warranty_period?: string | null
 }
 
 function fmtDate(iso: string) {
@@ -364,11 +366,12 @@ export default function ClientEstimatePage() {
                           <SR label="Pet door"      value={op.pet_door && op.pet_door !== 'None' ? op.pet_door : undefined} />
                           <SR label="Seat board"    value={op.seat_board ? 'Yes' : undefined} />
                           <SR label="Head board"    value={op.head_board ? 'Yes' : undefined} />
-                          {glassChips.length > 0 && (
+                          {(glassChips.length > 0 || !!op.energy_rating) && (
                             <>
                               <GrpHdr>Glass</GrpHdr>
                               <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
                                 {glassChips.map(c => <Chip key={c} label={c} />)}
+                                {!!op.energy_rating && <Chip label={`Energy Rating: ${op.energy_rating}`} />}
                               </div>
                             </>
                           )}
@@ -419,11 +422,12 @@ export default function ClientEstimatePage() {
                           <SR label="Pet door"      value={op.pet_door && op.pet_door !== 'None' ? op.pet_door : undefined} />
                           <SR label="Seat board"    value={op.seat_board ? 'Yes' : undefined} />
                           <SR label="Head board"    value={op.head_board ? 'Yes' : undefined} />
-                          {glassChips.length > 0 && (
+                          {(glassChips.length > 0 || !!op.energy_rating) && (
                             <>
                               <GrpHdr>Glass</GrpHdr>
                               <div style={{ display: 'flex', flexWrap: 'wrap', marginTop: 2 }}>
                                 {glassChips.map(c => <Chip key={c} label={c} />)}
+                                {!!op.energy_rating && <Chip label={`Energy Rating: ${op.energy_rating}`} />}
                               </div>
                             </>
                           )}
@@ -495,6 +499,24 @@ export default function ClientEstimatePage() {
               <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>
                 This estimate is valid until {validUntil}. Pricing is subject to change after this date.
               </div>
+            </div>
+          )}
+
+          {/* ── WARRANTY ── */}
+          {(!!profile?.warranty_summary || !!profile?.warranty_period) && (
+            <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
+              {!!profile?.warranty_summary && (
+                <div style={{ flex: 1, minWidth: 200, background: GRAY_BG, borderRadius: 6, padding: 12 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Warranty</div>
+                  <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>{profile.warranty_summary}</div>
+                </div>
+              )}
+              {!!profile?.warranty_period && (
+                <div style={{ minWidth: 140, background: GRAY_BG, borderRadius: 6, padding: 12 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Warranty period</div>
+                  <div style={{ fontSize: 12, color: NAVY, fontWeight: 700 }}>{profile.warranty_period}</div>
+                </div>
+              )}
             </div>
           )}
 

@@ -121,6 +121,7 @@ function buildOpeningRow(op: Opening, idx: number, estimateId: string, custom?: 
     pet_door:           (v.petDoor          as string) || null,
     seat_board:         Boolean(v.seatBoard),
     head_board:         Boolean(v.headBoard),
+    energy_rating:      (v.energyRating as string) || null,
   }
 }
 
@@ -208,6 +209,7 @@ function reverseMapOpeningRow(row: Record<string, unknown>): Opening {
   if (row.pet_door)           vals.petDoor            = String(row.pet_door)
   if (row.seat_board != null) vals.seatBoard          = Boolean(row.seat_board)
   if (row.head_board != null) vals.headBoard          = Boolean(row.head_board)
+  if (row.energy_rating)      vals.energyRating        = String(row.energy_rating)
 
   let sections: Opening['sections'] = undefined
   if (row.sections) {

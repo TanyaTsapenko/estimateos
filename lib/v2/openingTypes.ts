@@ -150,6 +150,7 @@ export const F: Record<string, FieldDef> = {
   tempered:       { label: 'Tempered',        kind: 'toggle', sec: 'glass', sub: 'Safety glass' },
   argon:          { label: 'Argon fill',      kind: 'toggle', sec: 'glass', sub: 'Insulating gas' },
   laminatedGlass: { label: 'Laminated glass', kind: 'toggle', sec: 'glass', sub: 'Impact & sound resistant' },
+  energyRating:   { label: 'Energy rating',   kind: 'text',   sec: 'glass', optional: true, ph: 'e.g. U-0.28 / ER-34 / ENERGY STAR' },
 
   // ── Installation
   material:      { label: 'Material',          kind: 'select', sec: 'install',
@@ -224,7 +225,7 @@ export const F: Record<string, FieldDef> = {
 }
 
 // ── Product catalog ───────────────────────────────────────────────
-const W_COMMON_GLASS = ['glassType','pane','lowE','tempered','argon','laminatedGlass'] as const
+const W_COMMON_GLASS = ['glassType','pane','lowE','tempered','argon','laminatedGlass','energyRating'] as const
 const W_COMMON_INSTALL = ['material','install','condition'] as const
 
 export type TypeDef = {
@@ -276,7 +277,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
       endVent: { name: 'End vent', subs: ['Single end vent (XOX)','Double end vent (OXO)'],
         fields: ['width','height','qty','room','floor',
           'extColour','intColour','grid','grilleType',
-          'glassType','pane','lowE','argon','tempered','laminatedGlass',
+          'glassType','pane','lowE','argon','tempered','laminatedGlass','energyRating',
           'material','install','condition','screen',
           'egress','tiltClean','photos','notes'] },
 
@@ -332,13 +333,13 @@ export const CATALOG: Record<string, CatalogGroup> = {
         subs: ['Arch','Half arch','Circle','Half circle','Triangle','Trapezoid','Pentagon','Octagon','Gothic','Eyebrow','Custom'],
         fields: ['width','height','qty','room','floor','customShapeDesc',
           'extColour','intColour','grilleType',
-          'glassType','pane','lowE','tempered','argon','laminatedGlass',
+          'glassType','pane','lowE','tempered','argon','laminatedGlass','energyRating',
           'material','install','condition','photos','notes'] },
 
       transom: { name: 'Transom', subs: ['Fixed transom','Operable transom'],
         fields: ['width','height','qty','room','floor','transomPanes','shape','position','associatedOpening',
           'extColour','intColour','grilleType',
-          'glassType','pane','lowE','tempered','argon','laminatedGlass',
+          'glassType','pane','lowE','tempered','argon','laminatedGlass','energyRating',
           'material','install','photos','notes'],
         extraFieldsByValue: { condition: { field: 'install', value: 'Retrofit' } } },
     },
@@ -355,7 +356,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
           'doorSwing','lockset','deadbolt','deadboltType',
-          'photos','notes'] },
+          'energyRating','photos','notes'] },
 
       doubleEntry: { name: 'Double entry', subs: ['Equal double','Unequal double',
           'Double + Sidelites','Double + Transom','Double + Sidelites + Transom'],
@@ -364,7 +365,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'laminatedGlass','doorMaterial','install','condition',
           'brickmould','jamb','thresholdType',
           'doubleDoorSwing','lockset','deadbolt','astragalType',
-          'photos','notes'],
+          'energyRating','photos','notes'],
         extraFieldsBySubtype: {
           'Double + Sidelites':             ['sidelights'],
           'Double + Transom':               ['transomAbove'],
@@ -376,7 +377,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'grid','glassSize','glassType2',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
           'doorSwing','lockset','multipointLock',
-          'photos','notes'],
+          'energyRating','photos','notes'],
         extraFieldsBySubtype: {
           'Double french':      ['activePanel','astragal'],
           'French + sidelites': ['activePanel','astragal','sidelights'],
@@ -386,7 +387,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
       garden: { name: 'Garden door', subs: [],
         fields: ['width','height','qty','room','floor',
           'grid','glassSize','glassType2','sidelights','transomAbove',
-          'glassType','pane','lowE','tempered','argon','laminatedGlass',
+          'glassType','pane','lowE','tempered','argon','laminatedGlass','energyRating',
           'doorMaterial','install','condition','thresholdType',
           'doorSwing','lockset','deadbolt','deadboltType','screenType',
           'photos','notes'] },
@@ -394,7 +395,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
       patio: { name: 'Patio sliding', subs: ['XO','OX','XOX','OXXO'],
         fields: ['width','height','qty','room','floor',
           'extColour','intColour',
-          'glassType','pane','lowE','tempered','argon','laminatedGlass',
+          'glassType','pane','lowE','tempered','argon','laminatedGlass','energyRating',
           'material','install','condition','thresholdType','screen',
           'photos','notes'],
         extraFieldsBySubtype: {
@@ -404,7 +405,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
 
       storm: { name: 'Storm door', subs: ['Full glass','Half glass','Screen'],
         fields: ['width','height','qty','room','floor',
-          'colour','glassType','glassType2','laminatedGlass',
+          'colour','glassType','glassType2','laminatedGlass','energyRating',
           'stormDoorMaterial','install','condition','screen',
           'hingeSide','lockset','closerType','petDoor','ventilationType',
           'photos','notes'] },
@@ -414,7 +415,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'doorExt','doorInt','doorStyle','glassInsert','glassType2','coreType',
           'laminatedGlass','doorMaterial','install','condition','thresholdType',
           'doorSwing','lockset',
-          'photos','notes'] },
+          'energyRating','photos','notes'] },
     },
   },
 }

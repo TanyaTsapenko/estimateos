@@ -181,6 +181,8 @@ function specLines(op: Opening): { base: string; opts: string[] } {
   if (transomAbove && transomAbove !== 'None') opts.push('Transom above')
   const transomPanes = v.transomPanes as string | undefined
   if (transomPanes && transomPanes !== '1 Lite') opts.push(transomPanes)
+  const energyRating = v.energyRating as string | undefined
+  if (energyRating) opts.push(`Energy Rating: ${energyRating}`)
 
   return { base, opts }
 }
