@@ -81,10 +81,12 @@ export default function ContractPage() {
   const [isDrawing,          setIsDrawing]          = useState(false)
   const [agreedToTerms,      setAgreedToTerms]      = useState(false)
   const [showSuccess,        setShowSuccess]        = useState(false)
+  const [showSignedDoc,      setShowSignedDoc]      = useState(false)
   const [clientSignatureUrl, setClientSignatureUrl] = useState<string | null>(null)
   const [flash,              setFlash]              = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
   const [signingFailed,      setSigningFailed]      = useState(false)
   const [pendingContractId,  setPendingContractId]  = useState<string | null>(null)
+  const [signedContractId,   setSignedContractId]   = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -235,6 +237,7 @@ export default function ContractPage() {
         setPendingContractId(null)
         setSigningFailed(false)
         setClientSignatureUrl(result.signatureUrl)
+        setSignedContractId(contractId)
 
         await Promise.allSettled([
           fetch('/api/notify-contractor-signed', {
@@ -395,10 +398,58 @@ export default function ContractPage() {
               </div>
             )}
           </div>
+          <button
+            onClick={() => setShowSignedDoc(true)}
+            style={{ width: '100%', maxWidth: 360, background: BLUE, color: '#fff', border: 'none', borderRadius: 12, padding: '14px 24px', font: `700 15px ${F}`, cursor: 'pointer', marginBottom: 12 }}>
+            View signed contract →
+          </button>
           <button onClick={() => router.push(`/dashboard/estimates/${id}`)}
             style={{ background: 'none', border: 'none', fontSize: 14, fontWeight: 600, color: INK_S, cursor: 'pointer', fontFamily: F, padding: '10px 24px' }}>
             Done
           </button>
+        </div>
+      )}
+
+      {/* ── SIGNED DOC VIEW ── */}
+      {showSignedDoc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: '#E9ECF2', fontFamily: F, display: 'flex', flexDirection: 'column' }}>
+          <AppTopBar onBack={() => setShowSignedDoc(false)} backLabel="Back" title="Signed Contract" />
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <ContractDocument
+              companyName={resolvedCompanyName}
+              contractDisplayId={contractDisplayId}
+              createdDate={createdDate}
+              logoUrl={profile?.logo_url ?? null}
+              companyPhone={profile?.phone ?? null}
+              companyEmail={profile?.email ?? null}
+              companyAddress={profile?.address ?? null}
+              companyCityProvince={companyCityProvince}
+              clientName={estimate.client_name}
+              clientPhone={estimate.client_phone}
+              clientEmail={estimate.client_email}
+              clientAddress={estimate.client_address}
+              clientCityProvince={clientCityProvince}
+              openings={openings}
+              subtotal={estimate.subtotal}
+              taxAmount={estimate.tax_amount}
+              taxLabel={taxLabel}
+              total={estimate.total}
+              discountAmount={estimate.discount_amount}
+              depositPct={depositPct}
+              depositRequired={true}
+              detCards={detCards}
+              enabledClauses={enabledClauses}
+              province={profile?.province ?? null}
+              contractorSigUrl={profile?.signature_url || ownerSignatureUrl || null}
+              repName={repName}
+              clientSignatureSlot={
+                <img src={clientSignatureUrl!} alt="Client signature" style={{ maxHeight: 64, maxWidth: '100%', objectFit: 'contain' }} />
+              }
+              clientSigDate={todayFmt}
+              downloadHref={signedContractId ? `/api/contract-pdf-gen?contractId=${signedContractId}` : undefined}
+              bottomPadding={24}
+            />
+          </div>
         </div>
       )}
 
