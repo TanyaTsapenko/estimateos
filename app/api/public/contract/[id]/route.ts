@@ -33,6 +33,7 @@ const OPENING_COLS = [
   'pane', 'lockset', 'deadbolt', 'deadbolt_type', 'brickmould', 'jamb', 'threshold_type',
   'door_style', 'glass_insert', 'glass_finish', 'screen_coverage', 'ventilation_type',
   'closer_type', 'pet_door', 'seat_board', 'head_board', 'astragal', 'astragal_type',
+  'energy_rating',
 ].join(', ')
 
 const PROFILE_COLS = [

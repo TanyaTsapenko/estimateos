@@ -81,6 +81,7 @@ export interface ContractOpening {
   seat_board?: boolean | null; head_board?: boolean | null
   astragal?: string | null; astragal_type?: string | null
   core_type?: string | null
+  energy_rating?: string | null
 }
 
 export interface ContractClause {
@@ -214,6 +215,7 @@ export function ContractDocument({
           if (op.seat_board)                                         specExtras.push('Seat board')
           if (op.head_board)                                         specExtras.push('Head board')
           if (op.astragal && op.astragal !== 'None')                 specExtras.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
+          if (op.energy_rating)                                      specExtras.push(`Energy Rating: ${op.energy_rating}`)
 
           const isCombo   = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSections(op.sections) : []

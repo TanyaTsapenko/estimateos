@@ -81,9 +81,10 @@ interface ContractPDFProps {
   customLabels?: Record<string, string>
   subtypesByType?: SubtypeMap
   openingPngs?: Record<string, string>
+  sectionDrawingPngs?: string[][]
 }
 
-export function ContractPDF({ contract, estimate, openings, company, customLabels, subtypesByType, openingPngs }: ContractPDFProps) {
+export function ContractPDF({ contract, estimate, openings, company, customLabels, subtypesByType, openingPngs, sectionDrawingPngs }: ContractPDFProps) {
   const depositPct    = estimate.deposit_percent || 0
   const depositAmount = (estimate.total || 0) * (depositPct / 100)
   const balanceAmount = (estimate.total || 0) - depositAmount
@@ -179,6 +180,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           if (op.seat_board) specExtras.push('Seat board')
           if (op.head_board) specExtras.push('Head board')
           if (op.astragal && op.astragal !== 'None') specExtras.push(op.astragal_type ? `Astragal — ${op.astragal_type}` : 'Astragal')
+          if (op.energy_rating) specExtras.push(`Energy Rating: ${op.energy_rating}`)
           const isCombo = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
           const specBlock = (
@@ -227,9 +229,17 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                 {comboSecs.length > 0 && (
                   <View style={{ marginBottom: 4 }}>
                     {comboSecs.map((sec: any, idx: number) => (
-                      <Text key={idx} style={{ fontSize: 8, color: INK_M, marginBottom: 1 }}>
-                        {idx + 1}. {sec.type} — {sec.width}"
-                      </Text>
+                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3, borderBottomWidth: idx < comboSecs.length - 1 ? 0.5 : 0, borderBottomColor: HAIR }}>
+                        <Text style={{ fontSize: 8, color: INK_S, width: 16 }}>{idx + 1}.</Text>
+                        {sectionDrawingPngs?.[i]?.[idx]
+                          ? <Image src={sectionDrawingPngs[i][idx]} style={{ width: 30, height: 36, objectFit: 'contain', marginRight: 6 }} />
+                          : <View style={{ width: 30, height: 36, marginRight: 6 }} />
+                        }
+                        <View>
+                          <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: INK }}>{sec.type}</Text>
+                          <Text style={{ fontSize: 8, color: INK_S }}>{sec.width}"</Text>
+                        </View>
+                      </View>
                     ))}
                   </View>
                 )}

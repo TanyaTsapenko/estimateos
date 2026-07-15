@@ -11,6 +11,16 @@ import { getEffectiveClauses } from '@/lib/contractClauses'
 import React from 'react'
 import { renderDrawingPng } from '@/lib/renderDrawingPng'
 
+const SECTION_TYPE_MAP: Record<string, string> = {
+  'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+}
+function parseSec(raw: any): { type: string; width: number }[] {
+  if (Array.isArray(raw)) return raw
+  if (typeof raw === 'string') { try { const p = JSON.parse(raw); if (Array.isArray(p)) return p } catch {} }
+  return []
+}
+
 export async function GET(req: NextRequest) {
   console.log('[contract-pdf] route called')
   try {
@@ -64,17 +74,34 @@ export async function GET(req: NextRequest) {
     // Pre-render each opening to PNG using the same shape-aware pipeline as the estimate PDF
     const openingPngs: Record<string, string> = {}
     const isComboOp = (op: any) => op.type === 'combination' || op.type === 'window_combo'
-    await Promise.allSettled(
-      (openings || []).map(async (op: any) => {
-        const [w, h] = isComboOp(op) ? [600, 200] : [400, 480]
-        try {
-          const { png } = await renderDrawingPng(op, w, h)
-          openingPngs[op.id] = png
-        } catch (e) {
-          console.error('[contract-pdf] drawing render failed for opening', op.id, e)
-        }
-      })
-    )
+    const [, sectionDrawingPngs] = await Promise.all([
+      Promise.allSettled(
+        (openings || []).map(async (op: any) => {
+          const [w, h] = isComboOp(op) ? [600, 200] : [400, 480]
+          try {
+            const { png } = await renderDrawingPng(op, w, h)
+            openingPngs[op.id] = png
+          } catch (e) {
+            console.error('[contract-pdf] drawing render failed for opening', op.id, e)
+          }
+        })
+      ),
+      Promise.all(
+        (openings || []).map(async (op: any) => {
+          if (!isComboOp(op)) return []
+          const secs = parseSec(op.sections)
+          if (!secs.length) return []
+          return Promise.all(
+            secs.map((sec: { type: string; width: number }) => {
+              const typeKey = SECTION_TYPE_MAP[sec.type] || 'picture'
+              return renderDrawingPng({ type: typeKey }, 120, 144)
+                .then(r => r.png)
+                .catch(() => '')
+            })
+          )
+        })
+      ),
+    ])
 
     console.log('[contract-pdf] calling renderToBuffer...')
 
@@ -87,6 +114,7 @@ export async function GET(req: NextRequest) {
         customLabels,
         subtypesByType,
         openingPngs,
+        sectionDrawingPngs,
       }) as React.ReactElement<DocumentProps>
     )
 
