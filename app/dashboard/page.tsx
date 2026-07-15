@@ -343,7 +343,7 @@ const [dashToast, setDashToast] = useState('')
       const lastMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()-1, 1).toISOString()
       const lastMonthEnd = new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString()
       const todayUTC = new Date().toISOString().slice(0, 10)
-      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }, { data: remProfile }] = await Promise.all([
+      const [{ data: estAll }, { data: estSigned }, { data: estThisMonth }, { data: estLastMonth }, { data: pendingInvoices }, { data: finalPendingInvoices }, { data: activityLog }, { data: estPipeline }, { data: estSignedToday }, { data: remProfile }, { data: allDepositInvoices }] = await Promise.all([
         supabase.from('estimates').select('id,total,status,updated_at,created_at,sent_at,estimate_number,client_name,last_reminder_sent_at,reminder_count,viewed_at').in('user_id', userIds).order('updated_at', { ascending: false }).limit(20),
         supabase.from('estimates').select('id,total,estimate_number,client_name,status,user_id').in('user_id', userIds).in('status', ['signed', 'accepted', 'invoiced']).order('created_at', { ascending: false }).limit(50),
         supabase.from('estimates').select('total,created_at,status').in('user_id', userIds).in('status', ['sent', 'signed', 'invoiced', 'paid']).gte('created_at', thisMonthStart),
@@ -354,6 +354,7 @@ const [dashToast, setDashToast] = useState('')
         supabase.from('estimates').select('id,total,status,created_at').in('user_id', userIds).in('status', ['draft', 'sent']),
         supabase.from('estimates').select('id,total,status,updated_at').in('user_id', userIds).in('status', ['signed', 'invoiced', 'paid']).gte('updated_at', todayUTC + 'T00:00:00.000Z'),
         supabase.from('profiles').select('quote_settings').eq('id', sanitizedId).single(),
+        supabase.from('invoices').select('estimate_id').in('user_id', userIds).eq('invoice_type', 'deposit').limit(200),
       ])
       const depositEstimateIds = (pendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
       const finalEstimateIds   = (finalPendingInvoices || []).map((inv: any) => inv.estimate_id?.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')).filter(Boolean)
@@ -402,11 +403,13 @@ const [dashToast, setDashToast] = useState('')
       const attItems: AttentionItem[] = []
       const pendingEstimateIds = new Set((pendingInvoices || []).map((inv: any) => inv.estimate_id))
       const finalEstimateIdSet = new Set((finalPendingInvoices || []).map((inv: any) => inv.estimate_id))
+      const allDepositEstimateIds = new Set((allDepositInvoices || []).map((inv: any) => inv.estimate_id))
       // Signed/accepted estimates ready for final invoice (no pending final invoice yet)
       if (estSigned?.length) {
         estSigned.forEach((e: any) => {
           if (e.status === 'paid') return
-          if (pendingEstimateIds.has(e.id)) return // deposit still pending, skip
+          if (pendingEstimateIds.has(e.id)) return // deposit invoice pending payment
+          if (!allDepositEstimateIds.has(e.id)) return // no deposit invoice row at all → treat as deposit pending
           if (finalEstimateIdSet.has(e.id)) return // final invoice already exists
           attItems.push({
             icon: FileText, color: '#7C3AED',
