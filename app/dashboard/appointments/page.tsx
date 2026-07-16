@@ -508,7 +508,7 @@ function EditScreen({ open, appt, onClose, onSave, onDelete }: {
   return (
     <>
       <ConfirmModal open={deleteOpen} icon="trash" title="Delete appointment?" body={`${currentAppt.client_name} appointment will be permanently deleted.`} confirmLabel="Delete" onConfirm={() => { setDeleteOpen(false); onDelete(currentAppt.id) }} onCancel={() => setDeleteOpen(false)} />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: T.bg, transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 320ms cubic-bezier(.32,.72,0,1)', display: 'flex', flexDirection: 'column', fontFamily: '-apple-system, "SF Pro Text", system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: T.bg, transform: open ? 'translateY(0)' : 'translateY(100%)', transition: 'transform 320ms cubic-bezier(.32,.72,0,1)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, flexShrink: 0, padding: 'max(60px, calc(env(safe-area-inset-top) + 16px)) 16px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 10, border: `1px solid ${T.border}`, background: T.card, color: T.inkMid, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0, flexShrink: 0 }}>
@@ -1043,7 +1043,7 @@ export default function AppointmentsPage() {
   // ── Desktop render ───────────────────────────────────────────────────────────
   if (isDesktop) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: T.bg, fontFamily: '-apple-system, "SF Pro Text", system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: T.bg }}>
         <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, padding: '20px 32px', flexShrink: 0 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', color: T.inkSoft, textTransform: 'uppercase' }}>Schedule</div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 16 }}>
@@ -1172,7 +1172,7 @@ export default function AppointmentsPage() {
   return (
     <>
       <style>{`.appt-tl-scroll::-webkit-scrollbar{display:none}`}</style>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F3F4F6', fontFamily: '-apple-system, "SF Pro Text", "SF Pro Display", system-ui, sans-serif', WebkitFontSmoothing: 'antialiased' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#F3F4F6' }}>
 
         {/* Header */}
         <AppTopBar
