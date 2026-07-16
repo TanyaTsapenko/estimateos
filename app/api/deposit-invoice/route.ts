@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   const internalSecret = process.env.INTERNAL_API_SECRET
   const headerSecret   = request.headers.get('x-internal-secret')
   const hasValidSecret = internalSecret && headerSecret === internalSecret
+  console.log('[DEBUG deposit-invoice] internalSecret length:', internalSecret?.length ?? 0, '| headerSecret length:', headerSecret?.length ?? 0, '| match:', hasValidSecret)
 
   if (!hasValidSecret) {
     try {
