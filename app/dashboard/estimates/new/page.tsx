@@ -298,7 +298,6 @@ function NewEstimateV2() {
   const [pendingAdd, setPendingAdd] = useState(false)
   const [deleteIdx, setDeleteIdx] = useState<number | null>(null)
   const [subtypeError, setSubtypeError] = useState('')
-  const [fieldErrors, setFieldErrors] = useState<string[]>([])
   const [customPricing, setCustomPricing] = useState<CustomPricing | undefined>(undefined)
   const [palettes, setPalettes] = useState<Palettes>({ frame: FRAME_COLOURS })
   const [saving, setSaving] = useState(false)
@@ -907,37 +906,12 @@ function NewEstimateV2() {
               <span style={{ fontSize: 13, color: '#DC2626', fontWeight: 600 }}>{subtypeError}</span>
             </div>
           )}
-          {fieldErrors.length > 0 && (
-            <div style={{ padding: '10px 16px', background: '#FEF2F2', borderTop: '1px solid #FECACA' }}>
-              {fieldErrors.map((e, i) => (
-                <div key={i} style={{ fontSize: 13, color: '#DC2626', fontWeight: 600, lineHeight: 1.6 }}>{e}</div>
-              ))}
-            </div>
-          )}
           <BottomBar
-            onBack={() => { setSubtypeError(''); setFieldErrors([]); setMode('client') }}
+            onBack={() => { setSubtypeError(''); setMode('client') }}
             onContinue={() => {
               const missing = openings.find(o => getType(o.typeId).subs.length > 0 && !o.sub)
               if (missing) { setSubtypeError('Please select a subtype for all openings'); return }
               setSubtypeError('')
-              const errs: string[] = []
-              openings.forEach((op, i) => {
-                const t = getType(op.typeId)
-                const v = op.vals
-                const need: string[] = []
-                if (t.fields.includes('floor') && !v.floor) need.push('Floor')
-                if (t.fields.includes('pane') && !v.pane) need.push('Glass pane')
-                if (t.fields.includes('material') && !v.material) need.push('Material')
-                if (t.fields.includes('doorMaterial') && !v.doorMaterial) need.push('Material')
-                if (t.fields.includes('extColour') && !v.extColour) need.push('Colour')
-                if (t.fields.includes('doorExt') && !v.doorExt) need.push('Colour')
-                if (t.fields.includes('colour') && !v.colour) need.push('Colour')
-                if (t.fields.includes('intColour') && !v.intColour) need.push('Interior colour')
-                if (t.fields.includes('doorInt') && !v.doorInt) need.push('Interior colour')
-                if (need.length) errs.push(`Opening #${i + 1} (${t.name}): select ${need.join(' and ')}`)
-              })
-              if (errs.length) { setFieldErrors(errs); return }
-              setFieldErrors([])
               setMode('review')
             }}
             ctaLabel="Continue to details"
