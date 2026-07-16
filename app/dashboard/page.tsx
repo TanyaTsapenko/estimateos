@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell, Activity } from 'lucide-react'
+import { Calendar, Send as SendIcon, Plus, Check as CheckIcon, ChevronRight, CreditCard, CheckCircle, Clock as ClockIcon, FileCheck, FileText, DollarSign, TrendingUp, PenLine, Receipt, Bell, Activity, AlertTriangle } from 'lucide-react'
 import { usePermissions } from '@/lib/usePermissions'
 import { getTeamUserIds } from '@/lib/teamScope'
 import BellButton, { type AppNotification } from '@/components/BellButton'
@@ -126,35 +126,47 @@ function getTodayStr() {
 }
 
 const ACTIVITY_CFG: Record<string, { icon: React.ElementType; bg: string; color: string; label: string }> = {
-  estimate_sent:        { icon: SendIcon,    bg: '#EFF6FF', color: '#2563EB', label: 'sent estimate' },
-  contract_signed:      { icon: FileCheck,   bg: '#ECFDF5', color: '#059669', label: 'signed contract' },
-  deposit_invoice_sent: { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent deposit invoice' },
-  deposit_paid:         { icon: DollarSign,  bg: '#ECFDF5', color: '#059669', label: 'paid deposit' },
-  final_invoice_sent:   { icon: FileText,    bg: '#EFF6FF', color: '#2563EB', label: 'sent final invoice' },
-  final_paid:           { icon: CheckCircle, bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
-  reminder_sent:        { icon: SendIcon,    bg: '#EFF6FF', color: '#2563EB', label: 'sent reminder' },
-  estimate_auto_expired:{ icon: ClockIcon,   bg: '#FEF3C7', color: '#D97706', label: 'estimate expired (no response)' },
+  estimate_sent:               { icon: SendIcon,       bg: '#EFF6FF', color: '#2563EB', label: 'sent estimate' },
+  contract_sent:               { icon: PenLine,        bg: '#EFF6FF', color: '#2563EB', label: 'sent contract' },
+  contract_signed:             { icon: FileCheck,      bg: '#ECFDF5', color: '#059669', label: 'signed contract' },
+  estimate_signed:             { icon: PenLine,        bg: '#EFEAFC', color: '#6D45D9', label: 'signed estimate' },
+  deposit_invoice_sent:        { icon: FileText,       bg: '#EFF6FF', color: '#2563EB', label: 'sent deposit invoice' },
+  deposit_paid:                { icon: DollarSign,     bg: '#ECFDF5', color: '#059669', label: 'paid deposit' },
+  final_invoice_sent:          { icon: FileText,       bg: '#EFF6FF', color: '#2563EB', label: 'sent final invoice' },
+  final_paid:                  { icon: CheckCircle,    bg: '#ECFDF5', color: '#059669', label: 'paid in full' },
+  reminder_sent:               { icon: SendIcon,       bg: '#EFF6FF', color: '#2563EB', label: 'sent reminder' },
+  estimate_auto_expired:       { icon: ClockIcon,      bg: '#FEF3C7', color: '#D97706', label: 'estimate expired (no response)' },
+  deposit_invoice_failed:      { icon: AlertTriangle,  bg: '#FEF2F2', color: '#DC2626', label: 'failed to send deposit invoice' },
+  deposit_invoice_email_failed:{ icon: AlertTriangle,  bg: '#FEF2F2', color: '#DC2626', label: 'failed to deliver deposit email' },
 }
 
 const EVENT_TONE: Record<string, { bg: string; color: string }> = {
-  estimate_sent:        { bg: '#EEF3FF', color: '#2563EB' },
-  contract_signed:      { bg: '#EFEAFC', color: '#6D45D9' },
-  deposit_invoice_sent: { bg: '#EEF3FF', color: '#2563EB' },
-  deposit_paid:         { bg: '#E7F6EE', color: '#0F8A4D' },
-  final_invoice_sent:   { bg: '#EEF3FF', color: '#2563EB' },
-  final_paid:           { bg: '#E7F6EE', color: '#0F8A4D' },
-  reminder_sent:        { bg: '#EEF3FF', color: '#2563EB' },
-  estimate_auto_expired:{ bg: '#FBF1DC', color: '#B7791F' },
+  estimate_sent:               { bg: '#EEF3FF', color: '#2563EB' },
+  contract_sent:               { bg: '#EEF3FF', color: '#2563EB' },
+  contract_signed:             { bg: '#EFEAFC', color: '#6D45D9' },
+  estimate_signed:             { bg: '#EFEAFC', color: '#6D45D9' },
+  deposit_invoice_sent:        { bg: '#EEF3FF', color: '#2563EB' },
+  deposit_paid:                { bg: '#E7F6EE', color: '#0F8A4D' },
+  final_invoice_sent:          { bg: '#EEF3FF', color: '#2563EB' },
+  final_paid:                  { bg: '#E7F6EE', color: '#0F8A4D' },
+  reminder_sent:               { bg: '#EEF3FF', color: '#2563EB' },
+  estimate_auto_expired:       { bg: '#FBF1DC', color: '#B7791F' },
+  deposit_invoice_failed:      { bg: '#FEE2E2', color: '#DC2626' },
+  deposit_invoice_email_failed:{ bg: '#FEE2E2', color: '#DC2626' },
 }
 const EVENT_ICONS: Record<string, React.ElementType> = {
-  estimate_sent:        SendIcon,
-  contract_signed:      PenLine,
-  deposit_invoice_sent: Receipt,
-  deposit_paid:         CheckCircle,
-  final_invoice_sent:   Receipt,
-  final_paid:           CheckCircle,
-  reminder_sent:        Bell,
-  estimate_auto_expired:ClockIcon,
+  estimate_sent:               SendIcon,
+  contract_sent:               PenLine,
+  contract_signed:             PenLine,
+  estimate_signed:             PenLine,
+  deposit_invoice_sent:        Receipt,
+  deposit_paid:                CheckCircle,
+  final_invoice_sent:          Receipt,
+  final_paid:                  CheckCircle,
+  reminder_sent:               Bell,
+  estimate_auto_expired:       ClockIcon,
+  deposit_invoice_failed:      AlertTriangle,
+  deposit_invoice_email_failed:AlertTriangle,
 }
 function getDealAccent(eventType: string): string {
   if (eventType === 'deposit_paid' || eventType === 'final_paid') return '#0F8A4D'
