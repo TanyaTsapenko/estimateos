@@ -103,13 +103,17 @@ function fmt12h(t: string | null): string {
   return `${h % 12 || 12}:${m.toString().padStart(2, '0')} ${h >= 12 ? 'PM' : 'AM'}`
 }
 
-function fmtTimeParts(t: string | null): { time: string; ampm: string } {
-  if (!t) return { time: '—', ampm: '' }
-  const [h, m] = t.split(':').map(Number)
-  return {
-    time: `${h % 12 || 12}:${m.toString().padStart(2, '0')}`,
-    ampm: h >= 12 ? 'PM' : 'AM',
-  }
+function fmtRange(start: string | null, end: string | null): string {
+  if (!start) return '—'
+  const [sh, sm] = start.split(':').map(Number)
+  const sPeriod = sh >= 12 ? 'PM' : 'AM'
+  const sTime = sm === 0 ? `${sh % 12 || 12}` : `${sh % 12 || 12}:${sm.toString().padStart(2, '0')}`
+  if (!end) return `${sTime} ${sPeriod}`
+  const [eh, em] = end.split(':').map(Number)
+  const ePeriod = eh >= 12 ? 'PM' : 'AM'
+  const eTime = em === 0 ? `${eh % 12 || 12}` : `${eh % 12 || 12}:${em.toString().padStart(2, '0')}`
+  if (sPeriod === ePeriod) return `${sTime}–${eTime} ${sPeriod}`
+  return `${sTime} ${sPeriod}–${eTime} ${ePeriod}`
 }
 
 function toHour(t: string | null): number {
@@ -211,29 +215,15 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
   isFollowUp?: boolean
 }) {
   const [navigating, setNavigating] = useState(false)
-  const { time, ampm } = fmtTimeParts(appt.rawTime)
-  const endFmt = appt.endTime ? fmt12h(appt.endTime) : null
   const dotColor = appt.status === 'completed' ? '#16A34A' : isFollowUp ? '#F97316' : '#2563EB'
 
   return (
     <div style={{ display: 'flex', marginBottom: 10 }}>
       {/* Time col */}
       <div style={{ width: 52, flexShrink: 0, paddingTop: 13, paddingRight: 8, textAlign: 'right' }}>
-        {appt.rawTime ? (
-          endFmt ? (
-            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.4 }}>
-              {time}<span style={{ fontSize: 9, color: '#B3BAC6' }}>{ampm}</span>
-              <div style={{ fontSize: 9, fontWeight: 600, color: '#8A94A6', lineHeight: 1.2 }}>– {endFmt}</div>
-            </div>
-          ) : (
-            <>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.15 }}>{time}</div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#B3BAC6', marginTop: 1 }}>{ampm}</div>
-            </>
-          )
-        ) : (
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#B3BAC6' }}>—</div>
-        )}
+        <div style={{ fontSize: 9.5, fontWeight: 700, color: '#0B1220', lineHeight: 1.3, whiteSpace: 'nowrap' }}>
+          {fmtRange(appt.rawTime, appt.endTime)}
+        </div>
       </div>
 
       {/* Rail col */}
@@ -647,7 +637,7 @@ function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: { 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
             <StatusTag status={ds} />
             <span style={{ color: T.inkFaint }}>·</span>
-            <span style={{ fontSize: 12, color: T.inkSoft }}>{dl}{appt.appointment_time ? ` at ${fmt12h(appt.appointment_time)}` : ''}</span>
+            <span style={{ fontSize: 12, color: T.inkSoft }}>{dl}{appt.appointment_time ? ` at ${fmtRange(appt.appointment_time, appt.appointment_end_time ?? null)}` : ''}</span>
           </div>
           <div style={{ fontSize: 30, fontWeight: 700, color: T.ink, letterSpacing: '-0.02em' }}>{appt.client_name}</div>
         </div>
@@ -658,7 +648,7 @@ function DesktopViewPanel({ appt, onEdit, onCreateEstimate, onViewEstimate }: { 
         </div>
       </div>
       <div style={{ background: T.card, borderRadius: 14, border: `1px solid ${T.border}`, padding: '4px 20px', marginBottom: 20 }}>
-        {[{ label: 'Phone', value: fmtPhone(appt.client_phone), mono: true }, { label: 'Address', value: appt.client_address || '—' }, { label: 'Date & time', value: `${dl}, ${appt.appointment_date}${appt.appointment_time ? ` · ${fmt12h(appt.appointment_time)}` : ''}`, mono: true }, { label: 'Lead source', value: appt.lead_source || '—' }].map(({ label, value, mono }) => (
+        {[{ label: 'Phone', value: fmtPhone(appt.client_phone), mono: true }, { label: 'Address', value: appt.client_address || '—' }, { label: 'Date & time', value: `${dl}, ${appt.appointment_date}${appt.appointment_time ? ` · ${fmtRange(appt.appointment_time, appt.appointment_end_time ?? null)}` : ''}`, mono: true }, { label: 'Lead source', value: appt.lead_source || '—' }].map(({ label, value, mono }) => (
           <div key={label} style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: 16, padding: '14px 0', borderBottom: `1px solid ${T.border}` }}>
             <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', color: T.inkSoft, textTransform: 'uppercase' as const }}>{label}</div>
             <div style={{ fontSize: 14, color: value === '—' ? T.inkFaint : T.ink, fontVariantNumeric: mono ? 'tabular-nums' : 'normal' as const }}>{value || '—'}</div>
