@@ -186,6 +186,21 @@ function NowRow() {
   )
 }
 
+// ─── HourMarker ───────────────────────────────────────────────────────────────
+function HourMarker({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', margin: '2px 0', pointerEvents: 'none' as const }}>
+      <div style={{ width: 52, flexShrink: 0, paddingRight: 8, textAlign: 'right' as const }}>
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#C4C9D4', letterSpacing: '0.04em' }}>{label}</span>
+      </div>
+      <div style={{ width: 26, flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ width: 5, height: 1, background: 'rgba(15,23,42,0.10)' }} />
+      </div>
+      <div style={{ flex: 1, height: 1, background: 'rgba(15,23,42,0.05)', borderRadius: 99 }} />
+    </div>
+  )
+}
+
 // ─── TimelineRow ──────────────────────────────────────────────────────────────
 function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp }: {
   appt: TimelineAppt
@@ -256,9 +271,16 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
             <div style={{ fontSize: 12.5, color: '#8A94A6', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 1 }}>
               {appt.address || 'No address'}
             </div>
-            {isFollowUp && (
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: '#F97316', marginTop: 3 }}>Needs follow-up</div>
-            )}
+            <div style={{ marginTop: 3 }}>
+              <span style={{
+                fontSize: 9.5, fontWeight: 800, letterSpacing: '0.06em',
+                textTransform: 'uppercase' as const, padding: '2px 6px', borderRadius: 4,
+                background: appt.status === 'completed' ? '#DCFCE7' : isFollowUp ? '#FFF7ED' : appt.status === 'cancelled' ? '#FEF2F2' : '#EFF6FF',
+                color:      appt.status === 'completed' ? '#16A34A' : isFollowUp ? '#EA580C' : appt.status === 'cancelled' ? '#DC2626' : '#2563EB',
+              }}>
+                {appt.status === 'completed' ? 'Completed' : isFollowUp ? 'Follow-up' : appt.status === 'cancelled' ? 'Cancelled' : 'Scheduled'}
+              </span>
+            </div>
           </div>
           {!expanded && (
             appt.estimateId ? (
@@ -1351,9 +1373,20 @@ export default function AppointmentsPage() {
                     <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.inkSoft} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
                   </button>
-                  {expandedRepIds.has(rep.id) && repAppts.map((appt, i) => (
-                    <TimelineRow key={appt.id} appt={appt} isLast={i === repAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(p => p === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={false} />
-                  ))}
+                  {expandedRepIds.has(rep.id) && repAppts.flatMap((appt, i) => {
+                    const rows: React.ReactNode[] = []
+                    if (appt.rawTime) {
+                      const curH = Math.floor(appt.hour)
+                      const prev = repAppts[i - 1]
+                      const prevH = prev?.rawTime ? Math.floor(prev.hour) : -1
+                      if (curH !== prevH) {
+                        const h = curH
+                        rows.push(<HourMarker key={`hr-${h}`} label={`${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`} />)
+                      }
+                    }
+                    rows.push(<TimelineRow key={appt.id} appt={appt} isLast={i === repAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(p => p === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={false} />)
+                    return rows
+                  })}
                 </div>
               )
             })}
@@ -1362,6 +1395,15 @@ export default function AppointmentsPage() {
             {!dayLoading && !showRepGrouped && displayedDayAppts.length > 0 && displayedDayAppts.flatMap((appt, i) => {
               const rows: React.ReactNode[] = []
               if (selectedDay === 'today' && i === nowInsertIdx) rows.push(<NowRow key="now" />)
+              if (appt.rawTime) {
+                const curH = Math.floor(appt.hour)
+                const prev = displayedDayAppts[i - 1]
+                const prevH = prev?.rawTime ? Math.floor(prev.hour) : -1
+                if (curH !== prevH) {
+                  const h = curH
+                  rows.push(<HourMarker key={`hr-${h}`} label={`${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`} />)
+                }
+              }
               rows.push(
                 <TimelineRow key={appt.id} appt={appt} isLast={i === displayedDayAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(prev => prev === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={selectedDay === 'today' && appt.status === 'upcoming' && (appt.endTime ? toHour(appt.endTime) : appt.hour + 0.5) < NOW} />
               )
