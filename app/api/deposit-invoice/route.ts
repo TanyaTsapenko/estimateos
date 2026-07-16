@@ -70,6 +70,11 @@ export async function POST(request: NextRequest) {
 
   if (invErr) return NextResponse.json({ error: invErr.message }, { status: 500 })
 
+  await admin.from('estimates').update({ invoice_id: invoice.id }).eq('id', estimateId)
+
+  let emailFailed = false
+  let emailErrorMsg: string | null = null
+
   if (est.client_email) {
     const { data: con } = await admin.from('contracts').select('id').eq('estimate_id', estimateId).order('created_at', { ascending: false }).limit(1).maybeSingle()
     const contractLink = con?.id
@@ -121,23 +126,50 @@ export async function POST(request: NextRequest) {
 
     const depositReplyTo = (prof as any)?.company_contact_email || (prof as any)?.interac_email || undefined
     try {
-      await resend.emails.send({
+      const { error: sendError } = await resend.emails.send({
         from: `${companyName} <noreply@useapexscale.com>`,
         to: [est.client_email],
         subject: `${depositPct === 100 ? 'Payment' : 'Deposit'} Invoice ${invoiceNum} — ${fmtInv(depositAmount)} due · ${companyName}`,
         html,
         ...(depositReplyTo ? { reply_to: depositReplyTo } : {}),
       })
-    } catch (emailError) {
-      console.error('[deposit-invoice] Failed to send email — rolling back invoice record:', emailError)
-      await admin.from('invoices').delete().eq('id', invoice.id)
-      return NextResponse.json({ error: 'Failed to send deposit email', details: String(emailError) }, { status: 500 })
+      if (sendError) {
+        emailFailed = true
+        emailErrorMsg = sendError.message
+        console.error('[deposit-invoice] Resend error (invoice preserved):', sendError)
+      }
+    } catch (emailError: any) {
+      emailFailed = true
+      emailErrorMsg = String(emailError?.message ?? emailError)
+      console.error('[deposit-invoice] Email send threw (invoice preserved):', emailError)
     }
   } else {
     console.error('[deposit-invoice] skipped email: no client_email for estimate', est.id)
   }
 
-  await admin.from('estimates').update({ invoice_id: invoice.id }).eq('id', estimateId)
+  if (emailFailed) {
+    await Promise.all([
+      logActivity(admin, {
+        user_id: est.user_id,
+        event_type: 'deposit_invoice_email_failed',
+        actor_type: 'contractor',
+        entity_type: 'estimate',
+        entity_id: estimateId,
+        entity_number: est.estimate_number,
+        client_name: est.client_name,
+        amount: depositAmount,
+      }).catch((e: any) => console.error('[deposit-invoice] logActivity error:', e)),
+      admin.from('notifications').insert({
+        user_id: est.user_id,
+        type: 'deposit_email_failed',
+        title: 'Deposit email failed to send',
+        body: `The deposit invoice for ${est.estimate_number}${est.client_name ? ` (${est.client_name})` : ''} was created but the email could not be sent. Please resend it manually.`,
+        read: false,
+        link: `/dashboard/estimates/${estimateId}`,
+      }),
+    ])
+    return NextResponse.json({ success: true, invoice, emailFailed: true, emailError: emailErrorMsg })
+  }
 
   logActivity(admin, {
     user_id: est.user_id,
