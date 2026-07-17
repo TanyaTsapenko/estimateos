@@ -330,7 +330,7 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
   // Total width for equal mode (string for controlled input)
   const [equalTotal, setEqualTotal] = useState<string>(() => String(totalSum || 72))
 
-  const eqW = (total: number, n: number) => Math.max(1, Math.round(total / n))
+  const eqW = (total: number, n: number) => Math.max(0.5, parseFloat((total / n).toFixed(1)))
   const parsedTotal = parseFloat(equalTotal) || 72
   const displayW = eqW(parsedTotal, sections.length)
 
