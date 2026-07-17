@@ -31,10 +31,6 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
   const inputRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  useEffect(() => {
-    console.log('[Places] AddressAutocomplete mounted')
-  }, [])
-
   // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -42,6 +38,10 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  useEffect(() => {
+    return () => clearTimeout(timerRef.current)
   }, [])
 
   // Recalculate dropdown position using fixed coords to escape overflow:hidden parents

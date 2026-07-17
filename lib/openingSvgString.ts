@@ -199,6 +199,7 @@ function bayStyle(unit: string, flip: boolean): string {
 export function openingSvgString(op: OpeningForSvg | string): string {
   if (typeof op === 'string') op = { type: op }
 
+  if (!op.type) return wrap(WF + dashedX(10, 10, 190, 220))
   const t   = op.type.toLowerCase().replace(/[_\s-]+/g, '')
   const sub = (op.window_subtype ?? '').toLowerCase().replace(/[_\s-]+/g, '')
   const dir = (op.opening_direction ?? '').toLowerCase()

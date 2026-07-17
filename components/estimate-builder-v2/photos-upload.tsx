@@ -114,7 +114,7 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
                         <circle cx="12" cy="13" r="3"/>
                       </svg>
-                      <input id={`${inputId}-replace`} type="file" accept="image/*" capture="environment"
+                      <input id={`${inputId}-replace`} type="file" accept="image/*"
                         style={{ display: 'none' }} onChange={e => handleUpload(slot, e)} />
                     </label>
                     {/* Download — opens in new tab (iOS fallback) + triggers save on desktop */}
@@ -151,7 +151,7 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
                       <span style={{ fontSize: 9, fontWeight: 700, color: C.inkSoft, textAlign: 'center', lineHeight: 1.2 }}>Add</span>
                     </>
                   )}
-                  <input id={inputId} type="file" accept="image/*" capture="environment"
+                  <input id={inputId} type="file" accept="image/*"
                     style={{ display: 'none' }} disabled={loading} onChange={e => handleUpload(slot, e)} />
                 </label>
               )}

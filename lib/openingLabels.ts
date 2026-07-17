@@ -27,7 +27,7 @@ export function getColourLabel(op: { colour?: string | null; custom_colour_label
   if (op.colour_name) return op.colour_name
   if (!op.colour) return ''
   if (op.colour === 'custom') return op.custom_colour_label || 'Custom colour'
-  return COLOUR_MAP[op.colour] || op.colour
+  return COLOUR_MAP[op.colour] || op.colour.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 export function getShapeLabel(op: { shape?: string | null; custom_shape_label?: string | null; shape_position?: string | null }): string {
@@ -43,7 +43,7 @@ export function getShapeLabel(op: { shape?: string | null; custom_shape_label?: 
 export function getInteriorColourLabel(op: { interior_colour?: string | null; interior_colour_name?: string | null }): string {
   if (op.interior_colour_name) return op.interior_colour_name
   if (!op.interior_colour || op.interior_colour === 'white') return ''
-  return COLOUR_MAP[op.interior_colour] || op.interior_colour
+  return COLOUR_MAP[op.interior_colour] || op.interior_colour.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 export function getSubtypeLabel(

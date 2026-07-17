@@ -12,7 +12,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .from('profiles')
     .select('trade, team_owner_id')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
   if (!profile?.trade && !profile?.team_owner_id) redirect('/onboarding')
 
   return (

@@ -247,7 +247,6 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#0A1628;backgro
     ${company.logo_url
       ? `<img src="${esc(company.logo_url)}" class="logo-img" alt="${esc(companyName)}" crossorigin="anonymous"/>`
       : `<div class="co-name">${esc(companyName)}</div>`}
-    ${company.logo_url ? `<div class="co-name">${esc(companyName)}</div>` : ''}
     <div class="co-info">
       ${[
         contactEmail,

@@ -10,9 +10,9 @@ export default function RootPage() {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setTimeout(() => router.replace('/dashboard'), 2200)
+        setTimeout(() => router.replace('/dashboard'), 900)
       } else {
-        setTimeout(() => router.replace('/auth'), 2200)
+        setTimeout(() => router.replace('/auth'), 900)
       }
     })
   }, [])

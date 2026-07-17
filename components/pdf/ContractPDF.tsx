@@ -65,12 +65,16 @@ const styles = StyleSheet.create({
   footerText: { fontSize: 8, color: INK_S },
 })
 
-function formatCurrency(amount: number) {
-  return `CA$${amount.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+function formatCurrency(amount: number | null | undefined) {
+  const n = amount ?? 0
+  return `CA$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+function formatDate(dateStr: string | null | undefined) {
+  if (!dateStr) return '—'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
 interface ContractPDFProps {
@@ -90,7 +94,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
   const balanceAmount = (estimate.total || 0) - depositAmount
   const clauses       = Array.isArray(contract.contract_clauses) ? contract.contract_clauses : []
   const companyName   = contract.company_name || company.company_name || 'Your Contractor'
-  const conId         = `CON-${contract.contract_number || contract.id.slice(-6).toUpperCase()}`
+  const conId         = `CON-${contract.contract_number || (contract.id ? contract.id.slice(-6).toUpperCase() : '??????')}`
   const docDate       = formatDate(contract.signed_at || contract.created_at)
 
   const detItems: { label: string; value: string }[] = []
