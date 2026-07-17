@@ -1,12 +1,18 @@
 import { Resend } from 'resend'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { createClient } from '@/lib/supabase/server'
+import { getTeamUserIds } from '@/lib/teamScope'
 import { logActivity } from '@/lib/activity'
 import { emailRateLimit } from '@/lib/rateLimit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1'
   const { success } = await emailRateLimit.limit(ip)
   if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -29,6 +35,12 @@ export async function POST(req: NextRequest) {
       .select('client_name, client_address, client_city, total, user_id, deposit_percent, estimate_number')
       .eq('id', estimateId).single()
     est = e
+    if (est) {
+      const { userIds } = await getTeamUserIds(svc, user.id)
+      if (!userIds.includes(est.user_id as string)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
     if (est?.user_id) {
       const { data: p } = await svc.from('profiles')
         .select('logo_url, phone, deposit_percent, company_contact_email, interac_email')

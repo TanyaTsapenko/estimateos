@@ -7,6 +7,10 @@ const fmtCA = (n: number) =>
   'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export async function POST(req: Request) {
+  const secret = process.env.INTERNAL_API_SECRET
+  if (!secret || req.headers.get('x-internal-secret') !== secret)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { clientEmail, clientName, companyName, companyPhone, companyEmail, contractId, total, logoUrl } = await req.json()
 
   const contractNumber = 'CON-' + contractId.slice(0, 6).toUpperCase()

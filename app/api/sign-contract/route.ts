@@ -133,5 +133,53 @@ export async function POST(request: NextRequest) {
     console.error('[sign-contract] logActivity error:', logErr)
   }
 
+  try {
+    const origin = request.nextUrl.origin
+    const internalSecret = process.env.INTERNAL_API_SECRET
+    if (internalSecret) {
+      const [{ data: profForNotify }, { data: estForNotify }] = await Promise.all([
+        supabase.from('profiles')
+          .select('email, phone, logo_url, deposit_percent, company_name')
+          .eq('id', contract.profile_id).single(),
+        supabase.from('estimates')
+          .select('client_email, client_name, total, deposit_percent')
+          .eq('id', contract.estimate_id).single(),
+      ])
+      if (profForNotify && estForNotify) {
+        const depositPct = estForNotify.deposit_percent ?? profForNotify.deposit_percent ?? 30
+        await Promise.allSettled([
+          fetch(`${origin}/api/notify-contractor-signed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': internalSecret },
+            body: JSON.stringify({
+              contractorEmail: profForNotify.email || '',
+              clientName: estForNotify.client_name || clientName,
+              companyName: profForNotify.company_name || '',
+              total: estForNotify.total || 0,
+              depositPercent: depositPct,
+              contractId,
+            }),
+          }),
+          fetch(`${origin}/api/send-contract-signed`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': internalSecret },
+            body: JSON.stringify({
+              clientEmail: estForNotify.client_email || '',
+              clientName: estForNotify.client_name || clientName,
+              companyName: profForNotify.company_name || '',
+              companyPhone: profForNotify.phone || null,
+              companyEmail: profForNotify.email || null,
+              contractId,
+              total: estForNotify.total || 0,
+              logoUrl: profForNotify.logo_url || null,
+            }),
+          }),
+        ])
+      }
+    }
+  } catch (notifyErr) {
+    console.error('[sign-contract] notification error:', notifyErr)
+  }
+
   return NextResponse.json({ success: true, signatureUrl })
 }

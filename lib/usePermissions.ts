@@ -42,7 +42,13 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
         .select('role, permissions, team_owner_id, member_role')
         .eq('id', user.id)
         .single()
-      if (!data) { setLoading(false); return }
+      if (!data) {
+        console.warn('[usePermissions] profile fetch failed; defaulting to minimal permissions')
+        setRole('estimator')
+        setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS)
+        setLoading(false)
+        return
+      }
 
       const r = (data.role ?? null) as string | null
       const isTeamMember = !!data.team_owner_id

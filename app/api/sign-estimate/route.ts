@@ -13,12 +13,15 @@ export async function POST(request: NextRequest) {
 
   const { data: estimate, error: estErr } = await supabase
     .from('estimates')
-    .select('id, status, user_id, estimate_number, client_name, total')
+    .select('id, status, user_id, estimate_number, client_name, total, client_signature_url')
     .eq('id', estimateId)
     .single()
 
   if (estErr || !estimate) return NextResponse.json({ error: 'Estimate not found' }, { status: 404 })
-  if (!['draft', 'sent'].includes(estimate.status)) {
+  if (action === 'sign' && estimate.status === 'signed') {
+    return NextResponse.json({ success: true, signatureUrl: estimate.client_signature_url })
+  }
+  if (estimate.status !== 'sent') {
     return NextResponse.json({ error: 'Estimate cannot be signed or declined in its current state' }, { status: 400 })
   }
 

@@ -37,12 +37,11 @@ const OPENING_COLS = [
 ].join(', ')
 
 const PROFILE_COLS = [
-  'deposit_percent', 'deposit_required', 'signature_url', 'warranty_period',
-  'cancellation_policy', 'contract_terms', 'completion_timeframe', 'payment_methods',
-  'customer_responsibilities', 'buyer_right_to_cancel', 'damage_disclaimer',
-  'permits_responsibility', 'project_manager', 'logo_url', 'phone', 'website',
-  'city', 'province', 'address', 'postal', 'contract_clauses', 'deposit_timing',
-  'company_contact_email', 'gst_hst_number', 'licence',
+  'deposit_percent', 'signature_url', 'warranty_period',
+  'contract_terms', 'completion_timeframe', 'payment_methods',
+  'project_manager', 'logo_url', 'phone', 'website',
+  'city', 'province', 'address', 'postal', 'contract_clauses',
+  'gst_hst_number', 'licence',
 ].join(', ')
 
 type Row = Record<string, unknown>

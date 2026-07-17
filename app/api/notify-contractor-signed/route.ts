@@ -6,6 +6,10 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 const fmtCA = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export async function POST(req: Request) {
+  const secret = process.env.INTERNAL_API_SECRET
+  if (!secret || req.headers.get('x-internal-secret') !== secret)
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { contractorEmail, clientName, companyName, total, depositPercent, contractId } = await req.json()
 
   const depositAmount = Math.round(total * depositPercent) / 100

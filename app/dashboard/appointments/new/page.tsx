@@ -176,7 +176,7 @@ export default function NewAppointmentPage() {
           console.log('[appointments/new] about to insert client')
           const { data: created, error: createErr } = await supabase
             .from('clients').insert({
-              owner_id:    sanitizedId,
+              owner_id:    ownerId,
               name:        form.client_name.trim(),
               phone:       phone,
               email:       email,

@@ -58,7 +58,7 @@ export async function GET(
   const svc = createServiceClient()
 
   const estimate = await row(
-    svc.from('estimates').select(ESTIMATE_COLS).eq('id', id).maybeSingle()
+    svc.from('estimates').select(ESTIMATE_COLS).eq('id', id).neq('status', 'draft').maybeSingle()
   )
   if (!estimate) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

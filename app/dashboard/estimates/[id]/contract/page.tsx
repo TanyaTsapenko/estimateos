@@ -89,15 +89,28 @@ export default function ContractPage() {
 
   useEffect(() => {
     async function load() {
-      const [{ data: est }, { data: ops, error: opsErr }] = await Promise.all([
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      const myId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+
+      const [{ data: est }, { data: ops, error: opsErr }, { data: myProf }] = await Promise.all([
         supabase.from('estimates').select('*').eq('id', id).single(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', id).order('created_at', { ascending: true }),
+        supabase.from('profiles').select('team_owner_id').eq('id', myId).single(),
       ])
       if (opsErr) console.error('[contract page] openings error:', opsErr)
       if (!est) { setLoading(false); return }
+
+      const myRoot = myProf?.team_owner_id || myId
+      const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
+      if (estOwnerId !== myRoot) {
+        const { data: estOwnerProf } = await supabase.from('profiles').select('team_owner_id').eq('id', estOwnerId).single()
+        const estRoot = estOwnerProf?.team_owner_id || estOwnerId
+        if (estRoot !== myRoot) { setLoading(false); return }
+      }
+
       setEstimate(est)
       setOpenings(ops || [])
-      const estOwnerId = est.user_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof } = await supabase
         .from('profiles')
         .select('id, company_name, phone, email, address, city, province, postal, website, licence, signature_url, contract_terms, logo_url, deposit_percent, warranty_period, warranty_summary, completion_timeframe, payment_methods, project_manager, contract_clauses, gst_hst_number, signing_rep_name, signing_rep_title, first_name, last_name, team_owner_id')
@@ -238,26 +251,11 @@ export default function ContractPage() {
         setClientSignatureUrl(result.signatureUrl)
         setSignedContractId(contractId)
 
-        await Promise.allSettled([
-          fetch('/api/notify-contractor-signed', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contractorEmail: profile?.email || '',
-              contractorName: resolvedCompanyName,
-              clientName: estimate?.client_name || '',
-              companyName: resolvedCompanyName,
-              total: estimate?.total || 0,
-              depositPercent: depositPct,
-              contractId,
-            }),
-          }),
-          fetch('/api/create-deposit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estimateId: id }),
-          }),
-        ])
+        await fetch('/api/create-deposit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estimateId: id }),
+        })
 
         setShowSuccess(true)
         return
