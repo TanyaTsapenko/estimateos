@@ -383,7 +383,7 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
         )}
 
         {/* ── TOTALS + NOTES ── */}
-        <View style={S.bottomHalf} wrap={false}>
+        <View style={[S.bottomHalf, !estimate.scope_notes ? { justifyContent: 'flex-end' } : {}]} wrap={false}>
           {/* Scope notes */}
           {!!estimate.scope_notes && (
             <View style={S.notesCol}>
@@ -393,7 +393,7 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
           )}
 
           {/* Totals */}
-          <View style={[S.totalsCol, !estimate.scope_notes ? { marginLeft: 'auto' } : {}]}>
+          <View style={S.totalsCol}>
             <Text style={[S.secLabel, { marginTop: 8 }]}>Pricing</Text>
 
             <View style={S.totRow}>
