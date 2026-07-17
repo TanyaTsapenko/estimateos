@@ -21,10 +21,12 @@ export async function POST(req: NextRequest) {
 
   if (!clientEmail) return NextResponse.json({ error: 'No client email' }, { status: 400 })
 
+  if (!contractId) return NextResponse.json({ error: 'Missing contractId' }, { status: 400 })
+  const safeCompany = (companyName || '').replace(/[<>"&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;','&':'&amp;'}[c]!))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
   const signUrl = `${appUrl}/sign/contract/${contractId}`
   const fmt = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const contractBadge = 'CON-' + contractId.slice(0, 6).toUpperCase()
+  const contractBadge = 'CON-' + (contractId as string).slice(0, 6).toUpperCase()
 
   const svc = createServiceClient()
   let est: any = null
@@ -56,8 +58,8 @@ export async function POST(req: NextRequest) {
   const depositFmt = est?.total != null ? fmt(est.total * depositPct / 100) : null
 
   const logoHtml = prof?.logo_url
-    ? `<img src="${prof.logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${companyName}" />`
-    : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;vertical-align:middle;">${companyName.charAt(0).toUpperCase()}</td></tr></table></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${companyName}</span></td></tr></table>`
+    ? `<img src="${prof.logo_url}" style="height:30px;max-width:160px;display:block;object-fit:contain;" alt="${safeCompany}" />`
+    : `<table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:middle;padding-right:8px;"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td width="30" height="30" style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,#1a3a7c,#2563EB);color:#fff;font-weight:800;font-size:14px;text-align:center;line-height:30px;vertical-align:middle;">${safeCompany.charAt(0).toUpperCase() || 'A'}</td></tr></table></td><td style="vertical-align:middle;"><span style="font-size:14px;font-weight:800;color:#0B1220;">${safeCompany}</span></td></tr></table>`
 
   const introPara = projectAddress
     ? `Review the details for your project at <b style="color:#0B1220;">${projectAddress}</b> and sign online in a couple of taps. Once signed, you'll receive a copy and deposit instructions by email.`
@@ -73,8 +75,8 @@ export async function POST(req: NextRequest) {
     : ''
 
   const phoneFooter = prof?.phone
-    ? `Questions before signing?<br>Contact <b style="color:#475467;">${companyName}</b> &middot; ${prof.phone}`
-    : `Questions before signing? Contact <b style="color:#475467;">${companyName}</b>`
+    ? `Questions before signing?<br>Contact <b style="color:#475467;">${safeCompany}</b> &middot; ${prof.phone}`
+    : `Questions before signing? Contact <b style="color:#475467;">${safeCompany}</b>`
 
   const emailHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EAECF2" style="background:#EAECF2;"><tr><td align="center" style="padding:32px 16px;">
 <div style="font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:600px;width:100%;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(15,23,42,0.06);">
