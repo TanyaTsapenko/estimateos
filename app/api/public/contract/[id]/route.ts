@@ -18,7 +18,7 @@ const ESTIMATE_COLS = [
   'subtotal', 'tax_amount', 'total', 'discount_amount',
   'trim_casing', 'trim_casing_size', 'trim_jamb', 'trim_jamb_extension_depth',
   'trim_jamb_extension_depth_custom', 'trim_brickmold', 'trim_brickmold_colour_name',
-  'trim_rosettes', 'trim_caping', 'trim_nail_fin', 'trim_drip_cap', 'trim_blue_skin',
+  'trim_rosettes', 'trim_capping', 'trim_nail_fin', 'trim_drip_cap', 'trim_blue_skin',
 ].join(', ')
 
 const OPENING_COLS = [

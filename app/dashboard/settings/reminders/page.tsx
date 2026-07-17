@@ -96,7 +96,9 @@ export default function ReminderSettingsPage() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
@@ -114,7 +116,7 @@ export default function ReminderSettingsPage() {
         setSettings(loaded)
         setInitial(loaded)
       }
-    })
+    })()
   }, [])
 
   async function save() {

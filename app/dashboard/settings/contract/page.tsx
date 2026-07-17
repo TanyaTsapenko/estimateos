@@ -175,7 +175,7 @@ export default function ContractSettingsPage() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: any) => {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
@@ -184,7 +184,7 @@ export default function ContractSettingsPage() {
         .select('signature_url, warranty_period, deposit_required, deposit_percent, deposit_timing, project_manager, completion_timeframe, payment_methods, contract_clauses')
         .eq('id', sanitizedId)
         .single()
-        .then(({ data: prof }) => {
+        .then(({ data: prof }: any) => {
           if ((prof as any)?.signature_url) setSignatureUrl((prof as any).signature_url)
           const wp  = (prof as any)?.warranty_period     || '1 year'
           const dr  = (prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null ? (prof as any).deposit_required : true

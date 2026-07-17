@@ -106,7 +106,7 @@ export default function SignContractPage() {
 
   useEffect(() => {
     createClient().auth.getUser()
-      .then(({ data: { user } }) => setIsAnon(!user))
+      .then(({ data }: any) => setIsAnon(!data?.user))
       .catch(() => setIsAnon(true))
   }, [])
 

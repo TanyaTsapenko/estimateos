@@ -238,7 +238,7 @@ export default function EstimateDetailPage() {
         .select('*').eq('estimate_id', estimate.id)
       if (ops?.length) {
         await supabase.from('estimate_openings').insert(
-          ops.map(o => ({ ...o, id: undefined, estimate_id: newEst.id }))
+          ops.map((o: any) => ({ ...o, id: undefined, estimate_id: newEst.id }))
         )
       }
       setDupToast({ num, id: newEst.id })

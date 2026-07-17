@@ -28,12 +28,14 @@ export default function Sidebar() {
   const [roleLabel, setRoleLabel] = useState('')
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const { data: prof } = await supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single()
-      const name = prof ? [prof.first_name, prof.last_name].filter(Boolean).join(' ') : user.email?.split('@')[0] || ''
+      const name = prof ? [(prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') : user.email?.split('@')[0] || ''
       setDisplayName(name)
-    })
+    })()
   }, [])
 
   useEffect(() => {

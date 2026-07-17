@@ -1018,7 +1018,9 @@ function NewEstimateForm() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       userIdRef.current = sanitizedId
@@ -1096,7 +1098,7 @@ function NewEstimateForm() {
           setTrimBrickmoldPaletteId((est as any).trim_brickmold_colour_palette_id || null)
           setTrimBrickmoldColourName((est as any).trim_brickmold_colour_name || null)
           setTrimRosettes((est as any).trim_rosettes || 'none')
-          setTrimCaping(Boolean((est as any).trim_caping))
+          setTrimCaping(Boolean((est as any).trim_capping))
           setTrimNailFin(Boolean((est as any).trim_nail_fin))
           setTrimDripCap(Boolean((est as any).trim_drip_cap))
           setTrimBlueSkin(Boolean((est as any).trim_blue_skin))
@@ -1162,7 +1164,7 @@ function NewEstimateForm() {
         }
       }
       applyPriceRows(priceRows)
-    })
+    })()
   }, [])
 
   const province = client.client_province || profile?.province || 'AB'
@@ -1264,7 +1266,7 @@ function NewEstimateForm() {
       trim_brickmold_colour_palette_id: trimBrickmold ? trimBrickmoldPaletteId : null,
       trim_brickmold_colour_name: trimBrickmold ? trimBrickmoldColourName : null,
       trim_rosettes: trimRosettes,
-      trim_caping: trimCaping,
+      trim_capping: trimCaping,
       trim_nail_fin: trimNailFin,
       trim_drip_cap: trimDripCap,
       trim_blue_skin: trimBlueSkin,

@@ -35,46 +35,50 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { setRole('estimator'); setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS); setLoading(false); return }
-      const { data } = await supabase
-        .from('profiles')
-        .select('role, permissions, team_owner_id, member_role')
-        .eq('id', user.id)
-        .maybeSingle()
-      if (!data) {
-        console.warn('[usePermissions] profile fetch failed; defaulting to minimal permissions')
+    ;(async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const user = authData?.user ?? null
+        if (!user) { setRole('estimator'); setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS); setLoading(false); return }
+        const { data } = await supabase
+          .from('profiles')
+          .select('role, permissions, team_owner_id, member_role')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (!data) {
+          console.warn('[usePermissions] profile fetch failed; defaulting to minimal permissions')
+          setRole('estimator')
+          setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS)
+          setLoading(false)
+          return
+        }
+
+        const r = (data.role ?? null) as string | null
+        const isTeamMember = !!data.team_owner_id
+        const isOwner = r === 'owner' || r === 'manager' || (!r && !isTeamMember) || (!r && data.member_role === 'owner') || (!r && data.member_role === 'manager')
+        const isAdmin = r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')
+
+        if (isOwner) {
+          setRole('owner')
+          setPermissions(OWNER_PERMISSIONS)
+        } else if (isAdmin) {
+          setRole('admin')
+          setPermissions(DEFAULT_ADMIN_PERMISSIONS)
+        } else {
+          setRole('estimator')
+          const stored = data.permissions as Partial<Permissions> | null
+          const KEYS = Object.keys(DEFAULT_ESTIMATOR_PERMISSIONS) as (keyof Permissions)[]
+          const filtered: Partial<Permissions> = {}
+          if (stored) for (const k of KEYS) if (typeof stored[k] === 'boolean') filtered[k] = stored[k]
+          setPermissions({ ...DEFAULT_ESTIMATOR_PERMISSIONS, ...filtered })
+        }
+        setLoading(false)
+      } catch {
         setRole('estimator')
         setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS)
         setLoading(false)
-        return
       }
-
-      const r = (data.role ?? null) as string | null
-      const isTeamMember = !!data.team_owner_id
-      const isOwner = r === 'owner' || r === 'manager' || (!r && !isTeamMember) || (!r && data.member_role === 'owner') || (!r && data.member_role === 'manager')
-      const isAdmin = r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')
-
-      if (isOwner) {
-        setRole('owner')
-        setPermissions(OWNER_PERMISSIONS)
-      } else if (isAdmin) {
-        setRole('admin')
-        setPermissions(DEFAULT_ADMIN_PERMISSIONS)
-      } else {
-        setRole('estimator')
-        const stored = data.permissions as Partial<Permissions> | null
-        const KEYS = Object.keys(DEFAULT_ESTIMATOR_PERMISSIONS) as (keyof Permissions)[]
-        const filtered: Partial<Permissions> = {}
-        if (stored) for (const k of KEYS) if (typeof stored[k] === 'boolean') filtered[k] = stored[k]
-        setPermissions({ ...DEFAULT_ESTIMATOR_PERMISSIONS, ...filtered })
-      }
-      setLoading(false)
-    }).catch(() => {
-      setRole('estimator')
-      setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS)
-      setLoading(false)
-    })
+    })()
   }, [])
 
   return { role, permissions, loading }

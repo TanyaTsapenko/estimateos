@@ -94,7 +94,9 @@ export default function NewAppointmentPage() {
   }, [form.appointment_date, form.appointment_time, form.appointment_end_time, form.assigned_to])
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: prof }, { data: members }] = await Promise.all([
@@ -102,7 +104,7 @@ export default function NewAppointmentPage() {
         supabase.from('profiles').select('id, first_name, last_name, email').eq('team_owner_id', sanitizedId),
       ])
       const ownerName = prof
-        ? [( prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') || 'You'
+        ? [(prof as any).first_name, (prof as any).last_name].filter(Boolean).join(' ') || 'You'
         : 'You'
       const owner: TeamMember = { id: sanitizedId, name: ownerName }
       const extras: TeamMember[] = (members || []).map((m: any) => ({
@@ -113,7 +115,7 @@ export default function NewAppointmentPage() {
       setTeamMembers(extras)
       setAllMembers(all)
       set('assigned_to', sanitizedId)
-    })
+    })()
   }, [])
 
   async function save() {

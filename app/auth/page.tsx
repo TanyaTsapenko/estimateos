@@ -12,9 +12,12 @@ export default function SplashPage() {
   const router = useRouter()
 
   useEffect(() => {
-    createClient().auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/dashboard')
-    }).catch(() => {})
+    ;(async () => {
+      try {
+        const { data } = await createClient().auth.getSession()
+        if (data.session) router.replace('/dashboard')
+      } catch {}
+    })()
   }, [])
 
   return (

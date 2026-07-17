@@ -11,7 +11,7 @@ export type TrimRow = {
   trim_brickmold?: boolean | null
   trim_brickmold_colour_name?: string | null
   trim_rosettes?: string | null
-  trim_caping?: boolean | null
+  trim_capping?: boolean | null
   trim_nail_fin?: boolean | null
   trim_drip_cap?: boolean | null
   trim_blue_skin?: boolean | null
@@ -52,7 +52,7 @@ export function trimSummaryLines(row: TrimRow): { label: string; value: string }
   if (row.trim_rosettes && row.trim_rosettes !== 'none') {
     lines.push({ label: 'Rosettes', value: ROSETTE_LABELS[row.trim_rosettes] || cap(row.trim_rosettes) })
   }
-  if (row.trim_caping)    lines.push({ label: 'Capping',   value: 'Yes' })
+  if (row.trim_capping)   lines.push({ label: 'Capping',   value: 'Yes' })
   if (row.trim_nail_fin)  lines.push({ label: 'Nail fin',  value: 'Yes' })
   if (row.trim_drip_cap)  lines.push({ label: 'Drip cap',  value: 'Yes' })
   if (row.trim_blue_skin) lines.push({ label: 'Self-Adhesive Flashing Membrane', value: 'Yes' })

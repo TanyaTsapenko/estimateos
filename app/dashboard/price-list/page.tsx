@@ -145,7 +145,7 @@ export default function PriceListPage() {
         data = refetched
       }
       if (data) {
-        setItems(data.map(r => ({
+        setItems(data.map((r: any) => ({
           key:         r.opening_type,
           label:       r.custom_label || r.opening_type,
           base:        r.base_price   || 0,

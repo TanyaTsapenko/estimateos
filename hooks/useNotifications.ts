@@ -29,7 +29,7 @@ export function useNotifications() {
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'notifications',
           filter: `user_id=eq.${user.id}`,
-        }, (payload) => setNotifs(prev => [payload.new as Notif, ...prev].slice(0, 30)))
+        }, (payload: any) => setNotifs(prev => [payload.new as Notif, ...prev].slice(0, 30)))
         .subscribe()
     }
     load()

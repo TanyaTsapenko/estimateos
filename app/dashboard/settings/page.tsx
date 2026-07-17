@@ -220,7 +220,9 @@ function ProfileSection({ flash }: { flash: FlashFn }) {
   const valid = !!values.firstName && !!values.lastName && !!values.email
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
@@ -236,7 +238,7 @@ function ProfileSection({ flash }: { flash: FlashFn }) {
         setValues(loaded)
         setInitial(loaded)
       }
-    })
+    })()
   }, [])
 
   // Revoke object URL when it's no longer needed
@@ -455,7 +457,9 @@ function NotificationsSection({ flash }: { flash: FlashFn }) {
   const dirty = JSON.stringify({ email, digest, inapp }) !== JSON.stringify(saved)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const { data: prof } = await supabase.from('profiles').select('notification_settings').eq('id', sanitizedId).single()
@@ -467,7 +471,7 @@ function NotificationsSection({ flash }: { flash: FlashFn }) {
         setEmail(e); setDigest(d); setInapp(i)
         setSaved({ email: e, digest: d, inapp: i })
       }
-    })
+    })()
   }, [])
 
   async function handleSave() {
@@ -616,7 +620,9 @@ function CompanySection({ flash }: { flash: FlashFn }) {
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
@@ -655,7 +661,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
         if ((prof as any).logo_url) setLogoUrl((prof as any).logo_url)
         if ((prof as any).warranty_pdf_url) setWarrantyPdfUrl((prof as any).warranty_pdf_url)
       }
-    })
+    })()
   }, [])
 
   async function saveCompany() {
@@ -879,7 +885,9 @@ function TeamSection({ flash }: { flash: FlashFn }) {
   const [editingMemberOriginal, setEditingMemberOriginal] = useState<{ role: string; permissions: typeof invitePerms } | null>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) return
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setMyId(sanitizedId)
@@ -891,7 +899,7 @@ function TeamSection({ flash }: { flash: FlashFn }) {
       setOwnerProfile(ownerProf)
       setMembers(mems || [])
       setPendingCount(invs?.length ?? 0)
-    })
+    })()
   }, [])
 
   async function updateMemberRole(memberId: string, newRole: string) {
@@ -1182,11 +1190,11 @@ function ContractSection({ flash }: { flash: FlashFn }) {
   const [hasStrokes, setHasStrokes] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(({ data }: any) => {
       if (!data.user) return
       const sanitizedId = data.user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
-      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, deposit_timing, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }) => {
+      supabase.from('profiles').select('signature_url, warranty_period, deposit_required, deposit_percent, deposit_timing, project_manager, completion_timeframe, payment_methods, contract_clauses').eq('id', sanitizedId).single().then(({ data: prof }: any) => {
         if ((prof as any)?.signature_url)   setSignatureUrl((prof as any).signature_url)
         const wp  = (prof as any)?.warranty_period     || '1 year'
         const dr  = (prof as any)?.deposit_required !== undefined && (prof as any)?.deposit_required !== null ? (prof as any).deposit_required : true
@@ -1769,7 +1777,9 @@ export default function SettingsPage() {
   }, [searchParams])
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    ;(async () => {
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user ?? null
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       const [{ data: prof }, { data: teamMems }, { data: teamInvs }] = await Promise.all([
@@ -1777,12 +1787,12 @@ export default function SettingsPage() {
         supabase.from('profiles').select('id').eq('team_owner_id', sanitizedId),
         supabase.from('team_invitations').select('id').eq('owner_id', sanitizedId).eq('status', 'pending'),
       ])
-      if (prof?.company_name) setCompanyName(prof.company_name)
+      if ((prof as any)?.company_name) setCompanyName((prof as any).company_name)
       const memberCount = 1 + (teamMems?.length ?? 0)
-      const pendingCount = teamInvs?.length ?? 0
+      const pendingCount = (teamInvs as any[])?.length ?? 0
       const memberLabel = `${memberCount} member${memberCount !== 1 ? 's' : ''}`
       setTeamDesc(pendingCount > 0 ? `${memberLabel} · ${pendingCount} invite${pendingCount !== 1 ? 's' : ''}` : memberLabel)
-    })
+    })()
   }, [])
 
   // Build visible tab groups based on permissions

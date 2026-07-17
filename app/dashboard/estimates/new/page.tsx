@@ -439,7 +439,7 @@ function NewEstimateV2() {
     if (!editId) return
     async function loadEstimate() {
       const [{ data: est }, { data: ops }] = await Promise.all([
-        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, discount_type, discount_value, trim_casing, trim_casing_size, trim_casing_custom_name, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_jamb_custom_name, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_caping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
+        supabase.from('estimates').select('client_id, client_name, client_email, client_phone, client_address, client_city, client_province, client_postal_code, scope_notes, discount_type, discount_value, trim_casing, trim_casing_size, trim_casing_custom_name, trim_jamb, trim_jamb_extension_depth, trim_jamb_extension_depth_custom, trim_jamb_custom_name, trim_brickmold, trim_brickmold_colour_name, trim_rosettes, trim_capping, trim_nail_fin, trim_drip_cap, trim_blue_skin').eq('id', editId).maybeSingle(),
         supabase.from('estimate_openings').select('*').eq('estimate_id', editId).order('sort_order'),
       ])
       if (!est) return
@@ -466,7 +466,7 @@ function NewEstimateV2() {
         brickmold:                 Boolean(e.trim_brickmold),
         brickmoldColourName:       (e.trim_brickmold_colour_name as string | null) || null,
         rosettes:                  String(e.trim_rosettes                  || 'none'),
-        caping:                    Boolean(e.trim_caping),
+        caping:                    Boolean(e.trim_capping),
         nailFin:                   Boolean(e.trim_nail_fin),
         dripCap:                   Boolean(e.trim_drip_cap),
         blueSkin:                  Boolean(e.trim_blue_skin),
@@ -674,7 +674,7 @@ function NewEstimateV2() {
         trim_brickmold:                   trimState.brickmold,
         trim_brickmold_colour_name:       trimState.brickmold ? trimState.brickmoldColourName : null,
         trim_rosettes:                    trimState.rosettes,
-        trim_caping:                      trimState.caping,
+        trim_capping:                     trimState.caping,
         trim_nail_fin:                    trimState.nailFin,
         trim_drip_cap:                    trimState.dripCap,
         trim_blue_skin:                   trimState.blueSkin,

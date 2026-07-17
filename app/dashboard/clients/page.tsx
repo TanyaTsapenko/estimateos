@@ -86,7 +86,7 @@ export default function ClientsPage() {
         estMap.set(e.client_id, cur)
       }
 
-      setClients((clientRows || []).map(c => ({
+      setClients((clientRows || []).map((c: any) => ({
         ...c,
         ...(estMap.get(c.id) ?? { estimateCount: 0, signedCount: 0, totalValue: 0 }),
         estimateCount: estMap.get(c.id)?.count ?? 0,

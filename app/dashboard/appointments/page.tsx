@@ -852,13 +852,13 @@ export default function AppointmentsPage() {
       .order('appointment_time', { ascending: true, nullsFirst: false })
       .limit(50)
     const apptList = rows || []
-    const estIds = apptList.flatMap(a => a.estimate_id ? [a.estimate_id as string] : [])
+    const estIds = apptList.flatMap((a: any) => a.estimate_id ? [a.estimate_id as string] : [])
     let estMap = new Map<string, string>()
     if (estIds.length > 0) {
       const { data: ests } = await supabase.from('estimates').select('id, estimate_number').in('id', estIds)
-      estMap = new Map((ests ?? []).map(e => [e.id, e.estimate_number]))
+      estMap = new Map((ests ?? []).map((e: any) => [e.id, e.estimate_number]))
     }
-    setAppts(apptList.map(a => ({ ...a, user_id: (a as any).assigned_to || a.user_id, estimate_number: a.estimate_id ? (estMap.get(a.estimate_id) ?? null) : null })))
+    setAppts(apptList.map((a: any) => ({ ...a, user_id: a.assigned_to || a.user_id, estimate_number: a.estimate_id ? (estMap.get(a.estimate_id) ?? null) : null })))
     setLoading(false)
   }, [])
 
@@ -897,7 +897,7 @@ export default function AppointmentsPage() {
       .or(`user_id.in.(${teamUserIds.join(',')}),assigned_to.in.(${teamUserIds.join(',')})`)
       .gte('appointment_date', firstDay)
       .lte('appointment_date', lastDay)
-      .then(({ data }) => setMonthDots(new Set((data || []).map((a: { appointment_date: string }) => a.appointment_date))))
+      .then(({ data }: any) => setMonthDots(new Set((data || []).map((a: any) => a.appointment_date))))
   }, [teamUserIds, calYear, calMonth])
 
   // Load day appointments when userId or selectedDay changes
@@ -919,14 +919,14 @@ export default function AppointmentsPage() {
         .limit(50)
 
       const rowList = rows || []
-      const estIds = rowList.filter(a => a.estimate_id).map(a => a.estimate_id!)
+      const estIds = rowList.filter((a: any) => a.estimate_id).map((a: any) => a.estimate_id!)
       let estTotalMap = new Map<string, number>()
       if (estIds.length > 0) {
         const { data: ests } = await supabase.from('estimates').select('id, total').in('id', estIds)
-        estTotalMap = new Map((ests ?? []).map(e => [e.id, e.total ?? 0]))
+        estTotalMap = new Map((ests ?? []).map((e: any) => [e.id, e.total ?? 0]))
       }
 
-      const mapped: TimelineAppt[] = rowList.map(a => {
+      const mapped: TimelineAppt[] = rowList.map((a: any) => {
         const total = a.estimate_id ? (estTotalMap.get(a.estimate_id) ?? null) : null
         return {
           id: a.id,

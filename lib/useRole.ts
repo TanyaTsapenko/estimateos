@@ -10,29 +10,33 @@ export function useRole(): { role: AppRole; loading: boolean } {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { setRole('estimator'); setLoading(false); return }
+    ;(async () => {
+      try {
+        const { data: authData } = await supabase.auth.getUser()
+        const user = authData?.user ?? null
+        if (!user) { setRole('estimator'); setLoading(false); return }
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('role, member_role, team_owner_id')
-        .eq('id', user.id)
-        .maybeSingle()
+        const { data } = await supabase
+          .from('profiles')
+          .select('role, member_role, team_owner_id')
+          .eq('id', user.id)
+          .maybeSingle()
 
-      if (!data) { setRole('estimator'); setLoading(false); return }
+        if (!data) { setRole('estimator'); setLoading(false); return }
 
-      const r = (data.role ?? null) as string | null
-      const isTeamMember = !!data.team_owner_id
+        const r = (data.role ?? null) as string | null
+        const isTeamMember = !!data.team_owner_id
 
-      if (r === 'estimator' || (!r && isTeamMember && data.member_role === 'estimator')) {
-        setRole('estimator')
-      } else if (r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')) {
-        setRole('admin')
-      } else {
-        setRole('owner')
-      }
-      setLoading(false)
-    }).catch(() => { setRole('estimator'); setLoading(false) })
+        if (r === 'estimator' || (!r && isTeamMember && data.member_role === 'estimator')) {
+          setRole('estimator')
+        } else if (r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')) {
+          setRole('admin')
+        } else {
+          setRole('owner')
+        }
+        setLoading(false)
+      } catch { setRole('estimator'); setLoading(false) }
+    })()
   }, [])
 
   return { role, loading }

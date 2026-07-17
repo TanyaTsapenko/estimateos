@@ -276,7 +276,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       setAppointments(apptList)
 
       // Phase 2: estimates by appointment_id (estimates.client_id is not reliably set)
-      const apptIds = apptList.map(a => a.id)
+      const apptIds = apptList.map((a: any) => a.id)
       const { data: ests } = apptIds.length
         ? await supabase.from('estimates')
             .select('id, estimate_number, status, total, created_at, appointment_id')
@@ -288,7 +288,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       const estList = ests || []
 
       // Phase 3: contracts + invoices by estimate IDs
-      const estimateIds = estList.map(e => e.id)
+      const estimateIds = estList.map((e: any) => e.id)
       const [{ data: contracts }, { data: invoices }] = estimateIds.length
         ? await Promise.all([
             supabase.from('contracts').select('id, estimate_id, status').in('estimate_id', estimateIds),
@@ -315,7 +315,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
         estById.set(e.id, e)
       }
 
-      const built: Project[] = apptList.map(a => {
+      const built: Project[] = apptList.map((a: any) => {
         const estimate = estByApptId.get(a.id) ?? (a.estimate_id ? estById.get(a.estimate_id) ?? null : null)
         const invs     = estimate ? (invoiceMap.get(estimate.id) ?? { deposit: null, final: null }) : { deposit: null, final: null }
         return {

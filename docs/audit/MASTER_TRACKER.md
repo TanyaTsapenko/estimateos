@@ -48,6 +48,18 @@
 
 ---
 
+## DEFERRED — Wave 2 session (July 17, 2026)
+
+| # | Item | Reason deferred |
+|---|------|-----------------|
+| #47 | **Profile creation race** — `auth.users` row may exist before `profiles` row is committed when two concurrent sign-up paths (email confirm + Google OAuth) race each other. Risk: reads against `profiles` get null, defaulting user to estimator role permanently. | Requires DB trigger or server-side hook; cannot be fixed client-side without introducing a new `profiles` upsert API route with idempotency key. Deferred until auth hardening sprint. |
+| #55 | **COLOUR_MAP completeness** — `COLOUR_MAP` in opening types/pricing only covers ~15 named colours; any colour string outside the map falls through to raw text in contracts and estimates. | Needs product decision on canonical colour list; incomplete list would require ongoing maintenance. Deferred until colour picker replaces free-text input. |
+| #60 | **Duplicate profile queries** — multiple `useEffect` hooks in dashboard and settings pages each independently fetch the same `profiles` row (role, name, permissions). On a slow connection this causes 3–5 redundant DB reads per page mount. | Requires a shared `useProfile` context/hook extracted above the router. Refactor scope too large for bug-fix sprint; deferred to architecture cleanup sprint. |
+| #93 | **FieldControl colour palette** — `FieldControl` for colour selection renders a free-text input instead of a constrained palette picker, allowing arbitrary strings to reach contract PDFs. | Blocked by #55 (no canonical colour list yet). Deferred with #55. |
+| #107/#108 | **Navigation loading state** — tapping nav items (Sidebar, DrawerNav) shows no visual feedback; the next page starts rendering without any transition indicator, causing the UI to appear frozen on slow connections. | Low severity; no data correctness impact. Requires a loading context wired into every page transition. Deferred to UX polish sprint. |
+
+---
+
 ## BACKLOG / DEFERRED
 
 - **FAB: remaining ~9 screens** (estimate/appointment/client create+edit, invoice page) — Week 3.5 continuation

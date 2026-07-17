@@ -280,9 +280,9 @@ const [dashToast, setDashToast] = useState('')
     console.log('Team userIds:', userIds, 'isOwnerOrManager:', ownerOrManager)
     setIsOwnerOrManager(ownerOrManager)
     supabase.from('notifications').select('*').in('user_id', userIds).order('created_at', { ascending: false }).limit(50)
-      .then(({ data }) => { if (data) setNotifications(data as AppNotification[]) })
+      .then(({ data }: any) => { if (data) setNotifications(data as AppNotification[]) })
     supabase.from('notifications').select('*', { count: 'exact', head: true }).in('user_id', userIds).eq('read', false)
-      .then(({ count }) => setUnreadCount(count ?? 0))
+      .then(({ count }: any) => setUnreadCount(count ?? 0))
     const nameMap: Record<string, string> = {}
     if (ownerOrManager && userIds.length > 1) {
       const { data: teamProfs } = await supabase
@@ -292,7 +292,7 @@ const [dashToast, setDashToast] = useState('')
       }
       setRepNames(nameMap)
     }
-    supabase.from('profiles').select('company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }) => {
+    supabase.from('profiles').select('company_name, first_name, last_name, logo_url, contract_terms').eq('id', sanitizedId).single().then(async ({ data: prof }: any) => {
       if (prof) {
         setCompanyName((prof as any).company_name || '')
         const full = [prof.first_name, prof.last_name].filter(Boolean).join(' ')
@@ -625,7 +625,8 @@ const [dashToast, setDashToast] = useState('')
       }
       setAttention(prev => prev.filter(i => i.id !== invoiceId))
       loadAll()
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase.auth.getUser().then(({ data }: any) => {
+        const user = data?.user ?? null
         if (!user) return
         fetch('/api/log-activity', {
           method: 'POST',
