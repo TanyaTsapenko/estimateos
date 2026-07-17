@@ -119,14 +119,14 @@ export default function ClientEstimatePage() {
   const [estimate, setEstimate] = useState<Estimate | null>(null)
   const [openings, setOpenings] = useState<Opening[]>([])
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [docStatus, setDocStatus] = useState<'loading' | 'signed' | 'declined' | 'active'>('loading')
+  const [docStatus, setDocStatus] = useState<'loading' | 'signed' | 'declined' | 'active' | 'error'>('loading')
 
   useEffect(() => {
     async function load() {
       const res = await fetch(`/api/public/estimate/${id}`)
-      if (!res.ok) return
+      if (!res.ok) { setDocStatus('error'); return }
       const { estimate: est, profile: prof, openings: ops } = await res.json()
-      if (!est) return
+      if (!est) { setDocStatus('error'); return }
       setEstimate(est)
       setOpenings(ops || [])
       setProfile(prof)
@@ -150,9 +150,17 @@ export default function ClientEstimatePage() {
     }
   }, [estimate])
 
-  if (docStatus === 'loading' || !estimate) return (
+  if (docStatus === 'loading') return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: PAGE_BG, fontFamily: SANS }}>
       <div style={{ fontSize: 13, color: MUTED }}>Loading…</div>
+    </div>
+  )
+
+  if (docStatus === 'error' || !estimate) return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: PAGE_BG, fontFamily: SANS, padding: '0 24px', textAlign: 'center' }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Estimate not found</div>
+      <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.6 }}>This estimate may have been removed or the link is incorrect.</div>
     </div>
   )
 
@@ -531,7 +539,7 @@ export default function ClientEstimatePage() {
       {/* ── DOWNLOAD BUTTON ── */}
       <div className="print-hide" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px 28px', background: `linear-gradient(to top, ${PAGE_BG} 60%, transparent)` }}>
         <button
-          onClick={() => window.location.href = `/api/estimate-pdf?id=${id}`}
+          onClick={() => window.open(`/api/estimate-pdf?id=${id}`, '_blank', 'noopener')}
           style={{ display: 'block', width: '100%', maxWidth: 480, margin: '0 auto', height: 54, borderRadius: 14, background: BLUE, border: 'none', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: SANS, boxShadow: '0 4px 20px rgba(37,99,235,0.28)' }}
         >
           Download PDF
