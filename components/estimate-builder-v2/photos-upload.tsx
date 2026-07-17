@@ -55,7 +55,7 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !userId) return
-    if (!ALLOWED_TYPES.includes(file.type)) { setError('Only JPG, PNG or WebP allowed'); return }
+    if (!ALLOWED_TYPES.includes(file.type)) { setError('Only JPG, PNG, WebP or HEIC allowed'); return }
     if (file.size > 5 * 1024 * 1024) { setError('Max 5 MB per photo'); return }
     setError('')
     setUploading(p => ({ ...p, [slot]: true }))
@@ -82,7 +82,8 @@ export function PhotosUpload({ op, userId, onChange }: Props) {
     const markerIdx = url.indexOf(marker)
     if (markerIdx !== -1) {
       const path = decodeURIComponent(url.slice(markerIdx + marker.length).split('?')[0])
-      await supabase.storage.from('opening-photos').remove([path])
+      const { error } = await supabase.storage.from('opening-photos').remove([path])
+      if (error) { console.error('[photos] delete failed:', error.message); return }
     }
     onChange(slot, null)
   }

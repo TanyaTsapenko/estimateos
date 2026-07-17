@@ -51,6 +51,8 @@ export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
       g = <>{DF}<line x1="7" y1="11.5" x2="17" y2="11.5" {...thin} /><path d="M9 4.5 L15 9.5 M9 7.5 L13.5 11" {...thin} />{dot(15, 16)}</>; break
     case 'interior':
       g = <>{DF}<path d="M7 3.5 Q16 3.5 16 13.5" {...thin} fill="none" />{dot(15, 13.5)}</>; break
+    case 'transom':
+      g = <><rect x="5" y="3.5" width="14" height="7" rx="1.5" {...st} /><line x1="5" y1="13" x2="19" y2="13" {...thin} /></>; break
     default:
       g = WF
   }

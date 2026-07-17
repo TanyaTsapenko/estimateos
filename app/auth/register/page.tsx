@@ -76,11 +76,12 @@ export default function RegisterPage() {
     if (e) { setError(e.message || 'Registration failed. Please try again.'); setLoading(false); return }
 
     if (signUpData.user?.id) {
-      await fetch('/api/register-profile', {
+      const profRes = await fetch('/api/register-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: signUpData.user.id, firstName: firstName.trim(), lastName: lastName.trim() }),
       })
+      if (!profRes.ok) console.error('[register] profile creation failed:', await profRes.text().catch(() => ''))
     }
 
     if (signUpData.session) {
@@ -175,9 +176,9 @@ export default function RegisterPage() {
           </div>
           <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5, margin: 0 }}>
             By signing up you agree to our{' '}
-            <span onClick={() => router.push('/terms')} style={{ color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>Terms</span>
+            <span onClick={() => window.open('/terms', '_blank')} style={{ color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>Terms</span>
             {' '}and{' '}
-            <span onClick={() => router.push('/privacy')} style={{ color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>Privacy Policy</span>
+            <span onClick={() => window.open('/privacy', '_blank')} style={{ color: '#2563EB', fontWeight: 600, cursor: 'pointer' }}>Privacy Policy</span>
           </p>
         </div>
 

@@ -16,7 +16,7 @@ async function resolveDestination(
     .from('profiles')
     .select('onboarding_done')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
   const destination = profile?.onboarding_done ? '/dashboard' : '/onboarding'
   return NextResponse.redirect(new URL(destination, origin))
 }

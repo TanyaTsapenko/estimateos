@@ -67,6 +67,9 @@ export default function LoginPage() {
   }
 
   async function handleGoogle() {
+    setError('')
+    setEmailError('')
+    if (loading) return
     setLoading(true)
     const { error: e } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -154,11 +157,12 @@ export default function LoginPage() {
 
         <button
           onClick={handleGoogle}
+          disabled={loading}
           style={{
             width: '100%', height: 48, borderRadius: 12,
             background: '#FFFFFF', border: '0.5px solid #E5E7EB',
-            color: '#0A1628', fontSize: 14, fontWeight: 600,
-            cursor: 'pointer', fontFamily: F,
+            color: loading ? '#9CA3AF' : '#0A1628', fontSize: 14, fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer', fontFamily: F,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           }}
         >
