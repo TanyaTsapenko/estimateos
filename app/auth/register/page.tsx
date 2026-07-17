@@ -92,6 +92,7 @@ export default function RegisterPage() {
   }
 
   async function handleGoogle() {
+    if (!agreed) { setError('Please agree to the Terms and Privacy Policy'); return }
     setLoading(true)
     const { error: e } = await supabase.auth.signInWithOAuth({
       provider: 'google',
