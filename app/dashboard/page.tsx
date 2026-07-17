@@ -191,12 +191,15 @@ function nth(n: number): string {
 const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
 const PAYMENT_EVENTS  = new Set(['deposit_paid', 'final_paid'])
 
-type ActivityGroup =
-  | { kind: 'single'; item: ActivityItem }
-  | { kind: 'group'; entity_id: string; entity_number: string; client_name: string; items: ActivityItem[] }
+type ActivityGroup = {
+  entity_id: string
+  entity_number: string
+  client_name: string
+  items: ActivityItem[]   // newest-first
+}
 
 const STATUS_PRIORITY: Record<string, number> = {
-  final_paid: 10, contract_signed: 8, deposit_paid: 6,
+  final_paid: 10, deposit_paid: 8, contract_signed: 6,
   final_invoice_sent: 4, deposit_invoice_sent: 4,
   reminder_sent: 2, estimate_sent: 1, estimate_auto_expired: 0,
 }
@@ -211,27 +214,27 @@ const STATUS_BADGE: Record<string, { label: string; bg: string; color: string }>
   estimate_auto_expired:{ label: 'Expired',       bg: '#FEF3C7', color: '#D97706' },
 }
 
+// Events whose amount represents the full estimate total (not a partial payment)
+const TOTAL_AMOUNT_EVENTS = new Set(['estimate_sent', 'contract_signed'])
+
 function groupActivity(items: ActivityItem[]): ActivityGroup[] {
-  const result: ActivityGroup[] = []
-  let i = 0
-  while (i < items.length) {
-    const cur = items[i]
-    if (cur.entity_id) {
-      let j = i + 1
-      while (j < items.length && items[j].entity_id === cur.entity_id) j++
-      if (j - i >= 2) {
-        result.push({ kind: 'group', entity_id: cur.entity_id, entity_number: cur.entity_number, client_name: cur.client_name, items: items.slice(i, j) })
-        i = j
-      } else {
-        result.push({ kind: 'single', item: cur })
-        i++
-      }
-    } else {
-      result.push({ kind: 'single', item: cur })
-      i++
+  // items arrive newest-first from DB; Map preserves insertion order
+  const byKey = new Map<string, ActivityGroup>()
+  for (const item of items) {
+    // Non-estimate events (no entity_id) each get a unique key so they stay solo
+    const key = item.entity_id || `__solo__${item.event_type}__${item.time}`
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        entity_id:     item.entity_id,
+        entity_number: item.entity_number,
+        client_name:   item.client_name,
+        items:         [],
+      })
     }
+    byKey.get(key)!.items.push(item)
   }
-  return result
+  // Insertion order = order of first appearance in newest-first list = most-recent-first
+  return Array.from(byKey.values())
 }
 
 export default function DashboardPage() {
@@ -1319,18 +1322,19 @@ const [dashToast, setDashToast] = useState('')
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {visibleGroups.map((g, gi) => {
-                        const items = g.kind === 'single' ? [g.item] : g.items
+                        const { items, entity_id: entityId, entity_number: entityNumber, client_name: clientName } = g
                         const topEvent = items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, items[0])
                         const accent = getDealAccent(topEvent.event_type)
-                        const topAmt = items.find(it => it.amount != null)?.amount ?? null
-                        const clientName = g.kind === 'single' ? g.item.client_name : g.client_name
-                        const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
-                        const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
+                        // Header amount = estimate total; prefer events that carry the full estimate value
+                        const totalAmt = items.find(it => TOTAL_AMOUNT_EVENTS.has(it.event_type) && it.amount != null)?.amount
+                          ?? items.find(it => it.amount != null)?.amount ?? null
                         const initials = (clientName || '?').slice(0, 1).toUpperCase()
                         const isClientViewed = topEvent.event_type === 'estimate_sent' && !!entityId && !!viewedByEstimate[entityId]
                         const effectiveAccent = isClientViewed ? '#059669' : accent
                         const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
+                        const visibleItems = items.slice(0, 3)
+                        const hiddenCount = items.length - visibleItems.length
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
@@ -1347,14 +1351,14 @@ const [dashToast, setDashToast] = useState('')
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                                 {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: effectiveAccent + '18', color: effectiveAccent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
-                                {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
+                                {totalAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(totalAmt)}</span>}
                               </div>
                             </div>
                             {/* Expanded timeline */}
                             {isOpen && (
                               <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
                                 <div style={{ paddingTop: 12 }}>
-                                  {items.map((it, idx) => {
+                                  {visibleItems.map((it, idx) => {
                                     const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
                                     const Icon = EVENT_ICONS[it.event_type] || ClockIcon
                                     const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
@@ -1365,9 +1369,9 @@ const [dashToast, setDashToast] = useState('')
                                           <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Icon size={12} color={tone.color} strokeWidth={2} />
                                           </div>
-                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                          {idx < visibleItems.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < visibleItems.length - 1 ? 8 : 0 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
                                             {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
@@ -1377,6 +1381,9 @@ const [dashToast, setDashToast] = useState('')
                                       </div>
                                     )
                                   })}
+                                  {hiddenCount > 0 && (
+                                    <div style={{ fontSize: 11.5, color: '#AEB6C4', paddingTop: 6, paddingLeft: 32 }}>+{hiddenCount} more update{hiddenCount > 1 ? 's' : ''}</div>
+                                  )}
                                 </div>
                                 {entityId && (
                                   <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
@@ -1496,18 +1503,19 @@ const [dashToast, setDashToast] = useState('')
                   <>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {visibleGroups.map((g, gi) => {
-                        const items = g.kind === 'single' ? [g.item] : g.items
+                        const { items, entity_id: entityId, entity_number: entityNumber, client_name: clientName } = g
                         const topEvent = items.reduce((best, it) => (STATUS_PRIORITY[it.event_type] ?? -1) > (STATUS_PRIORITY[best.event_type] ?? -1) ? it : best, items[0])
                         const accent = getDealAccent(topEvent.event_type)
-                        const topAmt = items.find(it => it.amount != null)?.amount ?? null
-                        const clientName = g.kind === 'single' ? g.item.client_name : g.client_name
-                        const entityNumber = g.kind === 'single' ? g.item.entity_number : g.entity_number
-                        const entityId = g.kind === 'single' ? g.item.entity_id : g.entity_id
+                        // Header amount = estimate total; prefer events that carry the full estimate value
+                        const totalAmt = items.find(it => TOTAL_AMOUNT_EVENTS.has(it.event_type) && it.amount != null)?.amount
+                          ?? items.find(it => it.amount != null)?.amount ?? null
                         const initials = (clientName || '?').slice(0, 1).toUpperCase()
                         const isClientViewed = topEvent.event_type === 'estimate_sent' && !!entityId && !!viewedByEstimate[entityId]
                         const effectiveAccent = isClientViewed ? '#059669' : accent
                         const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
+                        const visibleItems = items.slice(0, 3)
+                        const hiddenCount = items.length - visibleItems.length
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
@@ -1524,14 +1532,14 @@ const [dashToast, setDashToast] = useState('')
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                                 {statusBadge && <span style={{ height: 22, padding: '0 9px', borderRadius: 99, background: effectiveAccent + '18', color: effectiveAccent, fontSize: 10.5, fontWeight: 800, display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{statusBadge.label}</span>}
-                                {topAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(topAmt)}</span>}
+                                {totalAmt != null && <span style={{ fontSize: 13.5, fontWeight: 800, color: '#0B1220' }}>{fmtAmt(totalAmt)}</span>}
                               </div>
                             </div>
                             {/* Expanded timeline */}
                             {isOpen && (
                               <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
                                 <div style={{ paddingTop: 12 }}>
-                                  {items.map((it, idx) => {
+                                  {visibleItems.map((it, idx) => {
                                     const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
                                     const Icon = EVENT_ICONS[it.event_type] || ClockIcon
                                     const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
@@ -1542,9 +1550,9 @@ const [dashToast, setDashToast] = useState('')
                                           <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Icon size={12} color={tone.color} strokeWidth={2} />
                                           </div>
-                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                          {idx < visibleItems.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < visibleItems.length - 1 ? 8 : 0 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
                                             {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
@@ -1554,6 +1562,9 @@ const [dashToast, setDashToast] = useState('')
                                       </div>
                                     )
                                   })}
+                                  {hiddenCount > 0 && (
+                                    <div style={{ fontSize: 11.5, color: '#AEB6C4', paddingTop: 6, paddingLeft: 32 }}>+{hiddenCount} more update{hiddenCount > 1 ? 's' : ''}</div>
+                                  )}
                                 </div>
                                 {entityId && (
                                   <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
