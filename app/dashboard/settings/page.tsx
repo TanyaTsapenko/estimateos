@@ -1207,7 +1207,9 @@ function ContractSection({ flash }: { flash: FlashFn }) {
         if (rawClauses) {
           try {
             const parsed = JSON.parse(rawClauses)
-            setContractClauses(parsed)
+            const savedIds = new Set((parsed as ContractClause[]).map((c: ContractClause) => c.id))
+            const merged = [...parsed, ...DEFAULT_CLAUSES.filter((c: ContractClause) => !savedIds.has(c.id))]
+            setContractClauses(merged)
             setSavedClauses(rawClauses)
           } catch {}
         } else {
