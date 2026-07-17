@@ -41,10 +41,10 @@ export function trimSummaryLines(row: TrimRow): { label: string; value: string }
       ? row.trim_jamb_custom_name
       : baseJamb
     const depth = row.trim_jamb_extension_depth
-    const depthStr = depth === 'Custom'
+    const depthStr = depth?.toLowerCase() === 'custom'
       ? (row.trim_jamb_extension_depth_custom || 'Custom size')
-      : (depth || '4-9/16"')
-    lines.push({ label: 'Jamb extension', value: `${mat} · ${depthStr}` })
+      : depth || null
+    lines.push({ label: 'Jamb extension', value: depthStr ? `${mat} · ${depthStr}` : mat })
   }
   if (row.trim_brickmold) {
     lines.push({ label: 'Brickmold', value: row.trim_brickmold_colour_name ? `Yes · ${row.trim_brickmold_colour_name}` : 'Yes' })
@@ -52,7 +52,7 @@ export function trimSummaryLines(row: TrimRow): { label: string; value: string }
   if (row.trim_rosettes && row.trim_rosettes !== 'none') {
     lines.push({ label: 'Rosettes', value: ROSETTE_LABELS[row.trim_rosettes] || cap(row.trim_rosettes) })
   }
-  if (row.trim_caping)    lines.push({ label: 'Caping',    value: 'Yes' })
+  if (row.trim_caping)    lines.push({ label: 'Capping',   value: 'Yes' })
   if (row.trim_nail_fin)  lines.push({ label: 'Nail fin',  value: 'Yes' })
   if (row.trim_drip_cap)  lines.push({ label: 'Drip cap',  value: 'Yes' })
   if (row.trim_blue_skin) lines.push({ label: 'Self-Adhesive Flashing Membrane', value: 'Yes' })
