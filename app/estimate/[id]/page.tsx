@@ -184,7 +184,7 @@ export default function ClientEstimatePage() {
     </div>
   )
 
-  const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
+  const [, taxLabel] = (estimate.client_province ? TAX_RATES[estimate.client_province] : null) || [0, 'Tax']
   const validUntil = estimate.valid_until ? fmtDate(estimate.valid_until) : null
   const issuedDate = estimate.created_at ? fmtDate(estimate.created_at.slice(0, 10)) : null
   const depositPct = profile?.deposit_percent ?? 0

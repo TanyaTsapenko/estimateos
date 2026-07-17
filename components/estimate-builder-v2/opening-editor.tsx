@@ -82,18 +82,6 @@ type Props = {
   onSections?: (sections: CombinationSection[]) => void
 }
 
-function resolveFrameColor(
-  extColour: string | undefined,
-  framePalette?: Array<{ id: string; hex: string }>
-): string | undefined {
-  if (!extColour || extColour === 'White') return undefined
-  const entry = framePalette?.find(p => p.id === extColour)
-  if (entry && entry.hex !== '#FFFFFF') return entry.hex
-  const lc = extColour.toLowerCase()
-  if (lc.includes('black')) return '#1a1a1a'
-  if (lc.includes('bronze')) return '#6b4423'
-  return '#475467'
-}
 
 export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicker, palettes, userId, onPhotoUpdate, onSections }: Props) {
   const filterKeys = (keys: string[]) => {
