@@ -52,6 +52,7 @@ export default function ConfirmModal({
 
   return (
     <div
+      role="presentation"
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
         background: 'rgba(0,0,0,0.45)',
@@ -61,6 +62,9 @@ export default function ConfirmModal({
       onClick={onCancel}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-modal-title"
         style={{
           background: '#fff', borderRadius: 14, padding: 28,
           width: 340, maxWidth: '100%',
@@ -83,7 +87,7 @@ export default function ConfirmModal({
           textAlign: 'center', marginBottom: 8,
           fontFamily: '-apple-system, "SF Pro Text", system-ui, sans-serif',
         }}>
-          {title}
+          <span id="confirm-modal-title">{title}</span>
         </div>
 
         <div style={{

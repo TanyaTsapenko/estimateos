@@ -76,8 +76,9 @@ export function TrimSection({ value, onChange, palette, openings, surcharges, sh
     value.jambExtensionDepth === 'Custom' && !value.jambExtensionDepthCustom.trim()
 
   // Nail Fin only applies to full-frame / stud-to-stud installations
-  const showNailFin = !openings || openings.length === 0 ||
-    openings.some(o => o.vals.install !== 'Retrofit')
+  const showNailFin = !openings || openings.length === 0
+    ? false
+    : openings.some(o => o.vals.install && o.vals.install !== 'Retrofit')
 
   const hasAny = value.casing !== 'none' || value.jamb !== 'none' || value.brickmold ||
     value.rosettes !== 'none' || value.caping || value.nailFin || value.dripCap || value.blueSkin
@@ -180,7 +181,7 @@ export function TrimSection({ value, onChange, palette, openings, surcharges, sh
                   <div style={{ marginTop: 8 }}>
                     <FieldLabel>Specify depth</FieldLabel>
                     <input
-                      style={{ ...inputEl, borderColor: depthError ? '#DC2626' : undefined }}
+                      style={{ ...inputEl, borderColor: depthError ? C.red : undefined }}
                       value={value.jambExtensionDepthCustom}
                       placeholder='e.g. 5-1/4"'
                       maxLength={20}
@@ -188,7 +189,7 @@ export function TrimSection({ value, onChange, palette, openings, surcharges, sh
                       onBlur={() => setDepthTouched(true)}
                     />
                     {depthError && (
-                      <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: '#DC2626' }}>Please enter a custom depth</div>
+                      <div style={{ marginTop: 4, fontSize: 11, fontWeight: 600, color: C.red }}>Please enter a custom depth</div>
                     )}
                   </div>
                 )}
