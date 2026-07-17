@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { C, F, SECTIONS, getType, type Opening, type Palettes, type CombinationSection } from '@/lib/v2/openingTypes'
 import { EBIcon } from './icons'
 import { MiniDiagram } from './diagram'
@@ -112,6 +112,13 @@ export function OpeningEditor({ op, onVal, onSub, openType, openPicker, setPicke
     return init
   })
   const toggle = (id: string) => setOpenSecs(o => ({ ...o, [id]: !o[id] }))
+
+  useEffect(() => {
+    const init: Record<string, boolean> = {}
+    if (rest[0]) init[rest[0].id] = true
+    setOpenSecs(init)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op.tempId])
 
   const openSubPicker = (subs: string[]) => {
     setPicker({

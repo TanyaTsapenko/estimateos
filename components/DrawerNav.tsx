@@ -127,7 +127,16 @@ export default function DrawerNav() {
   const isContractPage  = /^\/dashboard\/estimates\/[^/]+\/contract/.test(pathname)
   const isClientNew     = pathname === '/dashboard/clients/new'
   const isClientDetail  = /^\/dashboard\/clients\/[^/]+$/.test(pathname)
-  const hideFab         = isContractPage || isClientNew || isClientDetail
+  const isEstimateNew   = pathname === '/dashboard/estimates/new'
+  const isEstimateEdit  = /^\/dashboard\/estimates\/[^/]+\/edit/.test(pathname)
+  const isApptNew       = pathname === '/dashboard/appointments/new'
+  const isApptEdit      = /^\/dashboard\/appointments\/[^/]+\/edit/.test(pathname)
+  const isInvoicePage   = /^\/dashboard\/estimates\/[^/]+\/invoice/.test(pathname)
+  const isSignPage      = /^\/dashboard\/estimates\/[^/]+\/sign/.test(pathname)
+  const isPaymentSetup  = /^\/dashboard\/estimates\/[^/]+\/payment-setup/.test(pathname)
+  const hideFab = isContractPage || isClientNew || isClientDetail ||
+    isEstimateNew || isEstimateEdit || isApptNew || isApptEdit ||
+    isInvoicePage || isSignPage || isPaymentSetup
 
   if (!mounted) return null
   return createPortal(

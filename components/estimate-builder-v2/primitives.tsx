@@ -27,7 +27,7 @@ export function SelectBox({ value, placeholder, onClick }: { value?: string | nu
 export function DimInput({ value, unit, ph, onChange }: { value?: string | number; unit?: string; ph?: string; onChange: (v: string) => void }) {
   return (
     <div style={{ position: 'relative' }}>
-      <input value={value || ''} placeholder={ph} inputMode="decimal" onChange={e => onChange(e.target.value)}
+      <input value={value ?? ''} placeholder={ph} inputMode="decimal" onChange={e => onChange(e.target.value)}
         style={{ width: '100%', height: 46, padding: '0 34px 0 13px', borderRadius: 12, border: `1px solid ${C.borderStrong}`, background: C.card, fontSize: 13, fontWeight: 600, color: C.ink, fontVariantNumeric: 'tabular-nums', outline: 'none', boxSizing: 'border-box' }} />
       <span style={{ position: 'absolute', right: 13, top: '50%', transform: 'translateY(-50%)', fontSize: 13, fontWeight: 600, color: C.inkFaint }}>{unit}</span>
     </div>

@@ -119,6 +119,8 @@ export default function AddressAutocomplete({ value, onChange, onSelect, placeho
         if (c.types.includes('street_number')) streetNumber = c.long_name
         else if (c.types.includes('route')) route = c.long_name
         else if (c.types.includes('locality')) city = c.long_name
+        else if (!city && c.types.includes('sublocality_level_1')) city = c.long_name
+        else if (!city && c.types.includes('sublocality')) city = c.long_name
         else if (c.types.includes('administrative_area_level_1')) province = c.short_name
         else if (c.types.includes('postal_code')) postalCode = c.long_name
       }

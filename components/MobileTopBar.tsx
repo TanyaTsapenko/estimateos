@@ -1,9 +1,10 @@
 'use client'
 import { ApexMark } from './ApexScaleLogo'
+import { emitOpenDrawer } from '@/lib/drawer-bus'
 
 export default function MobileTopBar() {
   function openSidebar() {
-    window.dispatchEvent(new CustomEvent('open-mobile-sidebar'))
+    emitOpenDrawer()
   }
 
   return (
