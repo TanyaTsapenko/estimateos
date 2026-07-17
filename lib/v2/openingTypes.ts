@@ -519,7 +519,7 @@ export const V2_TO_OLD_TYPE_KEY: Record<string, string> = {
   slider:      'window_sl',
   singleHung:  'window_sh',
   doubleHung:  'window_dh',
-  hopper:      'window_dh',
+  hopper:      'window_hopper',
   tiltTurn:    'window_tilt',
   bay:         'window_bay',
   bow:         'window_bow',
