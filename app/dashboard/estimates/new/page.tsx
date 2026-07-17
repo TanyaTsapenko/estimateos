@@ -769,6 +769,7 @@ function NewEstimateV2() {
       <BuilderHeader
         count={openings.length}
         total={total}
+        title={editId ? 'Edit estimate' : 'New estimate'}
         step={mode === 'client' ? 1 : mode === 'review' ? 3 : 2}
         onBack={() => {
           if (mode === 'edit') setMode('list')

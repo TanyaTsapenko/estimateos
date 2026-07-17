@@ -52,11 +52,12 @@ function PillStepper({ cur }: { cur: number }) {
   )
 }
 
-export function BuilderHeader({ count, total, onBack, step }: {
+export function BuilderHeader({ count, total, onBack, step, title = 'New estimate' }: {
   count: number
   total: number
   onBack: () => void
   step?: number
+  title?: string
 }) {
   return (
     <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, flexShrink: 0, paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
@@ -65,7 +66,7 @@ export function BuilderHeader({ count, total, onBack, step }: {
           <EBIcon name="back" size={20} color={C.inkMid} />
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em' }}>New estimate</div>
+          <div style={{ fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em' }}>{title}</div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ fontSize: 11.5, color: C.inkSoft, fontWeight: 600 }}>{count} {count === 1 ? 'opening' : 'openings'}</div>

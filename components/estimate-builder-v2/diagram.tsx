@@ -49,6 +49,8 @@ export function MiniDiagram({ typeId, size = 40, color = C.blue }: Props) {
       g = <><rect x="3.5" y="5" width="17" height="14" rx="1.2" {...st} /><line x1="12" y1="5" x2="12" y2="19" {...st} /><path d="M6.5 12 h4 M9 10 l2 2 l-2 2" {...thin} /></>; break
     case 'storm':
       g = <>{DF}<line x1="7" y1="11.5" x2="17" y2="11.5" {...thin} /><path d="M9 4.5 L15 9.5 M9 7.5 L13.5 11" {...thin} />{dot(15, 16)}</>; break
+    case 'interior':
+      g = <>{DF}<path d="M7 3.5 Q16 3.5 16 13.5" {...thin} fill="none" />{dot(15, 13.5)}</>; break
     default:
       g = WF
   }
