@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
         if (!existing?.first_name) upsertPayload.first_name = firstName
         if (!existing?.last_name)  upsertPayload.last_name  = lastName
       }
-      await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
+      const { error: upsertErr } = await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
+      if (upsertErr) console.error('[auth/callback] profile upsert failed (code):', upsertErr.message)
       return resolveDestination(supabase, data.user.id, next, origin)
     }
   }
@@ -88,7 +89,8 @@ export async function GET(request: NextRequest) {
         if (!existing?.first_name) upsertPayload.first_name = firstName
         if (!existing?.last_name)  upsertPayload.last_name  = lastName
       }
-      await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
+      const { error: upsertErr } = await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
+      if (upsertErr) console.error('[auth/callback] profile upsert failed (token_hash):', upsertErr.message)
       return resolveDestination(supabase, data.user.id, next, origin)
     }
   }
