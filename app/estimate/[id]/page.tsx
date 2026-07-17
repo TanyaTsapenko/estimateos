@@ -195,7 +195,6 @@ export default function ClientEstimatePage() {
   return (
     <div style={{ minHeight: '100vh', fontFamily: SANS, background: PAGE_BG, paddingBottom: 100 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         .est-paper { max-width: 720px; margin: 0 auto; background: #fff; box-shadow: 0 1px 6px rgba(10,22,40,0.09); }
         .est-meta-row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-bottom: 18px; }
         @media (min-width: 520px) { .est-meta-row { grid-template-columns: 1fr 1fr 1fr; } }

@@ -1,5 +1,7 @@
 'use client'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { ApexScaleLogo } from '@/components/ApexScaleLogo'
 
 const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
@@ -8,6 +10,12 @@ const GLOW = 'radial-gradient(ellipse at 100% 0%, rgba(59,108,255,0.35) 0%, tran
 
 export default function SplashPage() {
   const router = useRouter()
+
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/dashboard')
+    }).catch(() => {})
+  }, [])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: F, background: '#F4F4F2' }}>

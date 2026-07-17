@@ -345,7 +345,7 @@ export function ContractDocument({
         {/* Sheet 1 footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: INK_S, marginTop: 22, paddingTop: 10, borderTop: `1px solid ${HAIR}` }}>
           <span>{companyName} · Installation Contract</span>
-          <span>Page 1 of 2</span>
+          <span>Page 1</span>
         </div>
       </div>
 

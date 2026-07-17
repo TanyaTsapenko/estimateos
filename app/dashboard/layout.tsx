@@ -8,12 +8,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileErr } = await supabase
     .from('profiles')
     .select('trade, team_owner_id')
     .eq('id', user.id)
     .maybeSingle()
-  if (!profile?.trade && !profile?.team_owner_id) redirect('/onboarding')
+  if (!profileErr && !profile?.trade && !profile?.team_owner_id) redirect('/onboarding')
 
   return (
     <div className="app-shell">
