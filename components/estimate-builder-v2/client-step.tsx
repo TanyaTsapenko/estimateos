@@ -34,6 +34,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
   const [clients, setClients] = useState<ClientRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [nameErr, setNameErr] = useState('')
   const [estimateCount, setEstimateCount] = useState<number | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -42,12 +43,13 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('clients')
         .select('id, name, email, phone, address, city, province, postal_code')
         .eq('owner_id', user.id)
         .order('name')
         .limit(200)
+      if (error) setLoadError(true)
       setClients(data || [])
       setLoading(false)
     }
@@ -176,6 +178,8 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
 
             {loading ? (
               <div style={{ fontSize: 13, color: C.inkSoft, padding: '10px 4px' }}>Loading clients…</div>
+            ) : loadError ? (
+              <div style={{ fontSize: 13, color: C.red, padding: '10px 4px' }}>Failed to load clients — please refresh.</div>
             ) : (clients.length > 0 || search.trim()) ? (
               <div style={{ marginTop: 8, borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, overflow: 'hidden', maxHeight: 260, overflowY: 'auto' }}>
                 {filtered.map((c, i) => (
