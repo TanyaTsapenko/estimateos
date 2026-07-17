@@ -37,6 +37,7 @@ export default function PaymentSetupPage() {
   const [useCustom,      setUseCustom]      = useState(false)
   const [discountType,   setDiscountType]   = useState<'$' | '%'>('$')
   const [discountValue,  setDiscountValue]  = useState(0)
+  const [saveError,      setSaveError]      = useState<string | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -88,13 +89,14 @@ export default function PaymentSetupPage() {
     const newAfterDiscount = estimate.subtotal - newDiscountAmt
     const newTaxAmt = Math.round(newAfterDiscount * estimate.tax_rate * 100) / 100
     const newTotal = Math.round((newAfterDiscount + newTaxAmt) * 100) / 100
-    await supabase.from('estimates').update({
+    const { error: updateErr } = await supabase.from('estimates').update({
       discount_type:   newDiscountAmt > 0 ? (discountType === '$' ? 'fixed' : 'percent') : null,
       discount_value:  newDiscountAmt > 0 ? discountValue : null,
       discount_amount: newDiscountAmt,
       tax_amount:      newTaxAmt,
       total:           newTotal,
     }).eq('id', id)
+    if (updateErr) { setSaveError('Failed to save — please try again.'); return }
     const params = new URLSearchParams({
       trigger,
       payment_method:  paymentMethod,
@@ -272,6 +274,7 @@ export default function PaymentSetupPage() {
         background: 'linear-gradient(to top, #F5F6F8 70%, transparent)',
         zIndex: 50,
       }}>
+        {saveError && <div style={{ color: '#DC2626', fontSize: 13, textAlign: 'center', marginBottom: 8 }}>{saveError}</div>}
         <button
           onClick={handleContinue}
           style={{ width: '100%', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, cursor: 'pointer', fontFamily: F }}

@@ -130,6 +130,20 @@ export async function GET(request: NextRequest) {
 
     const newCount = reminderCount + 1
     const isAtMax = newCount >= maxCount
+
+    try {
+      await resend.emails.send({
+        from: `${companyName} <noreply@useapexscale.com>`,
+        to: [est.client_email],
+        subject: `Following up on your estimate, ${est.client_name || 'Client'}`,
+        html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
+      })
+    } catch (e: any) {
+      console.error(`[auto-remind] email failed for ${est.id}:`, e.message)
+      continue
+    }
+
     await supabase.from('estimates').update({
       last_reminder_sent_at: new Date().toISOString(),
       reminder_count: newCount,
@@ -164,18 +178,6 @@ export async function GET(request: NextRequest) {
         read: false,
         link: `/dashboard/estimates/${est.id}`,
       })
-    }
-
-    try {
-      await resend.emails.send({
-        from: `${companyName} <noreply@useapexscale.com>`,
-        to: [est.client_email],
-        subject: `Following up on your estimate, ${est.client_name || 'Client'}`,
-        html,
-        ...(replyTo ? { reply_to: replyTo } : {}),
-      })
-    } catch (e: any) {
-      console.error(`[auto-remind] email failed for ${est.id}:`, e.message)
     }
 
     sent.push(est.id)

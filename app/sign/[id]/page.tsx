@@ -142,6 +142,7 @@ export default function PublicSignPage() {
     const companyPhone = profile?.phone ?? null
 
     // Anonymous client → new client-facing confirmation screen
+    if (isAnon === null) return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#94A3B8' }}>Loading…</div>
     if (isAnon !== false) return (
       <div style={{ minHeight: '100vh', background: '#F5F6F8', display: 'flex', flexDirection: 'column', fontFamily: '"Inter", system-ui, -apple-system, sans-serif' }}>
         <div style={{ background: '#fff', borderBottom: '1px solid #EEF0F4', padding: '16px 20px', paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 8px))' }}>

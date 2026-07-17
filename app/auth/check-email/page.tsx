@@ -50,9 +50,12 @@ export default function CheckEmailPage() {
           We sent a link to<br/><span style={{color:'#0A0E1A', fontWeight:600}}>{email || 'your email'}</span><br/>Check your inbox and follow the instructions.
         </p>
         <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:5, fontSize:12, color:'#8892b0', marginBottom:24}}>
-          Didn&apos;t get it? <span onClick={handleResend} style={{color:'#2045B8', fontWeight:600, cursor:'pointer'}}>Resend email</span>
+          {resent
+            ? <span style={{color:'#16A34A', fontWeight:600}}>✓ Email resent</span>
+            : <>{`Didn't get it? `}<span onClick={handleResend} style={{color: resending ? '#93C5FD' : '#2045B8', fontWeight:600, cursor: resending ? 'default' : 'pointer'}}>{resending ? 'Sending…' : 'Resend email'}</span></>
+          }
         </div>
-        <button onClick={() => window.location.href = 'mailto:'}
+        <button onClick={() => window.location.href = `mailto:${email}`}
           style={{width:'100%', background:'#2045B8', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
           Open email app →
         </button>
