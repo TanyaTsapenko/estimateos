@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Home, Calendar, FileText, Users } from 'lucide-react'
+import { Home, Calendar, FileText, Users, BarChart2 } from 'lucide-react'
 import { registerOpenDrawer } from '@/lib/drawer-bus'
+import { usePermissions } from '@/lib/usePermissions'
+import type { Permissions } from '@/lib/usePermissions'
 
 const C = {
   bg: '#F4F6FB', card: '#FFFFFF',
@@ -41,19 +43,27 @@ function NIcon({ name, size = 22, color = 'currentColor', stroke = 1.8 }: {
 }
 
 type LucideIcon = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>
-const MENU: { id: string; path: string; label: string; LIcon?: LucideIcon; icon?: string; exact: boolean; badge: boolean }[] = [
+const ALL_MENU: { id: string; path: string; label: string; LIcon?: LucideIcon; icon?: string; exact: boolean; badge: boolean; permKey?: keyof Permissions; ownerOnly?: boolean }[] = [
   { id: 'home',      path: '/dashboard',              label: 'Home',      LIcon: Home,     exact: true,  badge: false },
-  { id: 'schedule',  path: '/dashboard/appointments', label: 'Schedule',  LIcon: Calendar, exact: false, badge: false },
-  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', LIcon: FileText, exact: false, badge: false },
-  { id: 'invoices',  path: '/dashboard/invoices',     label: 'Invoices',  icon: 'invoice', exact: false, badge: false },
-  { id: 'clients',   path: '/dashboard/clients',      label: 'Clients',   LIcon: Users,    exact: false, badge: false },
-  { id: 'marketing', path: '/dashboard/marketing',    label: 'Marketing', icon: 'mega',    exact: false, badge: false },
+  { id: 'estimates', path: '/dashboard/estimates',    label: 'Estimates', LIcon: FileText, exact: false, badge: false, permKey: 'estimates' },
+  { id: 'schedule',  path: '/dashboard/appointments', label: 'Schedule',  LIcon: Calendar, exact: false, badge: false, permKey: 'schedule' },
+  { id: 'clients',   path: '/dashboard/clients',      label: 'Clients',   LIcon: Users,    exact: false, badge: false, permKey: 'clients' },
+  { id: 'reports',   path: '/dashboard/reports',      label: 'Reports',   LIcon: BarChart2,  exact: false, badge: false, permKey: 'reports' },
+  { id: 'invoices',  path: '/dashboard/invoices',     label: 'Invoices',  icon: 'invoice', exact: false, badge: false, ownerOnly: true },
 ]
 
 export default function DrawerNav() {
   const router   = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
+  const { role, permissions, loading: permLoading } = usePermissions()
+
+  const MENU = permLoading ? ALL_MENU : ALL_MENU.filter(m => {
+    if (m.ownerOnly && role !== 'owner') return false
+    if (m.permKey && !permissions[m.permKey]) return false
+    return true
+  })
+  const showSettings = permLoading || permissions.settings
 
   const [mounted,     setMounted]     = useState(false)
   const [drawerOpen,  setDrawerOpen]  = useState(false)
@@ -357,7 +367,7 @@ export default function DrawerNav() {
           <div style={{ height: 1, background: C.border, margin: '10px 12px' }} />
 
           {/* Settings */}
-          <button
+          {showSettings && <button
             onClick={() => go('/dashboard/settings')}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 13,
@@ -372,7 +382,7 @@ export default function DrawerNav() {
               Settings
             </span>
             <NIcon name="chev" size={17} color={C.inkFaint} />
-          </button>
+          </button>}
         </div>
 
         {/* Sign out */}
