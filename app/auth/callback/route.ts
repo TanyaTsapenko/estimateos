@@ -75,13 +75,20 @@ export async function GET(request: NextRequest) {
       type: type as EmailOtpType,
     })
     if (!error && data.user) {
-      await supabase.from('profiles').upsert({
+      const meta = (data.user.user_metadata || {}) as Record<string, string>
+      const firstName = meta.first_name || null
+      const lastName  = meta.last_name  || null
+      const upsertPayload: Record<string, unknown> = {
         id: data.user.id,
         email: data.user.email,
-        first_name: data.user.user_metadata?.first_name ?? null,
-        last_name:  data.user.user_metadata?.last_name ?? null,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'id', ignoreDuplicates: false })
+      }
+      if (firstName || lastName) {
+        const { data: existing } = await supabase.from('profiles').select('first_name, last_name').eq('id', data.user.id).maybeSingle()
+        if (!existing?.first_name) upsertPayload.first_name = firstName
+        if (!existing?.last_name)  upsertPayload.last_name  = lastName
+      }
+      await supabase.from('profiles').upsert(upsertPayload, { onConflict: 'id', ignoreDuplicates: false })
       return resolveDestination(supabase, data.user.id, next, origin)
     }
   }

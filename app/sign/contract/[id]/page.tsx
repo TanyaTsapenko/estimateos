@@ -181,41 +181,13 @@ export default function SignContractPage() {
       setSigningFailed(false)
       setClientSignatureUrl(result.signatureUrl as string)
 
-      const [, , depositResult] = await Promise.allSettled([
-        fetch('/api/send-contract-signed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clientEmail: estimate?.client_email,
-            clientName: estimate?.client_name,
-            companyName: contract?.company_name || 'Your Contractor',
-            companyPhone: contract?.company_phone || '',
-            companyEmail: contract?.company_email || '',
-            contractId,
-            total: estimate?.total || 0,
-            logoUrl: profile?.logo_url || null,
-          }),
-        }),
-        fetch('/api/notify-contractor-signed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contractorEmail: contract?.company_email || '',
-            contractorName: contract?.company_name || '',
-            clientName: estimate?.client_name || '',
-            companyName: contract?.company_name || 'Your Company',
-            total: estimate?.total || 0,
-            depositPercent: profile?.deposit_percent ?? contract?.deposit_percent ?? 10,
-            contractId,
-          }),
-        }),
-        fetch('/api/create-deposit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ estimateId: contract.estimate_id }),
-        }),
-      ])
-      if (depositResult.status === 'rejected' || (depositResult.status === 'fulfilled' && !depositResult.value.ok)) {
+      // sign-contract route fires notify + send-contract-signed server-side; only deposit needed here
+      const depositRes = await fetch('/api/create-deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estimateId: contract.estimate_id }),
+      })
+      if (!depositRes.ok) {
         console.error('[sign-contract] deposit invoice creation failed for estimate', contract.estimate_id)
       }
 
@@ -234,19 +206,10 @@ export default function SignContractPage() {
     setResendingEmail(true)
     setResendEmailMsg(null)
     try {
-      const res = await fetch('/api/send-contract-signed', {
+      const res = await fetch('/api/sign-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientEmail: estimate?.client_email,
-          clientName: estimate?.client_name,
-          companyName: contract?.company_name || 'Your Contractor',
-          companyPhone: contract?.company_phone || '',
-          companyEmail: contract?.company_email || '',
-          contractId,
-          total: estimate?.total || 0,
-          logoUrl: profile?.logo_url || null,
-        }),
+        body: JSON.stringify({ contractId, resend: true }),
       })
       setResendEmailMsg(res.ok ? 'sent' : 'error')
     } catch {

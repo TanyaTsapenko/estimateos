@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { OPENING_TYPES, TAX_RATES, fmtCAD } from '@/lib/pricing'
 import { getSubtypeLabel } from '@/lib/openingLabels'
+import { logActivity } from '@/lib/activity'
 import { ArrowLeft } from 'lucide-react'
 import AppTopBar from '@/components/AppTopBar'
 
@@ -94,7 +95,25 @@ export default function SignPage() {
         {/* Hand to client */}
         <div style={{ textAlign: 'center', padding: '20px 0', borderTop: '1px solid var(--border-light)', marginTop: 8 }}>
           <button
-            onClick={() => router.push(`/sign/${id}`)}
+            onClick={async () => {
+              await supabase.from('estimates').update({ status: 'sent' }).eq('id', id)
+              try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user && estimate) {
+                  await logActivity(supabase, {
+                    user_id: user.id,
+                    event_type: 'estimate_sent',
+                    actor_type: 'contractor',
+                    entity_type: 'estimate',
+                    entity_id: id,
+                    entity_number: estimate.estimate_number,
+                    client_name: estimate.client_name ?? undefined,
+                    amount: estimate.total,
+                  })
+                }
+              } catch {}
+              router.push(`/sign/${id}`)
+            }}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', padding: '14px 0', background: '#2563EB', color: '#fff', border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             Hand to Client →
           </button>

@@ -4,7 +4,39 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { logActivity } from '@/lib/activity'
 
 export async function POST(request: NextRequest) {
-  const { contractId, signatureBase64, clientName, agreedToTerms } = await request.json()
+  const { contractId, signatureBase64, clientName, agreedToTerms, resend } = await request.json()
+
+  // Resend client confirmation email for an already-signed contract
+  if (resend) {
+    if (!contractId) return NextResponse.json({ error: 'Missing contractId' }, { status: 400 })
+    const supabase = createServiceClient()
+    const { data: contract } = await supabase.from('contracts').select('*').eq('id', contractId).single()
+    if (!contract || contract.status !== 'signed') return NextResponse.json({ error: 'Contract not signed' }, { status: 400 })
+    const [{ data: prof }, { data: est }] = await Promise.all([
+      supabase.from('profiles').select('email, phone, logo_url, company_name').eq('id', contract.profile_id).single(),
+      supabase.from('estimates').select('client_email, client_name, total').eq('id', contract.estimate_id).single(),
+    ])
+    if (!prof || !est) return NextResponse.json({ error: 'Data not found' }, { status: 404 })
+    const internalSecret = process.env.INTERNAL_API_SECRET
+    if (!internalSecret) return NextResponse.json({ error: 'Internal configuration error' }, { status: 500 })
+    const sendRes = await fetch(`${request.nextUrl.origin}/api/send-contract-signed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-internal-secret': internalSecret },
+      body: JSON.stringify({
+        clientEmail: est.client_email || '',
+        clientName: est.client_name || '',
+        companyName: prof.company_name || '',
+        companyPhone: prof.phone || null,
+        companyEmail: prof.email || null,
+        contractId,
+        total: est.total || 0,
+        logoUrl: prof.logo_url || null,
+      }),
+    })
+    if (!sendRes.ok) return NextResponse.json({ error: 'Email send failed' }, { status: 500 })
+    return NextResponse.json({ success: true })
+  }
+
   if (!contractId || !signatureBase64) {
     return NextResponse.json({ error: 'Missing contractId or signature' }, { status: 400 })
   }
