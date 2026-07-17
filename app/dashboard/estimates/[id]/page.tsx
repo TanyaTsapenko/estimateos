@@ -77,7 +77,7 @@ function parseSec(raw: any): { type: string; width: number }[] {
 
 const SECTION_TYPE_MAP: Record<string, string> = {
   'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
-  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung', 'Double Hung': 'doubleHung',
 }
 
 export default function EstimateDetailPage() {

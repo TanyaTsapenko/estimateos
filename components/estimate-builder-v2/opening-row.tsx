@@ -21,9 +21,18 @@ function summaryChips(op: Opening): string[] {
   const v = op.vals
   const chips: string[] = []
 
-  // Include base fields + any subtype-conditional extras
+  // Include base fields + subtype-conditional extras + value-conditional extras
   const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
-  const allKeys = [...t.fields, ...extraKeys.filter(k => !t.fields.includes(k))]
+  const valueExtraKeys = t.extraFieldsByValue
+    ? Object.entries(t.extraFieldsByValue)
+        .filter(([condKey, cond]) => {
+          const condVal = v[condKey]
+          if (cond.notEmpty) return !!condVal
+          return condVal === cond.value
+        })
+        .map(([, cond]) => cond.field)
+    : []
+  const allKeys = [...t.fields, ...extraKeys, ...valueExtraKeys].filter((k, i, arr) => arr.indexOf(k) === i)
 
   for (const key of allKeys) {
     if (CHIP_SKIP.has(key)) continue

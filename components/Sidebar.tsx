@@ -5,7 +5,7 @@ import { usePermissions } from '@/lib/usePermissions'
 import type { Permissions } from '@/lib/usePermissions'
 import { useEffect, useState } from 'react'
 import { SIcon } from './SIcon'
-import { ChevronDown } from 'lucide-react'
+
 import type { IconName } from './SIcon'
 import { ApexScaleLogo, ApexMark } from './ApexScaleLogo'
 
@@ -165,7 +165,7 @@ export default function Sidebar() {
               onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
               onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.35)')}
             >
-              <ChevronDown size={14} strokeWidth={2} />
+              <SIcon name="logout" size={14} />
             </button>
           </>
         ) : (

@@ -13,7 +13,7 @@ import { renderDrawingPng } from '@/lib/renderDrawingPng'
 
 const SECTION_TYPE_MAP: Record<string, string> = {
   'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
-  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung', 'Double Hung': 'doubleHung',
 }
 function parseSec(raw: any): { type: string; width: number }[] {
   if (Array.isArray(raw)) return raw

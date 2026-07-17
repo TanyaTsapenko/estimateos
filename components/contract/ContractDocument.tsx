@@ -20,7 +20,7 @@ const INSTALL_LABELS: Record<string, string> = { retrofit: 'Retrofit', fullframe
 const MATERIAL_LABELS: Record<string, string> = { vinyl: 'Vinyl', wood: 'Wood', fiberglass: 'Fiberglass', aluminum: 'Aluminum', composite: 'Composite' }
 const SECTION_TYPE_MAP: Record<string, string> = {
   'Casement': 'casement', 'Fixed': 'picture', 'Picture': 'picture',
-  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung',
+  'Slider': 'slider', 'Awning': 'awning', 'Single Hung': 'singleHung', 'Double Hung': 'doubleHung',
 }
 
 function parseSections(raw: any): { type: string; width: number }[] {

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { C, getType, type Opening } from '@/lib/v2/openingTypes'
 import { TAX_RATES } from '@/lib/pricing'
 import { type ClientInfo } from './client-step'
@@ -229,6 +229,9 @@ type Props = {
 export function ReviewStep({ clientInfo, openings, prices, trimCost = 0, trimState, scopeNotes, initialDiscountType = 'fixed', initialDiscountValue = '', onEditOpenings, onSave, saving = false }: Props) {
   const [discountType, setDiscountType] = useState<'fixed' | 'percent'>(initialDiscountType)
   const [discountValue, setDiscountValue] = useState(initialDiscountValue)
+
+  useEffect(() => { setDiscountType(initialDiscountType) }, [initialDiscountType])
+  useEffect(() => { setDiscountValue(initialDiscountValue) }, [initialDiscountValue])
 
   const [taxRate, taxLabel] = TAX_RATES[(clientInfo.province ?? '').toUpperCase()] ?? [0.05, 'GST (5%)']
 

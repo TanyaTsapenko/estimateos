@@ -9,11 +9,9 @@ export default function RootPage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setTimeout(() => router.replace('/dashboard'), 900)
-      } else {
-        setTimeout(() => router.replace('/auth'), 900)
-      }
+      setTimeout(() => router.replace(session ? '/dashboard' : '/auth'), 900)
+    }).catch(() => {
+      setTimeout(() => router.replace('/auth'), 900)
     })
   }, [])
 

@@ -60,5 +60,6 @@ interface SIconProps extends Omit<LucideProps, 'ref'> {
 
 export function SIcon({ name, size = 16, strokeWidth = 1.8, ...rest }: SIconProps) {
   const Icon = MAP[name]
+  if (!Icon) return null
   return <Icon size={size} strokeWidth={strokeWidth} {...rest} />
 }
