@@ -141,7 +141,7 @@ export default function ClientEstimatePage() {
       else if (est.status === 'declined') setDocStatus('declined')
       else setDocStatus('active')
     }
-    load()
+    load().catch(() => setDocStatus('error'))
   }, [id])
 
   useEffect(() => {

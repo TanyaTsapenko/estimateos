@@ -21,12 +21,12 @@ function groupSections(op: Opening) {
   const t = getType(op.typeId)
   const extraKeys = t.extraFieldsBySubtype?.[op.sub] ?? []
   const extraValueKeys = Object.entries(t.extraFieldsByValue ?? {})
-    .filter(([, cond]) => {
-      const v = op.vals[cond.field]
+    .filter(([condKey, cond]) => {
+      const v = op.vals[condKey]
       if (cond.notEmpty) return v !== undefined && v !== null && v !== '' && v !== false
       return v === cond.value
     })
-    .map(([k]) => k)
+    .map(([, cond]) => cond.field)
   const allKeys = [
     ...t.fields,
     ...extraKeys.filter(k => !t.fields.includes(k)),

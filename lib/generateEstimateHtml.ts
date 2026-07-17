@@ -72,7 +72,8 @@ export function generateEstimateHtml(opts: EstimateHtmlOptions): string {
     if (op.tempered)        chips.push('Tempered')
     if (op.laminated_glass) chips.push('Laminated')
 
-    const svgStr = openingSvgString(op)
+    let svgStr = ''
+    try { svgStr = openingSvgString(op) } catch { svgStr = '' }
 
     return `
 <div class="card">
