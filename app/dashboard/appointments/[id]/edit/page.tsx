@@ -51,6 +51,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
 
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [errors, setErrors]       = useState<ClientErrors>({})
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
@@ -175,11 +176,13 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
     }).eq('id', id)
 
     setSaving(false)
-    if (!error) router.push('/dashboard/appointments')
+    if (error) { setSaveError('Failed to save — please try again.'); return }
+    router.push('/dashboard/appointments')
   }
 
   async function deleteAppt() {
-    await supabase.from('appointments').delete().eq('id', id)
+    const { error } = await supabase.from('appointments').delete().eq('id', id)
+    if (error) { setSaveError('Failed to delete — please try again.'); return }
     router.push('/dashboard/appointments')
   }
 
@@ -399,7 +402,12 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
           </div>
 
           {/* Actions */}
-          <div style={{ marginTop: 24, display: 'flex', gap: 10 }}>
+          {saveError && (
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', marginTop: 16, fontSize: 13, color: '#DC2626' }}>
+              {saveError}
+            </div>
+          )}
+          <div style={{ marginTop: saveError ? 8 : 24, display: 'flex', gap: 10 }}>
             <button onClick={() => router.back()} style={{
               flex: 1, height: 48, borderRadius: 12, border: `1px solid ${T.borderStrong}`,
               background: T.card, color: T.inkMid, fontSize: 15, fontWeight: 600, cursor: 'pointer',
