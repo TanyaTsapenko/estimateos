@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   if (!clientEmail) return NextResponse.json({ error: 'No client email' }, { status: 400 })
 
   if (!contractId) return NextResponse.json({ error: 'Missing contractId' }, { status: 400 })
-  const safeCompany = (companyName || '').replace(/[<>"&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;','&':'&amp;'}[c]!))
+  const safeCompany = (companyName || '').replace(/[<>"&]/g, (c: string) => (({'<':'&lt;','>':'&gt;','"':'&quot;','&':'&amp;'} as Record<string,string>)[c] ?? c))
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://useapexscale.com'
   const signUrl = `${appUrl}/sign/contract/${contractId}`
   const fmt = (n: number) => 'CA$' + n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
