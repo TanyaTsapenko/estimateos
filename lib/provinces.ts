@@ -15,8 +15,8 @@ export const PROVINCE_NAMES: Record<string, string> = {
 }
 
 export function resolveProvinceName(code: string | null | undefined): string {
-  if (!code) return 'Alberta'
-  return PROVINCE_NAMES[code.toUpperCase()] ?? 'Alberta'
+  if (!code) return 'your province'
+  return PROVINCE_NAMES[code.toUpperCase()] ?? code
 }
 
 export function substituteProvince(content: string, provinceCode: string | null | undefined): string {

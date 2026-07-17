@@ -18,7 +18,7 @@ type FilterTab = 'all' | 'estimates' | 'payments' | 'team'
 
 const ESTIMATE_TYPES = ['estimate_viewed', 'estimate_signed', 'estimate_expired', 'estimate_declined']
 const PAYMENT_TYPES  = ['deposit_paid', 'final_paid']
-const TEAM_TYPES     = ['team_activity']
+const TEAM_TYPES     = ['team_activity', 'team_member_joined']
 
 const C = {
   ink:       '#0B1220',
