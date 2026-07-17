@@ -36,12 +36,12 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { setLoading(false); return }
+      if (!user) { setRole('estimator'); setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS); setLoading(false); return }
       const { data } = await supabase
         .from('profiles')
         .select('role, permissions, team_owner_id, member_role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
       if (!data) {
         console.warn('[usePermissions] profile fetch failed; defaulting to minimal permissions')
         setRole('estimator')
@@ -64,8 +64,15 @@ export function usePermissions(): { role: AppRole; permissions: Permissions; loa
       } else {
         setRole('estimator')
         const stored = data.permissions as Partial<Permissions> | null
-        setPermissions({ ...DEFAULT_ESTIMATOR_PERMISSIONS, ...(stored || {}) })
+        const KEYS = Object.keys(DEFAULT_ESTIMATOR_PERMISSIONS) as (keyof Permissions)[]
+        const filtered: Partial<Permissions> = {}
+        if (stored) for (const k of KEYS) if (typeof stored[k] === 'boolean') filtered[k] = stored[k]
+        setPermissions({ ...DEFAULT_ESTIMATOR_PERMISSIONS, ...filtered })
       }
+      setLoading(false)
+    }).catch(() => {
+      setRole('estimator')
+      setPermissions(DEFAULT_ESTIMATOR_PERMISSIONS)
       setLoading(false)
     })
   }, [])

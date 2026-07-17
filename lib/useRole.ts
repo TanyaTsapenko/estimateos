@@ -11,15 +11,15 @@ export function useRole(): { role: AppRole; loading: boolean } {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) { setLoading(false); return }
+      if (!user) { setRole('estimator'); setLoading(false); return }
 
       const { data } = await supabase
         .from('profiles')
         .select('role, member_role, team_owner_id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (!data) { setLoading(false); return }
+      if (!data) { setRole('estimator'); setLoading(false); return }
 
       const r = (data.role ?? null) as string | null
       const isTeamMember = !!data.team_owner_id
@@ -29,10 +29,10 @@ export function useRole(): { role: AppRole; loading: boolean } {
       } else if (r === 'admin' || (!r && isTeamMember && data.member_role === 'admin')) {
         setRole('admin')
       } else {
-        setRole('owner') // owner and manager both get full access
+        setRole('owner')
       }
       setLoading(false)
-    })
+    }).catch(() => { setRole('estimator'); setLoading(false) })
   }, [])
 
   return { role, loading }

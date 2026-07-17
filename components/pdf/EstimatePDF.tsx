@@ -401,13 +401,13 @@ export function EstimatePDF({ estimate, openings, company, customLabels, subtype
               <Text style={S.totVal}>{fmtCAD(estimate.subtotal || 0)}</Text>
             </View>
 
-            {!!(estimate.discount_value) && (
+            {!!(estimate.discount_amount || estimate.discount_value) && (
               <View style={S.totRow}>
                 <Text style={S.totLbl}>Discount</Text>
                 <Text style={S.totVal}>
-                  {estimate.discount_type === 'percent'
+                  {estimate.discount_type === 'percent' && estimate.discount_value
                     ? `−${estimate.discount_value}%`
-                    : `−${fmtCAD(estimate.discount_value)}`}
+                    : `−${fmtCAD(estimate.discount_amount || estimate.discount_value)}`}
                 </Text>
               </View>
             )}
