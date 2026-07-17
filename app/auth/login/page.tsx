@@ -104,9 +104,11 @@ export default function LoginPage() {
       {/* ── Form ──────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, background: '#F8F9FB', padding: '32px 24px 40px' }}>
         <div style={{ marginBottom: 16 }}>
-          <label style={lbl}>Email</label>
+          <label htmlFor="login-email" style={lbl}>Email</label>
           <input
+            id="login-email"
             type="email" value={email} placeholder="james@northview.ca"
+            autoComplete="email"
             onChange={e => { setEmail(e.target.value); setEmailError('') }}
             onBlur={() => { if (email && !isValidEmail(email)) setEmailError('Please enter a valid email address') }}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
@@ -116,9 +118,11 @@ export default function LoginPage() {
         </div>
 
         <div style={{ marginBottom: 6 }}>
-          <label style={lbl}>Password</label>
+          <label htmlFor="login-password" style={lbl}>Password</label>
           <input
+            id="login-password"
             type="password" value={password} placeholder="Your password"
+            autoComplete="current-password"
             onChange={e => setPassword(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleLogin()}
             style={inp}

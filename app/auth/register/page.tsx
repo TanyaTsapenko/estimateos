@@ -160,7 +160,11 @@ export default function RegisterPage() {
         {/* Terms checkbox */}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20 }}>
           <div
+            role="checkbox"
+            aria-checked={agreed}
+            tabIndex={0}
             onClick={() => setAgreed(!agreed)}
+            onKeyDown={e => (e.key === ' ' || e.key === 'Enter') && setAgreed(!agreed)}
             style={{
               width: 18, height: 18, borderRadius: 5, flexShrink: 0, marginTop: 1,
               background: agreed ? '#2563EB' : '#FFFFFF',
