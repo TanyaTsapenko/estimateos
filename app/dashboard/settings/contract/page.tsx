@@ -547,16 +547,6 @@ export default function ContractSettingsPage() {
                     {/* Title */}
                     <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#0A1628', minWidth: 0 }}>{clause.title}</span>
 
-                    {/* Delete button (non-fixed only) */}
-                    {!clause.fixed && (
-                      <button
-                        onClick={() => setClauseToDelete(clause.id)}
-                        style={{ width: 26, height: 26, borderRadius: 6, background: 'rgba(220,38,38,0.08)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                      </button>
-                    )}
-
                     {/* Chevron */}
                     <div onClick={() => setExpandedClause(isExpanded ? null : clause.id)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 2px' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
@@ -584,6 +574,12 @@ export default function ContractSettingsPage() {
                             onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, content: e.target.value } : c))}
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
                           />
+                          <button
+                            onClick={() => setClauseToDelete(clause.id)}
+                            style={{ marginTop: 10, background: 'none', border: 'none', padding: 0, fontSize: 13, fontWeight: 500, color: '#DC2626', cursor: 'pointer', fontFamily: 'inherit' }}
+                          >
+                            Remove clause
+                          </button>
                         </>
                       )}
                     </div>
@@ -674,8 +670,8 @@ export default function ContractSettingsPage() {
       <ConfirmModal
         open={clauseToDelete !== null}
         icon="trash"
-        title="Remove clause"
-        body="Are you sure you want to remove this clause? This cannot be undone."
+        title="Remove this clause?"
+        body={`"${contractClauses.find(c => c.id === clauseToDelete)?.title ?? 'This clause'}" will be permanently removed from your contract template.`}
         confirmLabel="Remove"
         onConfirm={() => {
           if (clauseToDelete) {
