@@ -241,8 +241,8 @@ export default function ReminderSettingsPage() {
           <SectionLabel>General</SectionLabel>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
             <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>Auto reminders</div>
-              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Automatically suggest reminders for stale estimates</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>Follow-up reminders</div>
+              <div style={{ fontSize: 12, color: '#94A3B8', marginTop: 2 }}>Flags overdue estimates on your dashboard.</div>
             </div>
             <Toggle checked={settings.auto_enabled} onChange={v => setSettings(s => ({ ...s, auto_enabled: v }))} />
           </div>
