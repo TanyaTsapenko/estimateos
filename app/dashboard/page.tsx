@@ -1395,7 +1395,7 @@ const [dashToast, setDashToast] = useState('')
                                   })}
                                 </div>
                                 {entityId && (
-                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
+                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 12, width: '100%', minHeight: 44, background: '#EEF3FF', border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#1D4ED8', fontFamily: 'inherit', padding: '10px 16px', textAlign: 'center' }}>
                                     View estimate →
                                   </button>
                                 )}
@@ -1571,7 +1571,7 @@ const [dashToast, setDashToast] = useState('')
                                   })}
                                 </div>
                                 {entityId && (
-                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
+                                  <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 12, width: '100%', minHeight: 44, background: '#EEF3FF', border: 'none', borderRadius: 12, cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#1D4ED8', fontFamily: 'inherit', padding: '10px 16px', textAlign: 'center' }}>
                                     View estimate →
                                   </button>
                                 )}
