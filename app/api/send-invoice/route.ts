@@ -161,10 +161,10 @@ export async function POST(request: NextRequest) {
 
   logActivity(createServiceClient(), {
     user_id: est?.user_id || user.id,
-    event_type: 'final_invoice_sent',
+    event_type: isFinal ? 'final_invoice_sent' : 'deposit_invoice_sent',
     actor_type: 'contractor',
-    entity_type: 'invoice',
-    entity_id: invoiceId,
+    entity_type: 'estimate',
+    entity_id: inv.estimate_id || invoiceId,
     entity_number: est?.estimate_number,
     client_name: est?.client_name,
     amount: inv.amount,

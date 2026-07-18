@@ -190,6 +190,7 @@ function nth(n: number): string {
 
 const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
 const PAYMENT_EVENTS  = new Set(['deposit_paid', 'final_paid'])
+const INVOICE_EVENTS  = new Set(['deposit_paid', 'final_paid', 'final_invoice_sent', 'deposit_invoice_sent'])
 
 type ActivityGroup = {
   entity_id: string
@@ -502,13 +503,13 @@ const [dashToast, setDashToast] = useState('')
       {
         const now = Date.now()
         const actTimeAgo = (iso: string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
-        const paymentEntityIds = (activityLog || [])
-          .filter((e: any) => e.event_type === 'deposit_paid' || e.event_type === 'final_paid')
+        const invoiceEntityIds = (activityLog || [])
+          .filter((e: any) => e.entity_type === 'invoice' || INVOICE_EVENTS.has(e.event_type))
           .map((e: any) => e.entity_id).filter(Boolean)
         const invoiceToEstimate: Record<string, string> = {}
-        if (paymentEntityIds.length) {
+        if (invoiceEntityIds.length) {
           const { data: invRows } = await supabase
-            .from('invoices').select('id, estimate_id').in('id', paymentEntityIds)
+            .from('invoices').select('id, estimate_id').in('id', invoiceEntityIds)
           for (const row of invRows || []) {
             if (row.estimate_id) invoiceToEstimate[row.id] = row.estimate_id
           }
@@ -517,9 +518,7 @@ const [dashToast, setDashToast] = useState('')
           event_type: e.event_type,
           actor_type: e.actor_type,
           actor_name: e.actor_name || (e.actor_type === 'contractor' ? 'You' : 'Client'),
-          entity_id: ((e.event_type === 'deposit_paid' || e.event_type === 'final_paid')
-            ? (invoiceToEstimate[e.entity_id] || e.entity_id)
-            : e.entity_id) || '',
+          entity_id: (invoiceToEstimate[e.entity_id] || e.entity_id) || '',
           entity_number: e.entity_number || '',
           client_name: e.client_name || '',
           amount: e.amount ?? null,
