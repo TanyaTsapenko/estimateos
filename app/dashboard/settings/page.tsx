@@ -14,7 +14,7 @@ import ConfirmModal from '@/components/ConfirmModal'
 import { type ContractClause, DEFAULT_CLAUSES } from '@/lib/contractClauses'
 // ── TYPES ────────────────────────────────────────
 type FlashFn   = (message: string, opts?: { submessage?: string; variant?: 'success' | 'error' | 'neutral' }) => void
-type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'quote' | 'reminders' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
+type SectionId = 'profile' | 'password' | 'notifications' | 'company' | 'reminders' | 'team' | 'contract' | 'price' | 'billing' | 'invoices'
 
 // ── NAV GROUPS ───────────────────────────────────
 const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: string; desc: string }[] }[] = [
@@ -30,7 +30,6 @@ const GROUPS: { title: string; items: { id: SectionId; icon: IconName; label: st
     title: 'BUSINESS',
     items: [
       { id: 'company',  icon: 'company',  label: 'Company',      desc: 'Logo, address, defaults' },
-      { id: 'quote' as const,      icon: 'quote' as const, label: 'Quote Settings', desc: 'Estimate validity & defaults' },
       { id: 'reminders' as const, icon: 'bell' as const,  label: 'Follow-ups',     desc: 'Follow-up timing & templates' },
       { id: 'team',               icon: 'team',            label: 'Team',          desc: 'Manage team members' },
       { id: 'contract', icon: 'contract', label: 'Contract',   desc: 'Terms template' },
@@ -1730,7 +1729,6 @@ const SECTIONS: Record<SectionId, (props: { flash: FlashFn }) => React.ReactElem
   password:      (p) => <PasswordSection {...p} />,
   notifications: (p) => <NotificationsSection {...p} />,
   company:       (p) => <CompanySection {...p} />,
-  quote:         () => <></>,
   reminders:     () => <></>,
   team:          (p) => <TeamSection {...p} />,
   contract:      (p) => <ContractSection {...p} />,
@@ -1794,7 +1792,7 @@ export default function SettingsPage() {
       if (isEstimator) return ['profile', 'password'].includes(item.id)
       if (role === 'admin') return !['billing', 'invoices', 'notifications'].includes(item.id)
       if (item.id === 'team' && role !== 'owner') return false
-      if ((item.id === 'company' || item.id === 'quote' || item.id === 'contract') && !permissions.settings) return false
+      if ((item.id === 'company' || item.id === 'contract') && !permissions.settings) return false
       if (item.id === 'price' && !permissions.price_list) return false
       return true
     }),
@@ -1829,7 +1827,6 @@ export default function SettingsPage() {
 
   const handleNavClick = (id: SectionId) => {
     guardLeave(() => {
-      if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
       if (id === 'reminders') { router.push('/dashboard/settings/reminders'); return }
       setActive(id)
       router.replace(`/dashboard/settings?section=${id}`, { scroll: false })

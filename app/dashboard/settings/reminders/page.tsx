@@ -37,7 +37,8 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
 // ── constants ─────────────────────────────────────────────────────────
 const DEFAULT_TEMPLATE = `Hi {client_name}, just following up on estimate {estimate_number} we prepared for {address}. Please let me know if you have any questions or would like to make any changes. The estimate is valid until {expiry_date}.`
 
-const DAY_OPTIONS     = [1, 2, 3, 5, 7]
+const DAY_OPTIONS       = [1, 2, 3, 5, 7]
+const VALID_DAY_OPTIONS = [15, 30, 45, 60]
 const MAX_COUNT_OPTIONS = [1, 2, 3]
 const TONE_PREFIXES   = ['', 'Just following up again — ', 'Final reminder — ']
 const ORDINALS        = ['1st reminder', '2nd reminder', '3rd reminder']
@@ -138,15 +139,17 @@ export default function ReminderSettingsPage() {
   const supabase = createClient()
   const { role, loading: roleLoading } = usePermissions()
 
-  const [settings, setSettings] = useState<RemSettings>(DEFAULTS)
-  const [initial,  setInitial]  = useState<RemSettings>(DEFAULTS)
-  const [userId,   setUserId]   = useState<string | null>(null)
+  const [settings,         setSettings]         = useState<RemSettings>(DEFAULTS)
+  const [initial,          setInitial]          = useState<RemSettings>(DEFAULTS)
+  const [validDays,        setValidDays]        = useState(30)
+  const [initialValidDays, setInitialValidDays] = useState(30)
+  const [userId,           setUserId]           = useState<string | null>(null)
   const baseQuoteSettingsRef    = useRef<Record<string, unknown>>({})
   const [toast,      setToast]      = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [previewTab, setPreviewTab] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const dirty = JSON.stringify(settings) !== JSON.stringify(initial)
+  const dirty = JSON.stringify(settings) !== JSON.stringify(initial) || validDays !== initialValidDays
 
   // Reset preview tab if max_count shrinks below current tab
   useEffect(() => {
@@ -164,7 +167,7 @@ export default function ReminderSettingsPage() {
       if (!user) return
       const sid = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sid)
-      const { data: prof } = await supabase.from('profiles').select('quote_settings').eq('id', sid).single()
+      const { data: prof } = await supabase.from('profiles').select('quote_settings, default_valid_days').eq('id', sid).single()
       const qs  = (prof as any)?.quote_settings ?? {}
       baseQuoteSettingsRef.current = qs
       const rem = qs?.reminders
@@ -178,17 +181,21 @@ export default function ReminderSettingsPage() {
         setSettings(loaded)
         setInitial(loaded)
       }
+      const vd: number = (prof as any)?.default_valid_days || 30
+      setValidDays(vd); setInitialValidDays(vd)
     })()
   }, [])
 
   async function save() {
     if (!userId) return
     const { error } = await supabase.from('profiles').update({
-      quote_settings: { ...baseQuoteSettingsRef.current, reminders: settings },
+      quote_settings:    { ...baseQuoteSettingsRef.current, reminders: settings },
+      default_valid_days: validDays,
     }).eq('id', userId)
     if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); return }
     baseQuoteSettingsRef.current = { ...baseQuoteSettingsRef.current, reminders: settings }
     setInitial({ ...settings })
+    setInitialValidDays(validDays)
     flash('Saved')
   }
 
@@ -249,6 +256,13 @@ export default function ReminderSettingsPage() {
         {/* Timing */}
         <Card>
           <SectionLabel>Timing</SectionLabel>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 2 }}>Estimate valid for</label>
+            <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>How long estimates remain valid after sending</div>
+            <select value={validDays} onChange={e => setValidDays(Number(e.target.value))} style={selectStyle}>
+              {VALID_DAY_OPTIONS.map(d => <option key={d} value={d}>{d} days</option>)}
+            </select>
+          </div>
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 2 }}>Days between reminders</label>
             <div style={{ fontSize: 12, color: '#94A3B8', marginBottom: 6 }}>Applied before the first reminder and between each subsequent one</div>
