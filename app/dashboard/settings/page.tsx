@@ -1151,7 +1151,7 @@ function TeamSection({ flash }: { flash: FlashFn }) {
 
 const PAYMENT_METHOD_OPTIONS = ['Cash', 'E-Transfer', 'Cheque', 'Financing']
 
-function ContractSection({ flash }: { flash: FlashFn }) {
+function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChange?: (dirty: boolean) => void }) {
   const supabase = createClient()
   const [warrantyPeriod,     setWarrantyPeriod]     = useState('1 year')
   const [depositRequired,    setDepositRequired]    = useState(true)
@@ -1181,6 +1181,16 @@ function ContractSection({ flash }: { flash: FlashFn }) {
     completionTimeframe !== savedCompletionTimeframe ||
     JSON.stringify(paymentMethods) !== JSON.stringify(savedPaymentMethods) ||
     projectManager !== savedProjectManager
+
+  useEffect(() => { onDirtyChange?.(isDirty) }, [isDirty])
+
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
+
   const [userId, setUserId] = useState<string | null>(null)
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null)
   const [sigKey, setSigKey] = useState(0)
@@ -1635,16 +1645,29 @@ function ContractSection({ flash }: { flash: FlashFn }) {
           )}
         </Card>
       </div>
-      <SaveBar dirty={isDirty} valid={true} onSave={saveContract} onDiscard={() => {
-        setContractClauses(JSON.parse(savedClauses || '[]').length ? JSON.parse(savedClauses) : DEFAULT_CLAUSES)
-        setWarrantyPeriod(savedWarrantyPeriod)
-        setDepositRequired(savedDepositRequired)
-        setDepositPercent(savedDepositPercent)
-        setDepositTiming(savedDepositTiming)
-        setCompletionTimeframe(savedCompletionTimeframe)
-        setPaymentMethods([...savedPaymentMethods])
-        setProjectManager(savedProjectManager)
-      }} />
+      {isDirty && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderTop: '1px solid rgba(10,22,40,0.07)', padding: '12px 20px' }}>
+          <div style={{ maxWidth: 820, margin: '0 auto', display: 'flex', gap: 12 }}>
+            <button
+              onClick={() => {
+                setContractClauses(JSON.parse(savedClauses || '[]').length ? JSON.parse(savedClauses) : DEFAULT_CLAUSES)
+                setWarrantyPeriod(savedWarrantyPeriod)
+                setDepositRequired(savedDepositRequired)
+                setDepositPercent(savedDepositPercent)
+                setDepositTiming(savedDepositTiming)
+                setCompletionTimeframe(savedCompletionTimeframe)
+                setPaymentMethods([...savedPaymentMethods])
+                setProjectManager(savedProjectManager)
+              }}
+              style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: '#475467', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}
+            >Discard</button>
+            <button
+              onClick={saveContract}
+              style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >Save changes</button>
+          </div>
+        </div>
+      )}
       <ConfirmModal
         open={clauseToDelete !== null}
         icon="trash"
@@ -1719,6 +1742,7 @@ export default function SettingsPage() {
   const supabase = createClient()
   const [active, setActive] = useState<SectionId>('profile')
   const [toast, setToast] = useState<{ message: string; submessage?: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
+  const [contractDirty, setContractDirty] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
@@ -1789,6 +1813,9 @@ export default function SettingsPage() {
   const ActiveSection = SECTIONS[active]
 
   const handleNavClick = (id: SectionId) => {
+    if (active === 'contract' && contractDirty) {
+      if (!window.confirm('You have unsaved changes — leave anyway?')) return
+    }
     if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
     if (id === 'reminders') { router.push('/dashboard/settings/reminders'); return }
     setActive(id)
@@ -1830,7 +1857,10 @@ export default function SettingsPage() {
         ) : (
           // Detail view
           <div>
-            <AppTopBar onBack={() => setMobileDetail(false)} backLabel="Settings" />
+            <AppTopBar onBack={() => {
+              if (active === 'contract' && contractDirty && !window.confirm('You have unsaved changes — leave anyway?')) return
+              setMobileDetail(false)
+            }} backLabel="Settings" />
             <div style={{ padding: '20px 16px 100px' }}>
               {role === 'estimator' && (
                 <div style={{ marginBottom: 16, padding: '12px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, fontSize: 13, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1838,7 +1868,9 @@ export default function SettingsPage() {
                   Contact your account owner to change company settings.
                 </div>
               )}
-              <ActiveSection flash={flash} />
+              {active === 'contract'
+                ? <ContractSection flash={flash} onDirtyChange={setContractDirty} />
+                : <ActiveSection flash={flash} />}
             </div>
           </div>
         )}
@@ -1928,7 +1960,9 @@ export default function SettingsPage() {
                   Contact your account owner to change company settings.
                 </div>
               )}
-              <ActiveSection flash={flash} />
+              {active === 'contract'
+                ? <ContractSection flash={flash} onDirtyChange={setContractDirty} />
+                : <ActiveSection flash={flash} />}
             </div>
           </div>
         </div>
