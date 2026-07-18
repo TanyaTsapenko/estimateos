@@ -1255,9 +1255,10 @@ function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChan
       project_manager:      projectManager,
       completion_timeframe: completionTimeframe,
       payment_methods:      paymentMethods,
-      contract_clauses:     JSON.stringify(contractClauses),
+      contract_clauses:     JSON.stringify(contractClauses.map(c => ({ ...c, title: c.title.trim() || 'Untitled clause' }))),
     }).eq('id', userId)
     if (error) { flash('Save failed: ' + error.message, { variant: 'error' }); return }
+    const savedClauses_ = contractClauses.map(c => ({ ...c, title: c.title.trim() || 'Untitled clause' }))
     setSavedWarrantyPeriod(warrantyPeriod)
     setSavedDepositRequired(depositRequired)
     setSavedDepositPercent(depositPercent)
@@ -1265,7 +1266,8 @@ function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChan
     setSavedProjectManager(projectManager)
     setSavedCompletionTimeframe(completionTimeframe)
     setSavedPaymentMethods([...paymentMethods])
-    setSavedClauses(JSON.stringify(contractClauses))
+    setContractClauses(savedClauses_)
+    setSavedClauses(JSON.stringify(savedClauses_))
     flash('Saved')
   }
 
@@ -1539,13 +1541,14 @@ function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChan
                           <input
                             value={clause.title}
                             onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, title: e.target.value } : c))}
-                            placeholder="Clause title"
+                            placeholder="New clause"
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box', marginBottom: 8 }}
                           />
                           <textarea
                             value={clause.content}
                             rows={4}
                             onChange={e => setContractClauses(prev => prev.map(c => c.id === clause.id ? { ...c, content: e.target.value } : c))}
+                            placeholder="Enter clause text..."
                             style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E5EA', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', color: '#0A1628', resize: 'vertical', outline: 'none', boxSizing: 'border-box', lineHeight: 1.6 }}
                           />
                           <button
@@ -1568,7 +1571,7 @@ function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChan
             onClick={() => {
               const newClause: ContractClause = {
                 id: 'custom_' + Date.now(),
-                title: 'New clause',
+                title: '',
                 content: '',
                 enabled: true,
                 fixed: false,
