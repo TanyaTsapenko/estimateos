@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         html,
       })
     } catch (e: any) {
-      console.error('[send-email/welcome] resend error:', e.message)
+      console.error('[send-email/welcome] resend error sending to', recipientEmail, '—', e.message)
     }
     return NextResponse.json({ success: true })
   }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const [, taxLabel] = TAX_RATES[est.client_province || 'AB'] || [0.05, 'Tax']
+  const [, taxLabel] = TAX_RATES[est.client_province || ''] || [0.05, 'Tax']
   const companyName = await getCompanyName(supabase, est.user_id)
   const clientLink = `${request.nextUrl.origin}/estimate/${estimateId}`
   const logoHtml = (prof as any)?.logo_url

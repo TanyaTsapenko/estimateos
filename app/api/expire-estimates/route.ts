@@ -31,16 +31,26 @@ export async function GET(request: NextRequest) {
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
 
-  const notifications = estimates.map(e => ({
-    user_id: e.user_id,
-    type:    'estimate_expired',
-    title:   'Estimate expired',
-    body:    `${e.estimate_number} expired without a response${e.client_name ? ` from ${e.client_name}` : ''}`,
-    read:    false,
-    link:    `/dashboard/estimates/${e.id}`,
-  }))
+  const links = estimates.map(e => `/dashboard/estimates/${e.id}`)
+  const { data: existing } = await supabase
+    .from('notifications')
+    .select('link')
+    .eq('type', 'estimate_expired')
+    .in('link', links)
+  const existingLinks = new Set((existing || []).map((n: any) => n.link))
 
-  await supabase.from('notifications').insert(notifications)
+  const notifications = estimates
+    .filter(e => !existingLinks.has(`/dashboard/estimates/${e.id}`))
+    .map(e => ({
+      user_id: e.user_id,
+      type:    'estimate_expired',
+      title:   'Estimate expired',
+      body:    `${e.estimate_number} expired without a response${e.client_name ? ` from ${e.client_name}` : ''}`,
+      read:    false,
+      link:    `/dashboard/estimates/${e.id}`,
+    }))
+
+  if (notifications.length > 0) await supabase.from('notifications').insert(notifications)
 
   return NextResponse.json({ expired: estimates.length, ids })
 }

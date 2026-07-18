@@ -325,7 +325,7 @@ export default function PublicSignPage() {
           <div style={{ fontSize: 16, fontWeight: 700, color: '#0A1628', marginBottom: 10 }}>
             Total: <span style={{ color: '#2563EB' }}>{fmtCAD(estimate.total)}</span>
           </div>
-          {profile?.contract_terms && profile.contract_terms !== 'тут компанія щось напише' && (
+          {profile?.contract_terms && profile.contract_terms.trim() !== '' && (
             <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.75, whiteSpace: 'pre-wrap', maxHeight: 120, overflowY: 'auto', marginBottom: 10 }}>
               {profile.contract_terms}
             </div>

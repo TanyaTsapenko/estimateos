@@ -281,7 +281,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
             <Text style={styles.totalLabel}>Subtotal</Text>
             <Text style={styles.totalValue}>{formatCurrency(estimate.subtotal)}</Text>
           </View>
-          {estimate.discount_amount > 0 && (
+          {!!(estimate.discount_amount || estimate.discount_value) && (
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Discount</Text>
               <Text style={[styles.totalValue, { color: '#16a34a' }]}>−{formatCurrency(estimate.discount_amount)}</Text>

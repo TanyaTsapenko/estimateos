@@ -690,7 +690,6 @@ function CompanySection({ flash }: { flash: FlashFn }) {
       licence_expiry_date:      normalized.licenceExpiry          || null,
       insurance_provider:       normalized.insuranceProvider      || null,
       insurance_expiry_date:    normalized.insuranceExpiry        || null,
-      insurance_policy_number:  normalized.insurance              || null,
       wsib_number:              normalized.wsibNumber             || null,
       signing_rep_name:         normalized.signingRepName         || null,
       signing_rep_title:        normalized.signingRepTitle        || null,
@@ -924,12 +923,12 @@ function TeamSection({ flash }: { flash: FlashFn }) {
         body: JSON.stringify({ inviteeEmail: inviteEmail.trim(), role: inviteRole, permissions: invitePerms }),
       })
       const json = await res.json()
-      if (!res.ok) { flash('Error: ' + (json.error || 'Failed to send invite'), { variant: 'error' }); setSending(false); return }
+      if (!res.ok && !json.emailFailed) { flash('Error: ' + (json.error || 'Failed to send invite'), { variant: 'error' }); setSending(false); return }
       setPendingCount(p => p + 1)
       setInviteEmail('')
       setShowInvite(false)
-      if (json.emailWarning) {
-        flash('Invite saved but email failed: ' + json.emailWarning)
+      if (json.emailFailed) {
+        flash('Invite saved — email failed to send: ' + json.error)
       } else {
         flash('Invite sent to ' + inviteEmail.trim())
       }
@@ -1639,7 +1638,16 @@ function ContractSection({ flash }: { flash: FlashFn }) {
           )}
         </Card>
       </div>
-      <SaveBar dirty={isDirty} valid={true} onSave={saveContract} onDiscard={() => {}} />
+      <SaveBar dirty={isDirty} valid={true} onSave={saveContract} onDiscard={() => {
+        setContractClauses(JSON.parse(savedClauses || '[]').length ? JSON.parse(savedClauses) : DEFAULT_CLAUSES)
+        setWarrantyPeriod(savedWarrantyPeriod)
+        setDepositRequired(savedDepositRequired)
+        setDepositPercent(savedDepositPercent)
+        setDepositTiming(savedDepositTiming)
+        setCompletionTimeframe(savedCompletionTimeframe)
+        setPaymentMethods([...savedPaymentMethods])
+        setProjectManager(savedProjectManager)
+      }} />
       <ConfirmModal
         open={clauseToDelete !== null}
         icon="trash"
@@ -1664,60 +1672,17 @@ function PriceListSection() {
   return null
 }
 
-function BillingSection({ flash }: { flash: FlashFn }) {
+function BillingSection({ flash: _flash }: { flash: FlashFn }) {
   return (
     <div>
-      <SectionHeader kicker="BILLING" title="Plan & billing" subtitle="Manage your subscription and payment method." />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#0A1628' }}>Pro Plan</div>
-                <Pill tone="blue">ACTIVE</Pill>
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B' }}>CA$149/mo · Renews Jun 1, 2026</div>
-            </div>
-            <button style={{ padding: '8px 16px', border: '1px solid #E2E5EA', borderRadius: 10, background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Change plan
-            </button>
-          </div>
-          <div style={{ borderTop: '1px solid #EEF0F4', paddingTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-            {[{ label: 'Estimates this month', value: '12' }, { label: 'Team seats', value: '2 / 5' }, { label: 'Storage', value: '0.4 GB / 10 GB' }].map(s => (
-              <div key={s.label}>
-                <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 4 }}>{s.label}</div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#0A1628' }}>{s.value}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <SectionLabel>Payment method</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 26, background: '#1A1A2E', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: 10, color: '#fff', fontWeight: 700 }}>VISA</span>
-              </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0A1628' }}>•••• •••• •••• 4242</div>
-                <div style={{ fontSize: 12, color: '#94A3B8' }}>Expires 12/27</div>
-              </div>
-            </div>
-            <button style={{ padding: '7px 14px', border: '1px solid #E2E5EA', borderRadius: 10, background: '#fff', fontSize: 13, fontWeight: 600, color: '#475569', cursor: 'pointer', fontFamily: 'inherit' }}>
-              Update
-            </button>
-          </div>
-        </Card>
-        <Card>
-          <div style={{ padding: '14px 16px', background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(180,83,9,0.15)', borderRadius: 10 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#B45309', marginBottom: 4 }}>Cancel plan</div>
-            <div style={{ fontSize: 13, color: '#64748B', marginBottom: 12 }}>You'll lose access to all Pro features at the end of your billing period.</div>
-            <button style={{ padding: '8px 16px', background: 'rgba(220,38,38,0.08)', color: '#DC2626', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Cancel plan
-            </button>
-          </div>
-        </Card>
-      </div>
+      <SectionHeader kicker="BILLING" title="Plan & billing" subtitle="Billing management is coming soon." />
+      <Card>
+        <div style={{ textAlign: 'center', padding: '32px 0', color: '#94A3B8', fontSize: 13 }}>
+          <div style={{ fontSize: 24, marginBottom: 10 }}>🚧</div>
+          <div style={{ fontWeight: 600, color: '#475569', marginBottom: 6 }}>Coming soon</div>
+          <div>Subscription management will be available here.</div>
+        </div>
+      </Card>
     </div>
   )
 }

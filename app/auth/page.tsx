@@ -51,7 +51,7 @@ export default function SplashPage() {
           { title: 'Invoice sent automatically',  sub: 'GST/HST calculated · PDF to client' },
         ] as const).map((item, i) => (
           <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid #F3F4F6' }}>
-            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#2045B8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#2563EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -66,7 +66,7 @@ export default function SplashPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
           <button
             onClick={() => router.push('/auth/register')}
-            style={{ height: 54, width: '100%', background: '#2045B8', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: F, cursor: 'pointer', boxShadow: '0 8px 20px rgba(32,69,184,0.3)' }}>
+            style={{ height: 54, width: '100%', background: '#2563EB', border: 'none', borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 15, fontFamily: F, cursor: 'pointer', boxShadow: '0 8px 20px rgba(32,69,184,0.3)' }}>
             Get Started — Free Trial →
           </button>
           <button

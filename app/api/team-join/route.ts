@@ -40,11 +40,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'You cannot accept your own invite' }, { status: 400 })
   }
 
-  const appRole = invite.role === 'owner' ? 'owner' : 'estimator'
-
   // Upsert so the row is created if it doesn't exist yet (e.g. user just registered via invite link)
   const profileData: Record<string, unknown> = {
-    id: user.id, team_owner_id: invite.owner_id, member_role: invite.role, role: appRole,
+    id: user.id, team_owner_id: invite.owner_id, member_role: invite.role, role: invite.role,
     onboarding_done: true,
   }
   if (invite.permissions) profileData.permissions = invite.permissions

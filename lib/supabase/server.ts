@@ -14,7 +14,10 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
-          } catch {}
+          } catch (e) {
+            // Expected in Server Components / middleware where cookies are read-only
+            console.warn('[supabase/server] setAll cookie error (expected in RSC):', (e as Error).message)
+          }
         },
       },
     }

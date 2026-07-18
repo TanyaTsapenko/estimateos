@@ -124,11 +124,10 @@ export async function POST(request: NextRequest) {
   if (emailError) {
     console.error('[team-invite] Resend error (full):', JSON.stringify(emailError))
     return NextResponse.json({
-      success: true,
+      error: emailError.message,
+      emailFailed: true,
       invitation,
-      emailWarning: emailError.message,
-      emailError: JSON.stringify(emailError),
-    })
+    }, { status: 500 })
   }
 
   return NextResponse.json({ success: true, invitation })

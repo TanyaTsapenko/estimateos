@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import AppTopBar from '@/components/AppTopBar'
@@ -85,6 +85,7 @@ export default function ReminderSettingsPage() {
   const [settings, setSettings] = useState<RemSettings>(DEFAULTS)
   const [initial, setInitial] = useState<RemSettings>(DEFAULTS)
   const [userId, setUserId] = useState<string | null>(null)
+  const baseQuoteSettingsRef = React.useRef<Record<string, unknown>>({})
   const [toast, setToast] = useState<{ message: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [activeTab, setActiveTab] = useState<1 | 2>(1)
 
@@ -103,7 +104,9 @@ export default function ReminderSettingsPage() {
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
       setUserId(sanitizedId)
       const { data: prof } = await supabase.from('profiles').select('quote_settings').eq('id', sanitizedId).single()
-      const rem = (prof as any)?.quote_settings?.reminders
+      const qs = (prof as any)?.quote_settings ?? {}
+      baseQuoteSettingsRef.current = qs
+      const rem = qs?.reminders
       if (rem) {
         const loaded: RemSettings = {
           auto_enabled:      rem.auto_enabled      ?? DEFAULTS.auto_enabled,
@@ -121,12 +124,11 @@ export default function ReminderSettingsPage() {
 
   async function save() {
     if (!userId) return
-    const { data: prof } = await supabase.from('profiles').select('quote_settings').eq('id', userId).single()
-    const currentQS = (prof as any)?.quote_settings ?? {}
     const { error } = await supabase.from('profiles').update({
-      quote_settings: { ...currentQS, reminders: settings },
+      quote_settings: { ...baseQuoteSettingsRef.current, reminders: settings },
     }).eq('id', userId)
     if (error) { flash('Error saving: ' + error.message, { variant: 'error' }); return }
+    baseQuoteSettingsRef.current = { ...baseQuoteSettingsRef.current, reminders: settings }
     setInitial({ ...settings })
     flash('Saved')
   }

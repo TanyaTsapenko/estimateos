@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     || `${(prof as any)?.first_name || ''} ${(prof as any)?.last_name || ''}`.trim()
     || 'Contractor'
   const location = [prof?.city, prof?.province].filter(Boolean).join(', ')
-  const [, taxLabel] = TAX_RATES[est?.client_province || prof?.province || 'AB'] || [0.05, 'Tax']
+  const [, taxLabel] = TAX_RATES[est?.client_province || prof?.province || ''] || [0.05, 'Tax']
 
   const issuedDate = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(inv.created_at))
   const dueDate = inv.due_date

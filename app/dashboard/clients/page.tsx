@@ -70,7 +70,7 @@ export default function ClientsPage() {
           .select('id, client_id, status, total')
           .in('user_id', userIds)
           .not('client_id', 'is', null)
-          .limit(20),
+          .limit(500),
       ])
 
       // Build per-client estimate stats

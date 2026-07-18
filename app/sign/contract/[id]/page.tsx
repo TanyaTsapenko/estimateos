@@ -81,6 +81,8 @@ export default function SignContractPage() {
   const [isAnon,             setIsAnon]             = useState<boolean | null>(null)
   const [showClientConfirm,  setShowClientConfirm]  = useState(false)
   const [signingFailed,      setSigningFailed]      = useState(false)
+  const [depositWarning,     setDepositWarning]     = useState(false)
+  const [declineError,       setDeclineError]       = useState(false)
   const [resendingEmail,     setResendingEmail]     = useState(false)
   const [resendEmailMsg,     setResendEmailMsg]     = useState<'sent' | 'error' | null>(null)
 
@@ -189,6 +191,7 @@ export default function SignContractPage() {
       })
       if (!depositRes.ok) {
         console.error('[sign-contract] deposit invoice creation failed for estimate', contract.estimate_id)
+        setDepositWarning(true)
       }
 
       if (isAnon !== false) {
@@ -221,12 +224,17 @@ export default function SignContractPage() {
 
   async function handleDecline() {
     if (!confirm('Are you sure you want to decline this contract?')) return
+    setDeclineError(false)
     const res = await fetch(`/api/public/contract/${contractId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'decline' }),
     })
-    if (res.ok) setContract(prev => prev ? { ...prev, status: 'declined' } : prev)
+    if (res.ok) {
+      setContract(prev => prev ? { ...prev, status: 'declined' } : prev)
+    } else {
+      setDeclineError(true)
+    }
   }
 
   if (loading) return (
@@ -491,6 +499,11 @@ export default function SignContractPage() {
               <div style={{ fontSize: 18, fontWeight: 700, color: INK, marginBottom: 6 }}>Contract Signed!</div>
               <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>Client will receive payment instructions by email</div>
             </div>
+            {depositWarning && (
+              <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: '#92400E' }}>
+                Deposit invoice could not be created automatically — please send it manually from the Invoices tab.
+              </div>
+            )}
             {depositRequired && (
               <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #E2E8F0', padding: 16, marginBottom: 12 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#94A3B8', marginBottom: 6 }}>Deposit Due</div>
@@ -601,6 +614,11 @@ export default function SignContractPage() {
               }}>
               {signing ? 'Signing…' : signingFailed ? 'Retry signing →' : 'Sign Contract'}
             </button>
+            {declineError && (
+              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 12px', marginBottom: 6, fontSize: 12, color: '#DC2626', textAlign: 'center' as const }}>
+                Decline failed — please try again.
+              </div>
+            )}
             <button onClick={handleDecline}
               style={{ width: '100%', background: 'transparent', border: 'none', borderRadius: 12, padding: 10, fontSize: 13, fontWeight: 600, color: '#DC2626', cursor: 'pointer', fontFamily: F }}>
               Decline

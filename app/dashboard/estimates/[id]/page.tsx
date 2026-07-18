@@ -282,7 +282,7 @@ export default function EstimateDetailPage() {
     </div>
   )
 
-  const [, taxLabel]  = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
+  const [, taxLabel]  = TAX_RATES[estimate.client_province || ''] || [0, 'Tax']
   const isSigned      = estimate.status === 'signed'
   const isInvoiced    = estimate.status === 'invoiced' || estimate.status === 'paid'
   const isDeclined    = estimate.status === 'declined'
@@ -333,7 +333,7 @@ export default function EstimateDetailPage() {
             <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: STATUS_COLOR['opened'], background: STATUS_BG['opened'], borderRadius: 6, padding: '4px 10px' }}>OPENED</span>
           )}
           <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.08em', color: STATUS_COLOR[estimate.status] || '#64748B', background: STATUS_BG[estimate.status] || 'rgba(100,116,139,.1)', borderRadius: 6, padding: '4px 10px' }}>
-            {estimate.status === 'signed' ? 'ACCEPTED' : estimate.status.toUpperCase()}
+            {estimate.status === 'signed' ? 'SIGNED' : estimate.status.toUpperCase()}
           </span>
         </div>}
       >
@@ -625,10 +625,10 @@ export default function EstimateDetailPage() {
           return (
             <div style={{ background: depositPending ? '#fff' : '#0F8A4D', borderRadius: 16, padding: 20, boxShadow: '0 4px 16px rgba(15,23,42,0.06)', border: depositPending ? '1px solid #E2E8F0' : 'none' }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: depositPending ? '#94A0B4' : 'rgba(255,255,255,0.6)', marginBottom: 6 }}>
-                {estimate.status === 'paid' ? 'PAID' : isInvoiced ? 'INVOICED' : 'ACCEPTED'}{signedDate ? ` · ${signedDate}` : ''}
+                {estimate.status === 'paid' ? 'PAID' : isInvoiced ? 'INVOICED' : 'SIGNED'}{signedDate ? ` · ${signedDate}` : ''}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700, color: depositPending ? '#0B1220' : '#fff', marginBottom: 16 }}>
-                {estimate.client_name || 'Client'} accepted this estimate
+                {estimate.client_name || 'Client'} signed this estimate
               </div>
               {depositPending ? (
                 <button onClick={() => router.push('/dashboard/invoices')}

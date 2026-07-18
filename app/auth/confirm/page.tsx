@@ -9,6 +9,7 @@ export default function ConfirmPage() {
   const [email, setEmail]       = useState('')
   const [resending, setResending] = useState(false)
   const [resent, setResent]     = useState(false)
+  const [resendError, setResendError] = useState('')
 
   useEffect(() => {
     setEmail(localStorage.getItem('confirm_email') || '')
@@ -17,12 +18,14 @@ export default function ConfirmPage() {
   async function handleResend() {
     if (!email || resending) return
     setResending(true)
-    await fetch('/api/send-confirmation', {
+    setResendError('')
+    const res = await fetch('/api/send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     })
     setResending(false)
+    if (!res.ok) { setResendError('Failed to resend — please try again.'); return }
     setResent(true)
     setTimeout(() => setResent(false), 4000)
   }
@@ -85,6 +88,11 @@ export default function ConfirmPage() {
         {resent && (
           <p style={{ color: '#16A34A', fontSize: 13, textAlign: 'center', marginBottom: 16, fontWeight: 500 }}>
             ✓ Confirmation email resent
+          </p>
+        )}
+        {resendError && (
+          <p style={{ color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 16 }}>
+            {resendError}
           </p>
         )}
 

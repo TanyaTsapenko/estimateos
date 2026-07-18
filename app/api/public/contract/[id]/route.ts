@@ -41,7 +41,7 @@ const PROFILE_COLS = [
   'contract_terms', 'completion_timeframe', 'payment_methods',
   'project_manager', 'logo_url', 'phone', 'website',
   'city', 'province', 'address', 'postal', 'contract_clauses',
-  'gst_hst_number', 'licence',
+  'licence',
 ].join(', ')
 
 type Row = Record<string, unknown>

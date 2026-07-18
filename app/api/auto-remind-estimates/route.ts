@@ -170,14 +170,23 @@ export async function GET(request: NextRequest) {
         entity_number: est.estimate_number,
         client_name: est.client_name || undefined,
       })
-      await supabase.from('notifications').insert({
-        user_id: est.user_id,
-        type: 'estimate_expired',
-        title: 'Estimate expired',
-        body: `${est.estimate_number} expired without a response${est.client_name ? ` from ${est.client_name}` : ''}`,
-        read: false,
-        link: `/dashboard/estimates/${est.id}`,
-      })
+      const link = `/dashboard/estimates/${est.id}`
+      const { data: existingNotif } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('type', 'estimate_expired')
+        .eq('link', link)
+        .maybeSingle()
+      if (!existingNotif) {
+        await supabase.from('notifications').insert({
+          user_id: est.user_id,
+          type: 'estimate_expired',
+          title: 'Estimate expired',
+          body: `${est.estimate_number} expired without a response${est.client_name ? ` from ${est.client_name}` : ''}`,
+          read: false,
+          link,
+        })
+      }
     }
 
     sent.push(est.id)

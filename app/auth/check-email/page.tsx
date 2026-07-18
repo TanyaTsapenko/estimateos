@@ -12,6 +12,7 @@ export default function CheckEmailPage() {
   const [email, setEmail] = useState('')
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
+  const [resendError, setResendError] = useState('')
 
   useEffect(() => {
     setEmail(localStorage.getItem('reset_email') || '')
@@ -20,10 +21,12 @@ export default function CheckEmailPage() {
   async function handleResend() {
     if (!email || resending) return
     setResending(true)
-    await supabase.auth.resetPasswordForEmail(email, {
+    setResendError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/auth/reset-password',
     })
     setResending(false)
+    if (error) { setResendError(error.message); return }
     setResent(true)
     setTimeout(() => setResent(false), 3000)
   }
@@ -49,16 +52,19 @@ export default function CheckEmailPage() {
         <p style={{fontSize:13, color:'#8892b0', lineHeight:1.55, marginBottom:16}}>
           We sent a link to<br/><span style={{color:'#0A0E1A', fontWeight:600}}>{email || 'your email'}</span><br/>Check your inbox and follow the instructions.
         </p>
-        <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:5, fontSize:12, color:'#8892b0', marginBottom:24}}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:5, fontSize:12, color:'#8892b0', marginBottom:resendError ? 8 : 24}}>
           {resent
             ? <span style={{color:'#16A34A', fontWeight:600}}>✓ Email resent</span>
-            : <>{`Didn't get it? `}<span onClick={handleResend} style={{color: resending ? '#93C5FD' : '#2045B8', fontWeight:600, cursor: resending ? 'default' : 'pointer'}}>{resending ? 'Sending…' : 'Resend email'}</span></>
+            : <>{`Didn't get it? `}<span onClick={handleResend} style={{color: resending ? '#93C5FD' : '#2563EB', fontWeight:600, cursor: resending ? 'default' : 'pointer'}}>{resending ? 'Sending…' : 'Resend email'}</span></>
           }
         </div>
-        <button onClick={() => window.location.href = `mailto:${email}`}
-          style={{width:'100%', background:'#2045B8', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
-          Open email app →
-        </button>
+        {resendError && <p style={{color:'#EF4444', fontSize:12, textAlign:'center', marginBottom:16}}>{resendError}</p>}
+        {email && (
+          <button onClick={() => window.location.href = `mailto:${email}`}
+            style={{width:'100%', background:'#2563EB', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
+            Open email app →
+          </button>
+        )}
         <button onClick={() => router.push('/auth/login')}
           style={{width:'100%', background:'none', border:'none', padding:11, fontSize:13, color:'#8892b0', cursor:'pointer', marginTop:6}}>
           Back to sign in

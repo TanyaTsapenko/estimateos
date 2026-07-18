@@ -173,7 +173,7 @@ export default function EstimatesPage() {
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(e.total || 0)}</div>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.04em', color: sc.text, background: sc.bg, borderRadius: 4, padding: '2px 6px', display: 'inline-block', marginTop: 2 }}>
-            {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
+            {e.status === 'signed' ? 'SIGNED' : e.status.toUpperCase()}
           </span>
           {viewedDot(e)}
         </div>
@@ -211,7 +211,7 @@ export default function EstimatesPage() {
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: '#0A1628' }}>{fmtCAD(e.total || 0)}</div>
           <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.04em', color: sc.text, background: sc.bg, borderRadius: 4, padding: '2px 6px', display: 'inline-block', marginTop: 2 }}>
-            {e.status === 'signed' ? 'ACCEPTED' : e.status.toUpperCase()}
+            {e.status === 'signed' ? 'SIGNED' : e.status.toUpperCase()}
           </span>
         </div>
         <ChevronRight size={14} color="#CBD5E1" />
@@ -255,7 +255,7 @@ export default function EstimatesPage() {
         eyebrow="YOUR WORK"
         title="Estimates"
         right={<>
-          <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} accepted</span>
+          <span className="est-topbar-meta" style={{ fontSize: 13, color: '#94A3B8' }}>{estimates.length} total · {signedCount} signed</span>
           {role !== 'admin' && (
             <button
               onClick={() => router.push('/dashboard/estimates/new')}

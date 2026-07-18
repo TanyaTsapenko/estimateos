@@ -250,7 +250,6 @@ export default function CompanySettingsPage() {
       licence_expiry_date:      normalized.licenceExpiry          || null,
       insurance_provider:       normalized.insuranceProvider      || null,
       insurance_expiry_date:    normalized.insuranceExpiry        || null,
-      insurance_policy_number:  normalized.insurance              || null,
       wsib_number:              normalized.wsibNumber             || null,
       signing_rep_name:         normalized.signingRepName         || null,
       signing_rep_title:        normalized.signingRepTitle        || null,

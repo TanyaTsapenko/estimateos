@@ -29,7 +29,7 @@ const PRESETS: Preset[] = [
   { label: 'Start from scratch (Custom)',   types: null },
 ]
 
-const UNIT_OPTS = ['2', '3', '4', '5', 'Custom']
+const UNIT_OPTS = ['2', '3', '4', '5']
 
 // ── SVG layout ─────────────────────────────────────────────────────
 const SVG_W = 430, SVG_H = 200
@@ -330,9 +330,17 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
   // Total width for equal mode (string for controlled input)
   const [equalTotal, setEqualTotal] = useState<string>(() => String(totalSum || 72))
 
-  const eqW = (total: number, n: number) => Math.max(0.5, parseFloat((total / n).toFixed(1)))
+  function makeEqWidths(total: number, n: number): number[] {
+    if (n <= 0) return []
+    const eighths = Math.round(total * 8)
+    const base = Math.floor(eighths / n)
+    const rem  = eighths - base * n
+    return Array.from({ length: n }, (_, i) =>
+      Math.max(0.125, (i < rem ? base + 1 : base) / 8)
+    )
+  }
   const parsedTotal = parseFloat(equalTotal) || 72
-  const displayW = eqW(parsedTotal, sections.length)
+  const displayW = makeEqWidths(parsedTotal, sections.length)[0] ?? 0
 
   // ── Stable IDs for DnD (parallel array to sections) ─────────────
   const counterRef = useRef(0)
@@ -377,8 +385,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
     const types = preset.types
     // generate fresh IDs for all preset sections
     idsRef.current = types.map(() => String(counterRef.current++))
-    const w = eqW(total, types.length)
-    onChange(types.map(type => ({ type, width: w })))
+    const ws = makeEqWidths(total, types.length)
+    onChange(types.map((type, i) => ({ type, width: ws[i] ?? ws[0] ?? total })))
     setEqualTotal(String(total))
     setWidthMode('equal')
   }
@@ -391,8 +399,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
     const n = parseInt(val)
     if (n === sections.length) return
     if (widthMode === 'equal') {
-      const w = eqW(parsedTotal, n)
-      onChange(Array.from({ length: n }, (_, i) => ({ type: sections[i]?.type ?? 'Picture', width: w })))
+      const ws = makeEqWidths(parsedTotal, n)
+      onChange(Array.from({ length: n }, (_, i) => ({ type: sections[i]?.type ?? 'Picture', width: ws[i] ?? ws[0] ?? parsedTotal })))
     } else {
       const avgW = Math.max(1, Math.round(totalSum / sections.length) || 24)
       if (n > sections.length) {
@@ -409,7 +417,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
     if (newMode === 'equal') {
       const total = totalSum || 72
       setEqualTotal(String(total))
-      onChange(sections.map(s => ({ ...s, width: eqW(total, sections.length) })))
+      const ws = makeEqWidths(total, sections.length)
+      onChange(sections.map((s, i) => ({ ...s, width: ws[i] ?? ws[0] ?? total })))
     }
     setWidthMode(newMode)
   }
@@ -419,7 +428,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
     setEqualTotal(raw)
     const total = parseFloat(raw)
     if (!total || total <= 0) return
-    onChange(sections.map(s => ({ ...s, width: eqW(total, sections.length) })))
+    const ws = makeEqWidths(total, sections.length)
+    onChange(sections.map((s, i) => ({ ...s, width: ws[i] ?? ws[0] ?? total })))
   }
 
   // ── Per-section edit ─────────────────────────────────────────────
@@ -435,7 +445,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
     if (sections.length <= 1) return
     const next = sections.filter((_, j) => j !== i)
     if (widthMode === 'equal') {
-      onChange(next.map(s => ({ ...s, width: eqW(parsedTotal, next.length) })))
+      const ws = makeEqWidths(parsedTotal, next.length)
+      onChange(next.map((s, i) => ({ ...s, width: ws[i] ?? ws[0] ?? parsedTotal })))
     } else {
       onChange(next)
     }
@@ -444,8 +455,8 @@ export function SectionBuilder({ sections, heightIn, glassType, frameColor, onCh
   const add = () => {
     if (widthMode === 'equal') {
       const n = sections.length + 1
-      const w = eqW(parsedTotal, n)
-      onChange([...sections, { type: 'Picture' as CombinationSectionType, width: w }].map(s => ({ ...s, width: w })))
+      const ws = makeEqWidths(parsedTotal, n)
+      onChange([...sections, { type: 'Picture' as CombinationSectionType, width: ws[n - 1] ?? ws[0] ?? parsedTotal }].map((s, i) => ({ ...s, width: ws[i] ?? ws[0] ?? parsedTotal })))
     } else {
       const avgW = Math.max(1, Math.round(totalSum / sections.length) || 24)
       onChange([...sections, { type: 'Picture', width: avgW }])

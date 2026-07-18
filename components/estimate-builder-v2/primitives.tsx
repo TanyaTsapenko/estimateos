@@ -83,21 +83,6 @@ export function Swatches({ palette, entries, value, onChange }: { palette: strin
   )
 }
 
-// ── Photos stub ───────────────────────────────────────────────────
-export function PhotosField({ count = 0, onAdd }: { count?: number; onAdd: () => void }) {
-  return (
-    <div style={{ display: 'flex', gap: 9, flexWrap: 'wrap' }}>
-      <button onClick={onAdd} style={{ width: 70, height: 70, borderRadius: 12, border: `1.5px dashed ${C.borderStrong}`, background: C.card, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: C.inkSoft, cursor: 'pointer' }}>
-        <EBIcon name="camera" size={20} color={C.inkSoft} />
-        <span style={{ fontSize: 10, fontWeight: 700 }}>Add</span>
-      </button>
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} style={{ width: 70, height: 70, borderRadius: 12, background: `repeating-linear-gradient(135deg, ${C.blueSoft} 0 7px, #E4ECFF 7px 14px)`, border: `1px solid ${C.border}` }} />
-      ))}
-    </div>
-  )
-}
-
 // ── Notes ─────────────────────────────────────────────────────────
 export function NotesField({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
   return (

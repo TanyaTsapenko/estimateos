@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
   const clientEmail = est?.client_email
   if (!clientEmail) return NextResponse.json({ error: 'No client email on estimate' }, { status: 400 })
 
-  let depositInv: { amount: number; status: string } | null = null
+  let depositInv: { amount: number } | null = null
   if (inv.invoice_type === 'final' && inv.estimate_id) {
     const { data } = await supabase
       .from('invoices')
-      .select('amount, status')
+      .select('amount')
       .eq('estimate_id', inv.estimate_id)
       .eq('invoice_type', 'deposit')
       .single()
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
   const adminClient = createAdminClient()
   const companyName = await getCompanyName(adminClient, est?.user_id || inv.user_id)
 
-  const [, taxLabel] = TAX_RATES[est?.client_province || 'AB'] || [0.05, 'Tax']
+  const [, taxLabel] = TAX_RATES[est?.client_province || ''] || [0.05, 'Tax']
 
   const dueDate = inv.due_date
     ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(inv.due_date))

@@ -3,24 +3,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const F = "'Plus Jakarta Sans', 'Inter', sans-serif"
-const HDR = 'linear-gradient(135deg, #0A0E1A 0%, #1A2744 60%, #0D1B3E 100%)'
-const inp: React.CSSProperties = { width: '100%', padding: '13px 14px', background: '#fff', border: '1px solid #E8E8E8', borderRadius: 11, fontSize: 14, fontFamily: F, color: '#0A1628', outline: 'none', boxSizing: 'border-box', display: 'block' }
-const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#8892b0', display: 'block', marginBottom: 6, fontFamily: F }
-
-const PW_COLORS = ['#EF4444', '#F59E0B', '#FBBF24', '#22C55E']
-const PW_LABELS = ['Weak', 'Fair', 'Good', 'Strong']
-
-function pwScore(pw: string): number {
-  if (!pw) return 0
-  let s = 0
-  if (pw.length >= 6) s++
-  if (pw.length >= 10) s++
-  if (/[A-Z]/.test(pw) && /[0-9]/.test(pw)) s++
-  if (/[^A-Za-z0-9]/.test(pw)) s++
-  return Math.min(4, s)
-}
-
 export default function ResetPasswordPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -28,7 +10,6 @@ export default function ResetPasswordPage() {
   const [confirm, setConfirm] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const score = pwScore(password)
 
   async function handleUpdate() {
     setError('')
@@ -40,10 +21,6 @@ export default function ResetPasswordPage() {
     localStorage.removeItem('reset_email')
     router.push('/dashboard')
   }
-
-  const confirmPassword = confirm
-  const setConfirmPassword = setConfirm
-  const handleSubmit = handleUpdate
 
   return (
     <div style={{minHeight:'100vh', background:'#F4F4F2', display:'flex', flexDirection:'column'}}>
@@ -66,11 +43,11 @@ export default function ResetPasswordPage() {
         <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 8 characters"
           style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:12, boxSizing:'border-box'}} />
         <label style={{display:'block', fontSize:10, fontWeight:700, color:'#8892b0', letterSpacing:'0.08em', marginBottom:6, textTransform:'uppercase'}}>Confirm Password</label>
-        <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repeat your password"
+        <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat your password"
           style={{width:'100%', background:'#fff', border:'1px solid #E8E8E8', borderRadius:12, padding:'12px 14px', fontSize:15, color:'#0A0E1A', outline:'none', marginBottom:18, boxSizing:'border-box'}} />
         {error && <p style={{color:'#EF4444', fontSize:13, marginBottom:12}}>{error}</p>}
-        <button onClick={handleSubmit} disabled={loading}
-          style={{width:'100%', background:'#2045B8', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
+        <button onClick={handleUpdate} disabled={loading}
+          style={{width:'100%', background:'#2563EB', border:'none', borderRadius:13, padding:15, fontSize:15, fontWeight:600, color:'#fff', cursor:'pointer'}}>
           {loading ? 'Updating...' : 'Update password →'}
         </button>
         <button onClick={() => router.push('/auth/login')}

@@ -308,7 +308,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
           'openDir','openMode','egress','photos','notes'] },
 
       bay: { name: 'Bay', subs: ['3 lite','4 lite','5 lite'],
-        fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard','bayAngle',
+        fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','roofType','headBoard','bayAngle',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS,
           'material','install','condition','projectionDepth','supportType',
@@ -319,7 +319,7 @@ export const CATALOG: Record<string, CatalogGroup> = {
         fields: ['owidth','oheight','qty','room','floor','sideUnit','seatBoard','headBoard',
           'extColour','intColour','grid','grilleType',
           ...W_COMMON_GLASS, ...W_COMMON_INSTALL,
-          'projectionDepth','supportType',
+          'projectionDepth','supportType','roofType',
           'panelType','photos','notes'],
         extraFieldsByValue: { roofType: { field: 'supportType', notEmpty: true } } },
 

@@ -1008,25 +1008,29 @@ export default function AppointmentsPage() {
   function closeEdit()        { setEditOpen(false); setTimeout(() => setEditing(null), 350) }
 
   async function saveEdit(id: string, patch: Partial<Appt>) {
-    await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null }).eq('id', id)
+    if (error) { flash('Save failed: ' + error.message, { variant: 'error' }); return }
     setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
     closeEdit(); flash('Saved')
   }
 
   async function deleteAppt(id: string) {
-    await supabase.from('appointments').delete().eq('id', id)
+    const { error } = await supabase.from('appointments').delete().eq('id', id)
+    if (error) { flash('Delete failed: ' + error.message, { variant: 'error' }); return }
     setAppts(prev => prev.filter(a => a.id !== id))
     closeEdit(); flash('Deleted', { variant: 'neutral' })
   }
 
   async function desktopSaveEdit(id: string, patch: Partial<Appt>) {
-    await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null, appointment_end_time: patch.appointment_end_time || null, notes: patch.notes?.trim() || null }).eq('id', id)
+    const { error } = await supabase.from('appointments').update({ client_name: patch.client_name?.trim(), client_phone: patch.client_phone?.trim() || null, client_email: patch.client_email?.trim() || null, client_address: patch.client_address?.trim() || null, client_city: patch.client_city?.trim() || null, client_province: patch.client_province?.trim() || null, postal_code: patch.postal_code?.trim() || null, lead_source: patch.lead_source?.trim() || null, appointment_date: patch.appointment_date, appointment_time: patch.appointment_time || null, appointment_end_time: patch.appointment_end_time || null, notes: patch.notes?.trim() || null }).eq('id', id)
+    if (error) { flash('Save failed: ' + error.message, { variant: 'error' }); return }
     setAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a))
     setDesktopEditing(false); flash('Saved')
   }
 
   async function desktopDeleteAppt(id: string) {
-    await supabase.from('appointments').delete().eq('id', id)
+    const { error } = await supabase.from('appointments').delete().eq('id', id)
+    if (error) { flash('Delete failed: ' + error.message, { variant: 'error' }); return }
     setAppts(prev => prev.filter(a => a.id !== id))
     setSelectedId(null); setDesktopEditing(false); flash('Deleted', { variant: 'neutral' })
   }

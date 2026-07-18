@@ -50,7 +50,7 @@ export default function SignPage() {
     </div>
   )
 
-  const [, taxLabel] = TAX_RATES[estimate.client_province || 'AB'] || [0, 'Tax']
+  const [, taxLabel] = TAX_RATES[estimate.client_province || ''] || [0, 'Tax']
   const today = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
 
   return (

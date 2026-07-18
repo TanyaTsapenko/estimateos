@@ -40,12 +40,12 @@ export async function GET(req: NextRequest) {
       data = JSON.parse(rawText)
     } catch {
       console.error('[places] failed to parse response as JSON')
-      return NextResponse.json({ predictions: [] })
+      return NextResponse.json({ error: 'Places API returned non-JSON', predictions: [] }, { status: 502 })
     }
 
     if (!res.ok) {
       console.error('[places] autocomplete error:', data)
-      return NextResponse.json({ predictions: [] })
+      return NextResponse.json({ error: 'Places API error', predictions: [] }, { status: 502 })
     }
 
     const suggestions = (data.suggestions ?? []) as Array<{

@@ -27,6 +27,6 @@ export function EBIcon({ name, size = 16, color = 'currentColor', stroke = 1.7 }
     case 'search': return <svg {...p}><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
     case 'x':      return <svg {...p} strokeWidth={2}><path d="M6 6l12 12M18 6L6 18"/></svg>
     case 'dup':    return <svg {...p}><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>
-    default:       return null
+    default:       { console.warn('[EBIcon] unknown icon name:', name); return null }
   }
 }
