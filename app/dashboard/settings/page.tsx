@@ -1268,6 +1268,7 @@ function ContractSection({ flash, onDirtyChange }: { flash: FlashFn; onDirtyChan
     setSavedPaymentMethods([...paymentMethods])
     setContractClauses(savedClauses_)
     setSavedClauses(JSON.stringify(savedClauses_))
+    setExpandedClause(null)
     flash('Saved')
   }
 
