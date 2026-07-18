@@ -348,12 +348,13 @@ function NewEstimateV2() {
       const [priceResult, paletteResult, profileResult] = await Promise.all([
         supabase.from('price_lists').select('opening_type, base_price, labour_price').eq('user_id', user.id),
         supabase.from('color_palette').select('id, name, hex_color, category, price_addon').eq('user_id', user.id).order('sort_order').order('created_at'),
-        supabase.from('profiles').select('surcharges, team_owner_id').eq('id', user.id).single(),
+        supabase.from('profiles').select('surcharges, team_owner_id, province').eq('id', user.id).single(),
       ])
 
       // Extract profile data first to get teamOwnerId for fallbacks
       const { data: profRow } = profileResult
       const teamOwnerId: string | null = (profRow as any)?.team_owner_id ?? null
+      const profProvince: string | null = (profRow as any)?.province ?? null
 
       let { data: priceRows, error: priceErr } = priceResult
       if (priceErr) {
@@ -429,6 +430,10 @@ function NewEstimateV2() {
         if (Object.keys(colourPalette).length > 0) {
           setCustomPricing(prev => ({ ...prev, colourPalette }))
         }
+      }
+
+      if (profProvince && !editId) {
+        setClientInfo(prev => ({ ...prev, province: prev.province || profProvince }))
       }
     }
     load()
