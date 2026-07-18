@@ -1554,7 +1554,7 @@ function NewEstimateForm() {
               <div className="r1"><div className="f">
                 <label>Client Name *</label>
                 <input
-                  placeholder="Andriy Koval"
+                  placeholder="James Morrison"
                   value={client.client_name}
                   style={clientErrors.client_name ? { border: estErrBorder } : undefined}
                   onChange={e => { clearCErr('client_name'); setClient(p => ({ ...p, client_name: e.target.value })) }}
@@ -1566,7 +1566,7 @@ function NewEstimateForm() {
                 <div className="f"><label>Email</label>
                   <input
                     type="email"
-                    placeholder="andriy@email.com"
+                    placeholder="james@northview.ca"
                     value={client.client_email}
                     style={clientErrors.client_email ? { border: estErrBorder } : undefined}
                     onChange={e => { clearCErr('client_email'); setClient(p => ({ ...p, client_email: e.target.value })) }}
@@ -1817,7 +1817,7 @@ function NewEstimateForm() {
             <div className="r1"><div className="f">
               <label>Client Name *</label>
               <input
-                placeholder="Andriy Koval"
+                placeholder="James Morrison"
                 value={client.client_name}
                 style={clientErrors.client_name ? { border: estErrBorder } : undefined}
                 onChange={e => { clearCErr('client_name'); setClient(p => ({ ...p, client_name: e.target.value })) }}
@@ -1829,7 +1829,7 @@ function NewEstimateForm() {
               <div className="f"><label>Email</label>
                 <input
                   type="email"
-                  placeholder="andriy@email.com"
+                  placeholder="james@northview.ca"
                   value={client.client_email}
                   style={clientErrors.client_email ? { border: estErrBorder } : undefined}
                   onChange={e => { clearCErr('client_email'); setClient(p => ({ ...p, client_email: e.target.value })) }}

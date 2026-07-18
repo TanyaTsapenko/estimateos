@@ -124,7 +124,7 @@ export default function NewClientPage() {
             <input
               value={form.name}
               onChange={e => { set('name', e.target.value); clr('name') }}
-              placeholder="Jane Smith"
+              placeholder="James Morrison"
               style={{ ...inp, border: errors.name ? errBorder : inp.border }}
             />
             {errors.name && <div style={errStyle}>{errors.name}</div>}
@@ -147,7 +147,7 @@ export default function NewClientPage() {
             <input
               value={form.email}
               onChange={e => { set('email', e.target.value); clr('email') }}
-              placeholder="jane@example.com"
+              placeholder="james@northview.ca"
               inputMode="email"
               autoCapitalize="off"
               style={{ ...inp, border: errors.email ? errBorder : inp.border }}

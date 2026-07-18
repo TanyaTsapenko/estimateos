@@ -824,7 +824,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
         <Card>
           <SectionLabel>Documents &amp; Signature</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Field label="Signing Representative Name" value={values.signingRepName} onChange={set('signingRepName')} placeholder="Jane Smith" />
+            <Field label="Signing Representative Name" value={values.signingRepName} onChange={set('signingRepName')} placeholder="James Morrison" />
             <Field label="Title" value={values.signingRepTitle} onChange={set('signingRepTitle')} placeholder="Owner / GM" />
           </div>
           <CompanyTextArea label="Warranty Summary" value={values.warrantySummary} onChange={set('warrantySummary')} placeholder="Describe your warranty terms..." hint="Appears in the Warranty section of contracts" />
@@ -1412,7 +1412,7 @@ function ContractSection({ flash }: { flash: FlashFn }) {
           {/* Project Manager */}
           <div style={{ marginBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', color: '#94A3B8', textTransform: 'uppercase', marginBottom: 6 }}>Project Manager</div>
-            <input type="text" value={projectManager} onChange={e => setProjectManager(e.target.value)} placeholder="e.g. John Smith"
+            <input type="text" value={projectManager} onChange={e => setProjectManager(e.target.value)} placeholder="e.g. James Morrison"
               style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }} />
           </div>
 

@@ -234,7 +234,7 @@ export default function NewAppointmentPage() {
         <div className="r1"><div className="f">
           <label>Client Name *</label>
           <input
-            placeholder="Jane Smith"
+            placeholder="James Morrison"
             value={form.client_name}
             style={errors.client_name ? { border: errBorder } : undefined}
             onChange={e => { clearErr('client_name'); set('client_name', e.target.value) }}
@@ -260,7 +260,7 @@ export default function NewAppointmentPage() {
             <label>Email</label>
             <input
               type="email"
-              placeholder="jane@email.com"
+              placeholder="james@northview.ca"
               value={form.client_email}
               style={errors.client_email ? { border: errBorder } : undefined}
               onChange={e => { clearErr('client_email'); set('client_email', e.target.value) }}

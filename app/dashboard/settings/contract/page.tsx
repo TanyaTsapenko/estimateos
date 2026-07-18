@@ -437,7 +437,7 @@ export default function ContractSettingsPage() {
               type="text"
               value={projectManager}
               onChange={e => setProjectManager(e.target.value)}
-              placeholder="e.g. John Smith"
+              placeholder="e.g. James Morrison"
               style={{ width: '100%', padding: '10px 13px', border: '1px solid #E2E5EA', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', color: '#0A1628', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>

@@ -239,7 +239,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
               <label>Name *</label>
               <input
                 value={value.name}
-                placeholder="Andriy Koval"
+                placeholder="James Morrison"
                 onChange={e => { onChange({ ...value, name: e.target.value }); if (nameErr) setNameErr('') }}
                 style={nameErr ? { borderColor: C.red } : undefined}
               />
@@ -262,7 +262,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
               <input
                 type="email"
                 value={value.email}
-                placeholder="andriy@email.com"
+                placeholder="james@northview.ca"
                 onChange={e => onChange({ ...value, email: e.target.value })}
               />
             </div>

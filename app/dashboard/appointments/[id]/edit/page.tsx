@@ -236,7 +236,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                 value={form.client_name}
                 onChange={e => { clearErr('client_name'); set('client_name', e.target.value) }}
                 onBlur={() => setErr('client_name', validateName(form.client_name))}
-                placeholder="Jane Smith"
+                placeholder="James Morrison"
               />
               {errors.client_name && <div style={errStyle}>{errors.client_name}</div>}
             </div>
@@ -262,7 +262,7 @@ export default function EditAppointmentPage({ params }: { params: Promise<{ id: 
                   value={form.client_email}
                   onChange={e => { clearErr('client_email'); set('client_email', e.target.value) }}
                   onBlur={() => setErr('client_email', validateEmail(form.client_email))}
-                  placeholder="jane@email.com"
+                  placeholder="james@northview.ca"
                 />
                 {errors.client_email && <div style={errStyle}>{errors.client_email}</div>}
               </div>

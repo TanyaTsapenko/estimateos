@@ -540,7 +540,7 @@ function EditScreen({ open, appt, onClose, onSave, onDelete }: {
             </div>
             <div>
               <label style={fieldLabel}>Email</label>
-              <input type="email" style={inp} value={draft.client_email ?? ''} onChange={e => set('client_email')(e.target.value)} placeholder="client@example.com" />
+              <input type="email" style={inp} value={draft.client_email ?? ''} onChange={e => set('client_email')(e.target.value)} placeholder="james@northview.ca" />
             </div>
             <div>
               <label style={fieldLabel}>Address</label>
@@ -737,7 +737,7 @@ function DesktopEditPanel({ appt, onCancel, onSave, onDelete }: { appt: Appt; on
             </div>
             <div style={{ gridColumn: 'span 2' }}>
               <label style={fldLbl}>Email</label>
-              <input type="email" style={inp} value={draft.client_email ?? ''} onChange={e => set('client_email')(e.target.value)} placeholder="client@example.com" />
+              <input type="email" style={inp} value={draft.client_email ?? ''} onChange={e => set('client_email')(e.target.value)} placeholder="james@northview.ca" />
             </div>
             <div style={{ gridColumn: 'span 2' }}>
               <label style={fldLbl}>Address</label>

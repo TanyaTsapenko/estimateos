@@ -401,7 +401,7 @@ export default function CompanySettingsPage() {
         <Card>
           <SectionLabel>Documents &amp; Signature</SectionLabel>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Field label="Signing Representative Name" value={values.signingRepName} onChange={set('signingRepName')} placeholder="Jane Smith" />
+            <Field label="Signing Representative Name" value={values.signingRepName} onChange={set('signingRepName')} placeholder="James Morrison" />
             <Field label="Title" value={values.signingRepTitle} onChange={set('signingRepTitle')} placeholder="Owner / GM" />
           </div>
           <TextArea label="Warranty Summary" value={values.warrantySummary} onChange={set('warrantySummary')} placeholder="Describe your warranty terms..." hint="Appears in the Warranty section of contracts" />
