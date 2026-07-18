@@ -699,23 +699,23 @@ const [dashToast, setDashToast] = useState('')
     const maxCount: number = (prof as any)?.quote_settings?.reminders?.max_count ?? 3
     const remCount: number = est.reminder_count ?? 0
     const remSettings = (prof as any)?.quote_settings?.reminders
-    const rawTemplate: string = remSettings
-      ? (remCount <= 1 ? remSettings.template_1 : remSettings.template_2) || ''
+    const singleTemplate: string = remSettings
+      ? remSettings.template || remSettings.template_1 || remSettings.template_2 || ''
       : ''
+    const tonePrefix = remCount === 0 ? '' : remCount === 1 ? 'Just following up again — ' : 'Final reminder — '
     const expiryFmt = est.valid_until
       ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
       : ''
     const amtFmt = typeof est.total === 'number'
       ? `CA$${(est.total as number).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
       : ''
-    const resolvedTemplate = rawTemplate
+    const defaultMsg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
+    const msg = (tonePrefix + (singleTemplate || defaultMsg))
       .replace(/\{client_name\}/g, est.client_name || '')
       .replace(/\{address\}/g, address)
       .replace(/\{amount\}/g, amtFmt)
       .replace(/\{expiry_date\}/g, expiryFmt)
       .replace(/\{estimate_number\}/g, est.estimate_number || '')
-    const msg = resolvedTemplate ||
-      `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}${address ? ` for ${address}` : ''}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
     setReminderModal({
       estimateId,
       estimateNumber: est.estimate_number,
@@ -1621,7 +1621,12 @@ const [dashToast, setDashToast] = useState('')
 
             {/* Message */}
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8', marginBottom: 6 }}>MESSAGE</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#94A3B8' }}>MESSAGE</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: (reminderModal.reminderCount ?? 0) >= 2 ? '#991B1B' : '#64748B' }}>
+                  {(reminderModal.reminderCount ?? 0) === 0 ? '1st reminder' : (reminderModal.reminderCount ?? 0) === 1 ? '2nd reminder' : (reminderModal.reminderCount ?? 0) + 1 >= (reminderModal.maxCount ?? 3) ? 'Final reminder' : `${nth((reminderModal.reminderCount ?? 0) + 1)} reminder`}
+                </div>
+              </div>
               <textarea
                 value={reminderModal.message}
                 onChange={e => setReminderModal(m => m ? { ...m, message: e.target.value } : m)}
