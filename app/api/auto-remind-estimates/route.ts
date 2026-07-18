@@ -42,8 +42,7 @@ export async function GET(request: NextRequest) {
     const remSettings = prof.quote_settings?.reminders
     if (!remSettings?.auto_enabled) continue
 
-    const firstAfterDays: number = remSettings.first_after_days ?? 2
-    const secondAfterDays: number = remSettings.second_after_days ?? 3
+    const afterDays: number = remSettings.after_days ?? remSettings.first_after_days ?? 2
     const maxCount: number = remSettings.max_count ?? 3
     const reminderCount: number = est.reminder_count ?? 0
 
@@ -55,17 +54,14 @@ export async function GET(request: NextRequest) {
       if (hoursSince < 24) continue
     }
 
-    // Timing: first reminder uses first_after_days from sent_at/created_at;
-    // subsequent reminders use second_after_days from last_reminder_sent_at
     const isDue = reminderCount === 0
-      ? (now - new Date(est.sent_at || est.created_at).getTime()) >= firstAfterDays * 86400000
-      : !!est.last_reminder_sent_at && (now - new Date(est.last_reminder_sent_at).getTime()) >= secondAfterDays * 86400000
+      ? (now - new Date(est.sent_at || est.created_at).getTime()) >= afterDays * 86400000
+      : !!est.last_reminder_sent_at && (now - new Date(est.last_reminder_sent_at).getTime()) >= afterDays * 86400000
 
     if (!isDue || !est.client_email) continue
 
     // Build email
     const companyName = await getCompanyName(supabase, est.user_id)
-    const rawTemplate: string = (reminderCount <= 1 ? remSettings.template_1 : remSettings.template_2) || ''
     const expiryFmt = est.valid_until
       ? new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(est.valid_until + 'T00:00:00'))
       : ''
@@ -74,7 +70,10 @@ export async function GET(request: NextRequest) {
       : ''
     const clientLink = `${origin}/estimate/${est.id}`
     const defaultMsg = `Hi ${est.client_name || 'there'},\n\nJust following up on your estimate ${est.estimate_number}. Let us know if you have any questions — we'd love to help!\n\n${companyName}`
-    const resolvedMessage = (rawTemplate || defaultMsg)
+    const singleTemplate: string = remSettings.template || remSettings.template_1 || remSettings.template_2 || ''
+    const tonePrefix = reminderCount === 0 ? '' : reminderCount === 1 ? 'Just following up again — ' : 'Final reminder — '
+    const rawTemplate = tonePrefix + (singleTemplate || defaultMsg)
+    const resolvedMessage = rawTemplate
       .replace(/\{client_name\}/g, est.client_name || '')
       .replace(/\{address\}/g,     est.client_address || '')
       .replace(/\{amount\}/g,      amtFmt)
