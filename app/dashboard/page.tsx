@@ -188,8 +188,6 @@ function nth(n: number): string {
   return `${n}th`
 }
 
-const ESTIMATE_EVENTS = new Set(['estimate_sent', 'contract_signed', 'deposit_invoice_sent'])
-const PAYMENT_EVENTS  = new Set(['deposit_paid', 'final_paid'])
 const INVOICE_EVENTS  = new Set(['deposit_paid', 'final_paid', 'final_invoice_sent', 'deposit_invoice_sent'])
 
 type ActivityGroup = {
@@ -247,7 +245,6 @@ export default function DashboardPage() {
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [showAllAttention, setShowAllAttention] = useState(false)
   const [showAllActivity, setShowAllActivity] = useState(false)
-  const [activityFilter, setActivityFilter] = useState<'all' | 'estimates' | 'payments'>('all')
   const [openDealIdx, setOpenDealIdx] = useState(0)
   const [isMobile, setIsMobile] = useState(false)
 const [dashToast, setDashToast] = useState('')
@@ -1309,16 +1306,8 @@ const [dashToast, setDashToast] = useState('')
             <section style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', color: '#2563EB', textTransform: 'uppercase', marginBottom: 4 }}>Live Feed</div>
               <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#0B1220', marginBottom: 14 }}>Recent activity</div>
-              {/* Filter chips */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                {(['all', 'payments', 'estimates'] as const).map(tab => (
-                  <button key={tab} onClick={() => { setActivityFilter(tab); setOpenDealIdx(0) }} style={{ height: 32, padding: '0 14px', borderRadius: 99, border: activityFilter === tab ? 'none' : '1px solid rgba(15,23,42,0.07)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', background: activityFilter === tab ? '#2563EB' : '#fff', color: activityFilter === tab ? '#fff' : '#475467' }}>
-                    {tab === 'all' ? 'All' : tab === 'payments' ? 'Payments' : 'Estimates'}
-                  </button>
-                ))}
-              </div>
               {(() => {
-                const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
+                const filtered = activity
                 if (filtered.length === 0) return (
                   <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', padding: '28px 20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
@@ -1485,16 +1474,8 @@ const [dashToast, setDashToast] = useState('')
             <div>
               <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.13em', color: '#2563EB', textTransform: 'uppercase', marginBottom: 4 }}>Live Feed</div>
               <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#0B1220', marginBottom: 14 }}>Recent activity</div>
-              {/* Filter chips */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
-                {(['all', 'payments', 'estimates'] as const).map(tab => (
-                  <button key={tab} onClick={() => { setActivityFilter(tab); setOpenDealIdx(0) }} style={{ height: 32, padding: '0 14px', borderRadius: 99, border: activityFilter === tab ? 'none' : '1px solid rgba(15,23,42,0.07)', cursor: 'pointer', fontSize: 12.5, fontWeight: 700, fontFamily: 'inherit', background: activityFilter === tab ? '#2563EB' : '#fff', color: activityFilter === tab ? '#fff' : '#475467' }}>
-                    {tab === 'all' ? 'All' : tab === 'payments' ? 'Payments' : 'Estimates'}
-                  </button>
-                ))}
-              </div>
               {(() => {
-                const filtered = activityFilter === 'estimates' ? activity.filter(a => ESTIMATE_EVENTS.has(a.event_type)) : activityFilter === 'payments' ? activity.filter(a => PAYMENT_EVENTS.has(a.event_type)) : activity
+                const filtered = activity
                 if (filtered.length === 0) return (
                   <div style={{ background: '#FFFFFF', border: '1px solid rgba(15,23,42,0.10)', borderRadius: 16, boxShadow: '0 2px 10px rgba(15,23,42,0.04)', padding: '28px 20px', textAlign: 'center' }}>
                     <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
