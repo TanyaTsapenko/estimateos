@@ -1347,8 +1347,6 @@ const [dashToast, setDashToast] = useState('')
                         const effectiveAccent = isClientViewed ? '#059669' : accent
                         const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
-                        const visibleItems = items.slice(0, 3)
-                        const hiddenCount = items.length - visibleItems.length
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
@@ -1372,7 +1370,7 @@ const [dashToast, setDashToast] = useState('')
                             {isOpen && (
                               <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
                                 <div style={{ paddingTop: 12 }}>
-                                  {visibleItems.map((it, idx) => {
+                                  {items.map((it, idx) => {
                                     const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
                                     const Icon = EVENT_ICONS[it.event_type] || ClockIcon
                                     const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
@@ -1383,9 +1381,9 @@ const [dashToast, setDashToast] = useState('')
                                           <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Icon size={12} color={tone.color} strokeWidth={2} />
                                           </div>
-                                          {idx < visibleItems.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < visibleItems.length - 1 ? 8 : 0 }}>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
                                             {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
@@ -1395,9 +1393,6 @@ const [dashToast, setDashToast] = useState('')
                                       </div>
                                     )
                                   })}
-                                  {hiddenCount > 0 && (
-                                    <div style={{ fontSize: 11.5, color: '#AEB6C4', paddingTop: 6, paddingLeft: 32 }}>+{hiddenCount} more update{hiddenCount > 1 ? 's' : ''}</div>
-                                  )}
                                 </div>
                                 {entityId && (
                                   <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
@@ -1528,8 +1523,6 @@ const [dashToast, setDashToast] = useState('')
                         const effectiveAccent = isClientViewed ? '#059669' : accent
                         const statusBadge = isClientViewed ? { label: 'Viewed by client' } : STATUS_BADGE[topEvent.event_type]
                         const isOpen = openDealIdx === gi
-                        const visibleItems = items.slice(0, 3)
-                        const hiddenCount = items.length - visibleItems.length
                         return (
                           <div key={gi} style={{ borderRadius: 18, background: '#fff', border: isOpen ? '1px solid #DCE6FF' : '1px solid rgba(15,23,42,0.07)', boxShadow: isOpen ? '0 10px 26px -14px rgba(37,99,235,0.4)' : '0 1px 2px rgba(15,23,42,0.04)' }}>
                             {/* Card header */}
@@ -1553,7 +1546,7 @@ const [dashToast, setDashToast] = useState('')
                             {isOpen && (
                               <div style={{ padding: '0 16px 14px', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
                                 <div style={{ paddingTop: 12 }}>
-                                  {visibleItems.map((it, idx) => {
+                                  {items.map((it, idx) => {
                                     const tone = EVENT_TONE[it.event_type] || { bg: '#F1F5F9', color: '#94A3B8' }
                                     const Icon = EVENT_ICONS[it.event_type] || ClockIcon
                                     const isPayment = it.event_type === 'deposit_paid' || it.event_type === 'final_paid'
@@ -1564,9 +1557,9 @@ const [dashToast, setDashToast] = useState('')
                                           <div style={{ width: 22, height: 22, borderRadius: 11, background: tone.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <Icon size={12} color={tone.color} strokeWidth={2} />
                                           </div>
-                                          {idx < visibleItems.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
+                                          {idx < items.length - 1 && <div style={{ width: 2, height: 18, background: 'rgba(15,23,42,0.07)', marginTop: 3 }} />}
                                         </div>
-                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < visibleItems.length - 1 ? 8 : 0 }}>
+                                        <div style={{ flex: 1, minWidth: 0, paddingBottom: idx < items.length - 1 ? 8 : 0 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                                             <span style={{ fontSize: 13, fontWeight: 600, color: '#0B1220' }}>{actorLabel} {ACTIVITY_CFG[it.event_type]?.label || 'updated'}</span>
                                             {it.amount != null && <span style={{ fontSize: 12.5, fontWeight: 800, color: isPayment ? '#0F8A4D' : '#475467' }}>{fmtAmt(it.amount)}</span>}
@@ -1576,9 +1569,6 @@ const [dashToast, setDashToast] = useState('')
                                       </div>
                                     )
                                   })}
-                                  {hiddenCount > 0 && (
-                                    <div style={{ fontSize: 11.5, color: '#AEB6C4', paddingTop: 6, paddingLeft: 32 }}>+{hiddenCount} more update{hiddenCount > 1 ? 's' : ''}</div>
-                                  )}
                                 </div>
                                 {entityId && (
                                   <button onClick={() => router.push(`/dashboard/estimates/${entityId}`)} style={{ marginTop: 10, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#2563EB', padding: 0, fontFamily: 'inherit' }}>
