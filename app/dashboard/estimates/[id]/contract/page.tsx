@@ -299,6 +299,9 @@ export default function ContractPage() {
     .filter((c: any) => c.enabled !== false)
     .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
 
+  const missingProvince = !profile?.province &&
+    enabledClauses.some((c: any) => (c.content || '').includes('{{PROVINCE}}'))
+
   const paymentValue = urlPayment || (profile?.payment_methods && profile.payment_methods.length > 0 ? profile.payment_methods.join(', ') : null)
 
   const detCards: { label: string; value: string }[] = []
@@ -307,7 +310,7 @@ export default function ContractPage() {
   if (paymentValue)                  detCards.push({ label: 'Accepted payment',      value: paymentValue })
   if (profile?.project_manager)      detCards.push({ label: 'Project manager',       value: profile.project_manager })
 
-  const ctaDisabled = trigger === 'sign' ? (!hasValidSig || !agreedToTerms || sending) : sending
+  const ctaDisabled = missingProvince || (trigger === 'sign' ? (!hasValidSig || !agreedToTerms || sending) : sending)
 
   // Client signature slot — varies by trigger state
   const todayFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date())
@@ -517,6 +520,16 @@ export default function ContractPage() {
           {signingFailed && (
             <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#92400E', textAlign: 'center' as const }}>
               Connection lost — your signature is preserved. Tap below to retry.
+            </div>
+          )}
+          {missingProvince && (
+            <div style={{ background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: 12, color: '#92400E', textAlign: 'center' as const }}>
+              Set your province in{' '}
+              <span
+                style={{ fontWeight: 700, textDecoration: 'underline', cursor: 'pointer' }}
+                onClick={() => router.push('/dashboard/settings/company')}
+              >Settings → Company</span>
+              {' '}before sending — required for contract legal text.
             </div>
           )}
           {flash && (

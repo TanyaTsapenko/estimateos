@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ skipped: true, reason: 'deposit invoice already exists' })
 
   const { data: prof } = await admin.from('profiles')
-    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email, gst_hst_number, logo_url')
+    .select('company_name, first_name, last_name, phone, email, interac_email, deposit_percent, company_contact_email, gst_hst_number, logo_url, team_owner_id')
     .eq('id', est.user_id).single()
 
   const depositPct = est.deposit_percent ?? (prof as any)?.deposit_percent ?? 30
@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
   const dueDateStr = dueDate.toISOString().slice(0, 10)
   const dueDateFmt = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(dueDateStr + 'T00:00:00'))
 
-  const { count } = await admin.from('invoices')
-    .select('*', { count: 'exact', head: true }).eq('user_id', est.user_id)
-  const invoiceNum = `INV-${String((count || 0) + 1).padStart(4, '0')}`
+  const invCounterOwner = (prof as any)?.team_owner_id || est.user_id
+  const { data: invCounterVal } = await admin.rpc('next_doc_number', { p_owner_id: invCounterOwner, p_doc_type: 'invoice' })
+  const invoiceNum = `INV-${String((invCounterVal as number) || 1).padStart(4, '0')}`
 
   const companyName = await getCompanyName(admin, est.user_id)
   const interacEmail = (prof as any)?.interac_email || prof?.email || null

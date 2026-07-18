@@ -92,8 +92,10 @@ export default function CreateInvoicePage() {
       if (!user) { router.push('/auth'); return }
       const sanitizedId = user.id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
 
-      const { count } = await supabase.from('invoices').select('*', { count: 'exact', head: true }).eq('user_id', estimate.user_id)
-      const num = `INV-${String((count || 0) + 1).padStart(4, '0')}`
+      const { data: invProfRow } = await supabase.from('profiles').select('team_owner_id').eq('id', estimate.user_id).maybeSingle()
+      const invCounterOwner = (invProfRow as any)?.team_owner_id || estimate.user_id
+      const { data: invCounterVal } = await supabase.rpc('next_doc_number', { p_owner_id: invCounterOwner, p_doc_type: 'invoice' })
+      const num = `INV-${String((invCounterVal as number) || 1).padStart(4, '0')}`
 
       const { data: newInv, error: invErr } = await supabase.from('invoices').insert({
         estimate_id:    estimate.id,

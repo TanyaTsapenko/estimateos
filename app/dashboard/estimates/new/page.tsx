@@ -618,15 +618,18 @@ function NewEstimateV2() {
       // Use the rep's id when creating from an assigned appointment; fall back to session user
       const estimateUserId = repId || uid
 
+      // Resolve team root (used for shared client list and doc-number counter)
+      let teamRoot = uid
+      try {
+        const { data: myProf } = await supabase.from('profiles').select('team_owner_id').eq('id', uid).maybeSingle()
+        if ((myProf as any)?.team_owner_id) teamRoot = (myProf as any).team_owner_id
+      } catch {}
+
       // 1. Resolve client_id
       let clientId: string | null = clientInfo.id || null
       if (!clientId) {
         // Resolve team owner so team members share the same client list
-        let ownerId = uid
-        try {
-          const { data: prof } = await supabase.from('profiles').select('team_owner_id').eq('id', uid).single()
-          if (prof?.team_owner_id) ownerId = prof.team_owner_id
-        } catch {}
+        const ownerId = teamRoot
 
         const phone = clientInfo.phone?.trim() || null
         const email = clientInfo.email?.trim() || null
@@ -716,11 +719,11 @@ function NewEstimateV2() {
         if (delErr) throw new Error('Failed to clear openings: ' + delErr.message)
       } else {
         // ── INSERT new estimate ──
-        const { count } = await supabase
-          .from('estimates')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', estimateUserId)
-        const estimateNumber = 'EST-' + String((count || 0) + 1).padStart(4, '0')
+        const { data: counterVal } = await supabase.rpc('next_doc_number', {
+          p_owner_id: teamRoot,
+          p_doc_type: 'estimate',
+        })
+        const estimateNumber = 'EST-' + String((counterVal as number) || 1).padStart(4, '0')
         const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
 
         const { data: est, error: estErr } = await supabase

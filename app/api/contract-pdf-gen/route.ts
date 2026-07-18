@@ -68,6 +68,16 @@ export async function GET(req: NextRequest) {
       contract_terms_snapshot: contract.contract_terms_snapshot || '',
     }
 
+    const needsProvince = contractWithClauses.contract_clauses.some(
+      (c: any) => (c.content || '').includes('{{PROVINCE}}')
+    )
+    if (needsProvince && !company?.province) {
+      return NextResponse.json(
+        { error: 'Province not set in company profile. Go to Settings → Company before generating this PDF.' },
+        { status: 400 }
+      )
+    }
+
     console.log('[contract-pdf] openings count:', openings?.length)
     console.log('[contract-pdf] company name:', company?.company_name)
     console.log('[contract-pdf] contract_clauses type:', typeof contractWithClauses.contract_clauses)
