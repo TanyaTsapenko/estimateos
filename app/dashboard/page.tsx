@@ -446,6 +446,7 @@ const [dashToast, setDashToast] = useState('')
             cta: 'Mark as paid', id: inv.id, actionType: 'mark_paid',
             invoiceType: 'deposit' as const, createdAt: inv.created_at, priority: daysOld > 7 ? 0 : 3,
             amount: inv.amount, entityNumber: entityNumbers[inv.estimate_id],
+            estimateId: inv.estimate_id,
           })
         })
       }
@@ -501,11 +502,24 @@ const [dashToast, setDashToast] = useState('')
       {
         const now = Date.now()
         const actTimeAgo = (iso: string) => { const d=Math.floor((now-new Date(iso).getTime())/86400000); const h=Math.floor((now-new Date(iso).getTime())/3600000); const m=Math.floor((now-new Date(iso).getTime())/60000); return m<60?`${m} min ago`:h<24?`${h}h ago`:d===1?'yesterday':`${d} days ago` }
+        const paymentEntityIds = (activityLog || [])
+          .filter((e: any) => e.event_type === 'deposit_paid' || e.event_type === 'final_paid')
+          .map((e: any) => e.entity_id).filter(Boolean)
+        const invoiceToEstimate: Record<string, string> = {}
+        if (paymentEntityIds.length) {
+          const { data: invRows } = await supabase
+            .from('invoices').select('id, estimate_id').in('id', paymentEntityIds)
+          for (const row of invRows || []) {
+            if (row.estimate_id) invoiceToEstimate[row.id] = row.estimate_id
+          }
+        }
         setActivity((activityLog || []).map((e: any) => ({
           event_type: e.event_type,
           actor_type: e.actor_type,
           actor_name: e.actor_name || (e.actor_type === 'contractor' ? 'You' : 'Client'),
-          entity_id: e.entity_id || '',
+          entity_id: ((e.event_type === 'deposit_paid' || e.event_type === 'final_paid')
+            ? (invoiceToEstimate[e.entity_id] || e.entity_id)
+            : e.entity_id) || '',
           entity_number: e.entity_number || '',
           client_name: e.client_name || '',
           amount: e.amount ?? null,
