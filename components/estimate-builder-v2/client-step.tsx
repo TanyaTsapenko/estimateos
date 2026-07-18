@@ -72,7 +72,7 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
       phone:      c.phone       || '',
       address:    [c.address, c.city].filter(Boolean).join(', '),
       city:       c.city        || undefined,
-      province:   c.province    || undefined,
+      province:   c.province    || value.province || undefined,
       postalCode: c.postal_code || undefined,
     })
     setSubMode('selected')
@@ -83,12 +83,12 @@ export function ClientStep({ value, onChange, onContinue }: Props) {
   }
 
   const startCreate = () => {
-    onChange({ name: '', email: '', phone: '', address: '' })
+    onChange({ name: '', email: '', phone: '', address: '', province: value.province })
     setSubMode('create')
   }
 
   const backToBrowse = () => {
-    onChange({ name: '', email: '', phone: '', address: '' })
+    onChange({ name: '', email: '', phone: '', address: '', province: value.province })
     setNameErr('')
     setEstimateCount(null)
     setSubMode('browse')
