@@ -567,16 +567,17 @@ const cSelectBase: React.CSSProperties = {
   color: '#0A1628', background: '#fff', outline: 'none',
 }
 
-function ProvinceSelect({ label, value, onChange, required }: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+function ProvinceSelect({ label, value, onChange, required, error }: { label: string; value: string; onChange: (v: string) => void; required?: boolean; error?: string }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0A1628', marginBottom: 6 }}>
         {label}{required && <span style={{ color: '#DC2626', marginLeft: 2 }}>*</span>}
       </label>
       <select value={value} onChange={e => onChange(e.target.value)} style={cSelectBase}>
-        <option value="">— Select —</option>
+        <option value="">Select province</option>
         {COMPANY_PROVINCES.map(p => <option key={p.code} value={p.code}>{p.code} — {p.name}</option>)}
       </select>
+      {error && <div style={{ fontSize: 12, color: '#DC2626', marginTop: 4 }}>{error}</div>}
     </div>
   )
 }
@@ -597,7 +598,7 @@ function CompanyTextArea({ label, value, onChange, placeholder, hint }: { label:
 
 const COMPANY_INIT = {
   companyName: '', phone: '', website: '', addressLine: '', city: '',
-  province: 'AB', postal: '', licence: '', insurance: '', interacEmail: '',
+  province: '', postal: '', licence: '', insurance: '', interacEmail: '',
   gstHstNumber: '', companyContactEmail: '', financingInfo: '', googleReviewLink: '',
   licenceIssuingProvince: '', licenceExpiry: '',
   insuranceProvider: '', insuranceExpiry: '',
@@ -609,7 +610,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
   const [values, setValues] = useState(COMPANY_INIT)
   const [initial, setInitial] = useState(COMPANY_INIT)
   const dirty = JSON.stringify(values) !== JSON.stringify(initial)
-  const valid = dirty && !!values.companyName && !!values.city
+  const valid = dirty && !!values.companyName && !!values.city && !!values.province
   const set = (k: keyof typeof COMPANY_INIT) => (v: string) => setValues(s => ({ ...s, [k]: v }))
   const [userId, setUserId] = useState<string | null>(null)
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
@@ -638,7 +639,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
           website:               (prof as any).website                   || '',
           addressLine:           (prof as any).address                   || '',
           city:                  (prof as any).city                      || '',
-          province:              (prof as any).province                  || 'AB',
+          province:              (prof as any).province                  || '',
           postal:                (prof as any).postal                    || '',
           licence:               (prof as any).licence                   || '',
           insurance:             ((prof as any).insurance_policy_number ?? (prof as any).insurance) || '',
@@ -791,7 +792,7 @@ function CompanySection({ flash }: { flash: FlashFn }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: '0 12px' }}>
             <Field label="City" value={values.city} onChange={set('city')} required />
-            <ProvinceSelect label="Province" value={values.province} onChange={set('province')} required />
+            <ProvinceSelect label="Province" value={values.province} onChange={set('province')} required error={!values.province ? 'Province is required' : undefined} />
             <Field label="Postal Code" value={values.postal} onChange={set('postal')} warning={postalWarn} />
           </div>
         </Card>
