@@ -1743,6 +1743,8 @@ export default function SettingsPage() {
   const [active, setActive] = useState<SectionId>('profile')
   const [toast, setToast] = useState<{ message: string; submessage?: string; variant?: 'success' | 'error' | 'neutral' } | null>(null)
   const [contractDirty, setContractDirty] = useState(false)
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
+  const pendingLeaveRef = useRef<(() => void) | null>(null)
   const [isMobile, setIsMobile] = useState(false)
   const [mobileDetail, setMobileDetail] = useState(false)
   const [companyName, setCompanyName] = useState('')
@@ -1812,15 +1814,23 @@ export default function SettingsPage() {
   const flash: FlashFn = (message, opts) => { setToast({ message, ...opts }); setTimeout(() => setToast(null), 3500) }
   const ActiveSection = SECTIONS[active]
 
-  const handleNavClick = (id: SectionId) => {
+  const guardLeave = (action: () => void) => {
     if (active === 'contract' && contractDirty) {
-      if (!window.confirm('You have unsaved changes — leave anyway?')) return
+      pendingLeaveRef.current = action
+      setLeaveConfirmOpen(true)
+      return
     }
-    if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
-    if (id === 'reminders') { router.push('/dashboard/settings/reminders'); return }
-    setActive(id)
-    router.replace(`/dashboard/settings?section=${id}`, { scroll: false })
-    if (isMobile) setMobileDetail(true)
+    action()
+  }
+
+  const handleNavClick = (id: SectionId) => {
+    guardLeave(() => {
+      if (id === 'quote') { router.push('/dashboard/settings/quote'); return }
+      if (id === 'reminders') { router.push('/dashboard/settings/reminders'); return }
+      setActive(id)
+      router.replace(`/dashboard/settings?section=${id}`, { scroll: false })
+      if (isMobile) setMobileDetail(true)
+    })
   }
 
   // ── MOBILE ───────────────────────────────────
@@ -1857,10 +1867,7 @@ export default function SettingsPage() {
         ) : (
           // Detail view
           <div>
-            <AppTopBar onBack={() => {
-              if (active === 'contract' && contractDirty && !window.confirm('You have unsaved changes — leave anyway?')) return
-              setMobileDetail(false)
-            }} backLabel="Settings" />
+            <AppTopBar onBack={() => guardLeave(() => setMobileDetail(false))} backLabel="Settings" />
             <div style={{ padding: '20px 16px 100px' }}>
               {role === 'estimator' && (
                 <div style={{ marginBottom: 16, padding: '12px 14px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 12, fontSize: 13, color: '#1D4ED8', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1875,6 +1882,15 @@ export default function SettingsPage() {
           </div>
         )}
         {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
+        <ConfirmModal
+          open={leaveConfirmOpen}
+          icon="alert"
+          title="Unsaved changes"
+          body="Your contract clause changes haven't been saved. Leave anyway?"
+          confirmLabel="Leave"
+          onConfirm={() => { setLeaveConfirmOpen(false); pendingLeaveRef.current?.(); pendingLeaveRef.current = null }}
+          onCancel={() => { setLeaveConfirmOpen(false); pendingLeaveRef.current = null }}
+        />
       </div>
     )
   }
@@ -1969,6 +1985,15 @@ export default function SettingsPage() {
       </div>
 
       {toast && <SuccessBanner message={toast.message} submessage={toast.submessage} variant={toast.variant} mode="floating" onDismiss={() => setToast(null)} />}
+      <ConfirmModal
+        open={leaveConfirmOpen}
+        icon="alert"
+        title="Unsaved changes"
+        body="Your contract clause changes haven't been saved. Leave anyway?"
+        confirmLabel="Leave"
+        onConfirm={() => { setLeaveConfirmOpen(false); pendingLeaveRef.current?.(); pendingLeaveRef.current = null }}
+        onCancel={() => { setLeaveConfirmOpen(false); pendingLeaveRef.current = null }}
+      />
     </div>
   )
 }
