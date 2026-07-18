@@ -165,34 +165,18 @@ function Pill({ tone, children }: { tone: 'neutral' | 'blue' | 'green' | 'amber'
 }
 
 function SaveBar({ dirty, valid, saving, onSave, onDiscard }: { dirty: boolean; valid: boolean; saving?: boolean; onSave: () => void; onDiscard: () => void }) {
+  if (!dirty) return null
   return (
-    <div style={{
-      background: '#fff', borderRadius: 14, padding: 16, marginTop: 16,
-      boxShadow: '0 0 0 1px rgba(10,22,40,0.05)',
-    }}>
-      <div style={{ display: 'flex', gap: 12 }}>
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderTop: '1px solid rgba(10,22,40,0.07)', padding: '12px 20px' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', display: 'flex', gap: 12 }}>
         <button
-          onClick={onDiscard} disabled={!dirty || saving}
-          style={{
-            flex: 1, height: 52, borderRadius: 12,
-            border: '1px solid #e5e7eb', background: '#fff',
-            color: dirty && !saving ? '#475467' : '#94A3B8',
-            fontSize: 15, fontWeight: 500,
-            cursor: dirty && !saving ? 'pointer' : 'default',
-            fontFamily: 'inherit',
-          }}>
+          onClick={onDiscard} disabled={!!saving}
+          style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: saving ? '#94A3B8' : '#475467', fontSize: 15, fontWeight: 500, cursor: saving ? 'default' : 'pointer', fontFamily: 'inherit' }}>
           Discard
         </button>
         <button
-          onClick={onSave} disabled={!valid || saving}
-          style={{
-            flex: 1, height: 52, borderRadius: 12, border: 'none',
-            background: dirty && valid && !saving ? '#2563EB' : '#93aef5',
-            color: '#fff',
-            fontSize: 15, fontWeight: 600,
-            cursor: dirty && valid && !saving ? 'pointer' : 'default',
-            fontFamily: 'inherit',
-          }}>
+          onClick={onSave} disabled={!valid || !!saving}
+          style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: valid && !saving ? '#2563EB' : '#93aef5', color: '#fff', fontSize: 15, fontWeight: 600, cursor: valid && !saving ? 'pointer' : 'default', fontFamily: 'inherit' }}>
           {saving ? 'Saving...' : 'Save changes'}
         </button>
       </div>

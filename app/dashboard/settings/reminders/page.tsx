@@ -16,11 +16,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function SaveBar({ dirty, onSave, onDiscard }: { dirty: boolean; onSave: () => void; onDiscard: () => void }) {
+  if (!dirty) return null
   return (
-    <div style={{ background: '#fff', borderRadius: 14, padding: 16, boxShadow: '0 0 0 1px rgba(10,22,40,0.05)' }}>
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button onClick={onDiscard} disabled={!dirty} style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: dirty ? '#475467' : '#94A3B8', fontSize: 15, fontWeight: 500, cursor: dirty ? 'pointer' : 'default', fontFamily: 'inherit' }}>Discard</button>
-        <button onClick={onSave} disabled={!dirty} style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: dirty ? '#2563EB' : '#93aef5', color: '#fff', fontSize: 15, fontWeight: 600, cursor: dirty ? 'pointer' : 'default', fontFamily: 'inherit' }}>Save changes</button>
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(255,255,255,0.97)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', borderTop: '1px solid rgba(10,22,40,0.07)', padding: '12px 20px' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', display: 'flex', gap: 12 }}>
+        <button onClick={onDiscard} style={{ flex: 1, height: 52, borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: '#475467', fontSize: 15, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit' }}>Discard</button>
+        <button onClick={onSave} style={{ flex: 1, height: 52, borderRadius: 12, border: 'none', background: '#2563EB', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Save changes</button>
       </div>
     </div>
   )
