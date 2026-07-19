@@ -18,7 +18,7 @@ const ESTIMATE_COLS = [
 const PROFILE_COLS = [
   'company_name', 'address', 'city', 'province', 'postal',
   'phone', 'logo_url', 'contract_terms', 'deposit_percent',
-  'warranty_summary', 'warranty_period',
+  'warranty_summary', 'warranty_period', 'warranty_pdf_url',
 ].join(', ')
 
 const OPENING_COLS = [

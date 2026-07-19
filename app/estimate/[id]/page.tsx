@@ -68,7 +68,7 @@ interface Profile {
   company_name: string | null; address: string | null; city: string | null; province: string | null; postal: string | null
   phone: string | null; logo_url: string | null; contract_terms: string | null
   deposit_percent: number | null
-  warranty_summary?: string | null; warranty_period?: string | null
+  warranty_summary?: string | null; warranty_period?: string | null; warranty_pdf_url?: string | null
 }
 
 function fmtDate(iso: string) {
@@ -510,7 +510,7 @@ export default function ClientEstimatePage() {
           )}
 
           {/* ── WARRANTY ── */}
-          {(!!profile?.warranty_summary || !!profile?.warranty_period) && (
+          {(!!profile?.warranty_summary || !!profile?.warranty_period || !!profile?.warranty_pdf_url) && (
             <div style={{ display: 'flex', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
               {!!profile?.warranty_summary && (
                 <div style={{ flex: 1, minWidth: 200, background: GRAY_BG, borderRadius: 6, padding: 12 }}>
@@ -522,6 +522,14 @@ export default function ClientEstimatePage() {
                 <div style={{ minWidth: 140, background: GRAY_BG, borderRadius: 6, padding: 12 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: FAINT, marginBottom: 5 }}>Warranty period</div>
                   <div style={{ fontSize: 12, color: NAVY, fontWeight: 700 }}>{profile.warranty_period}</div>
+                </div>
+              )}
+              {!!profile?.warranty_pdf_url && (
+                <div style={{ minWidth: 140, background: GRAY_BG, borderRadius: 6, padding: 12, display: 'flex', alignItems: 'center' }}>
+                  <a href={profile.warranty_pdf_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: NAVY, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                    View warranty document
+                  </a>
                 </div>
               )}
             </div>
