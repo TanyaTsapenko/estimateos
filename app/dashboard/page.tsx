@@ -862,7 +862,7 @@ const [dashToast, setDashToast] = useState('')
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0,
-      background: '#F4F4F2', fontFamily: '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif', minHeight: '100vh',
+      background: '#F4F4F2', minHeight: '100vh',
     }}>
 
       {/* ── DESKTOP HEADER ── */}
