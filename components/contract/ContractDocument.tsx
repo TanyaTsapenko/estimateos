@@ -119,6 +119,7 @@ export interface ContractDocumentProps {
   clientSigDate: string
   downloadHref?: string
   bottomPadding?: number
+  customLabels?: Record<string, string>
 }
 
 export function ContractDocument({
@@ -129,7 +130,7 @@ export function ContractDocument({
   depositPct, depositRequired = true,
   detCards, enabledClauses, province,
   contractorSigUrl, repName, clientSignatureSlot, clientSigDate,
-  downloadHref, bottomPadding = 140,
+  downloadHref, bottomPadding = 140, customLabels,
 }: ContractDocumentProps) {
   const depositAmt = total * (depositPct / 100)
   const balanceAmt = total - depositAmt
@@ -192,7 +193,7 @@ export function ContractDocument({
           const resolvedType = V2_TO_OLD_TYPE_KEY[op.type] || op.type
           const nameLabel = resolvedType === 'window_arch'
             ? 'Special shape'
-            : (OPENING_TYPES[resolvedType]?.name ?? V2_TYPE_LABELS[op.type] ?? op.type)
+            : (customLabels?.[V2_TO_OLD_TYPE_KEY[op.type]] || customLabels?.[op.type] || OPENING_TYPES[resolvedType]?.name || V2_TYPE_LABELS[op.type] || op.type)
           const name      = `${nameLabel}${op.window_subtype ? ` (${getSubtypeLabel(op as any)})` : ''}`
           const extCol    = op.colour && op.colour !== 'white' ? getColourLabel(op as any) : null
           const intCol    = getInteriorColourLabel(op as any)
@@ -200,6 +201,7 @@ export function ContractDocument({
           const installLbl  = (op.install  && op.install  !== 'retrofit') ? (INSTALL_LABELS[op.install]   || op.install)  : null
           const materialLbl = (op.material && op.material !== 'vinyl')    ? (MATERIAL_LABELS[op.material] || op.material) : null
           const specExtras: string[] = []
+          if (op.room)                                               specExtras.push(op.room)
           if (op.door_style)                                         specExtras.push(op.door_style)
           if (op.glass_insert && op.glass_insert !== 'None')         specExtras.push(op.glass_insert)
           if (op.glass_finish)                                       specExtras.push(op.glass_finish)

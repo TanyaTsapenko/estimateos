@@ -70,13 +70,16 @@ export async function GET(
   )
   if (!contract) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const [estimate, openings, profile] = await Promise.all([
+  const [estimate, openings, profile, priceRows] = await Promise.all([
     row(svc.from('estimates').select(ESTIMATE_COLS).eq('id', contract.estimate_id as string).maybeSingle()),
     rows(svc.from('estimate_openings').select(OPENING_COLS).eq('estimate_id', contract.estimate_id as string).order('sort_order')),
     row(svc.from('profiles').select(PROFILE_COLS).eq('id', contract.profile_id as string).maybeSingle()),
+    rows(svc.from('price_lists').select('opening_type, custom_label').eq('user_id', contract.profile_id as string).neq('opening_type', '_sizes')),
   ])
+  const customLabels: Record<string, string> = {}
+  priceRows.forEach((r: any) => { if (r.custom_label) customLabels[r.opening_type] = r.custom_label })
 
-  return NextResponse.json({ contract, estimate, openings, profile })
+  return NextResponse.json({ contract, estimate, openings, profile, customLabels })
 }
 
 export async function PATCH(

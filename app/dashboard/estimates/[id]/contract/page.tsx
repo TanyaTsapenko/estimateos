@@ -73,6 +73,7 @@ export default function ContractPage() {
   const [repName, setRepName] = useState<string>('')
   const [loading,  setLoading]  = useState(true)
   const [sending,  setSending]  = useState(false)
+  const [customLabels, setCustomLabels] = useState<Record<string, string>>({})
 
   const svgRef                                        = useRef<SVGSVGElement>(null)
   const [paths,              setPaths]              = useState<string[]>([])
@@ -117,6 +118,10 @@ export default function ContractPage() {
         .eq('id', estOwnerId)
         .single()
       if (prof) setProfile(prof as Profile)
+      const { data: priceRows } = await supabase.from('price_lists').select('opening_type, custom_label').eq('user_id', estOwnerId).neq('opening_type', '_sizes')
+      const cl: Record<string, string> = {}
+      priceRows?.forEach((r: any) => { if (r.custom_label) cl[r.opening_type] = r.custom_label })
+      setCustomLabels(cl)
       setRepName([prof?.first_name, prof?.last_name].filter(Boolean).join(' '))
       if (prof?.team_owner_id) {
         const ownerSanitized = prof.team_owner_id.toString().toLowerCase().trim().replace(/[^\x20-\x7E]/g, '')
@@ -430,6 +435,7 @@ export default function ContractPage() {
               clientAddress={estimate.client_address}
               clientCityProvince={clientCityProvince}
               openings={openings}
+              customLabels={customLabels}
               subtotal={estimate.subtotal}
               taxAmount={estimate.tax_amount}
               taxLabel={taxLabel}
@@ -473,6 +479,7 @@ export default function ContractPage() {
             clientAddress={estimate.client_address}
             clientCityProvince={clientCityProvince}
             openings={openings}
+            customLabels={customLabels}
             subtotal={estimate.subtotal}
             taxAmount={estimate.tax_amount}
             taxLabel={taxLabel}

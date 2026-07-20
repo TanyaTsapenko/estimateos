@@ -257,7 +257,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                 {openingPngs?.[op.id]
                   ? <Image src={openingPngs[op.id]} style={{ width: 72, height: 86, objectFit: 'contain' }} />
                   : <View style={{ width: 72, height: 86, borderWidth: 0.5, borderColor: HAIR, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 7, color: INK_S, textAlign: 'center' }}>{op.type}</Text>
+                      <Text style={{ fontSize: 7, color: INK_S, textAlign: 'center' }}>{nameLabel}</Text>
                     </View>
                 }
               </View>

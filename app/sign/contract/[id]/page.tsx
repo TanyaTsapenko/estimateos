@@ -85,6 +85,7 @@ export default function SignContractPage() {
   const [declineError,       setDeclineError]       = useState(false)
   const [resendingEmail,     setResendingEmail]     = useState(false)
   const [resendEmailMsg,     setResendEmailMsg]     = useState<'sent' | 'error' | null>(null)
+  const [customLabels,       setCustomLabels]       = useState<Record<string, string>>({})
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
@@ -116,11 +117,12 @@ export default function SignContractPage() {
     async function load() {
       const res = await fetch(`/api/public/contract/${contractId}`)
       if (!res.ok) { setLoading(false); return }
-      const { contract: con, estimate: est, openings: ops, profile: prof } = await res.json()
+      const { contract: con, estimate: est, openings: ops, profile: prof, customLabels: cl } = await res.json()
       setContract(con)
       if (est) setEstimate(est)
       setOpenings(ops || [])
       if (prof) setProfile(prof as Profile)
+      if (cl) setCustomLabels(cl)
       setLoading(false)
     }
     load()
@@ -553,6 +555,7 @@ export default function SignContractPage() {
           clientAddress={estimate.client_address}
           clientCityProvince={clientCityProvince}
           openings={openings}
+          customLabels={customLabels}
           subtotal={estimate.subtotal}
           taxAmount={estimate.tax_amount}
           taxLabel={taxLabel}
