@@ -73,6 +73,7 @@ interface TimelineAppt {
   estimateId: string | null
   estTotal: string | null
   notes: string | null
+  won: number | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -182,10 +183,73 @@ function NowRow() {
       <div style={{ width: 62, flexShrink: 0, paddingRight: 10, textAlign: 'right' }}>
         <span style={{ fontSize: 10, fontWeight: 800, color: '#2563EB', letterSpacing: '0.04em' }}>NOW</span>
       </div>
-      <div style={{ width: 26, flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#2563EB', boxShadow: '0 0 0 3px rgba(37,99,235,0.18)' }} />
+      <div style={{ width: 26, flexShrink: 0, position: 'relative', display: 'flex', justifyContent: 'center', alignSelf: 'stretch' }}>
+        <div style={{ position: 'absolute', top: -10, bottom: '50%', width: 2, background: 'rgba(15,23,42,0.08)' }} />
+        <div style={{ position: 'absolute', top: '50%', bottom: -10, width: 2, background: 'rgba(15,23,42,0.08)' }} />
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#2563EB', boxShadow: '0 0 0 3px rgba(37,99,235,0.18)', zIndex: 2, position: 'relative' }} />
       </div>
       <div style={{ flex: 1, height: 2, background: 'rgba(37,99,235,0.4)', borderRadius: 99 }} />
+    </div>
+  )
+}
+
+// ─── Roster components ────────────────────────────────────────────────────────
+const REP_SOLID_COLORS = ['#7C3AED', '#D97706', '#0F8A4D', '#DB2777']
+
+function statusFor(repVisits: TimelineAppt[], nowH: number) {
+  if (!repVisits.length) return { text: 'No visits today', tone: T.inkSoft }
+  const onSite = repVisits.find(v => v.hour <= nowH && nowH < v.hour + 1.2 && v.status !== 'completed')
+  if (onSite) return { text: `On-site · ${onSite.name}`, tone: T.green }
+  const next = repVisits.find(v => v.hour >= nowH && v.status === 'upcoming')
+  if (next) return { text: `Next at ${fmt12h(next.rawTime)}`, tone: T.blue }
+  return { text: 'All visits done', tone: T.inkSoft }
+}
+
+function RepRow({ rep, repIndex, visits, won, nowH, onOpen }: {
+  rep: { id: string; name: string }
+  repIndex: number
+  visits: TimelineAppt[]
+  won: number
+  nowH: number
+  onOpen: () => void
+}) {
+  const color = rep.name === 'You' ? T.blue : REP_SOLID_COLORS[repIndex % REP_SOLID_COLORS.length]
+  const st = statusFor(visits, nowH)
+  return (
+    <button onClick={onOpen} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, padding: '13px 14px', background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, marginBottom: 10, textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 99, background: color, color: '#fff', fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{rep.name[0]}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: T.ink }}>{rep.name}</div>
+          <div style={{ fontSize: 12.5, color: st.tone, fontWeight: 600, marginTop: 1 }}>{st.text}</div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 700, color: T.ink }}>{visits.length}</div>
+          <div style={{ fontSize: 10.5, color: T.inkFaint, fontWeight: 600 }}>{visits.length === 1 ? 'visit' : 'visits'}</div>
+        </div>
+      </div>
+      {won > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: 11.5, fontWeight: 800, color: T.greenDeep, whiteSpace: 'nowrap' }}>+CA${won.toLocaleString('en-CA')}</span>
+        </div>
+      )}
+    </button>
+  )
+}
+
+function Roster({ teamReps, dayAppts, nowH, onOpen }: {
+  teamReps: { id: string; name: string }[]
+  dayAppts: TimelineAppt[]
+  nowH: number
+  onOpen: (repId: string) => void
+}) {
+  return (
+    <div style={{ padding: '16px 16px 40px' }}>
+      {teamReps.map((rep, ri) => {
+        const visits = dayAppts.filter(a => a.user_id === rep.id).sort((a, b) => a.hour - b.hour)
+        const won = visits.reduce((s, a) => s + (a.won ?? 0), 0)
+        return <RepRow key={rep.id} rep={rep} repIndex={ri} visits={visits} won={won} nowH={nowH} onOpen={() => onOpen(rep.id)} />
+      })}
     </div>
   )
 }
@@ -206,12 +270,12 @@ function TimelineRow({ appt, isLast, expanded, onToggle, onNavigate, isFollowUp 
   return (
     <div style={{ display: 'flex', marginBottom: 10 }}>
       {/* Time col */}
-      <div style={{ width: 62, flexShrink: 0, paddingTop: 11, paddingRight: 8, textAlign: 'right' }}>
+      <div style={{ width: 76, flexShrink: 0, paddingTop: 11, paddingRight: 8, textAlign: 'right' }}>
         {appt.rawTime ? (
           <>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2 }}>{fmt12h(appt.rawTime)}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#0B1220', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{fmt12h(appt.rawTime)}</div>
             {appt.endTime && (
-              <div style={{ fontSize: 11, color: '#94A0B4', lineHeight: 1.2, marginTop: 1 }}>–{fmt12h(appt.endTime)}</div>
+              <div style={{ fontSize: 11, color: '#94A0B4', lineHeight: 1.2, marginTop: 1, whiteSpace: 'nowrap' }}>–{fmt12h(appt.endTime)}</div>
             )}
           </>
         ) : (
@@ -921,13 +985,20 @@ export default function AppointmentsPage() {
       const rowList = rows || []
       const estIds = rowList.filter((a: any) => a.estimate_id).map((a: any) => a.estimate_id!)
       let estTotalMap = new Map<string, number>()
+      let estWonMap = new Map<string, number>()
       if (estIds.length > 0) {
-        const { data: ests } = await supabase.from('estimates').select('id, total').in('id', estIds)
+        const { data: ests } = await supabase.from('estimates').select('id, total, signed_at').in('id', estIds)
         estTotalMap = new Map((ests ?? []).map((e: any) => [e.id, e.total ?? 0]))
+        const todayLocalDate = new Date().toLocaleDateString('en-CA')
+        estWonMap = new Map((ests ?? []).map((e: any) => {
+          const signedLocalDate = e.signed_at ? new Date(e.signed_at).toLocaleDateString('en-CA') : null
+          return [e.id, signedLocalDate === todayLocalDate && e.total != null ? (e.total as number) : 0]
+        }))
       }
 
       const mapped: TimelineAppt[] = rowList.map((a: any) => {
         const total = a.estimate_id ? (estTotalMap.get(a.estimate_id) ?? null) : null
+        const wonAmt = a.estimate_id ? (estWonMap.get(a.estimate_id) ?? 0) : 0
         return {
           id: a.id,
           user_id: (a as any).assigned_to || (a as any).user_id,
@@ -941,6 +1012,7 @@ export default function AppointmentsPage() {
           estimateId: a.estimate_id || null,
           estTotal: total !== null ? `CA$${total.toLocaleString('en-CA', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : null,
           notes: a.notes || null,
+          won: wonAmt > 0 ? wonAmt : null,
         }
       })
 
@@ -961,6 +1033,7 @@ export default function AppointmentsPage() {
   const repFilteredAppts  = repFilter !== 'all' ? appts.filter(a => (a as any).user_id === repFilter) : appts
   const displayedDayAppts = repFilter !== 'all' ? dayAppts.filter(a => a.user_id === repFilter) : dayAppts
   const showRepGrouped    = repFilter === 'all' && teamReps.length > 1
+  const isRoster          = repFilter === 'all' && teamReps.length > 1
 
   const todayCount         = repFilteredAppts.filter(a => a.appointment_date === todayStr).length
   const needsFollowUpCount = selectedDay === 'today'
@@ -1181,10 +1254,16 @@ export default function AppointmentsPage() {
             <div style={{ fontSize: 11, fontWeight: 700, color: '#8A94A6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{getEyebrow(selectedDay)}</div>
             <div style={{ fontSize: 24, fontWeight: 700, color: '#0B1220', letterSpacing: '-0.02em', lineHeight: 1.1 }}>{dayTitle}</div>
             <div style={{ fontSize: 13, color: '#8A94A6', marginTop: 3 }}>
-              <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
-              {' · '}{doneCount} done
-              {cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
-              {needsFollowUpCount > 0 ? <span style={{ color: '#F97316', fontWeight: 700 }}> · {needsFollowUpCount} needs follow-up</span> : ''}
+              {isRoster ? (
+                <span style={{ fontWeight: 600, color: '#2563EB' }}>{teamReps.length} reps · {dayAppts.length} {dayAppts.length === 1 ? 'visit' : 'visits'}</span>
+              ) : (
+                <>
+                  <span style={{ fontWeight: 700, color: '#2563EB' }}>{upcomingCount} upcoming</span>
+                  {' · '}{doneCount} done
+                  {cancelledCount > 0 ? ` · ${cancelledCount} cancelled` : ''}
+                  {needsFollowUpCount > 0 ? <span style={{ color: '#F97316', fontWeight: 700 }}> · {needsFollowUpCount} needs follow-up</span> : ''}
+                </>
+              )}
             </div>
           </div>
         </AppTopBar>
@@ -1196,16 +1275,13 @@ export default function AppointmentsPage() {
           {teamReps.length > 1 && (
             <div style={{ display: 'flex', gap: 22, paddingLeft: 16, overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any, scrollbarWidth: 'none' as any }}>
               {[{ id: 'all', name: 'All reps' }, ...teamReps].map(m => {
-                const isMe = m.id === userId
-                const repDayCount = m.id === 'all' ? dayAppts.length : dayAppts.filter(a => a.user_id === m.id).length
-                if (m.id !== 'all' && !isMe && repDayCount === 0) return null
                 const active = repFilter === m.id
                 return (
                   <button key={m.id} onClick={() => setRepFilter(m.id)} style={{
                     flexShrink: 0, background: 'none', border: 'none',
                     borderBottom: `2.5px solid ${active ? '#2563EB' : 'transparent'}`,
                     paddingTop: 8, paddingBottom: 10, paddingLeft: 0, paddingRight: 0,
-                    fontSize: 14, fontWeight: 700,
+                    fontSize: 14, fontWeight: active ? 800 : 600,
                     color: active ? '#2563EB' : '#94A0B4',
                     cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit',
                   }}>
@@ -1360,8 +1436,13 @@ export default function AppointmentsPage() {
               <div style={{ textAlign: 'center', padding: '48px 0', color: '#8A94A6', fontSize: 13 }}>Loading…</div>
             )}
 
-            {/* Empty state */}
-            {!dayLoading && displayedDayAppts.length === 0 && !(showRepGrouped && dayAppts.length > 0) && (
+            {/* Roster (All reps) */}
+            {!dayLoading && isRoster && (
+              <Roster teamReps={teamReps} dayAppts={dayAppts} nowH={NOW} onOpen={id => { setRepFilter(id); setExpandedId(null) }} />
+            )}
+
+            {/* Empty state — single-rep or solo user with no visits */}
+            {!dayLoading && !isRoster && displayedDayAppts.length === 0 && (
               <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <div style={{ width: 48, height: 48, background: 'rgba(37,99,235,.08)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
                   <Calendar size={22} color="#2563EB" strokeWidth={1.5} />
@@ -1374,29 +1455,8 @@ export default function AppointmentsPage() {
               </div>
             )}
 
-            {/* Rep-grouped view (All reps + team) */}
-            {!dayLoading && showRepGrouped && dayAppts.length > 0 && teamReps.map((rep, ri) => {
-              const repAppts = dayAppts.filter(a => a.user_id === rep.id)
-              if (repAppts.length === 0) return null
-              return (
-                <div key={rep.id} style={{ marginBottom: 20 }}>
-                  <button onClick={() => setExpandedRepIds(prev => { const s = new Set(prev); s.has(rep.id) ? s.delete(rep.id) : s.add(rep.id); return s })} style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', marginBottom: 12, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: 10, background: REP_GRADIENTS[ri % REP_GRADIENTS.length], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                      {rep.name.charAt(0).toUpperCase()}
-                    </div>
-                    <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: T.ink }}>{rep.name}</span>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: T.inkSoft }}>{repAppts.length} {repAppts.length === 1 ? 'visit' : 'visits'}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={T.inkSoft} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: expandedRepIds.has(rep.id) ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform .2s', flexShrink: 0 }}><path d="M6 9l6 6 6-6"/></svg>
-                  </button>
-                  {expandedRepIds.has(rep.id) && repAppts.map((appt, i) => (
-                    <TimelineRow key={appt.id} appt={appt} isLast={i === repAppts.length - 1} expanded={expandedId === appt.id} onToggle={() => setExpandedId(p => p === appt.id ? null : appt.id)} onNavigate={path => router.push(path)} isFollowUp={false} />
-                  ))}
-                </div>
-              )
-            })}
-
-            {/* Flat / single-rep view */}
-            {!dayLoading && !showRepGrouped && displayedDayAppts.length > 0 && displayedDayAppts.flatMap((appt, i) => {
+            {/* Per-rep timeline (specific rep selected, or solo user) */}
+            {!dayLoading && !isRoster && displayedDayAppts.length > 0 && displayedDayAppts.flatMap((appt, i) => {
               const rows: React.ReactNode[] = []
               if (selectedDay === 'today' && i === nowInsertIdx) rows.push(<NowRow key="now" />)
               rows.push(
@@ -1404,7 +1464,7 @@ export default function AppointmentsPage() {
               )
               return rows
             })}
-            {!dayLoading && !showRepGrouped && selectedDay === 'today' && nowInsertIdx === displayedDayAppts.length && displayedDayAppts.length > 0 && (
+            {!dayLoading && !isRoster && selectedDay === 'today' && nowInsertIdx === displayedDayAppts.length && displayedDayAppts.length > 0 && (
               <NowRow key="now-end" />
             )}
 
