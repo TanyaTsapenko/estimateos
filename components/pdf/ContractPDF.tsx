@@ -187,7 +187,8 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
           if (op.energy_rating) specExtras.push(`Energy Rating: ${op.energy_rating}`)
           const isCombo = op.type === 'combination' || op.type === 'window_combo'
           const comboSecs = isCombo ? parseSectionsPdf(op.sections) : []
-          const specBlock = (
+          const hasSpecs = !!(extCol || intCol || glass || installLbl || materialLbl || specExtras.length > 0)
+          const specBlock = hasSpecs ? (
             <View>
               {(extCol || intCol) && (
                 <View style={{ flexDirection: 'row', marginBottom: 1 }}>
@@ -215,7 +216,7 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
               )}
               {specExtras.length > 0 && <Text style={{ fontSize: 8, color: INK_M }}>{specExtras.join(' · ')}</Text>}
             </View>
-          )
+          ) : null
 
           if (isCombo) {
             return (
@@ -236,13 +237,13 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
                       <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 3, borderBottomWidth: idx < comboSecs.length - 1 ? 0.5 : 0, borderBottomColor: HAIR }}>
                         <Text style={{ fontSize: 8, color: INK_S, width: 16 }}>{idx + 1}.</Text>
                         {sectionDrawingPngs?.[i]?.[idx]
-                          ? <Image src={sectionDrawingPngs[i][idx]} style={{ width: 30, height: 36, objectFit: 'contain', marginRight: 6 }} />
-                          : <View style={{ width: 30, height: 36, marginRight: 6 }} />
+                          ? <Image src={sectionDrawingPngs[i][idx]} style={{ width: 56, height: 65, objectFit: 'contain', marginRight: 6 }} />
+                          : <View style={{ width: 56, height: 65, marginRight: 6 }} />
                         }
-                        <View>
-                          <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: INK }}>{sec.type}</Text>
-                          <Text style={{ fontSize: 8, color: INK_S }}>{sec.width}"</Text>
-                        </View>
+                        <Text style={{ fontSize: 8 }}>
+                          <Text style={{ fontFamily: 'Helvetica-Bold', color: INK }}>{sec.type}</Text>
+                          <Text style={{ color: INK_S }}>{` · ${sec.width}"`}</Text>
+                        </Text>
                       </View>
                     ))}
                   </View>
@@ -255,8 +256,8 @@ export function ContractPDF({ contract, estimate, openings, company, customLabel
             <View key={i} style={styles.tableRow}>
               <View style={{ width: '18%' }}>
                 {openingPngs?.[op.id]
-                  ? <Image src={openingPngs[op.id]} style={{ width: 72, height: 86, objectFit: 'contain' }} />
-                  : <View style={{ width: 72, height: 86, borderWidth: 0.5, borderColor: HAIR, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
+                  ? <Image src={openingPngs[op.id]} style={{ width: 74, height: 85, objectFit: 'contain' }} />
+                  : <View style={{ width: 74, height: 85, borderWidth: 0.5, borderColor: HAIR, borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 7, color: INK_S, textAlign: 'center' }}>{nameLabel}</Text>
                     </View>
                 }
