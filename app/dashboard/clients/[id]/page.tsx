@@ -249,6 +249,8 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   const [deleteOpen,   setDeleteOpen]   = useState(false)
   const [editSaving,   setEditSaving]   = useState(false)
   const [deleting,     setDeleting]     = useState(false)
+  const [deleteBlockReason, setDeleteBlockReason] = useState<string | null>(null)
+  const [deleteError,  setDeleteError]  = useState<string | null>(null)
   const [editForm,     setEditForm]     = useState({ name: '', phone: '', email: '', address: '', city: '', province: '', postal_code: '' })
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -351,7 +353,13 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
 
   const deleteClient = useCallback(async () => {
     setDeleting(true)
-    await supabase.from('clients').delete().eq('id', clientId)
+    setDeleteError(null)
+    const { error } = await supabase.from('clients').delete().eq('id', clientId)
+    if (error) {
+      setDeleting(false)
+      setDeleteError('Delete failed: ' + error.message)
+      return
+    }
     router.push('/dashboard/clients')
   }, [clientId])
 
@@ -432,7 +440,21 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
                 Edit client
               </button>
               <button
-                onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
+                onClick={() => {
+                  setMenuOpen(false)
+                  const apptCount = appointments.length
+                  const estCount = projects.filter(p => p.estimate).length
+                  if (apptCount > 0 || estCount > 0) {
+                    const parts: string[] = []
+                    if (apptCount > 0) parts.push(`${apptCount} ${apptCount === 1 ? 'appointment' : 'appointments'}`)
+                    if (estCount > 0) parts.push(`${estCount} ${estCount === 1 ? 'estimate' : 'estimates'}`)
+                    setDeleteBlockReason(`This client has ${parts.join(' and ')} — remove or reassign those first.`)
+                  } else {
+                    setDeleteBlockReason(null)
+                  }
+                  setDeleteError(null)
+                  setDeleteOpen(true)
+                }}
                 style={{ width: '100%', padding: '13px 16px', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 600, color: T.red, textAlign: 'left' }}
               >
                 <X size={15} color={T.red} strokeWidth={2} />
@@ -733,23 +755,39 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
           <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Delete this client?</div>
-            <div style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.5, marginBottom: 24 }}>This cannot be undone.</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => setDeleteOpen(false)}
-                style={{ flex: 1, height: 44, background: '#F3F4F6', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: T.ink, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={deleteClient}
-                disabled={deleting}
-                style={{ flex: 1, height: 44, background: T.red, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.7 : 1 }}
-              >
-                {deleting ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
+            {deleteBlockReason ? (
+              <>
+                <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Can't delete this client</div>
+                <div style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.5, marginBottom: 24 }}>{deleteBlockReason}</div>
+                <button
+                  onClick={() => setDeleteOpen(false)}
+                  style={{ width: '100%', height: 44, background: '#F3F4F6', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: T.ink, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  Got it
+                </button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 17, fontWeight: 700, color: T.ink, marginBottom: 8 }}>Delete this client?</div>
+                <div style={{ fontSize: 14, color: T.inkSoft, lineHeight: 1.5, marginBottom: deleteError ? 12 : 24 }}>This cannot be undone.</div>
+                {deleteError && <div style={{ fontSize: 13, color: T.red, marginBottom: 16 }}>{deleteError}</div>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={() => setDeleteOpen(false)}
+                    style={{ flex: 1, height: 44, background: '#F3F4F6', border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: T.ink, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={deleteClient}
+                    disabled={deleting}
+                    style={{ flex: 1, height: 44, background: T.red, border: 'none', borderRadius: 11, fontSize: 14, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', opacity: deleting ? 0.7 : 1 }}
+                  >
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

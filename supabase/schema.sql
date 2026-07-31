@@ -207,6 +207,53 @@ create policy "Users update own invoices"
 create policy "Users delete own invoices"
   on public.invoices for delete using (auth.uid() = user_id);
 
+-- clients table was created via Supabase dashboard; documented here retroactively.
+-- owner_id = COALESCE(profile.team_owner_id, profile.id) at insert time — all teammates share the team owner's id.
+create table if not exists public.clients (
+  id          uuid primary key default gen_random_uuid(),
+  owner_id    uuid not null references public.profiles(id) on delete cascade,
+  name        text not null,
+  phone       text,
+  email       text,
+  address     text,
+  city        text,
+  province    text,
+  postal_code text,
+  notes       text,
+  created_at  timestamptz default now()
+);
+
+alter table public.clients enable row level security;
+
+drop policy if exists "Users see own clients"    on public.clients;
+drop policy if exists "Users insert own clients" on public.clients;
+drop policy if exists "Users update own clients" on public.clients;
+drop policy if exists "Users delete own clients" on public.clients;
+
+create policy "Users see own clients"
+  on public.clients for select using (
+    auth.uid() = owner_id
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = owner_id
+  );
+
+create policy "Users insert own clients"
+  on public.clients for insert with check (
+    auth.uid() = owner_id
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = owner_id
+  );
+
+create policy "Users update own clients"
+  on public.clients for update using (
+    auth.uid() = owner_id
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = owner_id
+  );
+
+create policy "Users delete own clients"
+  on public.clients for delete using (
+    auth.uid() = owner_id
+    OR (SELECT team_owner_id FROM public.profiles WHERE id = auth.uid()) = owner_id
+  );
+
 alter table public.profiles
   add column if not exists team_owner_id uuid references public.profiles(id) on delete set null,
   add column if not exists member_role text,
